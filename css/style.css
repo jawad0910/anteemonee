@@ -1317,16 +1317,52 @@ img { max-width: 100%; display: block; }
   font-weight: 500;
   transition: all 0.2s;
   font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-google::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn-google:hover::before {
+  opacity: 1;
 }
 
 .btn-google:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-google:active {
+  transform: scale(0.98);
 }
 
 .btn-google svg {
   width: 20px;
   height: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-google span,
+.btn-google:not(:has(span)) {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
 /* ===== ANIMATIONS ===== */
