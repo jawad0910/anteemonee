@@ -428,18 +428,16 @@
     </div>
 
     <div id="account-view" style="display:none">
-      <div class="account-page-header fade-in">
+      <div class="account-page-header">
         <h1>Your Account</h1>
         <p>Manage your Wassal profile</p>
       </div>
-
-      <div id="account-debug" style="background:rgba(255,102,117,0.08);border:1px solid rgba(255,102,117,0.15);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#FF6675;font-family:monospace;display:none"></div>
 
       <div id="account-cards"></div>
 
       <div id="onboarding-prompt-container"></div>
 
-      <div class="account-bottom-actions fade-in fade-in-delay-2">
+      <div class="account-bottom-actions">
         <a href="../index.html" class="btn-secondary">Back to Home</a>
         <button class="btn-danger" onclick="handleLogout()">Logout</button>
       </div>
@@ -579,7 +577,7 @@
       }).join('');
 
       document.getElementById('account-cards').innerHTML = `
-        <div class="account-card fade-in fade-in-delay-1">
+        <div class="account-card">
           <div class="profile-hero">
             <div class="profile-avatar-wrap" id="acct-avatar">
               ${imgUrl ? `<img src="${imgUrl}" alt="${username}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-lg" style="display:none">${username.charAt(0).toUpperCase()}</div>` : `<div class="avatar-fallback-lg">${username.charAt(0).toUpperCase()}</div>`}
@@ -591,7 +589,7 @@
           </div>
         </div>
 
-        <div class="account-card fade-in fade-in-delay-2">
+        <div class="account-card">
           <div class="card-header">
             <span class="card-title">Personal Info</span>
             <button class="edit-btn" onclick="toggleSection('personal')">
@@ -630,7 +628,7 @@
           </div>
         </div>
 
-        <div class="account-card fade-in fade-in-delay-3">
+        <div class="account-card">
           <div class="card-header">
             <span class="card-title">Academic Profile</span>
             <button class="edit-btn" onclick="toggleSection('academic')">
@@ -691,7 +689,7 @@
           </div>
         </div>
 
-        <div class="account-card fade-in fade-in-delay-4">
+        <div class="account-card">
           <div class="card-header">
             <span class="card-title">Goals</span>
             <button class="edit-btn" onclick="toggleSection('goals')">
@@ -945,12 +943,6 @@
       if (e.target.id === 'edit-board') onBoardChange();
     });
 
-    function showDebug(msg) {
-      const el = document.getElementById('account-debug');
-      if (el) { el.style.display = 'block'; el.textContent = msg; }
-      console.error('[ACC]', msg);
-    }
-
     (async function() {
       try {
         await checkAuth();
@@ -958,12 +950,9 @@
           document.getElementById('not-logged-in').style.display = 'block';
           return;
         }
-        showDebug('Logged in as ' + currentUser.id);
         await ensureProfile();
-        showDebug('Profile loaded: ' + (currentProfile ? 'yes' : 'no'));
 
         const step = await getOnboardingStep();
-        showDebug('Onboarding step: ' + step);
         if (step >= 0) {
           window.location.href = ONBOARDING_URL;
           return;
@@ -972,20 +961,14 @@
         document.getElementById('account-view').style.display = 'block';
         acctData.profile = currentProfile;
 
-        showDebug('Loading ref data...');
         await loadAllRefData();
-        showDebug('Ref data loaded. Goals: ' + acctData.ref.goals_list.length + ', Provinces: ' + acctData.ref.provinces.length);
-
         await loadAcademicData(currentUser.id);
-        showDebug('Academic loaded. Subjects: ' + acctData.subjects.length + ', Goals: ' + acctData.goals.length);
-
         renderCards();
-        showDebug('Cards rendered');
       } catch (e) {
-        showDebug('ERROR: ' + e.message);
+        console.error('Account init error:', e);
         document.getElementById('account-view').style.display = 'block';
         acctData.profile = currentProfile;
-        try { renderCards(); } catch (e2) { showDebug('renderCards also failed: ' + e2.message); }
+        try { renderCards(); } catch (e2) { console.error('renderCards error:', e2); }
       }
     })();
   </script>
