@@ -11,7 +11,7 @@
     .account-page {
       min-height: 100vh;
       padding: 120px 24px 80px;
-      max-width: 600px;
+      max-width: 640px;
       margin: 0 auto;
     }
     .account-page-header {
@@ -28,96 +28,344 @@
       color: var(--text-secondary);
       font-size: 15px;
     }
-    .account-card-large {
+    .account-card {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-xl);
       backdrop-filter: blur(var(--glass-blur));
       -webkit-backdrop-filter: blur(var(--glass-blur));
-      padding: 36px;
-      margin-bottom: 24px;
+      padding: 32px;
+      margin-bottom: 20px;
       position: relative;
+      overflow: hidden;
     }
-    .account-card-large::before {
+    .account-card::before {
       content: '';
-      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-      margin: -36px -36px 28px;
-      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     }
-    .account-top {
+    .card-header {
       display: flex;
       align-items: center;
-      gap: 20px;
-      margin-bottom: 28px;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
-    .account-top-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 2px solid var(--glass-border);
-      flex-shrink: 0;
-      position: relative;
-    }
-    .account-top-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-    }
-    .account-top-info h2 {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.4px;
-    }
-    .account-top-info p {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    .account-section-label {
+    .card-title {
       font-size: 11.5px;
       font-weight: 600;
       color: var(--accent);
       letter-spacing: 1.6px;
       text-transform: uppercase;
-      margin-bottom: 14px;
     }
-    .account-rows {
+    .edit-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .edit-btn:hover {
+      background: var(--accent-soft);
+      border-color: rgba(124, 92, 255, 0.2);
+      color: var(--accent);
+    }
+    .edit-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+    .profile-hero {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 4px;
+    }
+    .profile-avatar-wrap {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .profile-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2.5px solid var(--glass-border);
+    }
+    .avatar-fallback-lg {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #9B7BFF, #7C5CFF, #5B3EE8);
+      color: #fff;
+      font-size: 32px;
+      font-weight: 700;
+      border-radius: 50%;
+      border: 2.5px solid var(--glass-border);
+    }
+    .profile-info h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 4px;
+    }
+    .profile-info p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .field-rows {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 2px;
     }
-    .account-row {
+    .field-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 18px;
+      padding: 14px 16px;
       border-radius: var(--radius-sm);
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.2s;
     }
-    .account-row-label {
+    .field-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .field-label {
       font-size: 14px;
       color: var(--text-muted);
       font-weight: 500;
+      flex-shrink: 0;
     }
-    .account-row-value {
+    .field-value {
       font-size: 14px;
       font-weight: 600;
       text-align: right;
       max-width: 55%;
       word-break: break-word;
+      color: var(--white);
     }
-    .account-actions {
+    .field-value.empty {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .field-row-edit {
+      display: none;
+      padding: 12px 0;
+    }
+    .field-row-edit.active {
+      display: block;
+    }
+    .field-row-display {
       display: flex;
-      gap: 12px;
-      margin-top: 8px;
     }
-    .account-actions .btn-primary,
-    .account-actions .btn-secondary {
+    .field-row-display.hidden {
+      display: none;
+    }
+    .edit-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .edit-actions button {
       flex: 1;
+    }
+    .btn-save {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      background: var(--accent);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 48px;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-save:hover {
+      background: #6a4de6;
+      box-shadow: 0 6px 24px rgba(124, 92, 255, 0.3);
+    }
+    .btn-save:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-cancel {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 48px;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: var(--white);
+    }
+    .edit-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .edit-form-group:last-of-type {
+      margin-bottom: 0;
+    }
+    .edit-form-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .edit-form-group select,
+    .edit-form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.1px solid var(--border);
+      background: var(--surface);
+      color: var(--white);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .edit-form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7079' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    .edit-form-group select option {
+      background: var(--surface);
+      color: var(--white);
+    }
+    .edit-form-group input:focus,
+    .edit-form-group select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+    }
+    .edit-form-group input::placeholder {
+      color: var(--text-muted);
+    }
+    .multi-select-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .multi-select-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .multi-select-chip:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .multi-select-chip.selected {
+      background: var(--accent-soft);
+      border-color: rgba(124, 92, 255, 0.3);
+      color: var(--accent);
+    }
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      background: var(--success);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+      box-shadow: 0 8px 32px rgba(53, 211, 153, 0.3);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error {
+      background: var(--error);
+      box-shadow: 0 8px 32px rgba(255, 102, 117, 0.3);
+    }
+    .section-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.05);
+      margin: 4px 0;
+    }
+    .not-logged-in {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .not-logged-in h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .not-logged-in p {
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+    .onboarding-prompt {
+      text-align: center;
+      padding: 20px;
+      margin-top: 4px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(124, 92, 255, 0.15);
+      border-radius: var(--radius-md);
+    }
+    .onboarding-prompt p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
     }
     .btn-danger {
       display: inline-flex;
@@ -141,31 +389,23 @@
       background: rgba(255, 102, 117, 0.14);
       border-color: rgba(255, 102, 117, 0.25);
     }
-    .not-logged-in {
-      text-align: center;
-      padding: 60px 20px;
+    .account-bottom-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
     }
-    .not-logged-in h2 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 12px;
+    .account-bottom-actions .btn-secondary {
+      flex: 1;
     }
-    .not-logged-in p {
-      color: var(--text-secondary);
-      margin-bottom: 28px;
+    .account-bottom-actions .btn-danger {
+      flex: 1;
     }
-    .onboarding-prompt {
-      text-align: center;
-      padding: 20px;
-      margin-top: 20px;
-      background: var(--accent-soft);
-      border: 1px solid rgba(124, 92, 255, 0.15);
-      border-radius: var(--radius-md);
-    }
-    .onboarding-prompt p {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-bottom: 14px;
+    @media (max-width: 480px) {
+      .account-page { padding: 100px 16px 60px; }
+      .account-card { padding: 24px 18px; }
+      .profile-hero { flex-direction: column; text-align: center; gap: 16px; }
+      .edit-actions { flex-direction: column; }
+      .account-bottom-actions { flex-direction: column; }
     }
   </style>
 </head>
@@ -193,92 +433,500 @@
         <p>Manage your Wassal profile</p>
       </div>
 
-      <div class="account-card-large fade-in fade-in-delay-1">
-        <div class="account-top">
-          <div class="account-top-avatar" id="account-avatar"></div>
-          <div class="account-top-info">
-            <h2 id="account-display-name">—</h2>
-            <p id="account-email">—</p>
-          </div>
-        </div>
+      <div id="account-cards"></div>
 
-        <p class="account-section-label">Personal Info</p>
-        <div class="account-rows">
-          <div class="account-row">
-            <span class="account-row-label">Date of Birth</span>
-            <span class="account-row-value" id="acc-dob">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Province</span>
-            <span class="account-row-value" id="acc-province">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">City</span>
-            <span class="account-row-value" id="acc-city">—</span>
-          </div>
-        </div>
+      <div id="onboarding-prompt-container"></div>
 
-        <p class="account-section-label" style="margin-top:24px">Academic Profile</p>
-        <div class="account-rows">
-          <div class="account-row">
-            <span class="account-row-label">Education System</span>
-            <span class="account-row-value" id="acc-edu-system">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Board</span>
-            <span class="account-row-value" id="acc-board">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Class</span>
-            <span class="account-row-value" id="acc-class">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Group</span>
-            <span class="account-row-value" id="acc-group">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Subjects</span>
-            <span class="account-row-value" id="acc-subjects">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">College</span>
-            <span class="account-row-value" id="acc-college">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Session</span>
-            <span class="account-row-value" id="acc-session">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Exam Year</span>
-            <span class="account-row-value" id="acc-exam-year">—</span>
-          </div>
-        </div>
-
-        <p class="account-section-label" style="margin-top:24px">Goals</p>
-        <div class="account-rows" id="acc-goals-container">
-          <div class="account-row">
-            <span class="account-row-label">Goals</span>
-            <span class="account-row-value" id="acc-goals">—</span>
-          </div>
-          <div class="account-row">
-            <span class="account-row-label">Primary Goal</span>
-            <span class="account-row-value" id="acc-primary-goal">—</span>
-          </div>
-        </div>
-
-        <div id="onboarding-prompt-container"></div>
-      </div>
-
-      <div class="account-actions fade-in fade-in-delay-2">
+      <div class="account-bottom-actions fade-in fade-in-delay-2">
         <a href="../index.html" class="btn-secondary">Back to Home</a>
         <button class="btn-danger" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="../js/app.js"></script>
   <script>
+    let acctData = {
+      profile: null,
+      acad: null,
+      subjects: [],
+      goals: [],
+      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], colleges: [], academic_sessions: [], goal_categories: [], goals_list: [], subjects_list: [] }
+    };
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      requestAnimationFrame(() => t.classList.add('show'));
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    async function loadAllRefData() {
+      const [sysRes, provRes, sessRes, goalsCatRes] = await Promise.all([
+        db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
+        db.from('provinces').select('*').eq('is_active', true).order('name'),
+        db.from('academic_sessions').select('*').eq('is_active', true).order('sort_order'),
+        db.from('goal_categories').select('*, goals(*)').eq('is_active', true).order('sort_order')
+      ]);
+      acctData.ref.education_systems = sysRes.data || [];
+      acctData.ref.provinces = provRes.data || [];
+      acctData.ref.academic_sessions = sessRes.data || [];
+      const cats = goalsCatRes.data || [];
+      acctData.ref.goal_categories = cats;
+      acctData.ref.goals_list = cats.flatMap(c => (c.goals || []).map(g => ({ ...g, category_name: c.name })));
+    }
+
+    async function loadBoards(systemId) {
+      const { data } = await db.from('education_system_boards').select('board_id, boards(*)').eq('education_system_id', systemId);
+      acctData.ref.boards = (data || []).map(r => r.boards).filter(Boolean);
+    }
+
+    async function loadClassLevels(systemId) {
+      const { data } = await db.from('education_system_class_levels').select('class_level_id, class_levels(*)').eq('education_system_id', systemId);
+      acctData.ref.class_levels = (data || []).map(r => r.class_levels).filter(Boolean);
+    }
+
+    async function loadGroups(classLevelId) {
+      const { data } = await db.from('class_level_groups').select('group_id, groups(*)').eq('class_level_id', classLevelId);
+      acctData.ref.groups = (data || []).map(r => r.groups).filter(Boolean);
+    }
+
+    async function loadSubjectsList(groupId) {
+      const { data } = await db.from('group_subjects').select('subject_id, subjects(*)').eq('group_id', groupId);
+      acctData.ref.subjects_list = (data || []).map(r => r.subjects).filter(Boolean);
+    }
+
+    async function loadColleges(boardId) {
+      const { data } = await db.from('colleges').select('*').eq('board_id', boardId).eq('is_active', true).order('name');
+      acctData.ref.colleges = data || [];
+    }
+
+    async function loadCities(provinceId) {
+      const { data } = await db.from('cities').select('*').eq('province_id', provinceId).eq('is_active', true).order('name');
+      acctData.ref.cities = data || [];
+    }
+
+    async function loadAcademicData(userId) {
+      const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', userId).single();
+      acctData.acad = acad;
+      if (acad?.id) {
+        const { data: subs } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
+        acctData.subjects = subs?.map(s => s.subject_id) || [];
+      }
+      const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', userId);
+      acctData.goals = goals || [];
+    }
+
+    function resolveName(list, id, key) {
+      const item = list.find(i => i.id == id);
+      return item ? (item[key || 'name']) : '—';
+    }
+
+    function renderCards() {
+      const p = acctData.profile;
+      const a = acctData.acad;
+      const r = acctData.ref;
+      const user = currentUser;
+      const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+      const email = user?.email || '—';
+      const imgUrl = p?.avatar_url || p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+
+      const goalsNames = acctData.goals.map(g => { const gl = acctData.ref.goals_list.find(x => x.id == g.goal_id); return gl ? (gl.title || gl.name) : null; }).filter(Boolean);
+      const primaryGoal = acctData.goals.find(g => g.is_primary);
+      const primaryGoalName = primaryGoal ? (acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.title || acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.name || '—') : '—';
+
+      const subjectNames = acctData.subjects.map(sid => { const s = r.subjects_list.find(x => x.id == sid); return s ? s.name : null; }).filter(Boolean);
+
+      const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
+      const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const sysOptions = r.education_systems.map(s => `<option value="${s.id}" ${a?.education_system_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+      const boardOptions = r.boards.map(b => `<option value="${b.id}" ${a?.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+      const classOptions = r.class_levels.map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const groupOptions = r.groups.map(g => `<option value="${g.id}" ${a?.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
+      const collegeOptions = r.colleges.map(c => `<option value="${c.id}" ${a?.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const sessionOptions = r.academic_sessions.map(s => `<option value="${s.id}" ${a?.academic_session_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+
+      const subjectChips = r.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+
+      const goalsByCategory = {};
+      r.goal_categories.forEach(cat => { goalsByCategory[cat.id] = r.goals_list.filter(g => g.goal_category_id === cat.id); });
+      const goalChipsHtml = r.goal_categories.map(cat => {
+        const goals = goalsByCategory[cat.id] || [];
+        if (!goals.length) return '';
+        const chips = goals.map(g => `<div class="multi-select-chip ${acctData.goals.some(x => x.goal_id == g.id) ? 'selected' : ''}" data-id="${g.id}" onclick="toggleGoalChip(this)">${g.title || g.name}</div>`).join('');
+        return `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">${cat.name}</div><div class="multi-select-grid">${chips}</div></div>`;
+      }).join('');
+
+      document.getElementById('account-cards').innerHTML = `
+        <div class="account-card fade-in fade-in-delay-1">
+          <div class="profile-hero">
+            <div class="profile-avatar-wrap" id="acct-avatar">
+              ${imgUrl ? `<img src="${imgUrl}" alt="${username}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-lg" style="display:none">${username.charAt(0).toUpperCase()}</div>` : `<div class="avatar-fallback-lg">${username.charAt(0).toUpperCase()}</div>`}
+            </div>
+            <div class="profile-info">
+              <h2 id="acct-display-name">${username}</h2>
+              <p id="acct-email">${email}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-card fade-in fade-in-delay-2">
+          <div class="card-header">
+            <span class="card-title">Personal Info</span>
+            <button class="edit-btn" onclick="toggleSection('personal')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </div>
+          <div class="field-rows" id="personal-display">
+            <div class="field-row"><span class="field-label">Date of Birth</span><span class="field-value ${p?.date_of_birth ? '' : 'empty'}">${p?.date_of_birth || 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Province</span><span class="field-value ${p?.province_id ? '' : 'empty'}">${p?.province_id ? resolveName(r.provinces, p.province_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">City</span><span class="field-value ${p?.city_id ? '' : 'empty'}">${p?.city_id ? resolveName(r.cities, p.city_id) : 'Not set'}</span></div>
+          </div>
+          <div class="field-row-edit" id="personal-edit">
+            <div class="edit-form-group">
+              <label>Date of Birth</label>
+              <input type="date" id="edit-dob" value="${p?.date_of_birth || ''}" max="${new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="edit-form-group">
+              <label>Province</label>
+              <select id="edit-province" onchange="onProvinceChange()">
+                <option value="">Select province</option>
+                ${provOptions}
+              </select>
+            </div>
+            <div class="edit-form-group">
+              <label>City</label>
+              <select id="edit-city">
+                <option value="">Select city</option>
+                ${cityOptions}
+              </select>
+            </div>
+            <div class="edit-actions">
+              <button class="btn-cancel" onclick="toggleSection('personal')">Cancel</button>
+              <button class="btn-save" onclick="savePersonal()">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-card fade-in fade-in-delay-3">
+          <div class="card-header">
+            <span class="card-title">Academic Profile</span>
+            <button class="edit-btn" onclick="toggleSection('academic')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </div>
+          <div class="field-rows" id="academic-display">
+            <div class="field-row"><span class="field-label">Education System</span><span class="field-value ${a?.education_system_id ? '' : 'empty'}">${a?.education_system_id ? resolveName(r.education_systems, a.education_system_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">College</span><span class="field-value ${a?.college_id ? '' : 'empty'}">${a?.college_id ? resolveName(r.colleges, a.college_id, 'name') : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'name') : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Exam Year</span><span class="field-value ${a?.exam_year ? '' : 'empty'}">${a?.exam_year || 'Not set'}</span></div>
+          </div>
+          <div class="field-row-edit" id="academic-edit">
+            <div class="edit-form-group">
+              <label>Education System</label>
+              <select id="edit-edu-system" onchange="onEduSystemChange()">
+                <option value="">Select system</option>
+                ${sysOptions}
+              </select>
+            </div>
+            <div class="edit-form-group">
+              <label>Board</label>
+              <select id="edit-board"><option value="">Select board</option>${boardOptions}</select>
+            </div>
+            <div class="edit-form-group">
+              <label>Class</label>
+              <select id="edit-class" onchange="onClassChange()"><option value="">Select class</option>${classOptions}</select>
+            </div>
+            <div class="edit-form-group">
+              <label>Group</label>
+              <select id="edit-group" onchange="onGroupChange()"><option value="">Select group</option>${groupOptions}</select>
+            </div>
+            <div class="edit-form-group">
+              <label>Subjects</label>
+              <div class="multi-select-grid" id="edit-subjects">${subjectChips || '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>'}</div>
+            </div>
+            <div class="edit-form-group">
+              <label>College</label>
+              <select id="edit-college"><option value="">Select college</option>${collegeOptions}</select>
+            </div>
+            <div class="edit-form-group">
+              <label>Academic Session</label>
+              <select id="edit-session"><option value="">Select session</option>${sessionOptions}</select>
+            </div>
+            <div class="edit-form-group">
+              <label>Exam Year</label>
+              <input type="text" id="edit-exam-year" value="${a?.exam_year || ''}" placeholder="e.g. 2027" maxlength="4">
+            </div>
+            <div class="edit-actions">
+              <button class="btn-cancel" onclick="toggleSection('academic')">Cancel</button>
+              <button class="btn-save" onclick="saveAcademic()">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-card fade-in fade-in-delay-4">
+          <div class="card-header">
+            <span class="card-title">Goals</span>
+            <button class="edit-btn" onclick="toggleSection('goals')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </div>
+          <div class="field-rows" id="goals-display">
+            <div class="field-row"><span class="field-label">Goals</span><span class="field-value ${goalsNames.length ? '' : 'empty'}">${goalsNames.length ? goalsNames.join(', ') : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Primary Goal</span><span class="field-value ${primaryGoal ? '' : 'empty'}">${primaryGoalName}</span></div>
+          </div>
+          <div class="field-row-edit" id="goals-edit">
+            <div class="edit-form-group">
+              <label>Select your goals</label>
+              <div id="edit-goals-chips">${goalChipsHtml}</div>
+            </div>
+            <div class="edit-form-group" id="primary-goal-wrap" style="display:none;margin-top:14px">
+              <label>Primary Goal</label>
+              <select id="edit-primary-goal"><option value="">Select primary goal</option></select>
+            </div>
+            <div class="edit-actions">
+              <button class="btn-cancel" onclick="toggleSection('goals')">Cancel</button>
+              <button class="btn-save" onclick="saveGoals()">Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleSection(section) {
+      const display = document.getElementById(section + '-display');
+      const edit = document.getElementById(section + '-edit');
+      const isEditing = edit.classList.contains('active');
+      if (isEditing) {
+        display.classList.remove('hidden');
+        edit.classList.remove('active');
+      } else {
+        display.classList.add('hidden');
+        edit.classList.add('active');
+        if (section === 'academic') preloadAcademicDependent();
+        if (section === 'goals') refreshPrimaryGoalSelect();
+      }
+    }
+
+    async function onProvinceChange() {
+      const pid = document.getElementById('edit-province').value;
+      if (pid) {
+        await loadCities(pid);
+        const citySelect = document.getElementById('edit-city');
+        const currentCity = acctData.profile?.city_id;
+        citySelect.innerHTML = '<option value="">Select city</option>' + acctData.ref.cities.map(c => `<option value="${c.id}" ${currentCity == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      }
+    }
+
+    async function onEduSystemChange() {
+      const sid = document.getElementById('edit-edu-system').value;
+      if (sid) {
+        await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
+        document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>';
+        document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a class first</span>';
+      }
+    }
+
+    async function onClassChange() {
+      const cid = document.getElementById('edit-class').value;
+      if (cid) {
+        await loadGroups(cid);
+        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+        document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>';
+      }
+    }
+
+    async function onGroupChange() {
+      const gid = document.getElementById('edit-group').value;
+      if (gid) {
+        await loadSubjectsList(gid);
+        document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+      }
+    }
+
+    async function onBoardChange() {
+      const bid = document.getElementById('edit-board').value;
+      if (bid) {
+        await loadColleges(bid);
+        document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      }
+    }
+
+    async function preloadAcademicDependent() {
+      const a = acctData.acad;
+      if (!a) return;
+      if (a.education_system_id) {
+        await Promise.all([loadBoards(a.education_system_id), loadClassLevels(a.education_system_id)]);
+        document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${a.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      }
+      if (a.class_level_id) {
+        await loadGroups(a.class_level_id);
+        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
+      }
+      if (a.group_id) {
+        await loadSubjectsList(a.group_id);
+        document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+      }
+      if (a.board_id) {
+        await loadColleges(a.board_id);
+        document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      }
+    }
+
+    function toggleSubjectChip(el) {
+      el.classList.toggle('selected');
+    }
+
+    function toggleGoalChip(el) {
+      el.classList.toggle('selected');
+      refreshPrimaryGoalSelect();
+    }
+
+    function refreshPrimaryGoalSelect() {
+      const chips = document.querySelectorAll('#edit-goals-chips .multi-select-chip.selected');
+      const ids = Array.from(chips).map(c => c.dataset.id);
+      const wrap = document.getElementById('primary-goal-wrap');
+      const sel = document.getElementById('edit-primary-goal');
+      if (ids.length > 0) {
+        wrap.style.display = 'block';
+        const currentPrimary = acctData.goals.find(g => g.is_primary)?.goal_id || '';
+        sel.innerHTML = '<option value="">Select primary goal</option>' + ids.map(id => {
+          const g = acctData.ref.goals_list.find(x => x.id == id);
+          return g ? `<option value="${id}" ${currentPrimary == id ? 'selected' : ''}>${g.title || g.name}</option>` : '';
+        }).join('');
+      } else {
+        wrap.style.display = 'none';
+        sel.innerHTML = '';
+      }
+    }
+
+    async function savePersonal() {
+      const btn = document.querySelector('#personal-edit .btn-save');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const dob = document.getElementById('edit-dob').value;
+        const provinceId = document.getElementById('edit-province').value || null;
+        const cityId = document.getElementById('edit-city').value || null;
+        const { error } = await db.from('profiles').update({
+          date_of_birth: dob || null,
+          province_id: provinceId,
+          city_id: cityId
+        }).eq('id', currentUser.id);
+        if (error) throw error;
+        acctData.profile.date_of_birth = dob || null;
+        acctData.profile.province_id = provinceId;
+        acctData.profile.city_id = cityId;
+        renderCards();
+        showToast('Personal info updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    }
+
+    async function saveAcademic() {
+      const btn = document.querySelector('#academic-edit .btn-save');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const eduSystem = document.getElementById('edit-edu-system').value || null;
+        const board = document.getElementById('edit-board').value || null;
+        const cls = document.getElementById('edit-class').value || null;
+        const grp = document.getElementById('edit-group').value || null;
+        const college = document.getElementById('edit-college').value || null;
+        const session = document.getElementById('edit-session').value || null;
+        const examYear = document.getElementById('edit-exam-year').value.trim() || null;
+
+        const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
+          user_id: currentUser.id,
+          education_system_id: eduSystem,
+          board_id: board,
+          class_level_id: cls,
+          group_id: grp,
+          college_id: college,
+          academic_session_id: session,
+          exam_year: examYear
+        }, { onConflict: 'user_id' }).select('id').single();
+        if (acadErr) throw acadErr;
+
+        if (acadProfile?.id) {
+          await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
+          const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
+          const subjectIds = Array.from(selectedChips).map(c => c.dataset.id);
+          if (subjectIds.length) {
+            const { error: subErr } = await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+            if (subErr) throw subErr;
+          }
+          acctData.subjects = subjectIds;
+        }
+
+        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session, exam_year: examYear };
+
+        if (acctData.ref.subjects_list.length === 0 && grp) {
+          await loadSubjectsList(grp);
+        }
+
+        renderCards();
+        showToast('Academic profile updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    }
+
+    async function saveGoals() {
+      const btn = document.querySelector('#goals-edit .btn-save');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const selectedChips = document.querySelectorAll('#edit-goals-chips .multi-select-chip.selected');
+        const goalIds = Array.from(selectedChips).map(c => c.dataset.id);
+        const primaryGoalId = document.getElementById('edit-primary-goal')?.value || null;
+
+        await db.from('academic_goals').delete().eq('user_id', currentUser.id);
+        if (goalIds.length) {
+          const { error } = await db.from('academic_goals').insert(goalIds.map(gid => ({
+            user_id: currentUser.id,
+            goal_id: gid,
+            is_primary: gid === primaryGoalId
+          })));
+          if (error) throw error;
+        }
+
+        acctData.goals = goalIds.map(gid => ({ goal_id: gid, is_primary: gid === primaryGoalId }));
+        renderCards();
+        showToast('Goals updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    }
+
+    document.addEventListener('change', function(e) {
+      if (e.target.id === 'edit-board') onBoardChange();
+    });
+
     (async function() {
       await checkAuth();
       if (!currentUser) {
@@ -294,114 +942,10 @@
       }
 
       document.getElementById('account-view').style.display = 'block';
+      acctData.profile = currentProfile;
 
-      const user = currentUser;
-      const profile = currentProfile;
-      const username = profile?.username || user.user_metadata?.username || user.email?.split('@')[0] || 'User';
-      const email = user.email || '—';
-      const imgUrl = profile?.avatar_url || profile?.profile_image_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
-
-      document.getElementById('account-display-name').textContent = username;
-      document.getElementById('account-email').textContent = email;
-
-      const avatarEl = document.getElementById('account-avatar');
-      avatarEl.innerHTML = `
-        <img src="${imgUrl || ''}" alt="${username}"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-          style="width:100%;height:100%;object-fit:cover;border-radius:50%">
-        <div class="avatar-fallback" style="${imgUrl ? 'display:none' : ''}width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#9B7BFF,#7C5CFF,#5B3EE8);color:#fff;font-size:28px;font-weight:700;border-radius:50%;position:absolute;top:0;left:0">
-          ${username.charAt(0).toUpperCase()}
-        </div>
-      `;
-
-      if (profile) {
-        document.getElementById('acc-dob').textContent = profile.date_of_birth || '—';
-      }
-
-      if (!profile?.personal_info_completed || !profile?.academic_profile_completed || !profile?.goals_completed) {
-        const container = document.getElementById('onboarding-prompt-container');
-        container.innerHTML = `
-          <div class="onboarding-prompt">
-            <p>Complete your profile to get the most out of Wassal.</p>
-            <a href="onboarding.html" class="btn-primary" style="width:100%">Complete Setup</a>
-          </div>
-        `;
-      }
-
-      if (profile?.province_id) {
-        try {
-          const { data: prov } = await db.from('provinces').select('name').eq('id', profile.province_id).single();
-          document.getElementById('acc-province').textContent = prov?.name || '—';
-        } catch { document.getElementById('acc-province').textContent = '—'; }
-      }
-
-      if (profile?.city_id) {
-        try {
-          const { data: city } = await db.from('cities').select('name').eq('id', profile.city_id).single();
-          document.getElementById('acc-city').textContent = city?.name || '—';
-        } catch { document.getElementById('acc-city').textContent = '—'; }
-      }
-
-      try {
-        const { data: acad } = await db.from('student_academic_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (acad) {
-          if (acad.education_system_id) {
-            const { data: sys } = await db.from('education_systems').select('name').eq('id', acad.education_system_id).single();
-            document.getElementById('acc-edu-system').textContent = sys?.name || '—';
-          }
-          if (acad.board_id) {
-            const { data: board } = await db.from('boards').select('name').eq('id', acad.board_id).single();
-            document.getElementById('acc-board').textContent = board?.name || '—';
-          }
-          if (acad.class_level_id) {
-            const { data: cl } = await db.from('class_levels').select('name').eq('id', acad.class_level_id).single();
-            document.getElementById('acc-class').textContent = cl?.name || '—';
-          }
-          if (acad.group_id) {
-            const { data: grp } = await db.from('groups').select('name').eq('id', acad.group_id).single();
-            document.getElementById('acc-group').textContent = grp?.name || '—';
-          }
-          if (acad.college_id) {
-            const { data: col } = await db.from('colleges').select('name').eq('id', acad.college_id).single();
-            document.getElementById('acc-college').textContent = col?.name || '—';
-          }
-          if (acad.academic_session_id) {
-            const { data: sess } = await db.from('academic_sessions').select('label').eq('id', acad.academic_session_id).single();
-            document.getElementById('acc-session').textContent = sess?.label || '—';
-          }
-          document.getElementById('acc-exam-year').textContent = acad.exam_year || '—';
-
-          const { data: subs } = await db.from('student_subjects')
-            .select('subject_id, subjects(name)')
-            .eq('academic_profile_id', acad.id);
-          if (subs?.length) {
-            const names = subs.map(s => s.subjects?.name).filter(Boolean);
-            document.getElementById('acc-subjects').textContent = names.join(', ') || '—';
-          }
-        }
-      } catch (e) {
-        console.error('Academic profile load error:', e);
-      }
-
-      try {
-        const { data: goals } = await db.from('academic_goals')
-          .select('goal_id, is_primary, goals(label)')
-          .eq('user_id', user.id);
-        if (goals?.length) {
-          const names = goals.map(g => g.goals?.label).filter(Boolean);
-          document.getElementById('acc-goals').textContent = names.join(', ') || '—';
-          const primary = goals.find(g => g.is_primary);
-          if (primary?.goals?.label) {
-            document.getElementById('acc-primary-goal').textContent = primary.goals.label;
-          }
-        }
-      } catch (e) {
-        console.error('Goals load error:', e);
-      }
+      await Promise.all([loadAllRefData(), loadAcademicData(currentUser.id)]);
+      renderCards();
     })();
   </script>
 </body>
