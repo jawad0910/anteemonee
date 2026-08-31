@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connecting with Google — Wassal</title>
+  <meta name="theme-color" content="#07080C">
+  <link rel="icon" href="../../../assets/wassal.png">
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .callback-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+    .callback-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      padding: 48px 36px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .callback-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .callback-logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 24px;
+      border-radius: 16px;
+      animation: callback-pulse 2s ease-in-out infinite;
+    }
+    @keyframes callback-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.95); }
+    }
+    .callback-provider-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .callback-provider-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+    .callback-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 8px;
+    }
+    .callback-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    .callback-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .callback-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .callback-status {
+      font-size: 14px;
+      color: var(--text-secondary);
+      min-height: 20px;
+    }
+    .callback-success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .success-check {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(53, 211, 154, 0.1);
+      border: 1.5px solid rgba(53, 211, 154, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      animation: scaleIn 0.3s ease;
+    }
+    @keyframes scaleIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .success-message {
+      font-size: 15px;
+      color: var(--success);
+      font-weight: 500;
+    }
+    .callback-error {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .error-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(255, 102, 117, 0.1);
+      border: 1.5px solid rgba(255, 102, 117, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .error-message {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .error-actions {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+    .error-actions a,
+    .error-actions button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="callback-page">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+
+    <div class="callback-card">
+      <img src="../../../assets/wassal.png" alt="Wassal" class="callback-logo">
+
+      <div class="callback-provider-icon">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      </div>
+
+      <h1 class="callback-title">Connecting with Google</h1>
+      <p class="callback-subtitle">Setting up your Wassal account...</p>
+
+      <div class="callback-loading" id="callback-loading">
+        <div class="callback-spinner"></div>
+        <span class="callback-status" id="callback-status">Signing you in...</span>
+      </div>
+
+      <div class="callback-success" id="callback-success">
+        <div class="success-check">&#10003;</div>
+        <span class="success-message">Connected successfully!</span>
+      </div>
+
+      <div class="callback-error" id="callback-error">
+        <div class="error-icon">&#10007;</div>
+        <span class="error-message">Something went wrong.</span>
+        <div class="error-actions">
+          <a href="../login.html" class="btn-secondary" style="min-height:48px;font-size:14px">Back to Login</a>
+          <button class="btn-primary" style="min-height:48px;font-size:14px" onclick="window.location.reload()">Try Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="callback.js"></script>
+</body>
+</html>
