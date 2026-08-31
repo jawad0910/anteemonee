@@ -802,7 +802,6 @@
       await loadAllColleges();
       document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
     }
-    }
 
     function toggleSubjectChip(el) {
       el.classList.toggle('selected');
