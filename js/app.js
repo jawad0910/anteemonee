@@ -870,24 +870,27 @@ async function loadOnboardingData() {
     }
     const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id);
     const acad = acads?.length ? acads[0] : null;
-  if (acad) {
-    onboarding.data.education_system_id = acad.education_system_id || null;
-    onboarding.data.board_id = acad.board_id || null;
-    onboarding.data.class_level_id = acad.class_level_id || null;
-    onboarding.data.group_id = acad.group_id || null;
-    onboarding.data.college_id = acad.college_id || null;
-    onboarding.data.academic_session_id = acad.academic_session_id || null;
-    onboarding.data.exam_year = acad.exam_year || new Date().getFullYear().toString();
-    if (acad.id) {
-      const { data: subjects } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
-      onboarding.data.selected_subjects = subjects?.map(s => s.subject_id) || [];
+    if (acad) {
+      onboarding.data.education_system_id = acad.education_system_id || null;
+      onboarding.data.board_id = acad.board_id || null;
+      onboarding.data.class_level_id = acad.class_level_id || null;
+      onboarding.data.group_id = acad.group_id || null;
+      onboarding.data.college_id = acad.college_id || null;
+      onboarding.data.academic_session_id = acad.academic_session_id || null;
+      onboarding.data.exam_year = acad.exam_year || new Date().getFullYear().toString();
+      if (acad.id) {
+        const { data: subjects } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
+        onboarding.data.selected_subjects = subjects?.map(s => s.subject_id) || [];
+      }
     }
-  }
-  const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', currentUser.id);
-  if (goals?.length) {
-    onboarding.data.selected_goals = goals.map(g => g.goal_id);
-    const primary = goals.find(g => g.is_primary);
-    onboarding.data.primary_goal_id = primary?.goal_id || null;
+    const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', currentUser.id);
+    if (goals?.length) {
+      onboarding.data.selected_goals = goals.map(g => g.goal_id);
+      const primary = goals.find(g => g.is_primary);
+      onboarding.data.primary_goal_id = primary?.goal_id || null;
+    }
+  } catch (e) {
+    console.error('loadOnboardingData error:', e);
   }
 }
 
