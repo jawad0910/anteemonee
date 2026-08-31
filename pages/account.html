@@ -469,9 +469,9 @@
       try {
         const [sysRes, provRes, sessRes, goalsCatRes] = await Promise.all([
           db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
-          db.from('provinces').select('*').eq('is_active', true).order('name'),
-          db.from('academic_sessions').select('*').eq('is_active', true).order('sort_order'),
-          db.from('goal_categories').select('*').eq('is_active', true).order('sort_order')
+          db.from('provinces').select('*').order('name'),
+          db.from('academic_sessions').select('*').order('start_year'),
+          db.from('goal_categories').select('*').order('sort_order')
         ]);
         acctData.ref.education_systems = sysRes.data || [];
         acctData.ref.provinces = provRes.data || [];
@@ -479,7 +479,7 @@
         const cats = goalsCatRes.data || [];
         acctData.ref.goal_categories = cats;
 
-        const goalsResults = await Promise.all(cats.map(c => db.from('goals').select('*').eq('goal_category_id', c.id)));
+        const goalsResults = await Promise.all(cats.map(c => db.from('goals').select('*').eq('category_id', c.id).order('sort_order')));
         acctData.ref.goals_list = cats.flatMap((c, i) => (goalsResults[i].data || []).map(g => ({ ...g, category_name: c.name })));
       } catch (e) {
         console.error('loadAllRefData error:', e);
@@ -492,27 +492,33 @@
     }
 
     async function loadClassLevels(systemId) {
-      const { data } = await db.from('education_system_class_levels').select('class_level_id, class_levels(*)').eq('education_system_id', systemId);
-      acctData.ref.class_levels = (data || []).map(r => r.class_levels).filter(Boolean);
+      const { data } = await db.from('class_levels').select('*').eq('education_system_id', systemId).order('sort_order');
+      acctData.ref.class_levels = data || [];
     }
 
-    async function loadGroups(classLevelId) {
-      const { data } = await db.from('class_level_groups').select('group_id, groups(*)').eq('class_level_id', classLevelId);
-      acctData.ref.groups = (data || []).map(r => r.groups).filter(Boolean);
+    async function loadGroups(systemId) {
+      const { data } = await db.from('groups').select('*').eq('education_system_id', systemId).order('name');
+      acctData.ref.groups = data || [];
     }
 
-    async function loadSubjectsList(groupId) {
-      const { data } = await db.from('group_subjects').select('subject_id, subjects(*)').eq('group_id', groupId);
-      acctData.ref.subjects_list = (data || []).map(r => r.subjects).filter(Boolean);
+    async function loadSubjectsList(systemId, groupId) {
+      let query = db.from('subjects').select('*').eq('education_system_id', systemId);
+      if (groupId) {
+        query = query.or('group_id.is.null,group_id.eq.' + groupId);
+      } else {
+        query = query.is('group_id', null);
+      }
+      const { data } = await query.order('is_compulsory', { ascending: false }).order('name');
+      acctData.ref.subjects_list = data || [];
     }
 
-    async function loadColleges(boardId) {
-      const { data } = await db.from('colleges').select('*').eq('board_id', boardId).eq('is_active', true).order('name');
+    async function loadAllColleges() {
+      const { data } = await db.from('colleges').select('id,name,city_id').order('name').limit(500);
       acctData.ref.colleges = data || [];
     }
 
     async function loadCities(provinceId) {
-      const { data } = await db.from('cities').select('*').eq('province_id', provinceId).eq('is_active', true).order('name');
+      const { data } = await db.from('cities').select('*').eq('province_id', provinceId).order('name');
       acctData.ref.cities = data || [];
     }
 
@@ -548,7 +554,7 @@
       const user = currentUser;
       const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
       const email = user?.email || '—';
-      const imgUrl = p?.avatar_url || p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+      const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
       const goalsNames = acctData.goals.map(g => { const gl = acctData.ref.goals_list.find(x => x.id == g.goal_id); return gl ? (gl.label || gl.title || gl.name) : null; }).filter(Boolean);
       const primaryGoal = acctData.goals.find(g => g.is_primary);
@@ -560,15 +566,15 @@
       const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       const sysOptions = r.education_systems.map(s => `<option value="${s.id}" ${a?.education_system_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
       const boardOptions = r.boards.map(b => `<option value="${b.id}" ${a?.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-      const classOptions = r.class_levels.map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const classOptions = r.class_levels.map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
       const groupOptions = r.groups.map(g => `<option value="${g.id}" ${a?.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
       const collegeOptions = r.colleges.map(c => `<option value="${c.id}" ${a?.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      const sessionOptions = r.academic_sessions.map(s => `<option value="${s.id}" ${a?.academic_session_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+      const sessionOptions = r.academic_sessions.map(s => `<option value="${s.id}" ${a?.academic_session_id == s.id ? 'selected' : ''}>${s.label}</option>`).join('');
 
       const subjectChips = r.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
 
       const goalsByCategory = {};
-      r.goal_categories.forEach(cat => { goalsByCategory[cat.id] = r.goals_list.filter(g => g.goal_category_id === cat.id); });
+      r.goal_categories.forEach(cat => { goalsByCategory[cat.id] = r.goals_list.filter(g => g.category_id === cat.id); });
       const goalChipsHtml = r.goal_categories.map(cat => {
         const goals = goalsByCategory[cat.id] || [];
         if (!goals.length) return '';
@@ -639,11 +645,11 @@
           <div class="field-rows" id="academic-display">
             <div class="field-row"><span class="field-label">Education System</span><span class="field-value ${a?.education_system_id ? '' : 'empty'}">${a?.education_system_id ? resolveName(r.education_systems, a.education_system_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">College</span><span class="field-value ${a?.college_id ? '' : 'empty'}">${a?.college_id ? resolveName(r.colleges, a.college_id, 'name') : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'name') : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'label') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Exam Year</span><span class="field-value ${a?.exam_year ? '' : 'empty'}">${a?.exam_year || 'Not set'}</span></div>
           </div>
           <div class="field-row-edit" id="academic-edit">
@@ -750,35 +756,33 @@
       if (sid) {
         await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
         document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
         document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>';
         document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a class first</span>';
       }
     }
 
     async function onClassChange() {
-      const cid = document.getElementById('edit-class').value;
-      if (cid) {
-        await loadGroups(cid);
+      const sid = document.getElementById('edit-edu-system').value;
+      if (sid) {
+        await loadGroups(sid);
         document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
         document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>';
       }
     }
 
     async function onGroupChange() {
+      const sid = document.getElementById('edit-edu-system').value;
       const gid = document.getElementById('edit-group').value;
-      if (gid) {
-        await loadSubjectsList(gid);
+      if (gid && sid) {
+        await loadSubjectsList(sid, gid);
         document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
       }
     }
 
     async function onBoardChange() {
-      const bid = document.getElementById('edit-board').value;
-      if (bid) {
-        await loadColleges(bid);
-        document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-      }
+      await loadAllColleges();
+      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     }
 
     async function preloadAcademicDependent() {
@@ -787,20 +791,17 @@
       if (a.education_system_id) {
         await Promise.all([loadBoards(a.education_system_id), loadClassLevels(a.education_system_id)]);
         document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${a.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      }
-      if (a.class_level_id) {
-        await loadGroups(a.class_level_id);
+        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+        await loadGroups(a.education_system_id);
         document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
       }
-      if (a.group_id) {
-        await loadSubjectsList(a.group_id);
+      if (a.group_id && a.education_system_id) {
+        await loadSubjectsList(a.education_system_id, a.group_id);
         document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
       }
-      if (a.board_id) {
-        await loadColleges(a.board_id);
-        document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      }
+      await loadAllColleges();
+      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+    }
     }
 
     function toggleSubjectChip(el) {
@@ -896,7 +897,7 @@
         acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session, exam_year: examYear };
 
         if (acctData.ref.subjects_list.length === 0 && grp) {
-          await loadSubjectsList(grp);
+          await loadSubjectsList(eduSystem, grp);
         }
 
         renderCards();
@@ -950,11 +951,11 @@
       if (a?.education_system_id) {
         tasks.push(loadBoards(a.education_system_id));
         tasks.push(loadClassLevels(a.education_system_id));
+        tasks.push(loadGroups(a.education_system_id));
+        tasks.push(loadSubjectsList(a.education_system_id, a.group_id));
       }
-      if (a?.board_id) tasks.push(loadColleges(a.board_id));
-      if (a?.class_level_id) tasks.push(loadGroups(a.class_level_id));
-      if (a?.group_id) tasks.push(loadSubjectsList(a.group_id));
       if (p?.province_id) tasks.push(loadCities(p.province_id));
+      tasks.push(loadAllColleges());
       await Promise.all(tasks);
     }
 
