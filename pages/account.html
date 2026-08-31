@@ -550,9 +550,9 @@
       const email = user?.email || '—';
       const imgUrl = p?.avatar_url || p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
-      const goalsNames = acctData.goals.map(g => { const gl = acctData.ref.goals_list.find(x => x.id == g.goal_id); return gl ? (gl.title || gl.name) : null; }).filter(Boolean);
+      const goalsNames = acctData.goals.map(g => { const gl = acctData.ref.goals_list.find(x => x.id == g.goal_id); return gl ? (gl.label || gl.title || gl.name) : null; }).filter(Boolean);
       const primaryGoal = acctData.goals.find(g => g.is_primary);
-      const primaryGoalName = primaryGoal ? (acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.title || acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.name || '—') : '—';
+      const primaryGoalName = primaryGoal ? (acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.label || acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.title || acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.name || '—') : '—';
 
       const subjectNames = acctData.subjects.map(sid => { const s = r.subjects_list.find(x => x.id == sid); return s ? s.name : null; }).filter(Boolean);
 
@@ -572,7 +572,7 @@
       const goalChipsHtml = r.goal_categories.map(cat => {
         const goals = goalsByCategory[cat.id] || [];
         if (!goals.length) return '';
-        const chips = goals.map(g => `<div class="multi-select-chip ${acctData.goals.some(x => x.goal_id == g.id) ? 'selected' : ''}" data-id="${g.id}" onclick="toggleGoalChip(this)">${g.title || g.name}</div>`).join('');
+        const chips = goals.map(g => `<div class="multi-select-chip ${acctData.goals.some(x => x.goal_id == g.id) ? 'selected' : ''}" data-id="${g.id}" onclick="toggleGoalChip(this)">${g.label || g.title || g.name}</div>`).join('');
         return `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">${cat.name}</div><div class="multi-select-grid">${chips}</div></div>`;
       }).join('');
 
@@ -822,7 +822,7 @@
         const currentPrimary = acctData.goals.find(g => g.is_primary)?.goal_id || '';
         sel.innerHTML = '<option value="">Select primary goal</option>' + ids.map(id => {
           const g = acctData.ref.goals_list.find(x => x.id == id);
-          return g ? `<option value="${id}" ${currentPrimary == id ? 'selected' : ''}>${g.title || g.name}</option>` : '';
+          return g ? `<option value="${id}" ${currentPrimary == id ? 'selected' : ''}>${g.label || g.title || g.name}</option>` : '';
         }).join('');
       } else {
         wrap.style.display = 'none';
@@ -943,6 +943,21 @@
       if (e.target.id === 'edit-board') onBoardChange();
     });
 
+    async function loadDependentRefData() {
+      const a = acctData.acad;
+      const p = acctData.profile;
+      const tasks = [];
+      if (a?.education_system_id) {
+        tasks.push(loadBoards(a.education_system_id));
+        tasks.push(loadClassLevels(a.education_system_id));
+      }
+      if (a?.board_id) tasks.push(loadColleges(a.board_id));
+      if (a?.class_level_id) tasks.push(loadGroups(a.class_level_id));
+      if (a?.group_id) tasks.push(loadSubjectsList(a.group_id));
+      if (p?.province_id) tasks.push(loadCities(p.province_id));
+      await Promise.all(tasks);
+    }
+
     (async function() {
       try {
         await checkAuth();
@@ -963,6 +978,7 @@
 
         await loadAllRefData();
         await loadAcademicData(currentUser.id);
+        await loadDependentRefData();
         renderCards();
       } catch (e) {
         console.error('Account init error:', e);
