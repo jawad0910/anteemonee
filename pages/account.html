@@ -945,20 +945,14 @@
 
     (async function() {
       try {
-        console.log('[ACC] 1. checkAuth...');
         await checkAuth();
-        console.log('[ACC] 2. currentUser:', currentUser?.id);
         if (!currentUser) {
           document.getElementById('not-logged-in').style.display = 'block';
           return;
         }
-        console.log('[ACC] 3. ensureProfile...');
         await ensureProfile();
-        console.log('[ACC] 4. currentProfile:', currentProfile);
 
-        console.log('[ACC] 5. getOnboardingStep...');
         const step = await getOnboardingStep();
-        console.log('[ACC] 6. step:', step);
         if (step >= 0) {
           window.location.href = ONBOARDING_URL;
           return;
@@ -966,18 +960,15 @@
 
         document.getElementById('account-view').style.display = 'block';
         acctData.profile = currentProfile;
-        console.log('[ACC] 7. loading ref data...');
+
         await loadAllRefData();
-        console.log('[ACC] 8. loading academic data...');
         await loadAcademicData(currentUser.id);
-        console.log('[ACC] 9. rendering cards...');
         renderCards();
-        console.log('[ACC] 10. done');
       } catch (e) {
-        console.error('[ACC] FATAL:', e);
+        console.error('Account init error:', e);
         document.getElementById('account-view').style.display = 'block';
         acctData.profile = currentProfile;
-        try { renderCards(); } catch (e2) { console.error('[ACC] renderCards also failed:', e2); }
+        try { renderCards(); } catch (e2) { console.error('renderCards error:', e2); }
       }
     })();
   </script>
