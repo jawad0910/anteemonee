@@ -79,9 +79,9 @@ async function ensureProfile() {
   await loadProfile();
   if (currentProfile) {
     const avatarUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
-    if (avatarUrl && currentProfile.avatar_url !== avatarUrl) {
-      await db.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
-      currentProfile.avatar_url = avatarUrl;
+    if (avatarUrl && currentProfile.profile_image_url !== avatarUrl) {
+      await db.from('profiles').update({ profile_image_url: avatarUrl }).eq('id', currentUser.id);
+      currentProfile.profile_image_url = avatarUrl;
     }
     return currentProfile;
   }
@@ -92,7 +92,7 @@ async function ensureProfile() {
     username: username.toLowerCase(),
     email: currentUser.email,
     full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || null,
-    avatar_url: avatarUrl,
+    profile_image_url: avatarUrl,
     personal_info_completed: false,
     academic_profile_completed: false,
     goals_completed: false
@@ -128,7 +128,7 @@ function updateAuthUI() {
 
 function getDisplayUser() {
   const username = currentProfile?.username || currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'User';
-  const imgUrl = currentProfile?.avatar_url || currentProfile?.profile_image_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || '';
+  const imgUrl = currentProfile?.profile_image_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || '';
   return { username, imgUrl };
 }
 
@@ -798,9 +798,9 @@ function setupOnboarding() {
 async function loadOnboardingRefData() {
   const [systemsRes, provincesRes, sessionsRes, goalsCatRes] = await Promise.all([
     db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
-    db.from('provinces').select('*').eq('is_active', true).order('name'),
-    db.from('academic_sessions').select('*').eq('is_active', true).order('sort_order'),
-    db.from('goal_categories').select('*, goals(*)').eq('is_active', true).order('sort_order')
+    db.from('provinces').select('*').order('name'),
+    db.from('academic_sessions').select('*').order('start_year'),
+    db.from('goal_categories').select('*').order('sort_order')
   ]);
 
   onboarding.ref.education_systems = systemsRes.data || [];
@@ -809,7 +809,9 @@ async function loadOnboardingRefData() {
 
   const cats = goalsCatRes.data || [];
   onboarding.ref.goal_categories = cats;
-  onboarding.ref.goals = cats.flatMap(c => (c.goals || []).map(g => ({ ...g, category_name: c.name })));
+
+  const goalsResults = await Promise.all(cats.map(c => db.from('goals').select('*').eq('category_id', c.id).order('sort_order')));
+  onboarding.ref.goals = cats.flatMap((c, i) => (goalsResults[i].data || []).map(g => ({ ...g, category_name: c.name })));
 }
 
 async function loadBoards(systemId) {
@@ -820,32 +822,39 @@ async function loadBoards(systemId) {
 }
 
 async function loadClassLevels(systemId) {
-  const { data } = await db.from('education_system_class_levels')
-    .select('class_level_id, class_levels(*)')
-    .eq('education_system_id', systemId);
-  onboarding.ref.class_levels = (data || []).map(r => r.class_levels).filter(Boolean);
-}
-
-async function loadGroups(classLevelId) {
-  const { data } = await db.from('class_level_groups')
-    .select('group_id, groups(*)')
-    .eq('class_level_id', classLevelId);
-  onboarding.ref.groups = (data || []).map(r => r.groups).filter(Boolean);
-}
-
-async function loadSubjects(groupId) {
-  const { data } = await db.from('group_subjects')
-    .select('subject_id, subjects(*)')
-    .eq('group_id', groupId);
-  onboarding.ref.subjects = (data || []).map(r => r.subjects).filter(Boolean);
-}
-
-async function loadColleges(boardId) {
-  const { data } = await db.from('colleges')
+  const { data } = await db.from('class_levels')
     .select('*')
-    .eq('board_id', boardId)
-    .eq('is_active', true)
+    .eq('education_system_id', systemId)
+    .order('sort_order');
+  onboarding.ref.class_levels = data || [];
+}
+
+async function loadGroups(systemId) {
+  const { data } = await db.from('groups')
+    .select('*')
+    .eq('education_system_id', systemId)
     .order('name');
+  onboarding.ref.groups = data || [];
+}
+
+async function loadSubjects(systemId, groupId) {
+  let query = db.from('subjects')
+    .select('*')
+    .eq('education_system_id', systemId);
+  if (groupId) {
+    query = query.or('group_id.is.null,group_id.eq.' + groupId);
+  } else {
+    query = query.is('group_id', null);
+  }
+  const { data } = await query.order('is_compulsory', { ascending: false }).order('name');
+  onboarding.ref.subjects = data || [];
+}
+
+async function loadAllColleges() {
+  const { data } = await db.from('colleges')
+    .select('id,name,city_id')
+    .order('name')
+    .limit(500);
   onboarding.ref.colleges = data || [];
 }
 
@@ -853,7 +862,6 @@ async function loadCities(provinceId) {
   const { data } = await db.from('cities')
     .select('*')
     .eq('province_id', provinceId)
-    .eq('is_active', true)
     .order('name');
   onboarding.ref.cities = data || [];
 }
@@ -1004,13 +1012,13 @@ async function loadStepData(step) {
       if (d.education_system_id) await loadClassLevels(d.education_system_id);
       break;
     case 6:
-      if (d.class_level_id) await loadGroups(d.class_level_id);
+      if (d.education_system_id) await loadGroups(d.education_system_id);
       break;
     case 7:
-      if (d.group_id) await loadSubjects(d.group_id);
+      if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
       break;
     case 8:
-      if (d.board_id) await loadColleges(d.board_id);
+      await loadAllColleges();
       break;
     case 9:
       break;
@@ -1178,8 +1186,8 @@ function renderOnboardingStep() {
         <div class="onboarding-options">
           ${r.class_levels.map(cl => `
             <button class="onboarding-option ${d.class_level_id === cl.id ? 'selected' : ''}" data-id="${cl.id}">
-              <span class="option-name">${cl.name}</span>
-              ${cl.sort_order ? `<span class="option-desc">Year ${cl.sort_order}</span>` : ''}
+              <span class="option-name">${cl.label}</span>
+              ${cl.value ? `<span class="option-desc">Year ${cl.value}</span>` : ''}
             </button>
           `).join('')}
         </div>
@@ -1215,7 +1223,7 @@ function renderOnboardingStep() {
           d.selected_subjects = [];
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
-          await loadSubjects(d.group_id);
+          await loadSubjects(d.education_system_id, d.group_id);
         });
       });
       break;
@@ -1269,8 +1277,8 @@ function renderOnboardingStep() {
         <div class="onboarding-options">
           ${r.academic_sessions.map(s => `
             <button class="onboarding-option ${d.academic_session_id === s.id ? 'selected' : ''}" data-id="${s.id}">
-              <span class="option-name">${s.name}</span>
-              ${s.start_date ? `<span class="option-desc">${s.start_date} — ${s.end_date || 'Ongoing'}</span>` : ''}
+              <span class="option-name">${s.label}</span>
+              ${s.start_year ? `<span class="option-desc">${s.start_year} — ${s.end_year || 'Ongoing'}</span>` : ''}
             </button>
           `).join('')}
         </div>
@@ -1299,11 +1307,11 @@ function renderOnboardingStep() {
           <div class="review-row"><span class="review-label">City</span><span class="review-value">${r.cities.find(c => c.id == d.city_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.name || '—'}</span></div>
+          <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || '—'}</span></div>
           <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => r.subjects.find(s => s.id == id)?.name).filter(Boolean).join(', ') || '—'}</span></div>
           <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.name || '—'}</span></div>
+          <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.label || '—'}</span></div>
           <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || '—'}</span></div>
         </div>
       `;
@@ -1312,7 +1320,7 @@ function renderOnboardingStep() {
     case 10:
       const goalsByCategory = {};
       r.goal_categories.forEach(cat => {
-        goalsByCategory[cat.id] = r.goals.filter(g => g.goal_category_id === cat.id);
+        goalsByCategory[cat.id] = r.goals.filter(g => g.category_id === cat.id);
       });
 
       container.innerHTML = `
@@ -1327,7 +1335,7 @@ function renderOnboardingStep() {
               <div class="onboarding-options onboarding-options-multi">
                 ${goals.map(g => `
                   <button class="onboarding-option ${d.selected_goals.includes(g.id) ? 'selected' : ''}" data-id="${g.id}">
-                    <span class="option-name">${g.title || g.name}</span>
+                    <span class="option-name">${g.label}</span>
                     ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
                   </button>
                 `).join('')}
@@ -1360,7 +1368,7 @@ function renderOnboardingStep() {
             if (!goal) return '';
             return `
               <button class="onboarding-option ${d.primary_goal_id === id ? 'selected' : ''}" data-id="${id}">
-                <span class="option-name">${goal.title || goal.name}</span>
+                <span class="option-name">${goal.label}</span>
                 ${goal.description ? `<span class="option-desc">${goal.description}</span>` : ''}
               </button>
             `;
