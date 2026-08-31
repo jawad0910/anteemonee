@@ -466,18 +466,24 @@
     }
 
     async function loadAllRefData() {
-      const [sysRes, provRes, sessRes, goalsCatRes] = await Promise.all([
-        db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
-        db.from('provinces').select('*').eq('is_active', true).order('name'),
-        db.from('academic_sessions').select('*').eq('is_active', true).order('sort_order'),
-        db.from('goal_categories').select('*, goals(*)').eq('is_active', true).order('sort_order')
-      ]);
-      acctData.ref.education_systems = sysRes.data || [];
-      acctData.ref.provinces = provRes.data || [];
-      acctData.ref.academic_sessions = sessRes.data || [];
-      const cats = goalsCatRes.data || [];
-      acctData.ref.goal_categories = cats;
-      acctData.ref.goals_list = cats.flatMap(c => (c.goals || []).map(g => ({ ...g, category_name: c.name })));
+      try {
+        const [sysRes, provRes, sessRes, goalsCatRes] = await Promise.all([
+          db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
+          db.from('provinces').select('*').eq('is_active', true).order('name'),
+          db.from('academic_sessions').select('*').eq('is_active', true).order('sort_order'),
+          db.from('goal_categories').select('*').eq('is_active', true).order('sort_order')
+        ]);
+        acctData.ref.education_systems = sysRes.data || [];
+        acctData.ref.provinces = provRes.data || [];
+        acctData.ref.academic_sessions = sessRes.data || [];
+        const cats = goalsCatRes.data || [];
+        acctData.ref.goal_categories = cats;
+
+        const goalsResults = await Promise.all(cats.map(c => db.from('goals').select('*').eq('goal_category_id', c.id)));
+        acctData.ref.goals_list = cats.flatMap((c, i) => (goalsResults[i].data || []).map(g => ({ ...g, category_name: c.name })));
+      } catch (e) {
+        console.error('loadAllRefData error:', e);
+      }
     }
 
     async function loadBoards(systemId) {
@@ -511,14 +517,22 @@
     }
 
     async function loadAcademicData(userId) {
-      const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', userId).single();
-      acctData.acad = acad;
-      if (acad?.id) {
-        const { data: subs } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
-        acctData.subjects = subs?.map(s => s.subject_id) || [];
+      try {
+        const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', userId);
+        const acad = acads?.length ? acads[0] : null;
+        acctData.acad = acad;
+        if (acad?.id) {
+          const { data: subs } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
+          acctData.subjects = subs?.map(s => s.subject_id) || [];
+        }
+        const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', userId);
+        acctData.goals = goals || [];
+      } catch (e) {
+        console.error('loadAcademicData error:', e);
+        acctData.acad = null;
+        acctData.subjects = [];
+        acctData.goals = [];
       }
-      const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', userId);
-      acctData.goals = goals || [];
     }
 
     function resolveName(list, id, key) {
@@ -928,24 +942,31 @@
     });
 
     (async function() {
-      await checkAuth();
-      if (!currentUser) {
-        document.getElementById('not-logged-in').style.display = 'block';
-        return;
+      try {
+        await checkAuth();
+        if (!currentUser) {
+          document.getElementById('not-logged-in').style.display = 'block';
+          return;
+        }
+        await ensureProfile();
+
+        const step = await getOnboardingStep();
+        if (step >= 0) {
+          window.location.href = ONBOARDING_URL;
+          return;
+        }
+
+        document.getElementById('account-view').style.display = 'block';
+        acctData.profile = currentProfile;
+
+        await Promise.all([loadAllRefData(), loadAcademicData(currentUser.id)]);
+        renderCards();
+      } catch (e) {
+        console.error('Account init error:', e);
+        document.getElementById('account-view').style.display = 'block';
+        acctData.profile = currentProfile;
+        renderCards();
       }
-      await ensureProfile();
-
-      const step = await getOnboardingStep();
-      if (step >= 0) {
-        window.location.href = ONBOARDING_URL;
-        return;
-      }
-
-      document.getElementById('account-view').style.display = 'block';
-      acctData.profile = currentProfile;
-
-      await Promise.all([loadAllRefData(), loadAcademicData(currentUser.id)]);
-      renderCards();
     })();
   </script>
 </body>
