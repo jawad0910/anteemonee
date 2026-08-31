@@ -165,7 +165,7 @@ async function handleUser(user) {
         username: username.toLowerCase(),
         email: user.email,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-        avatar_url: avatarUrl,
+        profile_image_url: avatarUrl,
         personal_info_completed: false,
         academic_profile_completed: false,
         goals_completed: false
@@ -179,7 +179,7 @@ async function handleUser(user) {
             username: fallbackUsername,
             email: user.email,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            avatar_url: avatarUrl,
+            profile_image_url: avatarUrl,
             personal_info_completed: false,
             academic_profile_completed: false,
             goals_completed: false
@@ -194,8 +194,8 @@ async function handleUser(user) {
       return;
     }
 
-    if (avatarUrl && profile.avatar_url !== avatarUrl) {
-      await db.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+    if (avatarUrl && profile.profile_image_url !== avatarUrl) {
+      await db.from('profiles').update({ profile_image_url: avatarUrl }).eq('id', user.id);
     }
 
     const step = await getOnboardingStep(user.id);
