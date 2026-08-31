@@ -66,7 +66,7 @@ async function loadProfile() {
   try {
     const { data } = await db
       .from('profiles')
-      .select('*')
+      .select('id, username, full_name, email, profile_image_url, bio, phone, date_of_birth, province_id, city_id, goals_completed, personal_info_completed, academic_profile_completed')
       .eq('id', currentUser.id);
     currentProfile = data?.length ? data[0] : null;
   } catch (e) {
@@ -76,7 +76,7 @@ async function loadProfile() {
 
 async function ensureProfile() {
   if (!currentUser) return null;
-  await loadProfile();
+  if (!currentProfile) await loadProfile();
   if (currentProfile) {
     const avatarUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
     if (avatarUrl && currentProfile.profile_image_url !== avatarUrl) {
@@ -722,8 +722,8 @@ async function signInWithSpotify() {
 async function getOnboardingStep() {
   if (!currentUser) return -1;
   try {
-    const { data: profiles } = await db.from('profiles').select('*').eq('id', currentUser.id);
-    const profile = profiles?.length ? profiles[0] : null;
+    if (!currentProfile) await loadProfile();
+    const profile = currentProfile;
     if (!profile) return 0;
     if (!profile.date_of_birth || !profile.province_id) return 0;
     if (!profile.city_id) return 1;
@@ -870,8 +870,8 @@ async function loadCities(provinceId) {
 async function loadOnboardingData() {
   if (!currentUser) return;
   try {
-    const { data: profiles } = await db.from('profiles').select('*').eq('id', currentUser.id);
-    const profile = profiles?.length ? profiles[0] : null;
+    if (!currentProfile) await loadProfile();
+    const profile = currentProfile;
     if (profile) {
       onboarding.data.dob = profile.date_of_birth || '';
       onboarding.data.province_id = profile.province_id || null;
