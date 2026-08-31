@@ -1108,7 +1108,7 @@ function renderOnboardingStep() {
         <p class="onboarding-subtitle">Tell us a bit about yourself.</p>
         <div class="form-group">
           <label for="onb-dob">Date of Birth</label>
-          <input type="date" id="onb-dob" class="form-input" value="${d.dob}" max="${new Date().toISOString().split('T')[0]}">
+          <input type="date" id="onb-dob" class="form-input" value="${d.dob}" max="${new Date().toISOString().split('T')[0]}" lang="en-GB">
         </div>
         <div class="form-group">
           <label for="onb-province">Province</label>
