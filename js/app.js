@@ -648,7 +648,7 @@ async function signInWithGoogle() {
   try {
     const { error } = await db.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: REDIRECT_URL }
+      options: { redirectTo: BASE + '/pages/auth/callback/google.html' }
     });
     if (error) throw error;
   } catch (err) {
@@ -660,7 +660,7 @@ async function signInWithSpotify() {
   try {
     const { error } = await db.auth.signInWithOAuth({
       provider: 'spotify',
-      options: { redirectTo: REDIRECT_URL }
+      options: { redirectTo: BASE + '/pages/auth/callback/spotify.html' }
     });
     if (error) throw error;
   } catch (err) {
