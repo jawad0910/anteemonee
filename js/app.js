@@ -127,15 +127,16 @@ function updateAuthUI() {
    ========================= */
 
 function getDisplayUser() {
+  const fullName = currentProfile?.full_name || currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || '';
   const username = currentProfile?.username || currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'User';
   const imgUrl = currentProfile?.profile_image_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || '';
-  return { username, imgUrl };
+  return { fullName, username, imgUrl };
 }
 
 function renderProfileAvatar() {
   const container = document.getElementById('profile-avatar-container');
   if (!container) return;
-  const { username, imgUrl } = getDisplayUser();
+  const { fullName, username, imgUrl } = getDisplayUser();
 
   container.innerHTML = `
     <button class="profile-btn" onclick="toggleProfileDropdown()" aria-label="Profile menu">
@@ -153,7 +154,7 @@ function renderProfileAvatar() {
           <div class="avatar-fallback dropdown-avatar-fallback" style="${imgUrl ? 'display:none' : ''}">${username.charAt(0).toUpperCase()}</div>
         </div>
         <div class="dropdown-info">
-          <span class="dropdown-name">${username}</span>
+          <span class="dropdown-name">${fullName || username}</span>
           <span class="dropdown-email">${currentUser?.email || ''}</span>
         </div>
       </div>
