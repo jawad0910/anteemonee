@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup — Wassal</title>
+  <meta name="theme-color" content="#07080C">
+  <link rel="icon" href="../assets/wassal.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .onboarding-page {
+      min-height: 100vh;
+      padding: 100px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .onboarding-progress {
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 8px;
+    }
+    .onboarding-progress-bar-bg {
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .onboarding-progress-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+      transition: width 0.4s ease;
+      width: 8.33%;
+    }
+    .onboarding-step-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 8px;
+      margin-bottom: 24px;
+    }
+    .onboarding-card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      padding: 40px 36px;
+      position: relative;
+      z-index: 1;
+    }
+    .onboarding-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    #onboarding-container {
+      min-height: 200px;
+    }
+    .onboarding-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .onboarding-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+    .onboarding-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .onboarding-option {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      border: 1.2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+    .onboarding-option:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: var(--elevated);
+    }
+    .onboarding-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .option-name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+    .option-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .onboarding-options-multi {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 768px) {
+      .onboarding-options-multi { grid-template-columns: 1fr; }
+      .onboarding-card { padding: 28px 22px; }
+    }
+    .onboarding-review {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .review-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .review-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .review-value {
+      font-size: 14px;
+      font-weight: 600;
+      text-align: right;
+      max-width: 60%;
+      word-break: break-word;
+    }
+    .onboarding-goal-category {
+      margin-bottom: 24px;
+    }
+    .goal-category-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .onboarding-error {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 102, 117, 0.08);
+      border: 1px solid rgba(255, 102, 117, 0.15);
+      color: var(--error);
+      font-size: 14px;
+      display: none;
+      margin-bottom: 16px;
+    }
+    .onboarding-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .onboarding-actions .btn-primary,
+    .onboarding-actions .btn-secondary {
+      flex: 1;
+    }
+    @media (max-width: 480px) {
+      .onboarding-page { padding: 80px 16px 60px; }
+      .onboarding-card { padding: 24px 18px; }
+      .onboarding-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
+        <span class="logo-text">Wassal</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="onboarding-page">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+
+    <div class="onboarding-progress">
+      <div class="onboarding-progress-bar-bg">
+        <div class="onboarding-progress-bar" id="onboarding-progress-bar"></div>
+      </div>
+      <div class="onboarding-step-label" id="onboarding-step-label">Step 1 of 12</div>
+    </div>
+
+    <div class="onboarding-card">
+      <div class="onboarding-error" id="onboarding-error"></div>
+      <div id="onboarding-container"></div>
+      <div class="onboarding-actions">
+        <button class="btn-secondary" id="onboarding-prev" style="display:none">Back</button>
+        <button class="btn-primary" id="onboarding-next">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!currentUser) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      await loadOnboardingRefData();
+      setupOnboarding();
+      setupOnboardingNav();
+    });
+  </script>
+</body>
+</html>
