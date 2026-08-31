@@ -67,9 +67,8 @@ async function loadProfile() {
     const { data } = await db
       .from('profiles')
       .select('*')
-      .eq('id', currentUser.id)
-      .single();
-    currentProfile = data;
+      .eq('id', currentUser.id);
+    currentProfile = data?.length ? data[0] : null;
   } catch (e) {
     console.error('Profile load failed:', e);
   }
@@ -97,8 +96,8 @@ async function ensureProfile() {
     personal_info_completed: false,
     academic_profile_completed: false,
     goals_completed: false
-  }).select().single();
-  if (!error) currentProfile = data;
+  }).select();
+  if (!error && data?.length) currentProfile = data[0];
   return currentProfile;
 }
 
@@ -721,29 +720,36 @@ async function signInWithSpotify() {
 
 async function getOnboardingStep() {
   if (!currentUser) return -1;
-  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-  if (!profile) return 0;
-  if (!profile.date_of_birth || !profile.province_id) return 0;
-  if (!profile.city_id) return 1;
-  const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id).single();
-  if (!acad || !acad.education_system_id) return 2;
-  if (!acad.board_id) return 3;
-  if (!acad.class_level_id) return 4;
-  if (!acad.group_id) return 5;
-  if (acad.id) {
-    const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
-    if (!count) return 6;
-  } else {
-    return 6;
+  try {
+    const { data: profiles } = await db.from('profiles').select('*').eq('id', currentUser.id);
+    const profile = profiles?.length ? profiles[0] : null;
+    if (!profile) return 0;
+    if (!profile.date_of_birth || !profile.province_id) return 0;
+    if (!profile.city_id) return 1;
+    const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id);
+    const acad = acads?.length ? acads[0] : null;
+    if (!acad || !acad.education_system_id) return 2;
+    if (!acad.board_id) return 3;
+    if (!acad.class_level_id) return 4;
+    if (!acad.group_id) return 5;
+    if (acad.id) {
+      const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
+      if (!count) return 6;
+    } else {
+      return 6;
+    }
+    if (!acad.college_id) return 7;
+    if (!acad.academic_session_id) return 8;
+    if (!profile.goals_completed) {
+      const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+      if (!count) return 10;
+      return 11;
+    }
+    return -1;
+  } catch (e) {
+    console.error('getOnboardingStep error:', e);
+    return 0;
   }
-  if (!acad.college_id) return 7;
-  if (!acad.academic_session_id) return 8;
-  if (!profile.goals_completed) {
-    const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
-    if (!count) return 10;
-    return 11;
-  }
-  return -1;
 }
 
 /* =========================
@@ -854,13 +860,16 @@ async function loadCities(provinceId) {
 
 async function loadOnboardingData() {
   if (!currentUser) return;
-  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-  if (profile) {
-    onboarding.data.dob = profile.date_of_birth || '';
-    onboarding.data.province_id = profile.province_id || null;
-    onboarding.data.city_id = profile.city_id || null;
-  }
-  const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id).single();
+  try {
+    const { data: profiles } = await db.from('profiles').select('*').eq('id', currentUser.id);
+    const profile = profiles?.length ? profiles[0] : null;
+    if (profile) {
+      onboarding.data.dob = profile.date_of_birth || '';
+      onboarding.data.province_id = profile.province_id || null;
+      onboarding.data.city_id = profile.city_id || null;
+    }
+    const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id);
+    const acad = acads?.length ? acads[0] : null;
   if (acad) {
     onboarding.data.education_system_id = acad.education_system_id || null;
     onboarding.data.board_id = acad.board_id || null;
@@ -904,7 +913,8 @@ async function saveStepData(step) {
       await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, group_id: d.group_id }, { onConflict: 'user_id' });
       break;
     case 6: {
-      const { data: acad } = await db.from('student_academic_profiles').select('id').eq('user_id', currentUser.id).single();
+      const { data: acads } = await db.from('student_academic_profiles').select('id').eq('user_id', currentUser.id);
+      const acad = acads?.length ? acads[0] : null;
       if (acad) {
         await db.from('student_subjects').delete().eq('academic_profile_id', acad.id);
         if (d.selected_subjects.length) {
@@ -1388,7 +1398,7 @@ async function saveOnboarding() {
     }).eq('id', currentUser.id);
     if (profileErr) throw profileErr;
 
-    const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
+    const { data: acadProfileRes, error: acadErr } = await db.from('student_academic_profiles').upsert({
       user_id: currentUser.id,
       education_system_id: d.education_system_id,
       board_id: d.board_id,
@@ -1397,8 +1407,10 @@ async function saveOnboarding() {
       group_id: d.group_id,
       college_id: d.college_id,
       academic_session_id: d.academic_session_id
-    }, { onConflict: 'user_id' }).select('id').single();
+    }, { onConflict: 'user_id' }).select('id');
     if (acadErr) throw acadErr;
+
+    const acadProfile = acadProfileRes?.length ? acadProfileRes[0] : null;
 
     if (acadProfile?.id && d.selected_subjects.length) {
       await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
