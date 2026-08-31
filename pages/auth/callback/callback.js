@@ -57,29 +57,36 @@ function showSuccess(message) {
 }
 
 async function getOnboardingStep(userId) {
-  const { data: profile } = await db.from('profiles').select('*').eq('id', userId).single();
-  if (!profile) return 0;
-  if (!profile.date_of_birth || !profile.province_id) return 0;
-  if (!profile.city_id) return 1;
-  const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', userId).single();
-  if (!acad || !acad.education_system_id) return 2;
-  if (!acad.board_id) return 3;
-  if (!acad.class_level_id) return 4;
-  if (!acad.group_id) return 5;
-  if (acad.id) {
-    const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
-    if (!count) return 6;
-  } else {
-    return 6;
+  try {
+    const { data: profiles } = await db.from('profiles').select('*').eq('id', userId);
+    const profile = profiles?.length ? profiles[0] : null;
+    if (!profile) return 0;
+    if (!profile.date_of_birth || !profile.province_id) return 0;
+    if (!profile.city_id) return 1;
+    const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', userId);
+    const acad = acads?.length ? acads[0] : null;
+    if (!acad || !acad.education_system_id) return 2;
+    if (!acad.board_id) return 3;
+    if (!acad.class_level_id) return 4;
+    if (!acad.group_id) return 5;
+    if (acad.id) {
+      const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
+      if (!count) return 6;
+    } else {
+      return 6;
+    }
+    if (!acad.college_id) return 7;
+    if (!acad.academic_session_id) return 8;
+    if (!profile.goals_completed) {
+      const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+      if (!count) return 10;
+      return 11;
+    }
+    return -1;
+  } catch (e) {
+    console.error('getOnboardingStep error:', e);
+    return 0;
   }
-  if (!acad.college_id) return 7;
-  if (!acad.academic_session_id) return 8;
-  if (!profile.goals_completed) {
-    const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', userId);
-    if (!count) return 10;
-    return 11;
-  }
-  return -1;
 }
 
 async function handleCallback() {
@@ -141,7 +148,8 @@ async function handleUser(user) {
   setStatus('Setting up your account...');
 
   try {
-    const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+    const { data: profiles } = await db.from('profiles').select('*').eq('id', user.id);
+    const profile = profiles?.length ? profiles[0] : null;
 
     const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
 
