@@ -26,6 +26,7 @@ function getBaseUrl() {
 }
 const BASE = getBaseUrl();
 const REDIRECT_URL = BASE + '/pages/account.html';
+const ONBOARDING_URL = BASE + '/pages/onboarding.html';
 const RECOVERY_URL = BASE + '/pages/reset-password.html';
 
 /* =========================
@@ -74,6 +75,33 @@ async function loadProfile() {
   }
 }
 
+async function ensureProfile() {
+  if (!currentUser) return null;
+  await loadProfile();
+  if (currentProfile) {
+    const avatarUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
+    if (avatarUrl && currentProfile.avatar_url !== avatarUrl) {
+      await db.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+      currentProfile.avatar_url = avatarUrl;
+    }
+    return currentProfile;
+  }
+  const username = currentUser.user_metadata?.username || currentUser.user_metadata?.preferred_username || currentUser.email?.split('@')[0] || 'user';
+  const avatarUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
+  const { data, error } = await db.from('profiles').insert({
+    id: currentUser.id,
+    username: username.toLowerCase(),
+    email: currentUser.email,
+    full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || null,
+    avatar_url: avatarUrl,
+    personal_info_completed: false,
+    academic_profile_completed: false,
+    goals_completed: false
+  }).select().single();
+  if (!error) currentProfile = data;
+  return currentProfile;
+}
+
 function updateAuthUI() {
   const loggedOut = document.getElementById('auth-logged-out');
   const loggedIn = document.getElementById('auth-logged-in');
@@ -101,7 +129,7 @@ function updateAuthUI() {
 
 function getDisplayUser() {
   const username = currentProfile?.username || currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'User';
-  const imgUrl = currentProfile?.avatar_url || currentProfile?.profile_image_url || '';
+  const imgUrl = currentProfile?.avatar_url || currentProfile?.profile_image_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || '';
   return { username, imgUrl };
 }
 
@@ -131,11 +159,11 @@ function renderProfileAvatar() {
         </div>
       </div>
       <div class="dropdown-divider"></div>
-      <a href="/pages/account.html" class="dropdown-item">
+      <a href="${BASE}/pages/account.html" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Account
       </a>
-      <a href="/pages/account.html" class="dropdown-item">
+      <a href="${BASE}/pages/account.html" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Settings
       </a>
@@ -194,7 +222,7 @@ async function handleLogout() {
     await db.auth.signOut();
     currentUser = null;
     currentProfile = null;
-    window.location.href = '../index.html';
+    window.location.href = BASE + '/index.html';
   } catch (e) {
     console.error('Logout failed:', e);
   }
@@ -272,8 +300,14 @@ function scrollToFeatures() {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
-function getStarted() {
-  window.location.href = currentUser ? BASE + '/pages/account.html' : BASE + '/pages/signup.html';
+async function getStarted() {
+  if (currentUser) {
+    await ensureProfile();
+    const step = await getOnboardingStep();
+    window.location.href = step >= 0 ? ONBOARDING_URL : REDIRECT_URL;
+  } else {
+    window.location.href = BASE + '/pages/signup.html';
+  }
 }
 
 /* =========================
@@ -330,7 +364,13 @@ async function handleLogin(e) {
     }
 
     await checkAuth();
-    window.location.href = REDIRECT_URL;
+    await ensureProfile();
+    const step = await getOnboardingStep();
+    if (step >= 0) {
+      window.location.href = ONBOARDING_URL;
+    } else {
+      window.location.href = REDIRECT_URL;
+    }
   } catch (err) {
     showMessage(errorEl, err.message || 'Login failed. Please try again.');
   } finally {
@@ -390,6 +430,13 @@ async function handleSignup(e) {
 
     if (data?.user?.identities?.length === 0) {
       throw new Error('An account with this email already exists.');
+    }
+
+    if (data?.session) {
+      currentUser = data.user;
+      await ensureProfile();
+      window.location.href = ONBOARDING_URL;
+      return;
     }
 
     showMessage(successEl, 'Account created! Check your email for a verification link.');
@@ -669,6 +716,37 @@ async function signInWithSpotify() {
 }
 
 /* =========================
+   ONBOARDING STEP DETECTION
+   ========================= */
+
+async function getOnboardingStep() {
+  if (!currentUser) return -1;
+  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (!profile) return 0;
+  if (!profile.date_of_birth || !profile.province_id) return 0;
+  if (!profile.city_id) return 1;
+  const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id).single();
+  if (!acad || !acad.education_system_id) return 2;
+  if (!acad.board_id) return 3;
+  if (!acad.class_level_id) return 4;
+  if (!acad.group_id) return 5;
+  if (acad.id) {
+    const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
+    if (!count) return 6;
+  } else {
+    return 6;
+  }
+  if (!acad.college_id) return 7;
+  if (!acad.academic_session_id) return 8;
+  if (!profile.goals_completed) {
+    const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+    if (!count) return 10;
+    return 11;
+  }
+  return -1;
+}
+
+/* =========================
    ONBOARDING FLOW
    ========================= */
 
@@ -774,6 +852,82 @@ async function loadCities(provinceId) {
   onboarding.ref.cities = data || [];
 }
 
+async function loadOnboardingData() {
+  if (!currentUser) return;
+  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (profile) {
+    onboarding.data.dob = profile.date_of_birth || '';
+    onboarding.data.province_id = profile.province_id || null;
+    onboarding.data.city_id = profile.city_id || null;
+  }
+  const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id).single();
+  if (acad) {
+    onboarding.data.education_system_id = acad.education_system_id || null;
+    onboarding.data.board_id = acad.board_id || null;
+    onboarding.data.class_level_id = acad.class_level_id || null;
+    onboarding.data.group_id = acad.group_id || null;
+    onboarding.data.college_id = acad.college_id || null;
+    onboarding.data.academic_session_id = acad.academic_session_id || null;
+    onboarding.data.exam_year = acad.exam_year || new Date().getFullYear().toString();
+    if (acad.id) {
+      const { data: subjects } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
+      onboarding.data.selected_subjects = subjects?.map(s => s.subject_id) || [];
+    }
+  }
+  const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', currentUser.id);
+  if (goals?.length) {
+    onboarding.data.selected_goals = goals.map(g => g.goal_id);
+    const primary = goals.find(g => g.is_primary);
+    onboarding.data.primary_goal_id = primary?.goal_id || null;
+  }
+}
+
+async function saveStepData(step) {
+  const d = onboarding.data;
+  switch (step) {
+    case 0:
+      await db.from('profiles').update({ date_of_birth: d.dob || null, province_id: d.province_id || null }).eq('id', currentUser.id);
+      break;
+    case 1:
+      await db.from('profiles').update({ city_id: d.city_id || null }).eq('id', currentUser.id);
+      break;
+    case 2:
+      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, education_system_id: d.education_system_id, board_id: null, class_level_id: null, group_id: null, college_id: null }, { onConflict: 'user_id' });
+      break;
+    case 3:
+      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, board_id: d.board_id }, { onConflict: 'user_id' });
+      break;
+    case 4:
+      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, class_level_id: d.class_level_id, group_id: null }, { onConflict: 'user_id' });
+      break;
+    case 5:
+      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, group_id: d.group_id }, { onConflict: 'user_id' });
+      break;
+    case 6: {
+      const { data: acad } = await db.from('student_academic_profiles').select('id').eq('user_id', currentUser.id).single();
+      if (acad) {
+        await db.from('student_subjects').delete().eq('academic_profile_id', acad.id);
+        if (d.selected_subjects.length) {
+          await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: acad.id, subject_id: sid })));
+        }
+      }
+      break;
+    }
+    case 7:
+      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, college_id: d.college_id }, { onConflict: 'user_id' });
+      break;
+    case 8:
+      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, academic_session_id: d.academic_session_id, exam_year: d.exam_year || null }, { onConflict: 'user_id' });
+      break;
+    case 10:
+      await db.from('academic_goals').delete().eq('user_id', currentUser.id);
+      if (d.selected_goals.length) {
+        await db.from('academic_goals').insert(d.selected_goals.map(gid => ({ user_id: currentUser.id, goal_id: gid, is_primary: gid === d.primary_goal_id })));
+      }
+      break;
+  }
+}
+
 /* ---- ONBOARDING NAVIGATION ---- */
 
 function setupOnboardingNav() {
@@ -792,6 +946,7 @@ async function onboardingNext() {
     return;
   }
 
+  await saveStepData(onboarding.currentStep);
   onboarding.currentStep++;
   await loadStepData(onboarding.currentStep);
   renderOnboardingStep();
