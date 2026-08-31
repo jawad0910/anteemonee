@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wassal — Your Student OS</title>
+  <meta name="description" content="Wassal brings your studies, learning tools, planning, textbooks, practice, and AI together in one connected experience.">
+  <meta name="theme-color" content="#07080C">
+  <link rel="icon" href="assets/wassal.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-link">
+        <img src="assets/wassal.png" alt="Wassal" class="logo-img">
+        <span class="logo-text">Wassal</span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#hero">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+        </ul>
+      </nav>
+
+      <div class="auth-actions" id="auth-logged-out">
+        <a href="pages/login.html" class="btn-login">Login</a>
+        <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+      </div>
+
+      <div class="auth-actions" id="auth-logged-in" style="display:none">
+        <div class="profile-avatar-container" id="profile-avatar-container"></div>
+      </div>
+
+      <button class="mobile-menu-toggle" aria-label="Menu">
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu">
+    <div id="mobile-auth-logged-out">
+      <a href="#hero" class="mobile-nav-link">Home</a>
+      <a href="#about" class="mobile-nav-link">About</a>
+      <a href="#features" class="mobile-nav-link">Features</a>
+      <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+      <div class="mobile-cta">
+        <a href="pages/login.html" class="btn-login">Login</a>
+        <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+      </div>
+    </div>
+    <div id="mobile-auth-logged-in" style="display:none">
+      <div id="mobile-profile-section"></div>
+      <a href="#hero" class="mobile-nav-link">Home</a>
+      <a href="#about" class="mobile-nav-link">About</a>
+      <a href="#features" class="mobile-nav-link">Features</a>
+      <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+      <a href="pages/account.html">Account</a>
+      <button onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-glow hero-glow-3"></div>
+
+    <div class="hero-content fade-in">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Student OS for Pakistan
+      </div>
+      <h1>YOUR STUDY.<br><span class="accent">CONNECTED.</span></h1>
+      <p>Wassal brings your studies, learning tools, planning, textbooks, practice, and AI together in one connected experience.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="getStarted()">Get Started</button>
+        <button class="btn-secondary" onclick="scrollToFeatures()">Explore Wassal</button>
+      </div>
+
+      <div class="hero-visuals fade-in fade-in-delay-2">
+        <div class="hero-card">
+          <div class="hero-card-icon violet">&#9889;</div>
+          <h3>AI Learning</h3>
+          <p>Personalized explanations that adapt to your level.</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon cyan">&#128197;</div>
+          <h3>Smart Planner</h3>
+          <p>Auto-scheduled study plans based on your exams.</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon green">&#128218;</div>
+          <h3>Textbooks</h3>
+          <p>Your full curriculum in one organized place.</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon yellow">&#127919;</div>
+          <h3>Practice</h3>
+          <p>MCQs, short questions, past papers, mock tests.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section about" id="about">
+    <div class="fade-in">
+      <p class="section-label">About Wassal</p>
+      <h2 class="section-title">More Than Just a Study App.</h2>
+      <p class="section-desc">Wassal is being built as a connected student experience. It brings together learning, AI assistance, textbooks, planning, practice, and progress — so you always know what to do next.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-item fade-in fade-in-delay-1">
+        <div class="about-item-icon">&#129302;</div>
+        <h3>AI-Powered</h3>
+        <p>Intelligent tutor that understands your curriculum, board, and level.</p>
+      </div>
+      <div class="about-item fade-in fade-in-delay-2">
+        <div class="about-item-icon">&#128200;</div>
+        <h3>Track Progress</h3>
+        <p>See exactly where you're strong and where you need to improve.</p>
+      </div>
+      <div class="about-item fade-in fade-in-delay-3">
+        <div class="about-item-icon">&#127919;</div>
+        <h3>Practice & Improve</h3>
+        <p>Practice smarter with questions tailored to your weaknesses.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="features-header fade-in">
+      <p class="section-label">Features</p>
+      <h2 class="section-title">Everything You Need to Succeed.</h2>
+      <p class="section-desc">One platform that replaces scattered notes, random apps, and confusion — with a system designed for how students actually study.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card fade-in fade-in-delay-1">
+        <div class="feature-icon violet">&#9889;</div>
+        <h3>AI Learning</h3>
+        <p>Ask questions, get explanations, and learn concepts with an AI that understands your exact curriculum and level.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-2">
+        <div class="feature-icon cyan">&#128197;</div>
+        <h3>Smart Planner</h3>
+        <p>Enter your exams and goals. Wassal builds a study schedule that adapts when you miss or complete sessions.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-3">
+        <div class="feature-icon green">&#128218;</div>
+        <h3>Textbooks & Syllabus</h3>
+        <p>Your full curriculum organized by board, class, and subject — always up to date.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-1">
+        <div class="feature-icon yellow">&#127919;</div>
+        <h3>Practice</h3>
+        <p>MCQs, short questions, long questions, and numericals. Practice chapter-wise or mixed.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-2">
+        <div class="feature-icon rose">&#128196;</div>
+        <h3>Past Papers</h3>
+        <p>Structured past-paper questions searchable by board, year, chapter, and topic.</p>
+      </div>
+      <div class="feature-card fade-in fade-in-delay-3">
+        <div class="feature-icon blue">&#128202;</div>
+        <h3>Progress Tracking</h3>
+        <p>Performance analytics, weakness detection, and personalized recommendations.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section how-it-works" id="how-it-works">
+    <div class="fade-in">
+      <p class="section-label">How It Works</p>
+      <h2 class="section-title">Start in Four Steps.</h2>
+      <p class="section-desc">Get personalized in minutes. Wassal learns about you and builds your study system.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step fade-in fade-in-delay-1">
+        <div class="step-number">01</div>
+        <h3>Create Your Profile</h3>
+        <p>Sign up and tell Wassal your board, class, group, and subjects.</p>
+      </div>
+      <div class="step fade-in fade-in-delay-2">
+        <div class="step-number">02</div>
+        <h3>Set Your Goals</h3>
+        <p>Enter your exam dates, targets, and what you want to achieve.</p>
+      </div>
+      <div class="step fade-in fade-in-delay-3">
+        <div class="step-number">03</div>
+        <h3>Start Learning</h3>
+        <p>Follow your personalized plan. Study, practice, and use the AI tutor.</p>
+      </div>
+      <div class="step fade-in fade-in-delay-4">
+        <div class="step-number">04</div>
+        <h3>Grow With Progress</h3>
+        <p>Wassal tracks your improvement and adjusts your plan as you grow.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" id="cta">
+    <div class="cta-glow"></div>
+    <div class="cta-content fade-in">
+      <p class="section-label">Get Started</p>
+      <h2 class="section-title">Ready to Connect Your Studies?</h2>
+      <p class="section-desc">Join Wassal and experience a smarter way to study, plan, and improve.</p>
+      <button class="btn-primary" onclick="getStarted()">Create Your Account</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="logo-link">
+            <img src="assets/wassal.png" alt="Wassal" class="logo-img">
+            <span class="logo-text">Wassal</span>
+          </a>
+          <p>The Student OS for Pakistan. Learn, practice, plan, and progress — all in one place.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="pages/signup.html">Sign Up</a>
+          </div>
+          <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#about">About</a>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Wassal. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
