@@ -815,11 +815,15 @@ async function loadOnboardingRefData() {
   onboarding.ref.goals = cats.flatMap((c, i) => (goalsResults[i].data || []).map(g => ({ ...g, category_name: c.name })));
 }
 
-async function loadBoards(systemId) {
+async function loadBoards(systemId, region) {
   const { data } = await db.from('education_system_boards')
     .select('board_id, boards(*)')
     .eq('education_system_id', systemId);
-  onboarding.ref.boards = (data || []).map(r => r.boards).filter(Boolean);
+  let boards = (data || []).map(r => r.boards).filter(Boolean);
+  if (region) {
+    boards = boards.filter(b => b.region === region || b.region === 'Federal');
+  }
+  onboarding.ref.boards = boards;
 }
 
 async function loadClassLevels(systemId) {
@@ -1007,7 +1011,10 @@ async function loadStepData(step) {
       if (!r.education_systems.length) await loadOnboardingRefData();
       break;
     case 4:
-      if (d.education_system_id) await loadBoards(d.education_system_id);
+      if (d.education_system_id) {
+        const province = r.provinces.find(p => p.id == d.province_id);
+        await loadBoards(d.education_system_id, province?.name);
+      }
       break;
     case 5:
       if (d.education_system_id) await loadClassLevels(d.education_system_id);
@@ -1063,11 +1070,15 @@ async function validateOnboardingStep(step) {
       return true;
     case 8:
       if (!d.academic_session_id) { showMessage(errorEl, 'Please select your academic session.'); return false; }
+      if (!d.exam_year || !/^\d{4}$/.test(d.exam_year)) { showMessage(errorEl, 'Please enter a valid 4-digit exam year.'); return false; }
       return true;
     case 9:
       return true;
     case 10:
       if (!d.selected_goals.length) { showMessage(errorEl, 'Please select at least one goal.'); return false; }
+      return true;
+    case 11:
+      if (!d.primary_goal_id) { showMessage(errorEl, 'Please select your primary goal.'); return false; }
       return true;
     default:
       return true;
@@ -1152,7 +1163,8 @@ function renderOnboardingStep() {
           d.selected_subjects = [];
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
-          await loadBoards(d.education_system_id);
+          const province = r.provinces.find(p => p.id == d.province_id);
+          await loadBoards(d.education_system_id, province?.name);
           await loadClassLevels(d.education_system_id);
         });
       });
