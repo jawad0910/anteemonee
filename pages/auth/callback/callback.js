@@ -30,7 +30,6 @@ function getBaseUrl() {
 const BASE = getBaseUrl();
 const ACCOUNT_URL = BASE + '/pages/account.html';
 const ONBOARDING_URL = BASE + '/pages/onboarding.html';
-const LOGIN_URL = BASE + '/pages/login.html';
 
 function setStatus(text) {
   const el = document.getElementById('callback-status');
@@ -55,6 +54,32 @@ function showSuccess(message) {
     successEl.style.display = 'flex';
     successEl.querySelector('.success-message').textContent = message;
   }
+}
+
+async function getOnboardingStep(userId) {
+  const { data: profile } = await db.from('profiles').select('*').eq('id', userId).single();
+  if (!profile) return 0;
+  if (!profile.date_of_birth || !profile.province_id) return 0;
+  if (!profile.city_id) return 1;
+  const { data: acad } = await db.from('student_academic_profiles').select('*').eq('user_id', userId).single();
+  if (!acad || !acad.education_system_id) return 2;
+  if (!acad.board_id) return 3;
+  if (!acad.class_level_id) return 4;
+  if (!acad.group_id) return 5;
+  if (acad.id) {
+    const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
+    if (!count) return 6;
+  } else {
+    return 6;
+  }
+  if (!acad.college_id) return 7;
+  if (!acad.academic_session_id) return 8;
+  if (!profile.goals_completed) {
+    const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+    if (!count) return 10;
+    return 11;
+  }
+  return -1;
 }
 
 async function handleCallback() {
@@ -96,7 +121,7 @@ async function handleCallback() {
       setStatus('Waiting for authentication...');
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const { data: { session: retrySession }, error: retryError } = await db.auth.getSession();
+      const { data: { session: retrySession } } = await db.auth.getSession();
       if (retrySession && retrySession.user) {
         await handleUser(retrySession.user);
         return;
@@ -116,15 +141,9 @@ async function handleUser(user) {
   setStatus('Setting up your account...');
 
   try {
-    const { data: profile, error: profileError } = await db
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
 
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Profile fetch error:', profileError.message);
-    }
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
 
     if (!profile) {
       setStatus('Creating your profile...');
@@ -138,7 +157,10 @@ async function handleUser(user) {
         username: username.toLowerCase(),
         email: user.email,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-        profile_image_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+        avatar_url: avatarUrl,
+        personal_info_completed: false,
+        academic_profile_completed: false,
+        goals_completed: false
       });
 
       if (insertError) {
@@ -149,7 +171,10 @@ async function handleUser(user) {
             username: fallbackUsername,
             email: user.email,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            profile_image_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+            avatar_url: avatarUrl,
+            personal_info_completed: false,
+            academic_profile_completed: false,
+            goals_completed: false
           });
         } else {
           console.error('Profile insert error:', insertError.message);
@@ -161,11 +186,13 @@ async function handleUser(user) {
       return;
     }
 
-    const personalDone = profile.personal_info_completed;
-    const academicDone = profile.academic_profile_completed;
-    const goalsDone = profile.goals_completed;
+    if (avatarUrl && profile.avatar_url !== avatarUrl) {
+      await db.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+    }
 
-    if (!personalDone || !academicDone || !goalsDone) {
+    const step = await getOnboardingStep(user.id);
+
+    if (step >= 0) {
       showSuccess('Welcome back! Continuing your setup...');
       setTimeout(() => { window.location.href = ONBOARDING_URL; }, 1500);
       return;
