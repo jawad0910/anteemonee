@@ -656,6 +656,18 @@ async function signInWithGoogle() {
   }
 }
 
+async function signInWithSpotify() {
+  try {
+    const { error } = await db.auth.signInWithOAuth({
+      provider: 'spotify',
+      options: { redirectTo: REDIRECT_URL }
+    });
+    if (error) throw error;
+  } catch (err) {
+    alert(err.message || 'Spotify sign-in failed.');
+  }
+}
+
 /* =========================
    ONBOARDING FLOW
    ========================= */
