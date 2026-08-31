@@ -400,6 +400,75 @@
     .account-bottom-actions .btn-danger {
       flex: 1;
     }
+    .edit-profile-avatar-wrap {
+      width: 96px; height: 96px; border-radius: 50%; position: relative; flex-shrink: 0; cursor: pointer;
+    }
+    .edit-profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 2.5px solid var(--glass-border); }
+    .edit-profile-avatar-overlay {
+      position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+    .edit-profile-avatar-wrap:hover .edit-profile-avatar-overlay { opacity: 1; }
+    .edit-profile-avatar-overlay svg { width: 24px; height: 24px; color: #fff; }
+    .edit-form-group textarea {
+      width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1.1px solid var(--border);
+      background: var(--surface); color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif;
+      outline: none; transition: all 0.2s; resize: vertical; min-height: 80px;
+    }
+    .edit-form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1); }
+    .edit-form-group textarea::placeholder { color: var(--text-muted); }
+    .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; }
+    .username-status { font-size: 12px; margin-top: 4px; }
+    .username-status.checking { color: var(--text-muted); }
+    .username-status.available { color: var(--success); }
+    .username-status.taken { color: var(--error); }
+    .edit-profile-avatar-fallback {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #9B7BFF, #7C5CFF, #5B3EE8);
+      color: #fff; font-size: 36px; font-weight: 700; border-radius: 50%; border: 2.5px solid var(--glass-border);
+    }
+    .img-upload-input { display: none; }
+    .auth-field-note { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .edit-profile-modal {
+      position: fixed; inset: 0; z-index: 10000; display: flex; align-items: flex-end; justify-content: center;
+    }
+    .ep-modal-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .ep-modal-sheet {
+      position: relative; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      background: #111216; border: 1px solid var(--glass-border); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .ep-modal-header {
+      display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0;
+    }
+    .ep-modal-header h3 { font-size: 18px; font-weight: 700; }
+    .ep-close-btn {
+      display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+      border-radius: var(--radius-sm); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+    }
+    .ep-close-btn:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+    .ep-modal-body { padding: 20px 24px; }
+    .ep-avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; }
+    .ep-modal-footer { display: flex; gap: 12px; padding: 16px 24px 24px; }
+    .ep-modal-footer button { flex: 1; }
+    .ep-notice {
+      display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-top: 8px;
+      border-radius: var(--radius-sm); background: rgba(255, 199, 0, 0.06); border: 1px solid rgba(255, 199, 0, 0.12);
+      font-size: 12px; color: #FFC700; line-height: 1.5;
+    }
+    .ep-notice svg { flex-shrink: 0; margin-top: 1px; }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (min-width: 600px) {
+      .ep-modal-sheet { border-radius: var(--radius-xl); margin-bottom: 24px; }
+    }
     @media (max-width: 480px) {
       .account-page { padding: 100px 16px 60px; }
       .account-card { padding: 24px 18px; }
@@ -440,6 +509,67 @@
       <div class="account-bottom-actions">
         <a href="../index.html" class="btn-secondary">Back to Home</a>
         <button class="btn-danger" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="ep-avatar-input" accept="image/*" class="img-upload-input">
+
+  <div class="edit-profile-modal" id="edit-profile-modal" style="display:none">
+    <div class="ep-modal-backdrop" onclick="closeEditProfile()"></div>
+    <div class="ep-modal-sheet">
+      <div class="ep-modal-header">
+        <h3>Edit Profile</h3>
+        <button class="ep-close-btn" onclick="closeEditProfile()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="ep-modal-body">
+        <div class="ep-avatar-section">
+          <div class="edit-profile-avatar-wrap" id="ep-avatar-wrap" onclick="document.getElementById('ep-avatar-input').click()">
+            <img id="ep-avatar-img" src="" alt="" style="display:none">
+            <div class="edit-profile-avatar-fallback" id="ep-avatar-fallback"></div>
+            <div class="edit-profile-avatar-overlay">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+          </div>
+          <p class="auth-field-note" style="text-align:center">Tap to change photo</p>
+        </div>
+
+        <div class="edit-form-group">
+          <label>Full Name</label>
+          <input type="text" id="ep-name" placeholder="Your full name" maxlength="100">
+        </div>
+        <div class="edit-form-group">
+          <label>Username</label>
+          <input type="text" id="ep-username" placeholder="Choose a username" maxlength="30" pattern="[a-zA-Z0-9_]+">
+          <div class="auth-field-note">Letters, numbers, and underscores only</div>
+          <div class="username-status" id="ep-username-status"></div>
+        </div>
+        <div class="edit-form-group">
+          <label>Email</label>
+          <input type="email" id="ep-email" placeholder="your@email.com">
+          <div class="auth-field-note">A verification link will be sent to the new email</div>
+        </div>
+        <div class="edit-form-group">
+          <label>Phone</label>
+          <input type="tel" id="ep-phone" placeholder="+92 300 1234567">
+          <div class="auth-field-note">Include country code (e.g. +92)</div>
+        </div>
+        <div class="edit-form-group">
+          <label>Bio</label>
+          <textarea id="ep-bio" placeholder="Tell us about yourself..." maxlength="200" rows="3"></textarea>
+          <div class="char-counter"><span id="ep-bio-count">0</span>/200</div>
+        </div>
+
+        <div id="ep-email-notice" class="ep-notice" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <span>A verification link will be sent to your new email. You must verify it to keep access.</span>
+        </div>
+      </div>
+      <div class="ep-modal-footer">
+        <button class="btn-cancel" onclick="closeEditProfile()">Cancel</button>
+        <button class="btn-save" id="ep-save-btn" onclick="saveEditProfile()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -589,9 +719,16 @@
               ${imgUrl ? `<img src="${imgUrl}" alt="${username}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-lg" style="display:none">${username.charAt(0).toUpperCase()}</div>` : `<div class="avatar-fallback-lg">${username.charAt(0).toUpperCase()}</div>`}
             </div>
             <div class="profile-info">
-              <h2 id="acct-display-name">${username}</h2>
+              <h2 id="acct-display-name">${p?.full_name || username}</h2>
+              <p id="acct-display-username" style="font-size:13px;color:var(--text-muted);margin-bottom:2px">@${username}</p>
               <p id="acct-email">${email}</p>
             </div>
+          </div>
+          <div style="padding-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="edit-btn" onclick="openEditProfile()" style="flex:1;justify-content:center;padding:10px 16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Profile
+            </button>
           </div>
         </div>
 
@@ -942,6 +1079,193 @@
     document.addEventListener('change', function(e) {
       if (e.target.id === 'edit-board') onBoardChange();
     });
+
+    let epUsernameTimer = null;
+    let epSelectedImage = null;
+
+    function openEditProfile() {
+      const p = acctData.profile;
+      const user = currentUser;
+      const modal = document.getElementById('edit-profile-modal');
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+      const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+      const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || '';
+      const fullName = p?.full_name || '';
+      const email = user?.email || '';
+      const phone = user?.phone || '';
+      const bio = p?.bio || '';
+
+      const avatarImg = document.getElementById('ep-avatar-img');
+      const avatarFallback = document.getElementById('ep-avatar-fallback');
+      if (imgUrl) {
+        avatarImg.src = imgUrl;
+        avatarImg.style.display = 'block';
+        avatarFallback.style.display = 'none';
+      } else {
+        avatarImg.style.display = 'none';
+        avatarFallback.textContent = (fullName || username || 'U').charAt(0).toUpperCase();
+        avatarFallback.style.display = 'flex';
+      }
+
+      document.getElementById('ep-name').value = fullName;
+      document.getElementById('ep-username').value = username;
+      document.getElementById('ep-email').value = email;
+      document.getElementById('ep-phone').value = phone;
+      document.getElementById('ep-bio').value = bio;
+      document.getElementById('ep-bio-count').textContent = bio.length;
+      document.getElementById('ep-username-status').textContent = '';
+      document.getElementById('ep-email-notice').style.display = 'none';
+      epSelectedImage = null;
+    }
+
+    function closeEditProfile() {
+      document.getElementById('edit-profile-modal').style.display = 'none';
+      document.body.style.overflow = '';
+      epSelectedImage = null;
+    }
+
+    function epHandleImageSelect(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', true); return; }
+      if (!file.type.startsWith('image/')) { showToast('Please select an image', true); return; }
+
+      epSelectedImage = file;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const avatarImg = document.getElementById('ep-avatar-img');
+        const avatarFallback = document.getElementById('ep-avatar-fallback');
+        avatarImg.src = ev.target.result;
+        avatarImg.style.display = 'block';
+        avatarFallback.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    document.getElementById('ep-avatar-input').addEventListener('change', epHandleImageSelect);
+
+    function epHandleUsernameCheck() {
+      clearTimeout(epUsernameTimer);
+      const val = document.getElementById('ep-username').value.trim().toLowerCase();
+      const status = document.getElementById('ep-username-status');
+      const currentUsername = (acctData.profile?.username || currentUser?.user_metadata?.username || '').toLowerCase();
+
+      if (!val) { status.textContent = ''; status.className = 'username-status'; return; }
+      if (!/^[a-zA-Z0-9_]+$/.test(val)) { status.textContent = 'Invalid characters'; status.className = 'username-status taken'; return; }
+      if (val.length < 3) { status.textContent = 'At least 3 characters'; status.className = 'username-status taken'; return; }
+      if (val === currentUsername) { status.textContent = 'Current username'; status.className = 'username-status available'; return; }
+
+      status.textContent = 'Checking...';
+      status.className = 'username-status checking';
+      epUsernameTimer = setTimeout(async () => {
+        try {
+          const { data, error } = await db.rpc('is_username_available', { p_username: val });
+          if (error) { status.textContent = ''; status.className = 'username-status'; return; }
+          if (data === true) { status.textContent = 'Username available'; status.className = 'username-status available'; }
+          else { status.textContent = 'Username taken'; status.className = 'username-status taken'; }
+        } catch { status.textContent = ''; status.className = 'username-status'; }
+      }, 400);
+    }
+
+    document.getElementById('ep-username').addEventListener('input', epHandleUsernameCheck);
+
+    function epHandleBioCount() {
+      document.getElementById('ep-bio-count').textContent = document.getElementById('ep-bio').value.length;
+    }
+
+    document.getElementById('ep-bio').addEventListener('input', epHandleBioCount);
+
+    function epHandleEmailChange() {
+      const newEmail = document.getElementById('ep-email').value.trim();
+      const oldEmail = currentUser?.email || '';
+      const notice = document.getElementById('ep-email-notice');
+      notice.style.display = (newEmail && newEmail !== oldEmail) ? 'flex' : 'none';
+    }
+
+    document.getElementById('ep-email').addEventListener('input', epHandleEmailChange);
+
+    async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'wassal_avatars');
+      const resp = await fetch('https://api.cloudinary.com/v1_1/rkqqv0rd/image/upload', {
+        method: 'POST', body: formData
+      });
+      if (!resp.ok) throw new Error('Image upload failed');
+      const data = await resp.json();
+      return data.secure_url;
+    }
+
+    async function saveEditProfile() {
+      const btn = document.getElementById('ep-save-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+      try {
+        const fullName = document.getElementById('ep-name').value.trim();
+        const username = document.getElementById('ep-username').value.trim().toLowerCase();
+        const newEmail = document.getElementById('ep-email').value.trim();
+        const phone = document.getElementById('ep-phone').value.trim();
+        const bio = document.getElementById('ep-bio').value.trim();
+
+        if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+          throw new Error('Username can only contain letters, numbers, and underscores');
+        }
+        if (username && username.length < 3) {
+          throw new Error('Username must be at least 3 characters');
+        }
+
+        const statusEl = document.getElementById('ep-username-status');
+        if (statusEl.className.includes('taken')) {
+          throw new Error('Username is already taken');
+        }
+
+        let profileImageUrl = acctData.profile?.profile_image_url || currentUser?.user_metadata?.avatar_url || '';
+        if (epSelectedImage) {
+          btn.innerHTML = '<span class="spinner"></span> Uploading image...';
+          profileImageUrl = await uploadToCloudinary(epSelectedImage);
+        }
+
+        const profileFields = {};
+        if (fullName !== (acctData.profile?.full_name || '')) profileFields.full_name = fullName;
+        if (username && username !== (acctData.profile?.username || '')) profileFields.username = username;
+        if (bio !== (acctData.profile?.bio || '')) profileFields.bio = bio;
+        if (profileImageUrl !== (acctData.profile?.profile_image_url || '')) profileFields.profile_image_url = profileImageUrl;
+
+        if (Object.keys(profileFields).length > 0) {
+          const { error: profileErr } = await db.from('profiles').update(profileFields).eq('id', currentUser.id);
+          if (profileErr) throw profileErr;
+        }
+
+        btn.innerHTML = '<span class="spinner"></span> Updating auth...';
+
+        const authFields = {};
+        const currentEmail = currentUser?.email || '';
+        if (newEmail && newEmail !== currentEmail) authFields.email = newEmail;
+        if (phone && phone !== (currentUser?.phone || '')) authFields.phone = phone;
+
+        if (Object.keys(authFields).length > 0) {
+          const { error: authErr } = await db.auth.updateUser(authFields);
+          if (authErr) throw authErr;
+        }
+
+        Object.assign(acctData.profile, profileFields);
+        if (username) currentUser.user_metadata = { ...currentUser.user_metadata, username };
+
+        renderProfileAvatar();
+        renderCards();
+        closeEditProfile();
+        showToast('Profile updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save profile', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    }
 
     async function loadDependentRefData() {
       const a = acctData.acad;
