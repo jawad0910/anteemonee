@@ -280,8 +280,16 @@
   <script src="../js/app.js"></script>
   <script>
     (async function() {
+      await checkAuth();
       if (!currentUser) {
         document.getElementById('not-logged-in').style.display = 'block';
+        return;
+      }
+      await ensureProfile();
+
+      const step = await getOnboardingStep();
+      if (step >= 0) {
+        window.location.href = ONBOARDING_URL;
         return;
       }
 
@@ -291,7 +299,7 @@
       const profile = currentProfile;
       const username = profile?.username || user.user_metadata?.username || user.email?.split('@')[0] || 'User';
       const email = user.email || '—';
-      const imgUrl = profile?.avatar_url || profile?.profile_image_url;
+      const imgUrl = profile?.avatar_url || profile?.profile_image_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
 
       document.getElementById('account-display-name').textContent = username;
       document.getElementById('account-email').textContent = email;
