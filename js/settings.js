@@ -416,7 +416,16 @@ async function startEnable2FA() {
     window._tfaFactorId = data.id;
     const qrArea = document.getElementById('tfa-qr-area');
     if (data.totp?.qr_code) {
-      qrArea.innerHTML = `<img src="${data.totp.qr_code}" alt="QR Code" style="width:180px;height:180px;border-radius:12px;background:#fff;padding:8px">`;
+      qrArea.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'background:#fff;padding:16px;border-radius:12px;display:inline-block';
+      const img = document.createElement('img');
+      img.src = data.totp.qr_code;
+      img.alt = 'QR Code';
+      img.style.cssText = 'width:180px;height:180px;display:block';
+      img.onerror = () => { wrap.innerHTML = '<p style="color:#888;font-size:13px">QR code failed to load. Use the secret below.</p>'; };
+      wrap.appendChild(img);
+      qrArea.appendChild(wrap);
     } else if (data.totp?.uri) {
       qrArea.innerHTML = `<div style="background:#fff;padding:16px;border-radius:12px;display:inline-block"><canvas id="tfa-qr-canvas"></canvas></div>`;
       drawQR(data.totp.uri);
