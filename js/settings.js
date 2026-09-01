@@ -327,9 +327,8 @@ async function load2FAStatus() {
     const { data, error } = await db.auth.mfa.listFactors();
     if (error) throw error;
     const allTotp = data?.totp || [];
-    tfaFactors = allTotp.filter(f => f.verify?.verified);
-    const unverified = allTotp.filter(f => !f.verify?.verified);
-    window._tfaUnverified = unverified;
+    tfaFactors = allTotp.filter(f => f.status === 'verified');
+    window._tfaUnverified = allTotp.filter(f => f.status === 'unverified');
   } catch {
     tfaFactors = [];
     window._tfaUnverified = [];
@@ -397,17 +396,42 @@ async function startEnable2FA() {
 
   try {
     const { data: factorsData } = await db.auth.mfa.listFactors();
-    const unverifiedFactors = (factorsData?.totp || []).filter(f => !f.verify?.verified);
+    const allTotp = factorsData?.totp || [];
+    const unverifiedFactors = allTotp.filter(f => f.status === 'unverified');
+    const verifiedFactors = allTotp.filter(f => f.status === 'verified');
+
+    if (verifiedFactors.length > 0) {
+      const errEl = document.getElementById('tfa-error');
+      if (errEl) { errEl.textContent = 'Authenticator is already enabled. Disable it first to set up a new one.'; errEl.style.display = 'block'; }
+      return;
+    }
 
     if (unverifiedFactors.length > 0) {
       const existing = unverifiedFactors[0];
       window._tfaFactorId = existing.id;
+      try {
+        const { data: reenrollData, error: reenrollErr } = await db.auth.mfa.unenroll({ factorId: existing.id });
+      } catch (_) {}
+      const { data, error } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator' });
+      if (error) throw error;
+      window._tfaFactorId = data.id;
       const qrArea = document.getElementById('tfa-qr-area');
-      qrArea.innerHTML = `
-        <div style="background:rgba(124,92,255,0.1);border:1px solid rgba(124,92,255,0.2);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--accent)">
-          Resuming previous setup. Enter the code from your authenticator app.
-        </div>
-        <button class="btn-settings btn-settings-ghost" onclick="cancelAndRestart2FA()" style="font-size:12px;margin-top:8px">Start Fresh</button>`;
+      if (data.totp?.qr_code) {
+        qrArea.innerHTML = '';
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'background:#fff;padding:16px;border-radius:12px;display:inline-block';
+        const img = document.createElement('img');
+        img.src = data.totp.qr_code;
+        img.alt = 'QR Code';
+        img.style.cssText = 'width:180px;height:180px;display:block';
+        wrap.appendChild(img);
+        qrArea.appendChild(wrap);
+      } else if (data.totp?.uri) {
+        qrArea.innerHTML = `<div style="background:#fff;padding:16px;border-radius:12px;display:inline-block"><canvas id="tfa-qr-canvas"></canvas></div>`;
+        drawQR(data.totp.uri);
+      } else {
+        qrArea.innerHTML = `<p style="color:var(--text-secondary);font-size:13px">Enter this secret manually:<br><code style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;font-size:14px">${data.totp?.secret || 'Unknown'}</code></p>`;
+      }
       return;
     }
 
@@ -441,7 +465,7 @@ async function startEnable2FA() {
 async function cancelAndRestart2FA() {
   try {
     const { data: factorsData } = await db.auth.mfa.listFactors();
-    const unverifiedFactors = (factorsData?.totp || []).filter(f => !f.verify?.verified);
+    const unverifiedFactors = (factorsData?.totp || []).filter(f => f.status === 'unverified');
     for (const f of unverifiedFactors) {
       await db.auth.mfa.unenroll({ factorId: f.id });
     }
