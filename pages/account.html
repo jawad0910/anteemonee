@@ -481,6 +481,69 @@
       .edit-actions { flex-direction: column; }
       .account-bottom-actions { flex-direction: column; }
     }
+    .card-shimmer {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      padding: 32px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-shimmer::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+    .shimmer-line {
+      height: 14px;
+      border-radius: 7px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+      margin-bottom: 16px;
+    }
+    .shimmer-line:last-child { margin-bottom: 0; }
+    .shimmer-line.w60 { width: 60%; }
+    .shimmer-line.w40 { width: 40%; }
+    .shimmer-line.w80 { width: 80%; }
+    .shimmer-line.w50 { width: 50%; }
+    .shimmer-circle {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+      margin-bottom: 16px;
+    }
+    .shimmer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .shimmer-row:last-child { border-bottom: none; }
+    .shimmer-label {
+      height: 12px; width: 90px; border-radius: 6px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+    }
+    .shimmer-value {
+      height: 12px; width: 120px; border-radius: 6px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+    }
+    @keyframes shimmer-slide {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
   </style>
 </head>
 <body>
@@ -508,6 +571,38 @@
       </div>
 
       <div id="account-cards"></div>
+
+      <div id="account-loading">
+        <div class="card-shimmer">
+          <div class="shimmer-circle"></div>
+          <div class="shimmer-line w60"></div>
+          <div class="shimmer-line w40"></div>
+        </div>
+        <div class="card-shimmer">
+          <div style="margin-bottom:20px"><div class="shimmer-line w50" style="height:10px"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+        </div>
+        <div class="card-shimmer">
+          <div style="margin-bottom:20px"><div class="shimmer-line w50" style="height:10px"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+        </div>
+        <div class="card-shimmer">
+          <div style="margin-bottom:20px"><div class="shimmer-line w50" style="height:10px"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+        </div>
+      </div>
 
       <div id="onboarding-prompt-container"></div>
 
@@ -684,6 +779,7 @@
 
     function renderCards() {
       try {
+      document.getElementById('account-loading').style.display = 'none';
       const p = acctData.profile;
       const a = acctData.acad;
       const r = acctData.ref;
@@ -816,20 +912,12 @@
               <select id="edit-group" onchange="onGroupChange()"><option value="">Select group</option>${groupOptions}</select>
             </div>
             <div class="edit-form-group">
-              <label>Subjects</label>
-              <div class="field-value" style="padding:12px 0;font-size:15px;color:var(--text-secondary)">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</div>
-            </div>
-            <div class="edit-form-group">
               <label>College</label>
               <select id="edit-college"><option value="">Select college</option>${collegeOptions}</select>
             </div>
             <div class="edit-form-group">
               <label>Academic Session</label>
               <select id="edit-session"><option value="">Select session</option>${sessionOptions}</select>
-            </div>
-            <div class="edit-form-group">
-              <label>Exam Year</label>
-              <div class="field-value" style="padding:12px 0;font-size:15px;color:var(--text-secondary)">${a?.exam_year || 'Not set'}</div>
             </div>
             <div class="edit-actions">
               <button class="btn-cancel" onclick="toggleSection('academic')">Cancel</button>
