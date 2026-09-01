@@ -778,7 +778,7 @@ const onboarding = {
     board_id: null,
     class_level_id: null,
     group_id: null,
-    exam_year: new Date().getFullYear().toString(),
+    exam_year: '',
     college_id: null,
     academic_session_id: null,
     selected_subjects: [],
@@ -1056,6 +1056,7 @@ async function loadStepData(step) {
       break;
     case 6:
       if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
+      d.selected_subjects = r.subjects.map(s => s.id);
       break;
     case 7:
       await loadAllColleges();
@@ -1111,14 +1112,12 @@ async function validateOnboardingStep(step) {
       if (!d.group_id) { showMessage(errorEl, 'Please select your group.'); return false; }
       return true;
     case 6:
-      if (!d.selected_subjects.length) { showMessage(errorEl, 'Please select at least one subject.'); return false; }
       return true;
     case 7:
       if (!d.college_id) { showMessage(errorEl, 'Please select your college.'); return false; }
       return true;
     case 8:
       if (!d.academic_session_id) { showMessage(errorEl, 'Please select your academic session.'); return false; }
-      if (!d.exam_year || !/^\d{4}$/.test(d.exam_year)) { showMessage(errorEl, 'Please enter a valid 4-digit exam year.'); return false; }
       return true;
     case 9:
       return true;
@@ -1291,29 +1290,17 @@ function renderOnboardingStep() {
 
     case 6:
       container.innerHTML = `
-        <h2 class="onboarding-title">Subjects</h2>
-        <p class="onboarding-subtitle">Select all your subjects.</p>
-        <div class="onboarding-options onboarding-options-multi">
+        <h2 class="onboarding-title">Confirm Your Subjects</h2>
+        <p class="onboarding-subtitle">These are your subjects based on your group selection.</p>
+        <div class="onboarding-review">
           ${r.subjects.map(s => `
-            <button class="onboarding-option ${d.selected_subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}">
-              <span class="option-name">${s.name}</span>
-              ${s.code ? `<span class="option-desc">${s.code}</span>` : ''}
-            </button>
+            <div class="review-row">
+              <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Group Subject'}</span>
+              <span class="review-value">${s.name}</span>
+            </div>
           `).join('')}
         </div>
       `;
-      container.querySelectorAll('.onboarding-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          if (d.selected_subjects.includes(id)) {
-            d.selected_subjects = d.selected_subjects.filter(s => s !== id);
-            btn.classList.remove('selected');
-          } else {
-            d.selected_subjects.push(id);
-            btn.classList.add('selected');
-          }
-        });
-      });
       break;
 
     case 7:
@@ -1331,32 +1318,52 @@ function renderOnboardingStep() {
       document.getElementById('onb-college')?.addEventListener('change', e => { d.college_id = e.target.value || null; });
       break;
 
-    case 8:
+    case 8: {
+      const classLevel = r.class_levels.find(c => c.id == d.class_level_id);
+      const classValue = classLevel?.value || 0;
+      const isSecondYear = classValue === 12;
+      const filteredSessions = isSecondYear
+        ? r.academic_sessions
+        : r.academic_sessions.filter(s => s.end_year !== 2027);
+      const selectedSession = r.academic_sessions.find(s => s.id == d.academic_session_id);
+      let examYearMsg = '';
+      if (selectedSession) {
+        const yearDiff = isSecondYear ? 1 : 0;
+        const examYear = selectedSession.end_year - yearDiff;
+        d.exam_year = examYear.toString();
+        examYearMsg = `<div style="margin-top:20px;padding:16px;border-radius:var(--radius-md);background:var(--accent-soft);border:1px solid rgba(124,92,255,0.15);text-align:center"><span style="font-size:15px;font-weight:600;color:var(--accent)">So your exam year is ${examYear}. Good Luck!</span></div>`;
+      }
       container.innerHTML = `
         <h2 class="onboarding-title">Academic Session</h2>
         <p class="onboarding-subtitle">Select your current academic session.</p>
         <div class="onboarding-options">
-          ${r.academic_sessions.map(s => `
-            <button class="onboarding-option ${d.academic_session_id === s.id ? 'selected' : ''}" data-id="${s.id}">
+          ${filteredSessions.map(s => `
+            <button class="onboarding-option ${d.academic_session_id == s.id ? 'selected' : ''}" data-id="${s.id}" data-end="${s.end_year}">
               <span class="option-name">${s.label}</span>
               ${s.start_year ? `<span class="option-desc">${s.start_year} — ${s.end_year || 'Ongoing'}</span>` : ''}
             </button>
           `).join('')}
         </div>
-        <div class="form-group" style="margin-top:16px">
-          <label for="onb-exam-year">Exam Year</label>
-          <input type="text" id="onb-exam-year" class="form-input" value="${d.exam_year}" placeholder="e.g. 2027" maxlength="4">
-        </div>
+        ${examYearMsg}
       `;
       container.querySelectorAll('.onboarding-option').forEach(btn => {
         btn.addEventListener('click', () => {
           d.academic_session_id = btn.dataset.id;
+          const endYear = parseInt(btn.dataset.end);
+          const yearDiff = isSecondYear ? 1 : 0;
+          d.exam_year = (endYear - yearDiff).toString();
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
+          const newMsg = container.querySelector('.onboarding-review');
+          if (newMsg) newMsg.remove();
+          const msgDiv = document.createElement('div');
+          msgDiv.className = 'onboarding-review';
+          msgDiv.innerHTML = `<div style="padding:16px;border-radius:var(--radius-md);background:var(--accent-soft);border:1px solid rgba(124,92,255,0.15);text-align:center"><span style="font-size:15px;font-weight:600;color:var(--accent)">So your exam year is ${d.exam_year}. Good Luck!</span></div>`;
+          container.appendChild(msgDiv);
         });
       });
-      document.getElementById('onb-exam-year')?.addEventListener('input', e => { d.exam_year = e.target.value; });
       break;
+    }
 
     case 9:
       container.innerHTML = `
