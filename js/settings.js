@@ -808,6 +808,8 @@ async function renderCoupons() {
 
     const hasRedeemed = redemptions && redemptions.length > 0;
 
+    c.innerHTML = '';
+
     if (hasRedeemed) {
       const r = redemptions[0];
       const start = new Date(r.premium_start_at).toLocaleDateString('en-GB');
