@@ -124,16 +124,6 @@ function updateAuthUI() {
     renderProfileAvatar();
     renderMobileProfile();
 
-    const heroCta = document.getElementById('hero-cta');
-    if (heroCta) { heroCta.textContent = 'Go to Dashboard'; heroCta.onclick = () => window.location.href = REDIRECT_URL; }
-    const ctaBtn = document.getElementById('cta-btn');
-    if (ctaBtn) { ctaBtn.textContent = 'Go to Dashboard'; ctaBtn.onclick = () => window.location.href = REDIRECT_URL; }
-    const ctaLabel = document.getElementById('cta-label');
-    if (ctaLabel) ctaLabel.textContent = 'Welcome Back';
-    const ctaTitle = document.getElementById('cta-title');
-    if (ctaTitle) ctaTitle.textContent = 'Continue Your Journey';
-    const ctaDesc = document.getElementById('cta-desc');
-    if (ctaDesc) ctaDesc.textContent = 'Pick up right where you left off.';
     const footerLink = document.getElementById('footer-signup-link');
     if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = 'pages/account.html'; }
   } else {
@@ -326,7 +316,12 @@ function setupIntersectionObserver() {
    ========================= */
 
 function scrollToFeatures() {
-  const el = document.getElementById('features');
+  const el = document.getElementById('ecosystem');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
