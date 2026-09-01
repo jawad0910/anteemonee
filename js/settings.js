@@ -935,15 +935,15 @@ function renderConnected() {
 
   if (hasEmail) {
     const emailIdentity = identities.find(i => i.provider === 'email');
-    rows.push(buildProviderRow('email', 'Email & Password', emailIdentity ? currentUser.email : 'Not linked'));
+    rows.push(buildProviderRow('email', 'Email & Password', emailIdentity ? currentUser.email : 'Not linked', true));
   }
   if (hasGoogle) {
     const googleIdentity = identities.find(i => i.provider === 'google');
-    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked'));
+    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked', hasGoogle));
   }
   if (hasSpotify) {
     const spotIdentity = identities.find(i => i.provider === 'spotify');
-    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked'));
+    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked', hasSpotify));
   }
 
   if (!rows.length) {
@@ -955,28 +955,12 @@ function renderConnected() {
   const linkRows = [];
   if (!hasGoogle) {
     linkRows.push(buildClickableRow('Link Google', 'Connect your Google account for easier sign-in', async () => {
-      try {
-        const { error } = await db.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin + '/pages/auth/callback/google.html' }
-        });
-        if (error) throw error;
-      } catch (err) {
-        showToastSettings(err.message || 'Failed to link Google', true);
-      }
+      await linkProvider('google');
     }));
   }
   if (!hasSpotify) {
     linkRows.push(buildClickableRow('Link Spotify', 'Connect your Spotify account', async () => {
-      try {
-        const { error } = await db.auth.signInWithOAuth({
-          provider: 'spotify',
-          options: { redirectTo: window.location.origin + '/pages/auth/callback/spotify.html' }
-        });
-        if (error) throw error;
-      } catch (err) {
-        showToastSettings(err.message || 'Failed to link Spotify', true);
-      }
+      await linkProvider('spotify');
     }));
   }
   if (linkRows.length) {
@@ -989,9 +973,50 @@ function renderConnected() {
     ];
     c.appendChild(buildCard('SECURITY NOTE', warnRows));
   }
+
+  if (hasGoogle || hasSpotify) {
+    const securityRows = [
+      buildRow('One account per provider', 'Each Google or Spotify account can only be linked to one Wassal account.'),
+      buildRow('Email & username are unique', 'No two accounts can share the same email or username.'),
+    ];
+    c.appendChild(buildCard('SECURITY POLICY', securityRows));
+  }
 }
 
-function buildProviderRow(provider, name, status) {
+async function linkProvider(provider) {
+  const providerName = provider === 'google' ? 'Google' : 'Spotify';
+
+  try {
+    const { data: profile, error: profileErr } = await db.from('profiles')
+      .select('id')
+      .neq('id', currentUser.id)
+      .limit(1);
+
+    if (profileErr) {
+      console.warn('Pre-link check failed, proceeding anyway:', profileErr);
+    }
+
+    const { error } = await db.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: window.location.origin + '/pages/auth/callback/' + provider + '.html',
+        queryParams: { prompt: 'consent' }
+      }
+    });
+    if (error) throw error;
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('already linked') || msg.includes('identity_already_exists')) {
+      showToastSettings(`This ${providerName} account is already linked to another Wassal account. Please use a different ${providerName} account.`, true);
+    } else if (msg.includes('provider_disabled')) {
+      showToastSettings(`${providerName} sign-in is not enabled. Please contact support.`, true);
+    } else {
+      showToastSettings(`Failed to link ${providerName}: ${msg || 'Unknown error'}`, true);
+    }
+  }
+}
+
+function buildProviderRow(provider, name, status, isConnected) {
   const row = document.createElement('div');
   row.className = 'provider-row';
   const icon = document.createElement('div');
@@ -1004,7 +1029,10 @@ function buildProviderRow(provider, name, status) {
   icon.innerHTML = icons[provider] || icons.email;
   const info = document.createElement('div');
   info.className = 'setting-info';
-  info.innerHTML = `<div class="setting-title">${name}</div><div class="setting-desc">${status}</div>`;
+  const badge = isConnected
+    ? '<span style="color:#35D399;font-size:11px;font-weight:600;margin-left:8px">CONNECTED</span>'
+    : '';
+  info.innerHTML = `<div class="setting-title">${name}${badge}</div><div class="setting-desc">${status}</div>`;
   row.appendChild(icon);
   row.appendChild(info);
   return row;
