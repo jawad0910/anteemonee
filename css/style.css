@@ -2068,7 +2068,7 @@ img { max-width: 100%; display: block; }
 @media (max-width: 768px) {
   .header { padding: 0 20px; height: 64px; }
   .nav-links { display: none; }
-  .mobile-menu-toggle { display: flex; }
+  .mobile-menu-toggle { display: none !important; }
   .mobile-menu { display: flex; }
   .auth-actions #auth-logged-out { display: none !important; }
 
