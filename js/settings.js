@@ -1161,7 +1161,7 @@ async function disconnectProvider(provider, identityId) {
   if (!confirmed) return;
 
   try {
-    const { error } = await db.auth.unlinkIdentity(identityId);
+    const { error } = await db.auth.unlink({ identityId });
     if (error) throw error;
     showToastSettings(`${providerName} disconnected successfully`);
     await refreshUser();
@@ -1170,6 +1170,8 @@ async function disconnectProvider(provider, identityId) {
     const msg = err.message || '';
     if (msg.includes('last_identity') || msg.includes('Cannot unlink')) {
       showToastSettings(`Cannot disconnect ${providerName}. It is your only login method. Add another method first.`, true);
+    } else if (msg.includes('Manual linking')) {
+      showToastSettings(`Manual linking is not enabled. Please enable it in your Supabase dashboard under Authentication → Settings.`, true);
     } else {
       showToastSettings(`Failed to disconnect ${providerName}: ${msg || 'Unknown error'}`, true);
     }
