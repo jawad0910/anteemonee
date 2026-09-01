@@ -27,9 +27,9 @@ function getBaseUrl() {
   return loc.origin;
 }
 
-const BASE = getBaseUrl();
-const ACCOUNT_URL = BASE + '/';
-const ONBOARDING_URL = BASE + '/pages/onboarding.html';
+const ORIGIN = window.location.origin;
+const ACCOUNT_URL = ORIGIN + '/';
+const ONBOARDING_URL = ORIGIN + '/pages/onboarding.html';
 
 function setStatus(text) {
   const el = document.getElementById('callback-status');
