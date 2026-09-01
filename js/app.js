@@ -1094,6 +1094,14 @@ async function validateOnboardingStep(step) {
   switch (step) {
     case 0:
       if (!d.dob) { showMessage(errorEl, 'Please enter your date of birth.'); return false; }
+      {
+        const birthDate = new Date(d.dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        if (age < 15) { showMessage(errorEl, 'You must be at least 15 years old to use Wassal.'); return false; }
+      }
       if (!d.province_id) { showMessage(errorEl, 'Please select your province.'); return false; }
       return true;
     case 1:
@@ -1155,7 +1163,8 @@ function renderOnboardingStep() {
         <p class="onboarding-subtitle">Tell us a bit about yourself.</p>
         <div class="form-group">
           <label for="onb-dob">Date of Birth</label>
-          <input type="date" id="onb-dob" class="form-input" value="${d.dob}" max="${new Date().toISOString().split('T')[0]}" lang="en-GB">
+          <input type="date" id="onb-dob" class="form-input" value="${d.dob}" max="${new Date(new Date().setFullYear(new Date().getFullYear() - 15)).toISOString().split('T')[0]}" lang="en-GB">
+          <p style="font-size:12px;color:var(--text-muted);margin-top:6px">You must be at least 15 years old.</p>
         </div>
         <div class="form-group">
           <label for="onb-province">Province</label>
