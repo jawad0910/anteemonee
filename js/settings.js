@@ -29,7 +29,7 @@ async function initSettings() {
   renderLanguage();
   renderPrivacy();
   await renderSubscription();
-  renderCoupons();
+  await renderCoupons();
   renderConnected();
   renderHelp();
   renderAbout();
@@ -796,27 +796,57 @@ async function joinWaitlist() {
    8. COUPONS
    ========================= */
 
-function renderCoupons() {
+async function renderCoupons() {
   const c = document.getElementById('settings-coupons-content');
-  c.innerHTML = '';
+  c.innerHTML = '<div class="skeleton" style="height:120px;margin:16px 0"></div>';
 
-  const inputCard = document.createElement('div');
-  inputCard.className = 'settings-card';
-  inputCard.innerHTML = `
-    <div class="settings-card-header">REDEEM COUPON</div>
-    <div class="coupon-input-group">
-      <input type="text" class="setting-input" id="coupon-code" placeholder="Enter coupon code" style="text-transform:uppercase" maxlength="20">
-      <button class="btn-settings btn-settings-primary" id="coupon-btn" onclick="redeemCoupon()">Redeem</button>
-    </div>
-    <div id="coupon-msg" style="padding:0 20px 16px;font-size:13px;display:none"></div>`;
-  c.appendChild(inputCard);
+  try {
+    const { data: redemptions } = await db.from('coupon_redemptions')
+      .select('id, coupon_id, redeemed_at, premium_start_at, premium_expiry_at')
+      .eq('user_id', currentUser.id)
+      .order('redeemed_at', { ascending: false });
 
-  const infoRows = [
-    buildRow('Coupon codes are case-insensitive'),
-    buildRow('Each code can be redeemed once per account'),
-    buildRow('Premium codes extend your current subscription'),
-  ];
-  c.appendChild(buildCard('HOW IT WORKS', infoRows));
+    const hasRedeemed = redemptions && redemptions.length > 0;
+
+    if (hasRedeemed) {
+      const r = redemptions[0];
+      const start = new Date(r.premium_start_at).toLocaleDateString('en-GB');
+      const expiry = new Date(r.premium_expiry_at).toLocaleDateString('en-GB');
+
+      const statusCard = document.createElement('div');
+      statusCard.className = 'settings-card';
+      statusCard.innerHTML = `
+        <div class="settings-card-header">COUPON STATUS</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title" style="color:#35D399">Coupon Redeemed</div>
+            <div class="setting-desc">Premium active from ${start} — expires ${expiry}</div>
+          </div>
+          <span class="status-badge premium">Premium</span>
+        </div>`;
+      c.appendChild(statusCard);
+    } else {
+      const inputCard = document.createElement('div');
+      inputCard.className = 'settings-card';
+      inputCard.innerHTML = `
+        <div class="settings-card-header">REDEEM COUPON</div>
+        <div class="coupon-input-group">
+          <input type="text" class="setting-input" id="coupon-code" placeholder="Enter coupon code" style="text-transform:uppercase" maxlength="20">
+          <button class="btn-settings btn-settings-primary" id="coupon-btn" onclick="redeemCoupon()">Redeem</button>
+        </div>
+        <div id="coupon-msg" style="padding:0 20px 16px;font-size:13px;display:none"></div>`;
+      c.appendChild(inputCard);
+    }
+
+    const infoRows = [
+      buildRow('Coupon codes are case-insensitive'),
+      buildRow('Each code can be redeemed once per account'),
+      buildRow('Premium codes extend your current subscription'),
+    ];
+    c.appendChild(buildCard('HOW IT WORKS', infoRows));
+  } catch (e) {
+    c.innerHTML = '<div class="settings-card"><div class="setting-row"><div class="setting-info"><div class="setting-title">Unable to load coupon info</div></div></div></div>';
+  }
 }
 
 async function redeemCoupon() {
@@ -825,50 +855,58 @@ async function redeemCoupon() {
   const btn = document.getElementById('coupon-btn');
   if (!code) return;
 
+  const ERRORS = {
+    INVALID: 'That coupon code isn\'t valid.',
+    INACTIVE: 'This coupon is no longer active.',
+    LIMIT_REACHED: 'This coupon has reached its redemption limit.',
+    ALREADY_USED: 'You\'ve already used this coupon.',
+    IP_USED: 'This coupon has already been redeemed from this network.',
+    NOT_AUTHENTICATED: 'Please sign in first.',
+    REDEEM_FAILED: 'Couldn\'t redeem the coupon. Please try again.',
+  };
+
   msgEl.style.display = 'none';
   setLoading(btn, true);
 
   try {
     let result = null;
-    let usedFallback = false;
 
+    // Try Edge Function first, fall back to RPC if not deployed
     try {
       const { data, error } = await db.functions.invoke('redeem-coupon', { body: { code } });
-      if (error) {
-        if (error.message?.includes('404') || error.status === 404 || error.context?.httpStatus === 404) {
-          usedFallback = true;
-        } else {
-          throw error;
-        }
-      } else {
-        result = data;
+      if (error) throw error;
+      result = data;
+      // Edge Function returns {ok: true, months, premium_expires_at} or {ok: false, error: machine_code}
+      if (result && !result.ok) {
+        const msg = ERRORS[result.error] || ERRORS.REDEEM_FAILED;
+        msgEl.textContent = msg;
+        msgEl.style.color = '#FF6675';
+        msgEl.style.display = 'block';
+        return;
       }
     } catch (fnErr) {
-      if (fnErr.message?.includes('404') || fnErr.status === 404) {
-        usedFallback = true;
-      } else {
-        throw fnErr;
-      }
-    }
-
-    if (usedFallback) {
+      // Edge Function not deployed — fall back to RPC
       const { data, error } = await db.rpc('redeem_coupon_self', { p_code: code });
       if (error) throw error;
       result = data;
+      // RPC returns jsonb: {ok: true, months, ...} or {ok: false, error: 'CODE'}
+      if (result && !result.ok) {
+        const msg = ERRORS[result.error] || ERRORS.REDEEM_FAILED;
+        msgEl.textContent = msg;
+        msgEl.style.color = '#FF6675';
+        msgEl.style.display = 'block';
+        return;
+      }
     }
 
-    if (result && (result.success || result === true)) {
-      msgEl.textContent = 'Coupon redeemed successfully! Your subscription has been updated.';
-      msgEl.style.color = '#35D399';
-      msgEl.style.display = 'block';
-      document.getElementById('coupon-code').value = '';
-      await renderSubscription();
-      showToastSettings('Coupon redeemed!');
-    } else {
-      msgEl.textContent = result?.error_message || result?.message || 'Invalid or expired coupon code.';
-      msgEl.style.color = '#FF6675';
-      msgEl.style.display = 'block';
-    }
+    // Success
+    msgEl.textContent = 'Coupon redeemed successfully! Your subscription has been updated.';
+    msgEl.style.color = '#35D399';
+    msgEl.style.display = 'block';
+    document.getElementById('coupon-code').value = '';
+    showToastSettings('Coupon redeemed!');
+    // Refresh both subscription and coupon status
+    await Promise.all([renderSubscription(), renderCoupons()]);
   } catch (err) {
     msgEl.textContent = err.message || 'Failed to redeem coupon.';
     msgEl.style.color = '#FF6675';
