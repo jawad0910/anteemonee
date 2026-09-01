@@ -180,7 +180,7 @@ function renderProfileAvatar() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Account
       </a>
-      <a href="${BASE}/pages/account.html" class="dropdown-item">
+      <a href="${BASE}/pages/settings.html" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Settings
       </a>
@@ -1631,4 +1631,67 @@ function hideMessage(el) {
   if (!el) return;
   el.textContent = '';
   el.style.display = 'none';
+}
+
+/* =========================
+   USER PREFERENCES
+   ========================= */
+
+let userPrefs = null;
+
+const DEFAULT_PREFS = {
+  notify_study_reminders: true, notify_planner_reminders: true,
+  notify_exam_reminders: true, notify_revision_reminders: true,
+  notify_daily_learning: false, notify_ai_recommendations: true,
+  notify_new_content: false, notify_past_paper_updates: false,
+  notify_system: true, quiet_hours_enabled: false,
+  quiet_start: '22:00', quiet_end: '07:00',
+  theme_mode: 'dark', accent_color: 'violet',
+  glass_intensity: 'medium', reduce_animations: false,
+  layout_density: 'comfortable',
+  ai_response_style: 'balanced', ai_language: 'english',
+  ai_voice_enabled: true, ai_voice_speed: 100,
+  ai_study_recommendations: true, ai_autoplay_voice: false,
+  planner_daily_goal_minutes: 120, planner_default_session_min: 45,
+  planner_week_starts_on: 1, planner_break_preference: 'short_breaks',
+  planner_auto_schedule: true, planner_exam_prep_mode: 'balanced',
+  learning_default_difficulty: 'mixed', learning_auto_save_mistakes: true,
+  learning_show_frequency: true, learning_show_mastery: true,
+  wifi_only_downloads: true,
+  app_language: 'english', textbook_language: 'english',
+  privacy_profile_visibility: 'private', privacy_stats_visibility: 'private',
+  privacy_activity_visibility: 'private', privacy_ai_history: true,
+  privacy_personalization: true, privacy_learning_history: true
+};
+
+async function loadUserPrefs() {
+  if (!currentUser) return DEFAULT_PREFS;
+  try {
+    const { data, error } = await db.from('user_preferences').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if (error) { console.error('loadUserPrefs error:', error); return { ...DEFAULT_PREFS }; }
+    if (!data) {
+      const { error: insErr } = await db.from('user_preferences').insert({ user_id: currentUser.id });
+      if (insErr) console.error('loadUserPrefs insert error:', insErr);
+      return { ...DEFAULT_PREFS };
+    }
+    userPrefs = { ...DEFAULT_PREFS, ...data };
+    return userPrefs;
+  } catch (e) {
+    console.error('loadUserPrefs exception:', e);
+    return { ...DEFAULT_PREFS };
+  }
+}
+
+async function saveUserPrefs(updates) {
+  if (!currentUser) throw new Error('Not authenticated');
+  const { error } = await db.from('user_preferences').update(updates).eq('user_id', currentUser.id);
+  if (error) throw error;
+  userPrefs = { ...userPrefs || DEFAULT_PREFS, ...updates };
+  applyPrefsToUI();
+}
+
+function applyPrefsToUI() {
+  if (!userPrefs) return;
+  if (userPrefs.reduce_animations) document.documentElement.classList.add('reduce-anim');
+  else document.documentElement.classList.remove('reduce-anim');
 }
