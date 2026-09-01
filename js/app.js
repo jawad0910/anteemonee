@@ -64,10 +64,14 @@ async function checkAuth() {
 async function loadProfile() {
   if (!currentUser) return;
   try {
-    const { data } = await db
+    const { data, error } = await db
       .from('profiles')
-      .select('id, username, full_name, email, profile_image_url, bio, phone, date_of_birth, province_id, city_id, goals_completed, personal_info_completed, academic_profile_completed')
+      .select('*')
       .eq('id', currentUser.id);
+    if (error) {
+      console.error('Profile query error:', error);
+      return;
+    }
     currentProfile = data?.length ? data[0] : null;
   } catch (e) {
     console.error('Profile load failed:', e);
@@ -722,43 +726,47 @@ async function signInWithSpotify() {
    ========================= */
 
 async function getOnboardingStep() {
-  if (!currentUser) return -1;
+  if (!currentUser) { console.log('[getOnboardingStep] no currentUser → -1'); return -1; }
   try {
     if (!currentProfile) await loadProfile();
     const profile = currentProfile;
-    if (!profile) return 0;
-    if (!profile.date_of_birth || !profile.province_id) return 0;
-    if (!profile.city_id) return 1;
+    if (!profile) { console.log('[getOnboardingStep] no profile → 0'); return 0; }
+    if (!profile.date_of_birth || !profile.province_id) { console.log('[getOnboardingStep] missing dob/province → 0', profile.date_of_birth, profile.province_id); return 0; }
+    if (!profile.city_id) { console.log('[getOnboardingStep] missing city → 1'); return 1; }
     const { data: acads, error: acadErr } = await db.from('student_academic_profiles')
       .select('id, education_system_id, board_id, class_level_id, group_id, college_id, academic_session_id, exam_year')
       .eq('user_id', currentUser.id);
-    if (acadErr) { console.error('getOnboardingStep SAP query error:', acadErr); return -1; }
+    if (acadErr) { console.error('[getOnboardingStep] SAP query error:', acadErr); return -1; }
     const acad = acads?.length ? acads[0] : null;
-    if (!acad || !acad.education_system_id) return 2;
-    if (!acad.board_id) return 3;
-    if (!acad.class_level_id) return 4;
-    if (!acad.group_id) return 5;
+    console.log('[getOnboardingStep] SAP row:', acad);
+    if (!acad || !acad.education_system_id) { console.log('[getOnboardingStep] no SAP or no edu_system → 2'); return 2; }
+    if (!acad.board_id) { console.log('[getOnboardingStep] no board → 3'); return 3; }
+    if (!acad.class_level_id) { console.log('[getOnboardingStep] no class_level → 4'); return 4; }
+    if (!acad.group_id) { console.log('[getOnboardingStep] no group → 5'); return 5; }
     if (acad.id) {
       const { count, error: countErr } = await db.from('student_subjects')
         .select('id', { count: 'exact', head: true })
         .eq('academic_profile_id', acad.id);
-      if (countErr) { console.error('getOnboardingStep subjects query error:', countErr); return -1; }
+      if (countErr) { console.error('[getOnboardingStep] subjects query error:', countErr); return -1; }
+      console.log('[getOnboardingStep] subject count:', count);
       if (!count) return 6;
     } else {
       return 6;
     }
-    if (!acad.academic_session_id) return 8;
+    if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session → 8'); return 8; }
     if (!profile.goals_completed) {
       const { count, error: goalsErr } = await db.from('academic_goals')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', currentUser.id);
-      if (goalsErr) { console.error('getOnboardingStep goals query error:', goalsErr); return -1; }
+      if (goalsErr) { console.error('[getOnboardingStep] goals query error:', goalsErr); return -1; }
+      console.log('[getOnboardingStep] goals count:', count, 'goals_completed:', profile.goals_completed);
       if (!count) return 10;
       return 11;
     }
+    console.log('[getOnboardingStep] all complete → -1');
     return -1;
   } catch (e) {
-    console.error('getOnboardingStep error:', e);
+    console.error('[getOnboardingStep] error:', e);
     return -1;
   }
 }
@@ -1294,7 +1302,7 @@ function renderOnboardingStep() {
           d.selected_subjects = [];
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
-          await loadGroups(d.class_level_id);
+          await loadGroups(d.education_system_id);
         });
       });
       break;
@@ -1506,27 +1514,42 @@ async function saveOnboarding() {
 
     const d = onboarding.data;
 
+    const examYearInt = parseInt(d.exam_year, 10);
+    const finalExamYear = Number.isFinite(examYearInt) ? examYearInt : new Date().getFullYear();
+
+    const sapPayload = {
+      user_id: currentUser.id,
+      education_system_id: d.education_system_id ? Number(d.education_system_id) : null,
+      board_id: d.board_id ? Number(d.board_id) : null,
+      class_level_id: d.class_level_id ? Number(d.class_level_id) : null,
+      exam_year: finalExamYear,
+      group_id: d.group_id ? Number(d.group_id) : null,
+      college_id: d.college_id ? Number(d.college_id) : null,
+      academic_session_id: d.academic_session_id ? Number(d.academic_session_id) : null
+    };
+
+    console.log('[saveOnboarding] SAP payload:', JSON.stringify(sapPayload));
+
     const { error: profileErr } = await db.from('profiles').update({
       date_of_birth: d.dob || null,
-      province_id: d.province_id || null,
-      city_id: d.city_id || null,
+      province_id: d.province_id ? Number(d.province_id) : null,
+      city_id: d.city_id ? Number(d.city_id) : null,
       personal_info_completed: true,
       academic_profile_completed: true,
       goals_completed: true
     }).eq('id', currentUser.id);
-    if (profileErr) throw profileErr;
+    if (profileErr) {
+      console.error('[saveOnboarding] Profile update error:', profileErr);
+      throw profileErr;
+    }
+    console.log('[saveOnboarding] Profile updated OK');
 
-    const { data: acadProfileRes, error: acadErr } = await db.from('student_academic_profiles').upsert({
-      user_id: currentUser.id,
-      education_system_id: d.education_system_id,
-      board_id: d.board_id,
-      class_level_id: d.class_level_id,
-      exam_year: parseInt(d.exam_year) || new Date().getFullYear(),
-      group_id: d.group_id,
-      college_id: d.college_id,
-      academic_session_id: d.academic_session_id
-    }, { onConflict: 'user_id' }).select('id');
-    if (acadErr) throw acadErr;
+    const { data: acadProfileRes, error: acadErr } = await db.from('student_academic_profiles').upsert(sapPayload, { onConflict: 'user_id' }).select('id');
+    if (acadErr) {
+      console.error('[saveOnboarding] SAP upsert error:', acadErr);
+      throw acadErr;
+    }
+    console.log('[saveOnboarding] SAP upsert result:', acadProfileRes);
 
     const acadProfile = acadProfileRes?.length ? acadProfileRes[0] : null;
 
@@ -1534,26 +1557,36 @@ async function saveOnboarding() {
       await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
       const subjectRows = d.selected_subjects.map(sid => ({
         academic_profile_id: acadProfile.id,
-        subject_id: sid
+        subject_id: Number(sid)
       }));
       const { error: subErr } = await db.from('student_subjects').insert(subjectRows);
-      if (subErr) throw subErr;
+      if (subErr) {
+        console.error('[saveOnboarding] Subjects insert error:', subErr);
+        throw subErr;
+      }
+      console.log('[saveOnboarding] Subjects saved:', subjectRows.length);
     }
 
     await db.from('academic_goals').delete().eq('user_id', currentUser.id);
     if (d.selected_goals.length) {
       const goalRows = d.selected_goals.map(gid => ({
         user_id: currentUser.id,
-        goal_id: gid,
+        goal_id: Number(gid),
         is_primary: gid === d.primary_goal_id
       }));
       const { error: goalErr } = await db.from('academic_goals').insert(goalRows);
-      if (goalErr) throw goalErr;
+      if (goalErr) {
+        console.error('[saveOnboarding] Goals insert error:', goalErr);
+        throw goalErr;
+      }
+      console.log('[saveOnboarding] Goals saved:', goalRows.length);
     }
 
     await loadProfile();
+    console.log('[saveOnboarding] All saved. Profile after reload:', JSON.stringify(currentProfile));
     window.location.href = REDIRECT_URL;
   } catch (err) {
+    console.error('[saveOnboarding] CAUGHT:', err);
     showMessage(errorEl, err.message || 'Failed to save. Please try again.');
   } finally {
     setLoading(nextBtn, false);
