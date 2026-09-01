@@ -1036,11 +1036,11 @@ function renderConnected() {
   }
   if (hasGoogle) {
     const googleIdentity = identities.find(i => i.provider === 'google');
-    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked', hasGoogle, canDisconnectAny, googleIdentity?.id));
+    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked', hasGoogle, canDisconnectAny, googleIdentity));
   }
   if (hasSpotify) {
     const spotIdentity = identities.find(i => i.provider === 'spotify');
-    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked', hasSpotify, canDisconnectAny, spotIdentity?.id));
+    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked', hasSpotify, canDisconnectAny, spotIdentity));
   }
 
   if (!rows.length) {
@@ -1114,7 +1114,7 @@ async function linkProvider(provider) {
   }
 }
 
-function buildProviderRow(provider, name, status, isConnected, canDisconnect, identityId) {
+function buildProviderRow(provider, name, status, isConnected, canDisconnect, identity) {
   const row = document.createElement('div');
   row.className = 'provider-row';
   const icon = document.createElement('div');
@@ -1136,19 +1136,19 @@ function buildProviderRow(provider, name, status, isConnected, canDisconnect, id
   row.appendChild(icon);
   row.appendChild(info);
 
-  if (canDisconnect && isConnected && provider !== 'email' && identityId) {
+  if (canDisconnect && isConnected && provider !== 'email' && identity) {
     const disconnectBtn = document.createElement('button');
     disconnectBtn.className = 'btn-settings btn-settings-danger';
     disconnectBtn.style.cssText = 'padding:6px 12px;font-size:12px;flex-shrink:0';
     disconnectBtn.textContent = 'Disconnect';
-    disconnectBtn.onclick = () => disconnectProvider(provider, identityId);
+    disconnectBtn.onclick = () => disconnectProvider(provider, identity);
     row.appendChild(disconnectBtn);
   }
 
   return row;
 }
 
-async function disconnectProvider(provider, identityId) {
+async function disconnectProvider(provider, identity) {
   const providerName = provider === 'google' ? 'Google' : 'Spotify';
 
   const providers = currentUser?.app_metadata?.providers || [];
@@ -1161,7 +1161,7 @@ async function disconnectProvider(provider, identityId) {
   if (!confirmed) return;
 
   try {
-    const { error } = await db.auth.unlinkIdentity({ identityId });
+    const { error } = await db.auth.unlinkIdentity(identity);
     if (error) throw error;
     showToastSettings(`${providerName} disconnected successfully`);
     await refreshUser();
