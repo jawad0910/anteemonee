@@ -239,13 +239,13 @@
 
 .roadmap-timeline {
   position: relative;
-  padding-left: 32px;
+  padding-left: 44px;
 }
 
 .roadmap-timeline::before {
   content: '';
   position: absolute;
-  left: 11px;
+  left: 15px;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -254,7 +254,7 @@
 
 .roadmap-item {
   position: relative;
-  padding: 0 0 32px 40px;
+  padding: 0 0 32px 0;
   text-align: left;
 }
 
@@ -264,7 +264,7 @@
 
 .roadmap-dot {
   position: absolute;
-  left: -27px;
+  left: -35px;
   top: 4px;
   width: 12px;
   height: 12px;
