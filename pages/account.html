@@ -829,7 +829,7 @@
             </div>
             <div class="edit-form-group">
               <label>Exam Year</label>
-              <input type="text" id="edit-exam-year" value="${a?.exam_year || ''}" placeholder="e.g. 2027" maxlength="4">
+              <div class="field-value" style="padding:12px 0;font-size:15px;color:var(--text-secondary)">${a?.exam_year || 'Not set'}</div>
             </div>
             <div class="edit-actions">
               <button class="btn-cancel" onclick="toggleSection('academic')">Cancel</button>
@@ -1011,7 +1011,6 @@
         const grp = document.getElementById('edit-group').value || null;
         const college = document.getElementById('edit-college').value || null;
         const session = document.getElementById('edit-session').value || null;
-        const examYear = document.getElementById('edit-exam-year').value.trim() || null;
 
         const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
           user_id: currentUser.id,
@@ -1020,8 +1019,7 @@
           class_level_id: cls,
           group_id: grp,
           college_id: college,
-          academic_session_id: session,
-          exam_year: examYear
+          academic_session_id: session
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
@@ -1036,7 +1034,7 @@
           acctData.subjects = subjectIds;
         }
 
-        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session, exam_year: examYear };
+        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session };
 
         if (acctData.ref.subjects_list.length === 0 && grp) {
           await loadSubjectsList(eduSystem, grp);
