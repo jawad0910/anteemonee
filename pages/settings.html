@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Wassal</title>
+  <meta name="theme-color" content="#07080C">
+  <link rel="icon" href="../assets/wassal.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/settings.css">
+  <link rel="preload" href="https://unpkg.com/@supabase/supabase-js@2" as="script">
+</head>
+<body>
+
+  <!-- HEADER (same as other pages) -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
+        <span class="logo-text">Wassal</span>
+      </a>
+      <nav class="nav-links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="account.html">Account</a></li>
+      </nav>
+      <div class="auth-actions" id="auth-logged-out" style="display:none">
+        <a href="login.html" class="btn-login">Login</a>
+      </div>
+      <div class="auth-actions" id="auth-logged-in" style="display:none">
+        <div class="profile-avatar-container" id="profile-avatar-container"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOT LOGGED IN -->
+  <div id="settings-not-auth" style="display:none" class="settings-page" style="text-align:center;padding-top:160px">
+    <h2 style="margin-bottom:12px">Sign in required</h2>
+    <p style="color:var(--text-secondary);margin-bottom:24px">Please sign in to access your settings.</p>
+    <a href="login.html" class="btn-settings btn-settings-primary">Sign In</a>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="settings-page" id="settings-page" style="display:none">
+
+    <div class="settings-header">
+      <h1>Settings</h1>
+      <p>Manage your Wassal experience and preferences.</p>
+    </div>
+
+    <div class="settings-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="settings-sidebar" id="settings-sidebar">
+        <button class="settings-nav-item active" data-cat="account">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Account
+        </button>
+        <button class="settings-nav-item" data-cat="security">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Login & Security
+        </button>
+        <button class="settings-nav-item" data-cat="notifications">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notifications
+        </button>
+        <button class="settings-nav-item" data-cat="ai">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+          AI & Learning
+        </button>
+        <button class="settings-nav-item" data-cat="study">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          Study
+        </button>
+        <button class="settings-nav-item" data-cat="appearance">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          Appearance
+        </button>
+        <button class="settings-nav-item" data-cat="language">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Language
+        </button>
+        <button class="settings-nav-item" data-cat="privacy">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Privacy
+        </button>
+        <div class="settings-nav-divider"></div>
+        <button class="settings-nav-item" data-cat="data">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Data & Storage
+        </button>
+        <button class="settings-nav-item" data-cat="subscription">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Subscription
+        </button>
+        <button class="settings-nav-item" data-cat="coupons">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><circle cx="18" cy="16" r="2"/></svg>
+          Coupons
+        </button>
+        <button class="settings-nav-item" data-cat="connected">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Connected Accounts
+        </button>
+        <div class="settings-nav-divider"></div>
+        <button class="settings-nav-item" data-cat="help">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Help & Support
+        </button>
+        <button class="settings-nav-item" data-cat="about">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          About
+        </button>
+        <div class="settings-nav-divider"></div>
+        <button class="settings-nav-item" onclick="settingsLogout()" style="color:#FF6675">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </button>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="settings-content" id="settings-content">
+
+        <!-- ============ ACCOUNT ============ -->
+        <div class="settings-category active" data-cat="account">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Account</h2>
+            <p>Manage your profile and personal information.</p>
+          </div>
+          <div id="settings-account-content"></div>
+        </div>
+
+        <!-- ============ SECURITY ============ -->
+        <div class="settings-category" data-cat="security">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Login & Security</h2>
+            <p>Manage your password and login methods.</p>
+          </div>
+          <div id="settings-security-content"></div>
+        </div>
+
+        <!-- ============ NOTIFICATIONS ============ -->
+        <div class="settings-category" data-cat="notifications">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Notifications</h2>
+            <p>Control what you get notified about.</p>
+          </div>
+          <div id="settings-notifications-content"></div>
+        </div>
+
+        <!-- ============ AI & LEARNING ============ -->
+        <div class="settings-category" data-cat="ai">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>AI & Learning</h2>
+            <p>Customize how the AI tutor works for you.</p>
+          </div>
+          <div id="settings-ai-content"></div>
+        </div>
+
+        <!-- ============ STUDY ============ -->
+        <div class="settings-category" data-cat="study">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Study Preferences</h2>
+            <p>Set your study goals and planner defaults.</p>
+          </div>
+          <div id="settings-study-content"></div>
+        </div>
+
+        <!-- ============ APPEARANCE ============ -->
+        <div class="settings-category" data-cat="appearance">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Appearance</h2>
+            <p>Customize the look and feel of Wassal.</p>
+          </div>
+          <div id="settings-appearance-content"></div>
+        </div>
+
+        <!-- ============ LANGUAGE ============ -->
+        <div class="settings-category" data-cat="language">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Language & Region</h2>
+            <p>Set your preferred language and region.</p>
+          </div>
+          <div id="settings-language-content"></div>
+        </div>
+
+        <!-- ============ PRIVACY ============ -->
+        <div class="settings-category" data-cat="privacy">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Privacy</h2>
+            <p>Control your data and visibility.</p>
+          </div>
+          <div id="settings-privacy-content"></div>
+        </div>
+
+        <!-- ============ DATA & STORAGE ============ -->
+        <div class="settings-category" data-cat="data">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Data & Storage</h2>
+            <p>Manage cached data and local storage.</p>
+          </div>
+          <div id="settings-data-content"></div>
+        </div>
+
+        <!-- ============ SUBSCRIPTION ============ -->
+        <div class="settings-category" data-cat="subscription">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Subscription</h2>
+            <p>View your plan and manage premium access.</p>
+          </div>
+          <div id="settings-subscription-content"></div>
+        </div>
+
+        <!-- ============ COUPONS ============ -->
+        <div class="settings-category" data-cat="coupons">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Coupons</h2>
+            <p>Redeem a coupon code for premium access.</p>
+          </div>
+          <div id="settings-coupons-content"></div>
+        </div>
+
+        <!-- ============ CONNECTED ACCOUNTS ============ -->
+        <div class="settings-category" data-cat="connected">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Connected Accounts</h2>
+            <p>Manage linked login providers.</p>
+          </div>
+          <div id="settings-connected-content"></div>
+        </div>
+
+        <!-- ============ HELP & SUPPORT ============ -->
+        <div class="settings-category" data-cat="help">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Help & Support</h2>
+            <p>Get help or send feedback.</p>
+          </div>
+          <div id="settings-help-content"></div>
+        </div>
+
+        <!-- ============ ABOUT ============ -->
+        <div class="settings-category" data-cat="about">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>About Wassal</h2>
+            <p>The Student OS for Pakistan.</p>
+          </div>
+          <div id="settings-about-content"></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- DELETE ACCOUNT MODAL -->
+  <div class="settings-modal-overlay" id="delete-account-modal">
+    <div class="settings-modal">
+      <h3>Delete Account</h3>
+      <p>This action is <strong style="color:#FF6675">permanent and irreversible</strong>. All your data including profile, academic information, study progress, AI history, and preferences will be permanently deleted.</p>
+      <p>Type <strong style="color:#FF6675">DELETE</strong> to confirm:</p>
+      <input type="text" class="confirm-input" id="delete-confirm-input" placeholder='Type "DELETE"'>
+      <div class="modal-actions">
+        <button class="btn-settings btn-settings-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-settings btn-settings-danger" id="delete-account-btn" onclick="confirmDeleteAccount()" disabled>Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="settings-toast" id="settings-toast"></div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/settings.js"></script>
+</body>
+</html>
