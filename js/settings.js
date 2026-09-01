@@ -858,10 +858,10 @@ function renderSubscriptionContent(container, planCard) {
   }
   container.appendChild(newPlanCard);
 
-  const aiUsed = ent?.ai_sessions_used ?? '—';
-  const aiLimit = ent?.ai_sessions_limit ?? '—';
-  const scansUsed = ent?.scans_used ?? '—';
-  const scansLimit = ent?.scans_limit ?? '—';
+  const aiUsed = ent?.ai_used ?? '—';
+  const aiLimit = ent?.ai_limit ?? '—';
+  const scansUsed = ent?.scan_used ?? '—';
+  const scansLimit = ent?.scan_limit ?? '—';
   const statusLabel = ent?.subscription_status || 'free';
 
   const usageRows = [
