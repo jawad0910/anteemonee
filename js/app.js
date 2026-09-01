@@ -118,6 +118,19 @@ function updateAuthUI() {
     if (mobileLoggedIn) mobileLoggedIn.style.display = 'flex';
     renderProfileAvatar();
     renderMobileProfile();
+
+    const heroCta = document.getElementById('hero-cta');
+    if (heroCta) { heroCta.textContent = 'Go to Account'; heroCta.onclick = () => window.location.href = REDIRECT_URL; }
+    const ctaBtn = document.getElementById('cta-btn');
+    if (ctaBtn) { ctaBtn.textContent = 'Go to Account'; ctaBtn.onclick = () => window.location.href = REDIRECT_URL; }
+    const ctaLabel = document.getElementById('cta-label');
+    if (ctaLabel) ctaLabel.textContent = 'Welcome Back';
+    const ctaTitle = document.getElementById('cta-title');
+    if (ctaTitle) ctaTitle.textContent = 'Continue Your Journey';
+    const ctaDesc = document.getElementById('cta-desc');
+    if (ctaDesc) ctaDesc.textContent = 'Pick up right where you left off.';
+    const footerLink = document.getElementById('footer-signup-link');
+    if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = 'pages/account.html'; }
   } else {
     if (loggedOut) loggedOut.style.display = 'flex';
     if (loggedIn) loggedIn.style.display = 'none';
