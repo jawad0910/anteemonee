@@ -434,8 +434,10 @@ async function handleSignup(e) {
 
     if (data?.session) {
       currentUser = data.user;
+      await checkAuth();
       await ensureProfile();
-      window.location.href = ONBOARDING_URL;
+      const step = await getOnboardingStep();
+      window.location.href = step >= 0 ? ONBOARDING_URL : REDIRECT_URL;
       return;
     }
 
@@ -727,29 +729,37 @@ async function getOnboardingStep() {
     if (!profile) return 0;
     if (!profile.date_of_birth || !profile.province_id) return 0;
     if (!profile.city_id) return 1;
-    const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id);
+    const { data: acads, error: acadErr } = await db.from('student_academic_profiles')
+      .select('id, education_system_id, board_id, class_level_id, group_id, college_id, academic_session_id, exam_year')
+      .eq('user_id', currentUser.id);
+    if (acadErr) { console.error('getOnboardingStep SAP query error:', acadErr); return -1; }
     const acad = acads?.length ? acads[0] : null;
     if (!acad || !acad.education_system_id) return 2;
     if (!acad.board_id) return 3;
     if (!acad.class_level_id) return 4;
     if (!acad.group_id) return 5;
     if (acad.id) {
-      const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
+      const { count, error: countErr } = await db.from('student_subjects')
+        .select('id', { count: 'exact', head: true })
+        .eq('academic_profile_id', acad.id);
+      if (countErr) { console.error('getOnboardingStep subjects query error:', countErr); return -1; }
       if (!count) return 6;
     } else {
       return 6;
     }
-    if (!acad.college_id) return 7;
     if (!acad.academic_session_id) return 8;
     if (!profile.goals_completed) {
-      const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+      const { count, error: goalsErr } = await db.from('academic_goals')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id);
+      if (goalsErr) { console.error('getOnboardingStep goals query error:', goalsErr); return -1; }
       if (!count) return 10;
       return 11;
     }
     return -1;
   } catch (e) {
     console.error('getOnboardingStep error:', e);
-    return 0;
+    return -1;
   }
 }
 
@@ -909,6 +919,10 @@ async function loadOnboardingData() {
 
 async function saveStepData(step) {
   const d = onboarding.data;
+  async function sapExists() {
+    const { data } = await db.from('student_academic_profiles').select('id').eq('user_id', currentUser.id).maybeSingle();
+    return data;
+  }
   switch (step) {
     case 0:
       await db.from('profiles').update({ date_of_birth: d.dob || null, province_id: d.province_id || null }).eq('id', currentUser.id);
@@ -916,35 +930,46 @@ async function saveStepData(step) {
     case 1:
       await db.from('profiles').update({ city_id: d.city_id || null }).eq('id', currentUser.id);
       break;
-    case 2:
-      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, education_system_id: d.education_system_id, board_id: null, class_level_id: null, group_id: null, college_id: null }, { onConflict: 'user_id' });
+    case 2: {
+      const row = await sapExists();
+      if (row) await db.from('student_academic_profiles').update({ education_system_id: d.education_system_id }).eq('user_id', currentUser.id);
       break;
-    case 3:
-      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, board_id: d.board_id }, { onConflict: 'user_id' });
+    }
+    case 3: {
+      const row = await sapExists();
+      if (row) await db.from('student_academic_profiles').update({ board_id: d.board_id }).eq('user_id', currentUser.id);
       break;
-    case 4:
-      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, class_level_id: d.class_level_id, group_id: null }, { onConflict: 'user_id' });
+    }
+    case 4: {
+      const row = await sapExists();
+      if (row) await db.from('student_academic_profiles').update({ class_level_id: d.class_level_id }).eq('user_id', currentUser.id);
       break;
-    case 5:
-      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, group_id: d.group_id }, { onConflict: 'user_id' });
+    }
+    case 5: {
+      const row = await sapExists();
+      if (row) await db.from('student_academic_profiles').update({ group_id: d.group_id }).eq('user_id', currentUser.id);
       break;
+    }
     case 6: {
-      const { data: acads } = await db.from('student_academic_profiles').select('id').eq('user_id', currentUser.id);
-      const acad = acads?.length ? acads[0] : null;
-      if (acad) {
-        await db.from('student_subjects').delete().eq('academic_profile_id', acad.id);
+      const row = await sapExists();
+      if (row) {
+        await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
         if (d.selected_subjects.length) {
-          await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: acad.id, subject_id: sid })));
+          await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
         }
       }
       break;
     }
-    case 7:
-      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, college_id: d.college_id }, { onConflict: 'user_id' });
+    case 7: {
+      const row = await sapExists();
+      if (row) await db.from('student_academic_profiles').update({ college_id: d.college_id }).eq('user_id', currentUser.id);
       break;
-    case 8:
-      await db.from('student_academic_profiles').upsert({ user_id: currentUser.id, academic_session_id: d.academic_session_id, exam_year: d.exam_year || null }, { onConflict: 'user_id' });
+    }
+    case 8: {
+      const row = await sapExists();
+      if (row) await db.from('student_academic_profiles').update({ academic_session_id: d.academic_session_id, exam_year: parseInt(d.exam_year) || new Date().getFullYear() }).eq('user_id', currentUser.id);
       break;
+    }
     case 10:
       await db.from('academic_goals').delete().eq('user_id', currentUser.id);
       if (d.selected_goals.length) {
@@ -978,9 +1003,10 @@ async function onboardingNext() {
   renderOnboardingStep();
 }
 
-function onboardingPrev() {
+async function onboardingPrev() {
   if (onboarding.currentStep <= 0) return;
   onboarding.currentStep--;
+  await loadStepData(onboarding.currentStep);
   renderOnboardingStep();
 }
 
@@ -1001,36 +1027,58 @@ async function loadStepData(step) {
   const r = onboarding.ref;
 
   switch (step) {
-    case 1:
+    case 0:
       if (!r.provinces.length) await loadOnboardingRefData();
       break;
-    case 2:
+    case 1:
       if (d.province_id) await loadCities(d.province_id);
+      break;
+    case 2:
+      if (!r.education_systems.length) await loadOnboardingRefData();
+      if (d.education_system_id) {
+        const province = r.provinces.find(p => p.id == d.province_id);
+        await loadBoards(d.education_system_id, province?.name);
+        await loadClassLevels(d.education_system_id);
+      }
       break;
     case 3:
       if (!r.education_systems.length) await loadOnboardingRefData();
-      break;
-    case 4:
       if (d.education_system_id) {
         const province = r.provinces.find(p => p.id == d.province_id);
         await loadBoards(d.education_system_id, province?.name);
       }
       break;
-    case 5:
+    case 4:
       if (d.education_system_id) await loadClassLevels(d.education_system_id);
       break;
-    case 6:
+    case 5:
       if (d.education_system_id) await loadGroups(d.education_system_id);
       break;
-    case 7:
+    case 6:
       if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
       break;
-    case 8:
+    case 7:
       await loadAllColleges();
       break;
+    case 8:
+      break;
     case 9:
+      if (!r.education_systems.length) await loadOnboardingRefData();
+      if (d.province_id && !r.cities.length) await loadCities(d.province_id);
+      if (d.education_system_id) {
+        if (!r.boards.length) {
+          const province = r.provinces.find(p => p.id == d.province_id);
+          await loadBoards(d.education_system_id, province?.name);
+        }
+        if (!r.class_levels.length) await loadClassLevels(d.education_system_id);
+        if (!r.groups.length) await loadGroups(d.education_system_id);
+        if (!r.subjects.length) await loadSubjects(d.education_system_id, d.group_id);
+      }
+      if (!r.colleges.length) await loadAllColleges();
       break;
     case 10:
+    case 11:
+      if (!r.goal_categories.length) await loadOnboardingRefData();
       break;
   }
 }
@@ -1427,7 +1475,7 @@ async function saveOnboarding() {
       education_system_id: d.education_system_id,
       board_id: d.board_id,
       class_level_id: d.class_level_id,
-      exam_year: d.exam_year || null,
+      exam_year: parseInt(d.exam_year) || new Date().getFullYear(),
       group_id: d.group_id,
       college_id: d.college_id,
       academic_session_id: d.academic_session_id
