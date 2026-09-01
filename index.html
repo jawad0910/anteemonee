@@ -33,7 +33,11 @@
         </ul>
       </nav>
 
-      <div class="auth-actions" id="auth-logged-out">
+      <div class="auth-actions" id="auth-loading">
+        <div class="auth-shimmer"></div>
+      </div>
+
+      <div class="auth-actions" id="auth-logged-out" style="display:none">
         <a href="pages/login.html" class="btn-login">Login</a>
         <a href="pages/signup.html" class="btn-signup">Sign Up</a>
       </div>
@@ -50,7 +54,10 @@
 
   <!-- MOBILE MENU -->
   <div class="mobile-menu">
-    <div id="mobile-auth-logged-out">
+    <div id="mobile-auth-loading">
+      <div class="auth-shimmer" style="margin:12px auto;width:100px"></div>
+    </div>
+    <div id="mobile-auth-logged-out" style="display:none">
       <a href="#hero" class="mobile-nav-link">Home</a>
       <a href="#about" class="mobile-nav-link">About</a>
       <a href="#features" class="mobile-nav-link">Features</a>
