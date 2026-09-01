@@ -817,7 +817,7 @@
             </div>
             <div class="edit-form-group">
               <label>Subjects</label>
-              <div class="multi-select-grid" id="edit-subjects">${subjectChips || '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>'}</div>
+              <div class="field-value" style="padding:12px 0;font-size:15px;color:var(--text-secondary)">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</div>
             </div>
             <div class="edit-form-group">
               <label>College</label>
@@ -1023,22 +1023,7 @@
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
-        if (acadProfile?.id) {
-          await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
-          const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
-          const subjectIds = Array.from(selectedChips).map(c => c.dataset.id);
-          if (subjectIds.length) {
-            const { error: subErr } = await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
-            if (subErr) throw subErr;
-          }
-          acctData.subjects = subjectIds;
-        }
-
         acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session };
-
-        if (acctData.ref.subjects_list.length === 0 && grp) {
-          await loadSubjectsList(eduSystem, grp);
-        }
 
         renderCards();
         showToast('Academic profile updated!');
