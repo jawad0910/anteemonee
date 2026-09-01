@@ -25,7 +25,7 @@ function getBaseUrl() {
   return loc.origin;
 }
 const BASE = getBaseUrl();
-const REDIRECT_URL = BASE + '/pages/account.html';
+const REDIRECT_URL = BASE + '/';
 const ONBOARDING_URL = BASE + '/pages/onboarding.html';
 const RECOVERY_URL = BASE + '/pages/reset-password.html';
 
@@ -108,8 +108,13 @@ async function ensureProfile() {
 function updateAuthUI() {
   const loggedOut = document.getElementById('auth-logged-out');
   const loggedIn = document.getElementById('auth-logged-in');
+  const authLoading = document.getElementById('auth-loading');
   const mobileLoggedOut = document.getElementById('mobile-auth-logged-out');
   const mobileLoggedIn = document.getElementById('mobile-auth-logged-in');
+  const mobileAuthLoading = document.getElementById('mobile-auth-loading');
+
+  if (authLoading) authLoading.style.display = 'none';
+  if (mobileAuthLoading) mobileAuthLoading.style.display = 'none';
 
   if (currentUser) {
     if (loggedOut) loggedOut.style.display = 'none';
@@ -120,9 +125,9 @@ function updateAuthUI() {
     renderMobileProfile();
 
     const heroCta = document.getElementById('hero-cta');
-    if (heroCta) { heroCta.textContent = 'Go to Account'; heroCta.onclick = () => window.location.href = REDIRECT_URL; }
+    if (heroCta) { heroCta.textContent = 'Go to Dashboard'; heroCta.onclick = () => window.location.href = REDIRECT_URL; }
     const ctaBtn = document.getElementById('cta-btn');
-    if (ctaBtn) { ctaBtn.textContent = 'Go to Account'; ctaBtn.onclick = () => window.location.href = REDIRECT_URL; }
+    if (ctaBtn) { ctaBtn.textContent = 'Go to Dashboard'; ctaBtn.onclick = () => window.location.href = REDIRECT_URL; }
     const ctaLabel = document.getElementById('cta-label');
     if (ctaLabel) ctaLabel.textContent = 'Welcome Back';
     const ctaTitle = document.getElementById('cta-title');
