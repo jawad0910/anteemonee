@@ -865,6 +865,32 @@ async function loadSubjects(systemId, groupId) {
   onboarding.ref.subjects = data || [];
 }
 
+function getClassYearValue() {
+  const cl = onboarding.ref.class_levels.find(c => c.id == onboarding.data.class_level_id);
+  return cl?.value || 0;
+}
+
+function isSecondYear() {
+  return getClassYearValue() === 12;
+}
+
+function getOnboardingSubjects() {
+  const secondYear = isSecondYear();
+  const suffix = secondYear ? '-II' : '-I';
+  return onboarding.ref.subjects
+    .filter(s => {
+      const name = (s.name || '').toLowerCase();
+      if (name.includes('pakistan studies')) return secondYear;
+      if (name.includes('islamiat') || name.includes('islamiyat')) return !secondYear;
+      return true;
+    })
+    .map(s => {
+      const name = (s.name || '').toLowerCase();
+      const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
+      return { ...s, displayName: noSuffix ? s.name : `${s.name} ${suffix}` };
+    });
+}
+
 async function loadAllColleges() {
   const { data } = await db.from('colleges')
     .select('id,name,city_id')
@@ -1056,7 +1082,7 @@ async function loadStepData(step) {
       break;
     case 6:
       if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
-      d.selected_subjects = r.subjects.map(s => s.id);
+      d.selected_subjects = getOnboardingSubjects().map(s => s.id);
       break;
     case 7:
       await loadAllColleges();
@@ -1297,20 +1323,24 @@ function renderOnboardingStep() {
       });
       break;
 
-    case 6:
+    case 6: {
+      const secondYear = isSecondYear();
+      const subjectList = getOnboardingSubjects();
       container.innerHTML = `
         <h2 class="onboarding-title">Confirm Your Subjects</h2>
         <p class="onboarding-subtitle">These are your subjects based on your group selection.</p>
         <div class="onboarding-review">
-          ${r.subjects.map(s => `
+          ${subjectList.map(s => `
             <div class="review-row">
               <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Group Subject'}</span>
-              <span class="review-value">${s.name}</span>
+              <span class="review-value">${s.displayName}</span>
             </div>
           `).join('')}
         </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:14px">${secondYear ? 'Per Govt. of Pakistan notification, 2nd Year students study Pakistan Studies only.' : 'Per Govt. of Pakistan notification, 1st Year students study Islamiyat only.'}</p>
       `;
       break;
+    }
 
     case 7:
       container.innerHTML = `
@@ -1386,7 +1416,7 @@ function renderOnboardingStep() {
           <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || '—'}</span></div>
           <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => r.subjects.find(s => s.id == id)?.name).filter(Boolean).join(', ') || '—'}</span></div>
+          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>
           <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.label || '—'}</span></div>
           <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || '—'}</span></div>
