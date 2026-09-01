@@ -1161,7 +1161,7 @@ async function disconnectProvider(provider, identityId) {
   if (!confirmed) return;
 
   try {
-    const { error } = await db.auth.unlink({ identityId });
+    const { error } = await db.auth.unlinkIdentity({ identityId });
     if (error) throw error;
     showToastSettings(`${providerName} disconnected successfully`);
     await refreshUser();
