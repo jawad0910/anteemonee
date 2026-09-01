@@ -3,10 +3,8 @@
    ========================================================= */
 
 let settingsPrefs = null;
-let settingsAcad = null;
 let settingsEntitlements = null;
-let settingsProfile = null;
-let settingsSaving = false;
+let savePrefTimer = null;
 
 /* =========================
    INIT
@@ -22,92 +20,27 @@ async function initSettings() {
   }
   document.getElementById('settings-page').style.display = 'block';
   await ensureProfile();
-  settingsProfile = currentProfile;
-
   settingsPrefs = await loadUserPrefs();
-  await loadEntitlements();
-  await loadAcademicData();
-
-  renderAccount();
+  applyReduceAnimations();
   renderSecurity();
   renderNotifications();
   renderAI();
-  renderStudy();
   renderAppearance();
   renderLanguage();
   renderPrivacy();
-  renderDataStorage();
-  renderSubscription();
+  await renderSubscription();
   renderCoupons();
   renderConnected();
   renderHelp();
   renderAbout();
-
   setupNavSidebar();
   setupDeleteConfirmInput();
+  recordSessionActivity();
+  startActivityTracking();
 }
 
 /* =========================
-   DATA LOADERS
-   ========================= */
-
-async function loadEntitlements() {
-  try {
-    const { data } = await db.from('user_entitlements').select('*').eq('user_id', currentUser.id).maybeSingle();
-    settingsEntitlements = data;
-  } catch (e) { settingsEntitlements = null; }
-}
-
-async function loadAcademicData() {
-  try {
-    const { data } = await db.from('student_academic_profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
-    settingsAcad = data;
-  } catch (e) { settingsAcad = null; }
-}
-
-/* =========================
-   NAV SIDEBAR
-   ========================= */
-
-function setupNavSidebar() {
-  const btns = document.querySelectorAll('.settings-nav-item[data-cat]');
-  btns.forEach(btn => {
-    btn.addEventListener('click', () => switchCategory(btn.dataset.cat));
-  });
-  const hash = window.location.hash.replace('#', '');
-  if (hash && document.querySelector(`.settings-category[data-cat="${hash}"]`)) {
-    switchCategory(hash);
-  }
-}
-
-function switchCategory(cat) {
-  document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector(`.settings-nav-item[data-cat="${cat}"]`)?.classList.add('active');
-  document.querySelectorAll('.settings-category').forEach(c => c.classList.remove('active'));
-  document.querySelector(`.settings-category[data-cat="${cat}"]`)?.classList.add('active');
-  window.history.replaceState(null, '', '#' + cat);
-  const sidebar = document.getElementById('settings-sidebar');
-  if (sidebar.classList.contains('open')) sidebar.classList.remove('open');
-}
-
-function showSidebar() {
-  document.getElementById('settings-sidebar').classList.add('open');
-}
-
-/* =========================
-   TOAST
-   ========================= */
-
-function showToastSettings(msg, isError) {
-  const t = document.getElementById('settings-toast');
-  t.textContent = msg;
-  t.className = 'settings-toast' + (isError ? ' error' : '');
-  requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-/* =========================
-   COMPONENTS
+   SHARED COMPONENTS
    ========================= */
 
 function buildToggle(id, checked, onChange) {
@@ -145,7 +78,13 @@ function buildRow(title, desc, rightEl) {
   info.className = 'setting-info';
   info.innerHTML = `<div class="setting-title">${title}</div>${desc ? `<div class="setting-desc">${desc}</div>` : ''}`;
   row.appendChild(info);
-  if (rightEl) row.appendChild(rightEl);
+  if (rightEl) {
+    if (typeof rightEl === 'string') {
+      row.insertAdjacentHTML('beforeend', rightEl);
+    } else {
+      row.appendChild(rightEl);
+    }
+  }
   return row;
 }
 
@@ -162,84 +101,81 @@ function buildCard(headerText, rows) {
   return card;
 }
 
-function buildSkeleton(count) {
-  const card = document.createElement('div');
-  card.className = 'settings-card';
-  for (let i = 0; i < count; i++) {
-    const row = document.createElement('div');
-    row.className = 'skeleton-row';
-    row.innerHTML = `<div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div>`;
-    card.appendChild(row);
+function buildClickableRow(title, desc, onClick) {
+  const row = document.createElement('div');
+  row.className = 'setting-row clickable';
+  row.innerHTML = `<div class="setting-info"><div class="setting-title">${title}</div><div class="setting-desc">${desc || ''}</div></div><span class="setting-arrow">&#8250;</span>`;
+  row.addEventListener('click', onClick);
+  return row;
+}
+
+function showToastSettings(msg, isError) {
+  const t = document.getElementById('settings-toast');
+  t.textContent = msg;
+  t.className = 'settings-toast' + (isError ? ' error' : '');
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+let savePrefTimers = {};
+function savePref(key, value) {
+  settingsPrefs = { ...settingsPrefs, [key]: value };
+  clearTimeout(savePrefTimers[key]);
+  savePrefTimers[key] = setTimeout(async () => {
+    try {
+      await saveUserPrefs({ [key]: value });
+      showToastSettings('Saved');
+    } catch (e) {
+      showToastSettings('Failed to save', true);
+    }
+  }, 400);
+}
+
+function badge(type, text) {
+  return `<span class="status-badge ${type}">${text}</span>`;
+}
+
+function applyReduceAnimations() {
+  if (settingsPrefs?.reduce_animations) {
+    document.documentElement.classList.add('reduce-anim');
+  } else {
+    document.documentElement.classList.remove('reduce-anim');
   }
-  return card;
 }
 
 /* =========================
-   1. ACCOUNT
+   SIDEBAR NAV
    ========================= */
 
-function renderAccount() {
-  const c = document.getElementById('settings-account-content');
-  c.innerHTML = '';
-  const p = settingsProfile;
-  const imgUrl = p?.profile_image_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || '';
-  const name = p?.full_name || '';
-  const username = p?.username || '';
-  const email = currentUser?.email || '';
-  const bio = p?.bio || '';
+function setupNavSidebar() {
+  const btns = document.querySelectorAll('.settings-nav-item[data-cat]');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => switchCategory(btn.dataset.cat));
+  });
+  const hash = window.location.hash.replace('#', '');
+  if (hash && document.querySelector(`.settings-category[data-cat="${hash}"]`)) {
+    switchCategory(hash);
+  }
+}
 
-  const profileCard = document.createElement('div');
-  profileCard.className = 'settings-card';
-  profileCard.innerHTML = `
-    <div class="settings-profile-card">
-      <div class="settings-profile-avatar">
-        ${imgUrl ? `<img src="${imgUrl}" alt="${username}">` : `<div class="avatar-fallback">${(name || username || 'U').charAt(0).toUpperCase()}</div>`}
-      </div>
-      <div class="settings-profile-info">
-        <h3>${name || username}</h3>
-        <p>@${username} &middot; ${email}</p>
-      </div>
-    </div>`;
-  c.appendChild(profileCard);
+function switchCategory(cat) {
+  document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+  const navBtn = document.querySelector(`.settings-nav-item[data-cat="${cat}"]`);
+  if (navBtn) navBtn.classList.add('active');
+  document.querySelectorAll('.settings-category').forEach(c => c.classList.remove('active'));
+  const target = document.querySelector(`.settings-category[data-cat="${cat}"]`);
+  if (target) target.classList.add('active');
+  window.history.replaceState(null, '', '#' + cat);
+  const sidebar = document.getElementById('settings-sidebar');
+  if (sidebar.classList.contains('open')) sidebar.classList.remove('open');
+}
 
-  const personalRows = [
-    buildRow('Full Name', name || 'Not set', null),
-    buildRow('Username', '@' + (username || 'Not set'), null),
-    buildRow('Email', email, null),
-    buildRow('Phone', p?.phone || currentUser?.phone || 'Not set', null),
-    buildRow('Bio', bio || 'No bio', null),
-  ];
-  const editBtn = document.createElement('button');
-  editBtn.className = 'btn-settings btn-settings-primary';
-  editBtn.textContent = 'Edit Profile';
-  editBtn.style.cssText = 'margin:12px 20px 16px;';
-  editBtn.addEventListener('click', () => window.location.href = 'account.html');
-  const personalCard = buildCard('PERSONAL INFORMATION', personalRows);
-  personalCard.appendChild(editBtn);
-  c.appendChild(personalCard);
-
-  const acad = settingsAcad;
-  const acadRows = [
-    buildRow('Education System', acad?.education_system_id ? 'FSc' : 'Not set'),
-    buildRow('Board', acad?.board_id ? 'Set' : 'Not set'),
-    buildRow('Class', acad?.class_level_id ? 'Set' : 'Not set'),
-    buildRow('Group', acad?.group_id ? 'Set' : 'Not set'),
-    buildRow('College', acad?.college_id ? 'Set' : 'Not set'),
-    buildRow('Academic Session', acad?.academic_session_id ? 'Set' : 'Not set'),
-    buildRow('Exam Year', acad?.exam_year || 'Not set'),
-  ];
-  const acadEditBtn = document.createElement('button');
-  acadEditBtn.className = 'btn-settings btn-settings-secondary';
-  acadEditBtn.textContent = 'Edit Academic Profile';
-  acadEditBtn.style.cssText = 'margin:12px 20px 16px;';
-  acadEditBtn.addEventListener('click', () => window.location.href = 'account.html');
-  const acadCard = buildCard('ACADEMIC PROFILE', acadRows);
-  acadCard.appendChild(acadEditBtn);
-  c.appendChild(acadCard);
+function showSidebar() {
+  document.getElementById('settings-sidebar').classList.add('open');
 }
 
 /* =========================
-   2. SECURITY
+   1. LOGIN & SECURITY
    ========================= */
 
 function renderSecurity() {
@@ -250,14 +186,14 @@ function renderSecurity() {
   pwCard.className = 'settings-card';
   pwCard.innerHTML = `
     <div class="settings-card-header">CHANGE PASSWORD</div>
-    <div style="padding:16px 20px 20px;">
+    <div style="padding:16px 20px 20px">
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Current Password</label>
         <input type="password" class="setting-input" id="sec-current-pw" placeholder="Enter current password" style="max-width:100%">
       </div>
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">New Password</label>
-        <input type="password" class="setting-input" id="sec-new-pw" placeholder="At least 8 characters" style="max-width:100%">
+        <input type="password" class="setting-input" id="sec-new-pw" placeholder="Min 8 chars, 1 uppercase, 1 number" style="max-width:100%">
       </div>
       <div style="margin-bottom:16px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Confirm New Password</label>
@@ -269,42 +205,45 @@ function renderSecurity() {
     </div>`;
   c.appendChild(pwCard);
 
-  const providers = currentUser?.app_metadata?.providers || [];
-  const hasGoogle = providers.includes('google');
-  const hasSpotify = providers.includes('spotify');
-  const hasEmail = providers.includes('email');
+  const tfaCard = document.createElement('div');
+  tfaCard.className = 'settings-card';
+  tfaCard.id = 'settings-2fa-card';
+  tfaCard.innerHTML = `
+    <div class="settings-card-header">TWO-FACTOR AUTHENTICATION</div>
+    <div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>`;
+  c.appendChild(tfaCard);
+  load2FAStatus();
 
-  const connectedRows = [];
-  if (hasEmail) connectedRows.push(buildConnectedRow('email', 'Email & Password', 'Signed in with email'));
-  if (hasGoogle) connectedRows.push(buildConnectedRow('google', 'Google', 'Connected'));
-  if (hasSpotify) connectedRows.push(buildConnectedRow('spotify', 'Spotify', 'Connected'));
-  if (!connectedRows.length) connectedRows.push(buildRow('No providers connected', ''));
-  c.appendChild(buildCard('CONNECTED LOGIN PROVIDERS', connectedRows));
+  const sessionsCard = document.createElement('div');
+  sessionsCard.className = 'settings-card';
+  sessionsCard.id = 'settings-sessions-card';
+  sessionsCard.innerHTML = `
+    <div class="settings-card-header">ACTIVE SESSIONS</div>
+    <div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>`;
+  c.appendChild(sessionsCard);
+  loadSessions();
 
-  const sessionRows = [
-    buildRow('Current Session', 'Active now', badge('active', 'Active')),
-  ];
-  c.appendChild(buildCard('SESSIONS', sessionRows));
-}
+  const eventsCard = document.createElement('div');
+  eventsCard.className = 'settings-card';
+  eventsCard.id = 'settings-events-card';
+  eventsCard.innerHTML = `
+    <div class="settings-card-header">SECURITY EVENTS</div>
+    <div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>`;
+  c.appendChild(eventsCard);
+  loadSecurityEvents();
 
-function buildConnectedRow(provider, name, status) {
-  const row = document.createElement('div');
-  row.className = 'provider-row';
-  const icon = document.createElement('div');
-  icon.className = 'provider-icon ' + provider;
-  icon.innerHTML = provider === 'google' ? '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#4285F4" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>'
-    : provider === 'spotify' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="#1ED760"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>'
-    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>';
-  const info = document.createElement('div');
-  info.className = 'setting-info';
-  info.innerHTML = `<div class="setting-title">${name}</div><div class="setting-desc">${status}</div>`;
-  row.appendChild(icon);
-  row.appendChild(info);
-  return row;
-}
-
-function badge(type, text) {
-  return `<span class="status-badge ${type}">${text}</span>`;
+  const dangerCard = document.createElement('div');
+  dangerCard.className = 'settings-danger-zone';
+  dangerCard.innerHTML = `
+    <div class="settings-card-header">DANGER ZONE</div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-title">Delete Account</div>
+        <div class="setting-desc">Permanently delete your account and all data</div>
+      </div>
+      <button class="btn-settings btn-settings-danger" onclick="openDeleteModal()">Delete</button>
+    </div>`;
+  c.appendChild(dangerCard);
 }
 
 async function changePassword() {
@@ -318,11 +257,21 @@ async function changePassword() {
   errEl.style.display = 'none';
   okEl.style.display = 'none';
 
-  if (!current || !newPw || !confirm) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
-  if (newPw.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
-  if (!/[A-Z]/.test(newPw)) { errEl.textContent = 'Password must contain an uppercase letter.'; errEl.style.display = 'block'; return; }
-  if (!/[0-9]/.test(newPw)) { errEl.textContent = 'Password must contain a number.'; errEl.style.display = 'block'; return; }
-  if (newPw !== confirm) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+  if (!current || !newPw || !confirm) {
+    errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return;
+  }
+  if (newPw.length < 8) {
+    errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return;
+  }
+  if (!/[A-Z]/.test(newPw)) {
+    errEl.textContent = 'Password must contain an uppercase letter.'; errEl.style.display = 'block'; return;
+  }
+  if (!/[0-9]/.test(newPw)) {
+    errEl.textContent = 'Password must contain a number.'; errEl.style.display = 'block'; return;
+  }
+  if (newPw !== confirm) {
+    errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return;
+  }
 
   setLoading(btn, true);
   try {
@@ -333,6 +282,7 @@ async function changePassword() {
     document.getElementById('sec-current-pw').value = '';
     document.getElementById('sec-new-pw').value = '';
     document.getElementById('sec-confirm-pw').value = '';
+    await recordSecurityEvent('password_changed');
     showToastSettings('Password updated');
   } catch (err) {
     errEl.textContent = err.message || 'Failed to update password.';
@@ -342,8 +292,254 @@ async function changePassword() {
   }
 }
 
+/* ---- Two-Factor Authentication ---- */
+
+let tfaFactors = [];
+
+async function load2FAStatus() {
+  const card = document.getElementById('settings-2fa-card');
+  try {
+    const { data, error } = await db.auth.mfa.listFactors();
+    if (error) throw error;
+    tfaFactors = (data?.totp || []);
+  } catch {
+    tfaFactors = [];
+  }
+  render2FA(card);
+}
+
+function render2FA(card) {
+  const enabled = tfaFactors.length > 0;
+  card.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'settings-card-header';
+  header.textContent = 'TWO-FACTOR AUTHENTICATION';
+  card.appendChild(header);
+
+  const row = document.createElement('div');
+  row.className = 'setting-row';
+  const info = document.createElement('div');
+  info.className = 'setting-info';
+  info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc">${enabled ? 'Protects your account with a TOTP code' : 'Add an extra layer of security'}</div>`;
+  row.appendChild(info);
+
+  if (enabled) {
+    const badgeEl = document.createElement('span');
+    badgeEl.innerHTML = badge('active', 'Enabled');
+    const disableBtn = document.createElement('button');
+    disableBtn.className = 'btn-settings btn-settings-danger';
+    disableBtn.textContent = 'Disable';
+    disableBtn.style.marginLeft = '8px';
+    disableBtn.addEventListener('click', disable2FA);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0';
+    wrap.appendChild(badgeEl);
+    wrap.appendChild(disableBtn);
+    row.appendChild(wrap);
+  } else {
+    const enableBtn = document.createElement('button');
+    enableBtn.className = 'btn-settings btn-settings-primary';
+    enableBtn.textContent = 'Enable';
+    enableBtn.addEventListener('click', startEnable2FA);
+    row.appendChild(enableBtn);
+  }
+  card.appendChild(row);
+}
+
+async function startEnable2FA() {
+  const card = document.getElementById('settings-2fa-card');
+  card.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'settings-card-header';
+  header.textContent = 'SET UP AUTHENTICATOR';
+  card.appendChild(header);
+
+  const body = document.createElement('div');
+  body.style.padding = '16px 20px 20px';
+  body.innerHTML = '<p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Scanning the QR code with your authenticator app (Google Authenticator, Authy, etc.)</p><div id="tfa-qr-area" style="text-align:center;margin-bottom:16px"></div><div style="margin-bottom:12px"><label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Enter the 6-digit code from your app</label><input type="text" class="setting-input" id="tfa-code" placeholder="000000" maxlength="6" style="max-width:200px;text-align:center;font-size:18px;letter-spacing:4px"></div><div id="tfa-error" style="color:#FF6675;font-size:13px;margin-bottom:10px;display:none"></div><div style="display:flex;gap:8px"><button class="btn-settings btn-settings-primary" id="tfa-verify-btn" onclick="verify2FASetup()">Verify & Enable</button><button class="btn-settings btn-settings-ghost" onclick="load2FAStatus()">Cancel</button></div>';
+  card.appendChild(body);
+
+  try {
+    const { data, error } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator' });
+    if (error) throw error;
+    window._tfaFactorId = data.id;
+    const qrArea = document.getElementById('tfa-qr-area');
+    if (data.totp?.qr_code) {
+      qrArea.innerHTML = `<img src="${data.totp.qr_code}" alt="QR Code" style="width:180px;height:180px;border-radius:12px;background:#fff;padding:8px">`;
+    } else if (data.totp?.uri) {
+      qrArea.innerHTML = `<div style="background:#fff;padding:16px;border-radius:12px;display:inline-block"><canvas id="tfa-qr-canvas"></canvas></div>`;
+      drawQR(data.totp.uri);
+    } else {
+      qrArea.innerHTML = `<p style="color:var(--text-secondary);font-size:13px">If you cannot scan the QR code, enter this secret manually:<br><code style="background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;font-size:14px">${data.totp?.secret || 'Unknown'}</code></p>`;
+    }
+  } catch (err) {
+    const errEl = document.getElementById('tfa-error');
+    if (errEl) { errEl.textContent = err.message || 'Failed to start 2FA setup.'; errEl.style.display = 'block'; }
+  }
+}
+
+function drawQR(uri) {
+  try {
+    const canvas = document.getElementById('tfa-qr-canvas');
+    if (!canvas) return;
+    canvas.width = 164; canvas.height = 164;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, 164, 164);
+    ctx.fillStyle = '#000';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Scan this URI:', 82, 80);
+    ctx.fillText(uri.substring(0, 40) + '...', 82, 100);
+  } catch (e) {}
+}
+
+async function verify2FASetup() {
+  const code = document.getElementById('tfa-code').value.trim();
+  const errEl = document.getElementById('tfa-error');
+  const btn = document.getElementById('tfa-verify-btn');
+  errEl.style.display = 'none';
+
+  if (!code || code.length !== 6) {
+    errEl.textContent = 'Please enter a 6-digit code.'; errEl.style.display = 'block'; return;
+  }
+
+  setLoading(btn, true);
+  try {
+    const { error } = await db.auth.mfa.challengeAndVerify({ factorId: window._tfaFactorId, code });
+    if (error) throw error;
+    await recordSecurityEvent('2fa_enabled');
+    showToastSettings('Two-factor authentication enabled');
+    await load2FAStatus();
+  } catch (err) {
+    errEl.textContent = err.message || 'Invalid code. Please try again.';
+    errEl.style.display = 'block';
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+async function disable2FA() {
+  if (!tfaFactors.length) return;
+  if (!confirm('Disable two-factor authentication? This makes your account less secure.')) return;
+
+  const factor = tfaFactors[0];
+  try {
+    const { error: challengeErr } = await db.auth.mfa.challenge({ factorId: factor.id });
+    if (challengeErr) throw challengeErr;
+    const { error: unenrollErr } = await db.auth.mfa.unenroll({ factorId: factor.id });
+    if (unenrollErr) throw unenrollErr;
+    await recordSecurityEvent('2fa_disabled');
+    showToastSettings('Two-factor authentication disabled');
+    tfaFactors = [];
+    render2FA(document.getElementById('settings-2fa-card'));
+  } catch (err) {
+    showToastSettings(err.message || 'Failed to disable 2FA', true);
+  }
+}
+
+/* ---- Active Sessions ---- */
+
+async function loadSessions() {
+  const card = document.getElementById('settings-sessions-card');
+  const sessions = await fetchSessions();
+  card.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'settings-card-header';
+  header.textContent = 'ACTIVE SESSIONS';
+  card.appendChild(header);
+
+  if (!sessions.length) {
+    const row = buildRow('No sessions found', '');
+    card.appendChild(row);
+    return;
+  }
+
+  const currentId = sessionStorage.getItem('wassal_session_id');
+  const current = sessions.find(s => s.id === currentId || s.is_current);
+  const others = sessions.filter(s => s !== current);
+
+  if (current) {
+    const row = document.createElement('div');
+    row.className = 'provider-row';
+    const icon = document.createElement('div');
+    icon.className = 'provider-icon email';
+    icon.innerHTML = getDeviceIcon(current);
+    const info = document.createElement('div');
+    info.className = 'setting-info';
+    info.innerHTML = `<div class="setting-title">${getDeviceLabel(current)} ${badge('active', 'This device')}</div><div class="setting-desc">Active now</div>`;
+    row.appendChild(icon);
+    row.appendChild(info);
+    card.appendChild(row);
+  }
+
+  others.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'provider-row';
+    const icon = document.createElement('div');
+    icon.className = 'provider-icon email';
+    icon.innerHTML = getDeviceIcon(s);
+    const info = document.createElement('div');
+    info.className = 'setting-info';
+    info.innerHTML = `<div class="setting-title">${getDeviceLabel(s)}</div><div class="setting-desc">${timeAgo(s.last_active_at)}</div>`;
+    row.appendChild(icon);
+    row.appendChild(info);
+    card.appendChild(row);
+  });
+
+  if (others.length) {
+    const divider = document.createElement('div');
+    divider.style.padding = '8px 20px 16px';
+    const signOutBtn = document.createElement('button');
+    signOutBtn.className = 'btn-settings btn-settings-danger';
+    signOutBtn.textContent = `Sign out ${others.length} other session${others.length > 1 ? 's' : ''}`;
+    signOutBtn.addEventListener('click', async () => {
+      if (!confirm('Sign out all other devices?')) return;
+      setLoading(signOutBtn, true);
+      await signOutOtherSessions();
+      showToastSettings('Other sessions signed out');
+      await loadSessions();
+      setLoading(signOutBtn, false);
+    });
+    divider.appendChild(signOutBtn);
+    card.appendChild(divider);
+  }
+}
+
+/* ---- Security Events ---- */
+
+const SECURITY_EVENT_LABELS = {
+  password_changed: 'Password changed',
+  new_signin: 'New sign-in',
+  '2fa_enabled': '2FA enabled',
+  '2fa_disabled': '2FA disabled',
+  signed_out_others: 'Signed out other devices',
+  email_changed: 'Email changed'
+};
+
+async function loadSecurityEvents() {
+  const card = document.getElementById('settings-events-card');
+  const events = await fetchSecurityEvents(10);
+  card.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'settings-card-header';
+  header.textContent = 'SECURITY EVENTS';
+  card.appendChild(header);
+
+  if (!events.length) {
+    card.appendChild(buildRow('No recent events', ''));
+    return;
+  }
+
+  events.forEach(ev => {
+    const label = SECURITY_EVENT_LABELS[ev.kind] || ev.kind;
+    const row = buildRow(label, timeAgo(ev.created_at));
+    card.appendChild(row);
+  });
+}
+
 /* =========================
-   3. NOTIFICATIONS
+   2. NOTIFICATIONS
    ========================= */
 
 function renderNotifications() {
@@ -360,8 +556,8 @@ function renderNotifications() {
   c.appendChild(buildCard('STUDY', studyRows));
 
   const aiRows = [
-    buildRow('AI Recommendations', 'AI-powered study suggestions', buildToggle('t-notify_ai', p.notify_ai_recommendations, v => savePref('notify_ai_recommendations', v))),
     buildRow('Daily Learning', 'Daily learning activity reminders', buildToggle('t-notify_daily', p.notify_daily_learning, v => savePref('notify_daily_learning', v))),
+    buildRow('AI Recommendations', 'AI-powered study suggestions', buildToggle('t-notify_ai', p.notify_ai_recommendations, v => savePref('notify_ai_recommendations', v))),
   ];
   c.appendChild(buildCard('AI & LEARNING', aiRows));
 
@@ -374,7 +570,7 @@ function renderNotifications() {
 }
 
 /* =========================
-   4. AI & LEARNING
+   3. AI PREFERENCES
    ========================= */
 
 function renderAI() {
@@ -383,13 +579,26 @@ function renderAI() {
   const p = settingsPrefs || {};
 
   const responseRows = [
-    buildRow('AI Response Style', 'How detailed the AI responds', buildSelect([
+    buildRow('Response Style', 'How detailed the AI responds', buildSelect([
       { value: 'concise', label: 'Concise' },
       { value: 'balanced', label: 'Balanced' },
       { value: 'detailed', label: 'Detailed' },
     ], p.ai_response_style, v => savePref('ai_response_style', v))),
   ];
   c.appendChild(buildCard('RESPONSE STYLE', responseRows));
+
+  const explanationLevel = localStorage.getItem('ai_explanation_level') || 'standard';
+  const explRows = [
+    buildRow('Explanation Level', 'Depth of concept explanations', buildSelect([
+      { value: 'simple', label: 'Simple' },
+      { value: 'standard', label: 'Standard' },
+      { value: 'advanced', label: 'Advanced' },
+    ], explanationLevel, v => {
+      localStorage.setItem('ai_explanation_level', v);
+      showToastSettings('Explanation level saved');
+    })),
+  ];
+  c.appendChild(buildCard('EXPLANATION', explRows));
 
   const langRows = [
     buildRow('AI Language', 'Language for AI responses', buildSelect([
@@ -402,15 +611,13 @@ function renderAI() {
   c.appendChild(buildCard('LANGUAGE', langRows));
 
   const voiceRows = [
-    buildRow('Voice Enabled', 'Enable voice responses', buildToggle('t-ai_voice', p.ai_voice_enabled, v => savePref('ai_voice_enabled', v))),
     buildRow('Voice Speed', 'Default speaking speed', buildSelect([
       { value: 75, label: '0.75x' },
       { value: 100, label: '1x (Normal)' },
       { value: 125, label: '1.25x' },
       { value: 150, label: '1.5x' },
-      { value: 175, label: '1.75x' },
-      { value: 200, label: '2x' },
     ], p.ai_voice_speed, v => savePref('ai_voice_speed', parseInt(v)))),
+    buildRow('Voice Enabled', 'Enable voice responses', buildToggle('t-ai_voice', p.ai_voice_enabled, v => savePref('ai_voice_enabled', v))),
     buildRow('Autoplay Voice', 'Auto-play AI voice responses', buildToggle('t-ai_autoplay', p.ai_autoplay_voice, v => savePref('ai_autoplay_voice', v))),
   ];
   c.appendChild(buildCard('VOICE', voiceRows));
@@ -422,69 +629,7 @@ function renderAI() {
 }
 
 /* =========================
-   5. STUDY PREFERENCES
-   ========================= */
-
-function renderStudy() {
-  const c = document.getElementById('settings-study-content');
-  c.innerHTML = '';
-  const p = settingsPrefs || {};
-
-  const goalRows = [
-    buildRow('Daily Study Goal', 'Target study time per day', buildSelect([
-      { value: 30, label: '30 minutes' },
-      { value: 60, label: '1 hour' },
-      { value: 90, label: '1.5 hours' },
-      { value: 120, label: '2 hours' },
-      { value: 180, label: '3 hours' },
-      { value: 240, label: '4 hours' },
-    ], p.planner_daily_goal_minutes, v => savePref('planner_daily_goal_minutes', parseInt(v)))),
-    buildRow('Default Session Length', 'Length of each study session', buildSelect([
-      { value: 25, label: '25 minutes' },
-      { value: 30, label: '30 minutes' },
-      { value: 45, label: '45 minutes' },
-      { value: 60, label: '60 minutes' },
-      { value: 90, label: '90 minutes' },
-    ], p.planner_default_session_min, v => savePref('planner_default_session_min', parseInt(v)))),
-  ];
-  c.appendChild(buildCard('GOALS & SESSIONS', goalRows));
-
-  const plannerRows = [
-    buildRow('Week Starts On', 'First day of the week', buildSelect([
-      { value: 1, label: 'Monday' },
-      { value: 6, label: 'Saturday' },
-      { value: 0, label: 'Sunday' },
-    ], p.planner_week_starts_on, v => savePref('planner_week_starts_on', parseInt(v)))),
-    buildRow('Break Reminders', 'Remind to take breaks', buildSelect([
-      { value: 'short_breaks', label: 'Short Breaks (Pomodoro)' },
-      { value: 'long_breaks', label: 'Long Breaks' },
-      { value: 'none', label: 'No Break Reminders' },
-    ], p.planner_break_preference, v => savePref('planner_break_preference', v))),
-    buildRow('Auto Schedule', 'Automatically schedule tasks', buildToggle('t-auto_sched', p.planner_auto_schedule, v => savePref('planner_auto_schedule', v))),
-    buildRow('Exam Prep Mode', 'Exam preparation strategy', buildSelect([
-      { value: 'balanced', label: 'Balanced' },
-      { value: 'weak_topics', label: 'Focus Weak Topics' },
-      { value: 'revision', label: 'Heavy Revision' },
-    ], p.planner_exam_prep_mode, v => savePref('planner_exam_prep_mode', v))),
-  ];
-  c.appendChild(buildCard('PLANNER', plannerRows));
-
-  const learningRows = [
-    buildRow('Default Difficulty', 'Difficulty level for practice', buildSelect([
-      { value: 'easy', label: 'Easy' },
-      { value: 'medium', label: 'Medium' },
-      { value: 'hard', label: 'Hard' },
-      { value: 'mixed', label: 'Mixed' },
-    ], p.learning_default_difficulty, v => savePref('learning_default_difficulty', v))),
-    buildRow('Auto-Save Mistakes', 'Automatically save mistakes', buildToggle('t-auto_mistakes', p.learning_auto_save_mistakes, v => savePref('learning_auto_save_mistakes', v))),
-    buildRow('Show Frequency', 'Show question frequency data', buildToggle('t-show_freq', p.learning_show_frequency, v => savePref('learning_show_frequency', v))),
-    buildRow('Show Mastery', 'Show topic mastery levels', buildToggle('t-show_mastery', p.learning_show_mastery, v => savePref('learning_show_mastery', v))),
-  ];
-  c.appendChild(buildCard('LEARNING', learningRows));
-}
-
-/* =========================
-   6. APPEARANCE
+   4. APPEARANCE
    ========================= */
 
 function renderAppearance() {
@@ -492,42 +637,27 @@ function renderAppearance() {
   c.innerHTML = '';
   const p = settingsPrefs || {};
 
-  const themeRows = [
-    buildRow('Theme', 'Choose your preferred theme', buildSelect([
-      { value: 'dark', label: 'Dark' },
-      { value: 'light', label: 'Light' },
-      { value: 'system', label: 'System Default' },
-    ], p.theme_mode, v => savePref('theme_mode', v))),
-    buildRow('Accent Color', 'Primary accent color', buildSelect([
-      { value: 'violet', label: 'Violet' },
-      { value: 'blue', label: 'Blue' },
-      { value: 'cyan', label: 'Cyan' },
-      { value: 'green', label: 'Green' },
-    ], p.accent_color, v => savePref('accent_color', v))),
-  ];
-  c.appendChild(buildCard('THEME', themeRows));
-
-  const effectRows = [
-    buildRow('Glass Intensity', 'Intensity of glass morphism effects', buildSelect([
-      { value: 'low', label: 'Low' },
-      { value: 'medium', label: 'Medium' },
-      { value: 'high', label: 'High' },
-    ], p.glass_intensity, v => savePref('glass_intensity', v))),
-    buildRow('Reduce Animations', 'Reduce motion for accessibility', buildToggle('t-reduce_anim', p.reduce_animations, v => {
+  const rows = [
+    buildRow('Reduce Animations', 'Minimize motion for accessibility', buildToggle('t-reduce_anim', p.reduce_animations, v => {
       savePref('reduce_animations', v);
       if (v) document.documentElement.classList.add('reduce-anim');
       else document.documentElement.classList.remove('reduce-anim');
     })),
-    buildRow('Interface Density', 'Layout compactness', buildSelect([
+    buildRow('Visual Effects', 'Intensity of glass morphism effects', buildSelect([
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' },
+    ], p.glass_intensity, v => savePref('glass_intensity', v))),
+    buildRow('Layout Density', 'Interface compactness', buildSelect([
       { value: 'comfortable', label: 'Comfortable' },
       { value: 'compact', label: 'Compact' },
     ], p.layout_density, v => savePref('layout_density', v))),
   ];
-  c.appendChild(buildCard('VISUAL EFFECTS', effectRows));
+  c.appendChild(buildCard('APPEARANCE', rows));
 }
 
 /* =========================
-   7. LANGUAGE
+   5. LANGUAGE
    ========================= */
 
 function renderLanguage() {
@@ -535,29 +665,21 @@ function renderLanguage() {
   c.innerHTML = '';
   const p = settingsPrefs || {};
 
-  const langRows = [
+  const rows = [
     buildRow('App Language', 'Interface language', buildSelect([
       { value: 'english', label: 'English' },
       { value: 'urdu', label: 'Urdu' },
-      { value: 'roman_urdu', label: 'Roman Urdu' },
     ], p.app_language, v => savePref('app_language', v))),
     buildRow('Textbook Language', 'Language for learning content', buildSelect([
       { value: 'english', label: 'English' },
       { value: 'urdu', label: 'Urdu' },
-      { value: 'roman_urdu', label: 'Roman Urdu' },
     ], p.textbook_language, v => savePref('textbook_language', v))),
   ];
-  c.appendChild(buildCard('LANGUAGE PREFERENCES', langRows));
-
-  const infoRows = [
-    buildRow('Date Format', 'DD/MM/YYYY (Pakistan standard)'),
-    buildRow('Time Zone', 'Asia/Karachi (PKT)'),
-  ];
-  c.appendChild(buildCard('REGION', infoRows));
+  c.appendChild(buildCard('LANGUAGE', rows));
 }
 
 /* =========================
-   8. PRIVACY
+   6. PRIVACY
    ========================= */
 
 function renderPrivacy() {
@@ -570,14 +692,6 @@ function renderPrivacy() {
       { value: 'private', label: 'Only Me' },
       { value: 'public', label: 'Everyone' },
     ], p.privacy_profile_visibility, v => savePref('privacy_profile_visibility', v))),
-    buildRow('Stats Visibility', 'Who can see your stats', buildSelect([
-      { value: 'private', label: 'Only Me' },
-      { value: 'public', label: 'Everyone' },
-    ], p.privacy_stats_visibility, v => savePref('privacy_stats_visibility', v))),
-    buildRow('Activity Visibility', 'Who can see your activity', buildSelect([
-      { value: 'private', label: 'Only Me' },
-      { value: 'public', label: 'Everyone' },
-    ], p.privacy_activity_visibility, v => savePref('privacy_activity_visibility', v))),
   ];
   c.appendChild(buildCard('VISIBILITY', visRows));
 
@@ -590,82 +704,49 @@ function renderPrivacy() {
 }
 
 /* =========================
-   9. DATA & STORAGE
+   7. SUBSCRIPTION
    ========================= */
 
-function renderDataStorage() {
-  const c = document.getElementById('settings-data-content');
-  c.innerHTML = '';
-
-  const cacheRows = [
-    buildRow('Clear Local Cache', 'Remove cached data from this device. Cloud data is NOT affected.', null),
-  ];
-  const cacheCard = buildCard('CACHE', cacheRows);
-  const clearBtn = document.createElement('button');
-  clearBtn.className = 'btn-settings btn-settings-secondary';
-  clearBtn.textContent = 'Clear Cache';
-  clearBtn.style.cssText = 'margin:12px 20px 16px;';
-  clearBtn.addEventListener('click', clearLocalCache);
-  cacheCard.appendChild(clearBtn);
-  c.appendChild(cacheCard);
-
-  const storageRows = [
-    buildRow('Local Storage', `${(localStorage.length * 0.001).toFixed(1)} KB used`),
-    buildRow('Data Location', 'Supabase Cloud (Pakistan region)'),
-    buildRow('Sync Status', 'Real-time sync enabled', badge('active', 'Active')),
-  ];
-  c.appendChild(buildCard('STORAGE INFORMATION', storageRows));
-
-  const exportCard = document.createElement('div');
-  exportCard.className = 'settings-card';
-  exportCard.innerHTML = `
-    <div class="settings-card-header">EXPORT</div>
-    <div style="padding:16px 20px">
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Download a copy of your account data. This includes your profile, academic data, and preferences.</p>
-      <button class="btn-settings btn-settings-secondary" onclick="exportData()">Request Data Export</button>
-    </div>`;
-  c.appendChild(exportCard);
-}
-
-function clearLocalCache() {
-  try {
-    const keysToKeep = [];
-    const keys = Object.keys(localStorage);
-    keys.forEach(k => { if (!keysToKeep.includes(k)) localStorage.removeItem(k); });
-    showToastSettings('Cache cleared successfully');
-  } catch (e) {
-    showToastSettings('Failed to clear cache', true);
-  }
-}
-
-function exportData() {
-  showToastSettings('Data export request received. You will be notified when ready.');
-}
-
-/* =========================
-   10. SUBSCRIPTION
-   ========================= */
-
-function renderSubscription() {
+async function renderSubscription() {
   const c = document.getElementById('settings-subscription-content');
   c.innerHTML = '';
-  const ent = settingsEntitlements;
-  const isPro = ent?.plan_type === 'premium' && ent?.subscription_status === 'active';
 
   const planCard = document.createElement('div');
   planCard.className = 'settings-card';
+  planCard.innerHTML = '<div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>';
+  c.appendChild(planCard);
+
+  try {
+    const { data, error } = await db.rpc('get_entitlement_snapshot');
+    if (error) throw error;
+    settingsEntitlements = data;
+  } catch {
+    settingsEntitlements = null;
+  }
+
+  renderSubscriptionContent(c, planCard);
+}
+
+function renderSubscriptionContent(container, planCard) {
+  container.removeChild(planCard);
+  const ent = settingsEntitlements;
+  const isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
+
+  const newPlanCard = document.createElement('div');
+  newPlanCard.className = 'settings-card';
   if (isPro) {
-    const expires = ent.premium_expires_at ? new Date(ent.premium_expires_at).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' }) : 'No expiry';
-    planCard.innerHTML = `
+    const expires = ent.expires_at || ent.premium_expires_at;
+    const expiresStr = expires ? new Date(expires).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' }) : 'No expiry';
+    newPlanCard.innerHTML = `
       <div class="plan-card">
         <div class="plan-icon pro">&#10024;</div>
         <div class="plan-info">
           <h4>Wassal Pro ${badge('premium', 'Active')}</h4>
-          <p>Expires ${expires}</p>
+          <p>Expires ${expiresStr}</p>
         </div>
       </div>`;
   } else {
-    planCard.innerHTML = `
+    newPlanCard.innerHTML = `
       <div class="plan-card">
         <div class="plan-icon free">&#128218;</div>
         <div class="plan-info">
@@ -678,15 +759,27 @@ function renderSubscription() {
     upgradeBtn.textContent = 'Join Premium Waitlist';
     upgradeBtn.style.cssText = 'margin:0 20px 16px;';
     upgradeBtn.addEventListener('click', joinWaitlist);
-    planCard.appendChild(upgradeBtn);
+    newPlanCard.appendChild(upgradeBtn);
   }
-  c.appendChild(planCard);
+  container.appendChild(newPlanCard);
+
+  const aiUsed = ent?.ai_sessions_used ?? '—';
+  const aiLimit = ent?.ai_sessions_limit ?? '—';
+  const scansUsed = ent?.scans_used ?? '—';
+  const scansLimit = ent?.scans_limit ?? '—';
+  const statusLabel = ent?.subscription_status || 'free';
 
   const usageRows = [
-    buildRow('AI Sessions', isPro ? 'Unlimited' : 'Limited per month'),
-    buildRow('Scans', isPro ? 'Unlimited' : 'Limited per month'),
+    buildRow('Plan Type', isPro ? 'Premium' : 'Free', isPro ? badge('premium', 'Pro') : badge('inactive', 'Free')),
+    buildRow('Status', statusLabel, badge(isPro ? 'active' : 'inactive', statusLabel)),
+    buildRow('AI Sessions', `${aiUsed} / ${aiLimit}`, null),
+    buildRow('Scans', `${scansUsed} / ${scansLimit}`, null),
   ];
-  c.appendChild(buildCard('FEATURE ACCESS', usageRows));
+  if (isPro && (ent?.expires_at || ent?.premium_expires_at)) {
+    const exp = ent.expires_at || ent.premium_expires_at;
+    usageRows.push(buildRow('Expiry Date', new Date(exp).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })));
+  }
+  container.appendChild(buildCard('USAGE', usageRows));
 }
 
 async function joinWaitlist() {
@@ -700,7 +793,7 @@ async function joinWaitlist() {
 }
 
 /* =========================
-   11. COUPONS
+   8. COUPONS
    ========================= */
 
 function renderCoupons() {
@@ -736,18 +829,43 @@ async function redeemCoupon() {
   setLoading(btn, true);
 
   try {
-    const { data, error } = await db.rpc('redeem_coupon_self', { p_code: code });
-    if (error) throw error;
-    if (data && data.success) {
+    let result = null;
+    let usedFallback = false;
+
+    try {
+      const { data, error } = await db.functions.invoke('redeem-coupon', { body: { code } });
+      if (error) {
+        if (error.message?.includes('404') || error.status === 404 || error.context?.httpStatus === 404) {
+          usedFallback = true;
+        } else {
+          throw error;
+        }
+      } else {
+        result = data;
+      }
+    } catch (fnErr) {
+      if (fnErr.message?.includes('404') || fnErr.status === 404) {
+        usedFallback = true;
+      } else {
+        throw fnErr;
+      }
+    }
+
+    if (usedFallback) {
+      const { data, error } = await db.rpc('redeem_coupon_self', { p_code: code });
+      if (error) throw error;
+      result = data;
+    }
+
+    if (result && (result.success || result === true)) {
       msgEl.textContent = 'Coupon redeemed successfully! Your subscription has been updated.';
       msgEl.style.color = '#35D399';
       msgEl.style.display = 'block';
       document.getElementById('coupon-code').value = '';
-      await loadEntitlements();
-      renderSubscription();
+      await renderSubscription();
       showToastSettings('Coupon redeemed!');
     } else {
-      msgEl.textContent = data?.error_message || 'Invalid or expired coupon code.';
+      msgEl.textContent = result?.error_message || result?.message || 'Invalid or expired coupon code.';
       msgEl.style.color = '#FF6675';
       msgEl.style.display = 'block';
     }
@@ -761,7 +879,7 @@ async function redeemCoupon() {
 }
 
 /* =========================
-   12. CONNECTED ACCOUNTS
+   9. CONNECTED ACCOUNTS
    ========================= */
 
 function renderConnected() {
@@ -777,15 +895,15 @@ function renderConnected() {
 
   if (hasEmail) {
     const emailIdentity = identities.find(i => i.provider === 'email');
-    rows.push(buildConnectedRow('email', 'Email & Password', emailIdentity ? currentUser.email : 'Not linked'));
+    rows.push(buildProviderRow('email', 'Email & Password', emailIdentity ? currentUser.email : 'Not linked'));
   }
   if (hasGoogle) {
     const googleIdentity = identities.find(i => i.provider === 'google');
-    rows.push(buildConnectedRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked'));
+    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked'));
   }
   if (hasSpotify) {
     const spotIdentity = identities.find(i => i.provider === 'spotify');
-    rows.push(buildConnectedRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked'));
+    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked'));
   }
 
   if (!rows.length) {
@@ -794,16 +912,66 @@ function renderConnected() {
 
   c.appendChild(buildCard('LOGIN PROVIDERS', rows));
 
+  const linkRows = [];
+  if (!hasGoogle) {
+    linkRows.push(buildClickableRow('Link Google', 'Connect your Google account for easier sign-in', async () => {
+      try {
+        const { error } = await db.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + '/pages/auth/callback/google.html' }
+        });
+        if (error) throw error;
+      } catch (err) {
+        showToastSettings(err.message || 'Failed to link Google', true);
+      }
+    }));
+  }
+  if (!hasSpotify) {
+    linkRows.push(buildClickableRow('Link Spotify', 'Connect your Spotify account', async () => {
+      try {
+        const { error } = await db.auth.signInWithOAuth({
+          provider: 'spotify',
+          options: { redirectTo: window.location.origin + '/pages/auth/callback/spotify.html' }
+        });
+        if (error) throw error;
+      } catch (err) {
+        showToastSettings(err.message || 'Failed to link Spotify', true);
+      }
+    }));
+  }
+  if (linkRows.length) {
+    c.appendChild(buildCard('LINK ACCOUNTS', linkRows));
+  }
+
   if (providers.length <= 1 && hasEmail) {
     const warnRows = [
-      buildRow('You only have one login method. Add another provider before removing email/password access.', ''),
+      buildRow('You only have one login method', 'Add another provider (Google or Spotify) before removing email/password access to avoid being locked out.'),
     ];
     c.appendChild(buildCard('SECURITY NOTE', warnRows));
   }
 }
 
+function buildProviderRow(provider, name, status) {
+  const row = document.createElement('div');
+  row.className = 'provider-row';
+  const icon = document.createElement('div');
+  icon.className = 'provider-icon ' + provider;
+  const icons = {
+    google: '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#4285F4" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>',
+    spotify: '<svg width="18" height="18" viewBox="0 0 24 24" fill="#1ED760"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>',
+    email: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>'
+  };
+  icon.innerHTML = icons[provider] || icons.email;
+  const info = document.createElement('div');
+  info.className = 'setting-info';
+  info.innerHTML = `<div class="setting-title">${name}</div><div class="setting-desc">${status}</div>`;
+  row.appendChild(icon);
+  row.appendChild(info);
+  return row;
+}
+
 /* =========================
-   13. HELP & SUPPORT
+   10. HELP & SUPPORT
    ========================= */
 
 function renderHelp() {
@@ -811,11 +979,9 @@ function renderHelp() {
   c.innerHTML = '';
 
   const linksRows = [
-    buildClickableRow('Help Center', 'Browse frequently asked questions', () => showToastSettings('Help Center coming soon')),
-    buildClickableRow('Contact Support', 'Get in touch with our team', () => openSupportModal('problem')),
-    buildClickableRow('Send Feedback', 'Share your thoughts with us', () => openSupportModal('suggestion')),
-    buildClickableRow('Report a Problem', 'Report a bug or issue', () => openSupportModal('problem')),
-    buildClickableRow('Feature Request', 'Suggest a new feature', () => openSupportModal('suggestion')),
+    buildClickableRow('Report a Problem', 'Report a bug or issue', () => openSupportForm('problem')),
+    buildClickableRow('Send Feedback', 'Share your thoughts with us', () => openSupportForm('suggestion')),
+    buildClickableRow('Feature Request', 'Suggest a new feature', () => openSupportForm('suggestion')),
   ];
   c.appendChild(buildCard('GET HELP', linksRows));
 
@@ -844,7 +1010,7 @@ function renderHelp() {
 }
 
 let supportKind = 'problem';
-function openSupportModal(kind) {
+function openSupportForm(kind) {
   supportKind = kind;
   document.getElementById('support-form-card').style.display = 'block';
   document.getElementById('support-subject').value = '';
@@ -859,7 +1025,9 @@ async function submitSupport() {
   const msgEl = document.getElementById('support-msg');
   const btn = document.getElementById('support-submit-btn');
 
-  if (!subject || !desc) { msgEl.textContent = 'All fields are required.'; msgEl.style.color = '#FF6675'; msgEl.style.display = 'block'; return; }
+  if (!subject || !desc) {
+    msgEl.textContent = 'All fields are required.'; msgEl.style.color = '#FF6675'; msgEl.style.display = 'block'; return;
+  }
 
   setLoading(btn, true);
   try {
@@ -885,16 +1053,8 @@ async function submitSupport() {
   }
 }
 
-function buildClickableRow(title, desc, onClick) {
-  const row = document.createElement('div');
-  row.className = 'setting-row clickable';
-  row.innerHTML = `<div class="setting-info"><div class="setting-title">${title}</div><div class="setting-desc">${desc || ''}</div></div><span class="setting-arrow">&#8250;</span>`;
-  row.addEventListener('click', onClick);
-  return row;
-}
-
 /* =========================
-   14. ABOUT
+   11. ABOUT
    ========================= */
 
 function renderAbout() {
@@ -915,20 +1075,18 @@ function renderAbout() {
     buildRow('Version', '1.0.0'),
     buildRow('Website', 'wassalpk.vercel.app'),
     buildRow('Platform', 'Web Application'),
-    buildRow('Built With', 'Supabase + Flutter'),
   ];
   c.appendChild(buildCard('APP INFORMATION', infoRows));
 
   const legalRows = [
     buildClickableRow('Privacy Policy', 'How we handle your data', () => showToastSettings('Privacy Policy page coming soon')),
     buildClickableRow('Terms of Service', 'Terms of use', () => showToastSettings('Terms page coming soon')),
-    buildClickableRow('Licenses', 'Open source licenses', () => showToastSettings('Licenses page coming soon')),
   ];
   c.appendChild(buildCard('LEGAL', legalRows));
 }
 
 /* =========================
-   15. LOGOUT
+   12. LOGOUT
    ========================= */
 
 function settingsLogout() {
@@ -940,7 +1098,7 @@ function settingsLogout() {
 }
 
 /* =========================
-   16. DELETE ACCOUNT
+   13. DELETE ACCOUNT
    ========================= */
 
 function openDeleteModal() {
@@ -974,22 +1132,4 @@ async function confirmDeleteAccount() {
     showToastSettings(err.message || 'Failed to delete account.', true);
     setLoading(btn, false);
   }
-}
-
-/* =========================
-   PREFERENCE SAVE HELPER
-   ========================= */
-
-let savePrefTimer = null;
-async function savePref(key, value) {
-  settingsPrefs = { ...settingsPrefs, [key]: value };
-  clearTimeout(savePrefTimer);
-  savePrefTimer = setTimeout(async () => {
-    try {
-      await saveUserPrefs({ [key]: value });
-      showToastSettings('Preference saved');
-    } catch (e) {
-      showToastSettings('Failed to save preference', true);
-    }
-  }, 400);
 }

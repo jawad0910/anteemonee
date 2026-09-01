@@ -1695,3 +1695,145 @@ function applyPrefsToUI() {
   if (userPrefs.reduce_animations) document.documentElement.classList.add('reduce-anim');
   else document.documentElement.classList.remove('reduce-anim');
 }
+
+/* =========================
+   SESSION ACTIVITY TRACKING
+   ========================= */
+
+function parseUserAgent() {
+  const ua = navigator.userAgent;
+  let browser = 'Unknown';
+  if (ua.includes('Firefox/')) browser = 'Firefox';
+  else if (ua.includes('Edg/')) browser = 'Edge';
+  else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
+  else if (ua.includes('Chrome/')) browser = 'Chrome';
+  else if (ua.includes('Safari/')) browser = 'Safari';
+
+  let os = 'Unknown';
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+  let deviceType = 'desktop';
+  if (ua.includes('Mobile') || ua.includes('Android')) deviceType = 'mobile';
+  else if (ua.includes('iPad') || ua.includes('Tablet')) deviceType = 'tablet';
+
+  return { browser, os, device_type: deviceType };
+}
+
+function getDeviceLabel(session) {
+  return `${session.browser} on ${session.os}`;
+}
+
+function getDeviceIcon(session) {
+  if (session.device_type === 'mobile') return '&#128241;';
+  if (session.device_type === 'tablet') return '&#128195;';
+  return '&#128187;';
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return 'Unknown';
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return mins + 'm ago';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days < 7) return days + 'd ago';
+  return new Date(dateStr).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' });
+}
+
+let _activityTimer = null;
+
+async function recordSessionActivity() {
+  if (!currentUser) return;
+  try {
+    const info = parseUserAgent();
+    const sessionId = sessionStorage.getItem('wassal_session_id');
+    if (sessionId) {
+      await db.from('session_activity').update({ last_active_at: new Date().toISOString(), is_current: true }).eq('id', sessionId);
+      return;
+    }
+    const { data: existing } = await db.from('session_activity')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .eq('browser', info.browser)
+      .eq('os', info.os)
+      .eq('device_type', info.device_type)
+      .eq('is_current', true)
+      .limit(1);
+    if (existing?.length) {
+      sessionStorage.setItem('wassal_session_id', existing[0].id);
+      await db.from('session_activity').update({ last_active_at: new Date().toISOString() }).eq('id', existing[0].id);
+      return;
+    }
+    await db.from('session_activity').update({ is_current: false }).eq('user_id', currentUser.id).eq('is_current', true);
+    const { data: inserted } = await db.from('session_activity').insert({
+      user_id: currentUser.id,
+      browser: info.browser,
+      os: info.os,
+      device_type: info.device_type,
+      is_current: true,
+      last_active_at: new Date().toISOString()
+    }).select('id').single();
+    if (inserted?.id) sessionStorage.setItem('wassal_session_id', inserted.id);
+  } catch (e) {
+    console.error('recordSessionActivity error:', e);
+  }
+}
+
+function startActivityTracking() {
+  recordSessionActivity();
+  _activityTimer = setInterval(recordSessionActivity, 5 * 60 * 1000);
+}
+
+function stopActivityTracking() {
+  if (_activityTimer) { clearInterval(_activityTimer); _activityTimer = null; }
+}
+
+async function fetchSessions() {
+  if (!currentUser) return [];
+  try {
+    const { data } = await db.from('session_activity')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('last_active_at', { ascending: false });
+    return data || [];
+  } catch (e) { return []; }
+}
+
+async function signOutOtherSessions() {
+  if (!currentUser) return;
+  try {
+    const currentSessionId = sessionStorage.getItem('wassal_session_id');
+    await db.from('session_activity').delete()
+      .eq('user_id', currentUser.id)
+      .neq('id', currentSessionId || -1);
+    await db.auth.signOut({ scope: 'others' });
+    await db.from('security_events').insert({ user_id: currentUser.id, kind: 'signed_out_others' });
+  } catch (e) { console.error('signOutOtherSessions error:', e); }
+}
+
+async function fetchSecurityEvents(limit = 10) {
+  if (!currentUser) return [];
+  try {
+    const { data } = await db.from('security_events')
+      .select('id, kind, detail, created_at')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return data || [];
+  } catch (e) { return []; }
+}
+
+async function recordSecurityEvent(kind, detail) {
+  if (!currentUser) return;
+  try {
+    await db.from('security_events').insert({ user_id: currentUser.id, kind, detail: detail || null });
+  } catch (e) { /* best-effort */ }
+}
