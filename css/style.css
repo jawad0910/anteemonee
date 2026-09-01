@@ -127,6 +127,20 @@ img { max-width: 100%; display: block; }
   gap: 12px;
 }
 
+.auth-shimmer {
+  width: 80px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.06) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .btn-login {
   font-size: 14px;
   font-weight: 500;
