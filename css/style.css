@@ -2819,7 +2819,7 @@ img { max-width: 100%; display: block; }
 
 /* Mobile */
 @media (max-width: 768px) {
-  .header { padding: 0 16px; height: 60px; }
+  .header { display: none; }
   .nav-links { display: none; }
   .header-actions .auth-actions #auth-logged-out { display: none !important; }
 
