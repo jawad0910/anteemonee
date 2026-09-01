@@ -28,7 +28,7 @@ function getBaseUrl() {
 }
 
 const BASE = getBaseUrl();
-const ACCOUNT_URL = BASE + '/pages/account.html';
+const ACCOUNT_URL = BASE + '/';
 const ONBOARDING_URL = BASE + '/pages/onboarding.html';
 
 function setStatus(text) {
