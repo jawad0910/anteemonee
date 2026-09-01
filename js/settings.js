@@ -43,6 +43,16 @@ async function initSettings() {
    SHARED COMPONENTS
    ========================= */
 
+function togglePwVis(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  btn.innerHTML = isPassword
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
 function buildToggle(id, checked, onChange) {
   const label = document.createElement('label');
   label.className = 'toggle';
@@ -189,15 +199,30 @@ function renderSecurity() {
     <div style="padding:16px 20px 20px">
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Current Password</label>
-        <input type="password" class="setting-input" id="sec-current-pw" placeholder="Enter current password" style="max-width:100%">
+        <div style="position:relative">
+          <input type="password" class="setting-input" id="sec-current-pw" placeholder="Enter current password" style="max-width:100%;padding-right:40px">
+          <button type="button" class="pw-toggle" onclick="togglePwVis('sec-current-pw', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px" aria-label="Toggle password visibility">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">New Password</label>
-        <input type="password" class="setting-input" id="sec-new-pw" placeholder="Min 8 chars, 1 uppercase, 1 number" style="max-width:100%">
+        <div style="position:relative">
+          <input type="password" class="setting-input" id="sec-new-pw" placeholder="Min 8 chars, 1 uppercase, 1 number" style="max-width:100%;padding-right:40px">
+          <button type="button" class="pw-toggle" onclick="togglePwVis('sec-new-pw', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px" aria-label="Toggle password visibility">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
       <div style="margin-bottom:16px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Confirm New Password</label>
-        <input type="password" class="setting-input" id="sec-confirm-pw" placeholder="Re-enter new password" style="max-width:100%">
+        <div style="position:relative">
+          <input type="password" class="setting-input" id="sec-confirm-pw" placeholder="Re-enter new password" style="max-width:100%;padding-right:40px">
+          <button type="button" class="pw-toggle" onclick="togglePwVis('sec-confirm-pw', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px" aria-label="Toggle password visibility">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
       <div id="sec-pw-error" style="color:#FF6675;font-size:13px;margin-bottom:10px;display:none"></div>
       <div id="sec-pw-success" style="color:#35D399;font-size:13px;margin-bottom:10px;display:none"></div>
@@ -301,15 +326,20 @@ async function load2FAStatus() {
   try {
     const { data, error } = await db.auth.mfa.listFactors();
     if (error) throw error;
-    tfaFactors = (data?.totp || []);
+    const allTotp = data?.totp || [];
+    tfaFactors = allTotp.filter(f => f.verify?.verified);
+    const unverified = allTotp.filter(f => !f.verify?.verified);
+    window._tfaUnverified = unverified;
   } catch {
     tfaFactors = [];
+    window._tfaUnverified = [];
   }
   render2FA(card);
 }
 
 function render2FA(card) {
   const enabled = tfaFactors.length > 0;
+  const hasUnverified = (window._tfaUnverified || []).length > 0;
   card.innerHTML = '';
   const header = document.createElement('div');
   header.className = 'settings-card-header';
@@ -320,7 +350,13 @@ function render2FA(card) {
   row.className = 'setting-row';
   const info = document.createElement('div');
   info.className = 'setting-info';
-  info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc">${enabled ? 'Protects your account with a TOTP code' : 'Add an extra layer of security'}</div>`;
+  if (enabled) {
+    info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc">Protects your account with a TOTP code</div>`;
+  } else if (hasUnverified) {
+    info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc" style="color:#FBBF24">Setup incomplete — finish or restart setup</div>`;
+  } else {
+    info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc">Add an extra layer of security</div>`;
+  }
   row.appendChild(info);
 
   if (enabled) {
@@ -339,7 +375,7 @@ function render2FA(card) {
   } else {
     const enableBtn = document.createElement('button');
     enableBtn.className = 'btn-settings btn-settings-primary';
-    enableBtn.textContent = 'Enable';
+    enableBtn.textContent = hasUnverified ? 'Continue Setup' : 'Enable';
     enableBtn.addEventListener('click', startEnable2FA);
     row.appendChild(enableBtn);
   }
@@ -360,6 +396,21 @@ async function startEnable2FA() {
   card.appendChild(body);
 
   try {
+    const { data: factorsData } = await db.auth.mfa.listFactors();
+    const unverifiedFactors = (factorsData?.totp || []).filter(f => !f.verify?.verified);
+
+    if (unverifiedFactors.length > 0) {
+      const existing = unverifiedFactors[0];
+      window._tfaFactorId = existing.id;
+      const qrArea = document.getElementById('tfa-qr-area');
+      qrArea.innerHTML = `
+        <div style="background:rgba(124,92,255,0.1);border:1px solid rgba(124,92,255,0.2);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--accent)">
+          Resuming previous setup. Enter the code from your authenticator app.
+        </div>
+        <button class="btn-settings btn-settings-ghost" onclick="cancelAndRestart2FA()" style="font-size:12px;margin-top:8px">Start Fresh</button>`;
+      return;
+    }
+
     const { data, error } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator' });
     if (error) throw error;
     window._tfaFactorId = data.id;
@@ -376,6 +427,17 @@ async function startEnable2FA() {
     const errEl = document.getElementById('tfa-error');
     if (errEl) { errEl.textContent = err.message || 'Failed to start 2FA setup.'; errEl.style.display = 'block'; }
   }
+}
+
+async function cancelAndRestart2FA() {
+  try {
+    const { data: factorsData } = await db.auth.mfa.listFactors();
+    const unverifiedFactors = (factorsData?.totp || []).filter(f => !f.verify?.verified);
+    for (const f of unverifiedFactors) {
+      await db.auth.mfa.unenroll({ factorId: f.id });
+    }
+  } catch (e) {}
+  startEnable2FA();
 }
 
 function drawQR(uri) {
@@ -932,18 +994,20 @@ function renderConnected() {
   const hasEmail = providers.includes('email');
   const hasGoogle = providers.includes('google');
   const hasSpotify = providers.includes('spotify');
+  const providerCount = providers.length;
+  const canDisconnectAny = providerCount > 1;
 
   if (hasEmail) {
     const emailIdentity = identities.find(i => i.provider === 'email');
-    rows.push(buildProviderRow('email', 'Email & Password', emailIdentity ? currentUser.email : 'Not linked', true));
+    rows.push(buildProviderRow('email', 'Email & Password', emailIdentity ? currentUser.email : 'Not linked', true, false));
   }
   if (hasGoogle) {
     const googleIdentity = identities.find(i => i.provider === 'google');
-    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked', hasGoogle));
+    rows.push(buildProviderRow('google', 'Google', googleIdentity ? (googleIdentity.identity_data?.email || 'Connected') : 'Not linked', hasGoogle, canDisconnectAny, googleIdentity?.id));
   }
   if (hasSpotify) {
     const spotIdentity = identities.find(i => i.provider === 'spotify');
-    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked', hasSpotify));
+    rows.push(buildProviderRow('spotify', 'Spotify', spotIdentity ? (spotIdentity.identity_data?.email || 'Connected') : 'Not linked', hasSpotify, canDisconnectAny, spotIdentity?.id));
   }
 
   if (!rows.length) {
@@ -967,9 +1031,9 @@ function renderConnected() {
     c.appendChild(buildCard('LINK ACCOUNTS', linkRows));
   }
 
-  if (providers.length <= 1 && hasEmail) {
+  if (!canDisconnectAny && providerCount === 1) {
     const warnRows = [
-      buildRow('You only have one login method', 'Add another provider (Google or Spotify) before removing email/password access to avoid being locked out.'),
+      buildRow('Cannot disconnect your only login method', 'Add another provider (Google, Spotify, or Email) before disconnecting to avoid being locked out.'),
     ];
     c.appendChild(buildCard('SECURITY NOTE', warnRows));
   }
@@ -978,6 +1042,7 @@ function renderConnected() {
     const securityRows = [
       buildRow('One account per provider', 'Each Google or Spotify account can only be linked to one Wassal account.'),
       buildRow('Email & username are unique', 'No two accounts can share the same email or username.'),
+      buildRow('Always need one login', 'You must have at least one login method active at all times.'),
     ];
     c.appendChild(buildCard('SECURITY POLICY', securityRows));
   }
@@ -1016,7 +1081,7 @@ async function linkProvider(provider) {
   }
 }
 
-function buildProviderRow(provider, name, status, isConnected) {
+function buildProviderRow(provider, name, status, isConnected, canDisconnect, identityId) {
   const row = document.createElement('div');
   row.className = 'provider-row';
   const icon = document.createElement('div');
@@ -1027,15 +1092,60 @@ function buildProviderRow(provider, name, status, isConnected) {
     email: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>'
   };
   icon.innerHTML = icons[provider] || icons.email;
+
   const info = document.createElement('div');
   info.className = 'setting-info';
   const badge = isConnected
     ? '<span style="color:#35D399;font-size:11px;font-weight:600;margin-left:8px">CONNECTED</span>'
     : '';
   info.innerHTML = `<div class="setting-title">${name}${badge}</div><div class="setting-desc">${status}</div>`;
+
   row.appendChild(icon);
   row.appendChild(info);
+
+  if (canDisconnect && isConnected && provider !== 'email' && identityId) {
+    const disconnectBtn = document.createElement('button');
+    disconnectBtn.className = 'btn-settings btn-settings-danger';
+    disconnectBtn.style.cssText = 'padding:6px 12px;font-size:12px;flex-shrink:0';
+    disconnectBtn.textContent = 'Disconnect';
+    disconnectBtn.onclick = () => disconnectProvider(provider, identityId);
+    row.appendChild(disconnectBtn);
+  }
+
   return row;
+}
+
+async function disconnectProvider(provider, identityId) {
+  const providerName = provider === 'google' ? 'Google' : 'Spotify';
+
+  const providers = currentUser?.app_metadata?.providers || [];
+  if (providers.length <= 1) {
+    showToastSettings(`Cannot disconnect ${providerName}. It is your only login method. Add another method first.`, true);
+    return;
+  }
+
+  const confirmed = confirm(`Disconnect ${providerName}? You will no longer be able to sign in with this ${providerName} account.`);
+  if (!confirmed) return;
+
+  try {
+    const { error } = await db.auth.unlinkIdentity(identityId);
+    if (error) throw error;
+    showToastSettings(`${providerName} disconnected successfully`);
+    await refreshUser();
+    renderConnected();
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('last_identity') || msg.includes('Cannot unlink')) {
+      showToastSettings(`Cannot disconnect ${providerName}. It is your only login method. Add another method first.`, true);
+    } else {
+      showToastSettings(`Failed to disconnect ${providerName}: ${msg || 'Unknown error'}`, true);
+    }
+  }
+}
+
+async function refreshUser() {
+  const { data: { user } } = await db.auth.getUser();
+  if (user) currentUser = user;
 }
 
 /* =========================
