@@ -13,13 +13,59 @@
 <body>
 
   <header class="header">
-    <div class="container header-inner">
+    <div class="header-inner">
       <a href="../index.html" class="logo-link">
         <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
         <span class="logo-text">Wassal</span>
       </a>
+
+      <div class="header-actions">
+        <div class="auth-actions" id="auth-loading">
+          <div class="auth-shimmer"></div>
+        </div>
+
+        <div class="auth-actions" id="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login">Login</a>
+          <a href="signup.html" class="btn-signup">Sign Up</a>
+        </div>
+
+        <div class="auth-actions" id="auth-logged-in" style="display:none">
+          <div class="profile-avatar-container" id="profile-avatar-container"></div>
+        </div>
+      </div>
+
+      <button class="mobile-menu-toggle" aria-label="Menu">
+        <span></span>
+      </button>
     </div>
   </header>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu">
+    <div id="mobile-auth-loading">
+      <div class="auth-shimmer" style="margin:12px auto;width:100px"></div>
+    </div>
+    <div id="mobile-auth-logged-out" style="display:none">
+      <a href="../index.html" class="mobile-nav-link">Home</a>
+      <a href="../index.html#ecosystem" class="mobile-nav-link">Features</a>
+      <a href="../index.html#ai-section" class="mobile-nav-link">AI</a>
+      <a href="download.html" class="mobile-nav-link">Download App</a>
+      <div class="mobile-cta">
+        <a href="login.html" class="btn-login">Login</a>
+        <a href="signup.html" class="btn-signup">Sign Up</a>
+      </div>
+    </div>
+    <div id="mobile-auth-logged-in" style="display:none">
+      <div id="mobile-profile-section"></div>
+      <a href="../index.html" class="mobile-nav-link">Home</a>
+      <a href="../index.html#ecosystem" class="mobile-nav-link">Features</a>
+      <a href="../index.html#ai-section" class="mobile-nav-link">AI</a>
+      <a href="download.html" class="mobile-nav-link">Download App</a>
+      <a href="account.html">Account</a>
+      <a href="settings.html">Settings</a>
+      <button onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
 
   <div class="chatbot-layout">
     <aside class="sidebar" id="sidebar">
