@@ -1241,6 +1241,18 @@
         if (bio !== (acctData.profile?.bio || '')) profileFields.bio = bio;
         if (profileImageUrl !== (acctData.profile?.profile_image_url || '')) profileFields.profile_image_url = profileImageUrl;
 
+        if (profileFields.username) {
+          const { data: existing } = await db.from('profiles')
+            .select('id')
+            .eq('username', profileFields.username.toLowerCase())
+            .neq('id', currentUser.id)
+            .maybeSingle();
+          if (existing) {
+            throw new Error('This username is already taken. Please choose another.');
+          }
+          profileFields.username = profileFields.username.toLowerCase();
+        }
+
         if (Object.keys(profileFields).length > 0) {
           const { error: profileErr } = await db.from('profiles').update(profileFields).eq('id', currentUser.id);
           if (profileErr) throw profileErr;
@@ -1250,7 +1262,13 @@
 
         const authFields = {};
         const currentEmail = currentUser?.email || '';
-        if (newEmail && newEmail !== currentEmail) authFields.email = newEmail;
+        if (newEmail && newEmail !== currentEmail) {
+          const { data: emailCheck } = await db.rpc('check_email_available', { p_email: newEmail.toLowerCase() }).catch(() => ({ data: null }));
+          if (emailCheck === false) {
+            throw new Error('This email is already registered to another account.');
+          }
+          authFields.email = newEmail;
+        }
         if (phone && phone !== (currentUser?.phone || '')) authFields.phone = phone;
 
         if (Object.keys(authFields).length > 0) {
