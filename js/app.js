@@ -1360,45 +1360,45 @@ function renderOnboardingStep() {
     case 8: {
       const classLevel = r.class_levels.find(c => c.id == d.class_level_id);
       const classValue = classLevel?.value || 0;
-      const isSecondYear = classValue === 12;
-      const filteredSessions = isSecondYear
-        ? r.academic_sessions
-        : r.academic_sessions.filter(s => s.end_year !== 2027);
-      const selectedSession = r.academic_sessions.find(s => s.id == d.academic_session_id);
-      let examYearMsg = '';
-      if (selectedSession) {
-        const yearDiff = isSecondYear ? 1 : 0;
-        const examYear = selectedSession.end_year - yearDiff;
-        d.exam_year = examYear.toString();
-        examYearMsg = `<div style="margin-top:20px;padding:16px;border-radius:var(--radius-md);background:var(--accent-soft);border:1px solid rgba(124,92,255,0.15);text-align:center"><span style="font-size:15px;font-weight:600;color:var(--accent)">So your exam year is ${examYear}. Good Luck!</span></div>`;
-      }
+      const isFirstYear = classValue === 11;
+      const filteredSessions = isFirstYear
+        ? r.academic_sessions.filter(s => s.end_year !== 2027)
+        : r.academic_sessions;
       container.innerHTML = `
         <h2 class="onboarding-title">Academic Session</h2>
         <p class="onboarding-subtitle">Select your current academic session.</p>
         <div class="onboarding-options">
           ${filteredSessions.map(s => `
-            <button class="onboarding-option ${d.academic_session_id == s.id ? 'selected' : ''}" data-id="${s.id}" data-end="${s.end_year}">
+            <button class="onboarding-option ${d.academic_session_id == s.id ? 'selected' : ''}" data-id="${s.id}" data-start="${s.start_year}" data-end="${s.end_year}">
               <span class="option-name">${s.label}</span>
-              ${s.start_year ? `<span class="option-desc">${s.start_year} — ${s.end_year || 'Ongoing'}</span>` : ''}
+              <span class="option-desc">${s.start_year} — ${s.end_year}</span>
             </button>
           `).join('')}
         </div>
-        ${examYearMsg}
+        <div id="exam-year-msg"></div>
       `;
+      function renderExamMsg() {
+        const wrap = document.getElementById('exam-year-msg');
+        if (!wrap) return;
+        if (d.academic_session_id) {
+          const sess = r.academic_sessions.find(s => s.id == d.academic_session_id);
+          if (sess) {
+            const examYear = isFirstYear ? Math.floor((sess.start_year + sess.end_year) / 2) : sess.end_year;
+            d.exam_year = examYear.toString();
+            wrap.innerHTML = `<div style="margin-top:20px;padding:16px;border-radius:var(--radius-md);background:var(--accent-soft);border:1px solid rgba(124,92,255,0.15);text-align:center"><span style="font-size:15px;font-weight:600;color:var(--accent)">So your exam year is ${examYear}. Good Luck!</span></div>`;
+            return;
+          }
+        }
+        d.exam_year = '';
+        wrap.innerHTML = '';
+      }
+      renderExamMsg();
       container.querySelectorAll('.onboarding-option').forEach(btn => {
         btn.addEventListener('click', () => {
           d.academic_session_id = btn.dataset.id;
-          const endYear = parseInt(btn.dataset.end);
-          const yearDiff = isSecondYear ? 1 : 0;
-          d.exam_year = (endYear - yearDiff).toString();
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
-          const newMsg = container.querySelector('.onboarding-review');
-          if (newMsg) newMsg.remove();
-          const msgDiv = document.createElement('div');
-          msgDiv.className = 'onboarding-review';
-          msgDiv.innerHTML = `<div style="padding:16px;border-radius:var(--radius-md);background:var(--accent-soft);border:1px solid rgba(124,92,255,0.15);text-align:center"><span style="font-size:15px;font-weight:600;color:var(--accent)">So your exam year is ${d.exam_year}. Good Luck!</span></div>`;
-          container.appendChild(msgDiv);
+          renderExamMsg();
         });
       });
       break;
