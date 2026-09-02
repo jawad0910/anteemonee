@@ -637,8 +637,8 @@
           </div>
           <h3>Android</h3>
           <p>Study with Wassal on your Android phone or tablet.</p>
-          <span class="status-badge">Coming Soon</span>
-          <button class="btn-download" data-platform="Android" onclick="showDownloadModal('Android')">Download for Android</button>
+          <span class="status-badge beta-badge">Beta Available</span>
+          <button class="btn-download btn-beta" onclick="openBetaModal()">Apply for Beta</button>
         </div>
 
         <!-- iOS -->
@@ -686,7 +686,7 @@
           <div class="roadmap-dot"></div>
           <div class="roadmap-content">
             <h4>Android</h4>
-            <p>In Development</p>
+            <p>Beta Available</p>
           </div>
         </div>
         <div class="roadmap-item">
@@ -741,41 +741,60 @@
     </div>
   </div>
 
+  <!-- BETA APPLY MODAL -->
+  <div class="modal-overlay" id="beta-apply-modal">
+    <div class="modal-card beta-modal">
+      <h3>Apply for Android Beta</h3>
+      <p class="modal-subtitle">Get early access to Wassal on Android. Enter your email to apply.</p>
+      <div class="beta-form" id="beta-form">
+        <div class="beta-input-group">
+          <input type="email" id="beta-email-input" placeholder="Enter your email" autocomplete="email">
+        </div>
+        <div class="beta-error" id="beta-error" style="display:none"></div>
+        <div class="beta-success" id="beta-success" style="display:none"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeBetaModal()">Cancel</button>
+          <button class="btn-primary btn-beta-submit" id="beta-submit-btn" onclick="submitBetaApplication()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BETA DOWNLOAD MODAL (verified users) -->
+  <div class="modal-overlay" id="beta-download-modal">
+    <div class="modal-card beta-modal">
+      <div class="beta-verified-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3>You're a Beta Tester!</h3>
+      <p class="modal-subtitle">You've been verified. Download the Wassal Android APK below.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeBetaDownloadModal()">Close</button>
+        <a href="#" class="btn-primary btn-download-apk" id="beta-download-link" download>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download APK
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- BETA NOT VERIFIED MODAL -->
+  <div class="modal-overlay" id="beta-notverified-modal">
+    <div class="modal-card beta-modal">
+      <div class="beta-notverified-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <h3>Not Verified Yet</h3>
+      <p class="modal-subtitle">Your beta application is still under review. You'll be able to download once you're verified.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeBetaNotVerifiedModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="../js/app.js"></script>
   <script src="../js/download.js"></script>
-  <script>
-    /* Fallback modal functions if download.js doesn't exist */
-    if (typeof showDownloadModal === 'undefined') {
-      const platformIcons = {
-        Android: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.342a1 1 0 0 1-1.002-1.003c0-.554.449-1.003 1.002-1.003s1.002.45 1.002 1.003c0 .554-.449 1.003-1.002 1.003m-11.046 0A1 1 0 0 1 5.475 14.34c0-.554.448-1.003 1.002-1.003s1.002.45 1.002 1.003c0 .554-.448 1.003-1.002 1.003m11.405-6.02l1.997-3.46a.416.416 0 0 0-.152-.567.416.416 0 0 0-.568.152L17.14 8.95a9.8 9.8 0 0 0-3.14-.507c-1.12 0-2.19.14-3.14.507L8.84 5.44a.416.416 0 0 0-.567-.152.416.416 0 0 0-.153.567l1.997 3.46C6.41 11.19 3.857 14.54 3.6 18.498h16.8c-.257-3.958-2.81-7.308-6.518-9.176"/></svg>',
-        iOS: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>',
-        Windows: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12V6.75l8-1.25V12H3zm0 .5h8v5.75l-8-1.25V12.5zM11.5 12V5.5l9.5-1.75V12h-9.5zm0 .5h9.5v8.25l-9.5-1.75V12.5zM3 13h8v5.25l-8-1.25V13z"/></svg>',
-        macOS: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>'
-      };
-
-      function showDownloadModal(platform) {
-        const modal = document.getElementById('download-modal');
-        document.getElementById('modal-platform-name').textContent = 'Wassal for ' + platform;
-        document.getElementById('modal-platform-icon').innerHTML = platformIcons[platform] || '';
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeDownloadModal() {
-        const modal = document.getElementById('download-modal');
-        modal.classList.remove('open');
-        document.body.style.overflow = '';
-      }
-
-      document.getElementById('download-modal').addEventListener('click', function(e) {
-        if (e.target === this) closeDownloadModal();
-      });
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeDownloadModal();
-      });
-    }
   </script>
 </body>
 </html>
