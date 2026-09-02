@@ -234,6 +234,22 @@
   box-shadow: 0 4px 20px rgba(124, 92, 255, 0.3);
 }
 
+.rejected-badge {
+  background: rgba(255, 102, 117, 0.1) !important;
+  color: var(--error) !important;
+}
+
+.btn-reapply {
+  background: rgba(255, 102, 117, 0.1) !important;
+  border-color: rgba(255, 102, 117, 0.25) !important;
+  color: var(--error) !important;
+}
+
+.btn-reapply:hover {
+  background: rgba(255, 102, 117, 0.2) !important;
+  border-color: rgba(255, 102, 117, 0.4) !important;
+}
+
 /* ─── Beta Modal ─── */
 
 .beta-modal {
