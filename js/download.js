@@ -13,8 +13,10 @@ async function checkBetaStatus() {
   if (!email) return;
   try {
     const { data } = await db.rpc('is_beta_verified', { p_email: email });
-    if (data === true) {
+    if (data?.is_verified === true) {
       updateAndroidCard('verified');
+    } else if (data?.is_rejected === true) {
+      updateAndroidCard('rejected');
     } else {
       const { data: row } = await db.from('beta_testers').select('id').eq('email', email).maybeSingle();
       if (row) updateAndroidCard('applied');
@@ -35,14 +37,27 @@ function updateAndroidCard(status) {
     if (btn) {
       btn.textContent = 'Download APK';
       btn.className = 'btn-download btn-beta';
+      btn.disabled = false;
+      btn.style.opacity = '';
       btn.onclick = () => openBetaDownloadModal();
     }
   } else if (status === 'applied') {
     if (badge) { badge.textContent = 'Applied'; badge.className = 'status-badge'; }
     if (btn) {
       btn.textContent = 'Application Pending';
+      btn.className = 'btn-download';
       btn.disabled = true;
       btn.style.opacity = '0.6';
+      btn.onclick = null;
+    }
+  } else if (status === 'rejected') {
+    if (badge) { badge.textContent = 'Rejected'; badge.className = 'status-badge rejected-badge'; }
+    if (btn) {
+      btn.textContent = 'Apply Again';
+      btn.className = 'btn-download btn-reapply';
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.onclick = () => openBetaModal();
     }
   }
 }
@@ -103,7 +118,7 @@ async function submitBetaApplication() {
   hideBetaMessages();
 
   try {
-    const { data: existing } = await db.from('beta_testers').select('id, is_verified').eq('email', email).maybeSingle();
+    const { data: existing } = await db.from('beta_testers').select('id, is_verified, is_rejected').eq('email', email).maybeSingle();
 
     if (existing) {
       if (existing.is_verified) {
@@ -111,6 +126,17 @@ async function submitBetaApplication() {
         sucEl.style.display = 'block';
         updateAndroidCard('verified');
         setTimeout(closeBetaModal, 2000);
+      } else if (existing.is_rejected) {
+        await db.from('beta_testers').delete().eq('id', existing.id);
+        const { error: insertErr } = await db.from('beta_testers').insert({
+          email: email,
+          user_id: currentUser?.id || null
+        });
+        if (insertErr) throw insertErr;
+        sucEl.textContent = 'Re-application submitted! We\'ll review your request again.';
+        sucEl.style.display = 'block';
+        updateAndroidCard('applied');
+        setTimeout(closeBetaModal, 2500);
       } else {
         errEl.textContent = 'You have already applied. Your application is under review.';
         errEl.style.display = 'block';
