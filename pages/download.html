@@ -649,7 +649,6 @@
           <h3>iOS</h3>
           <p>Study with Wassal on your iPhone or iPad.</p>
           <span class="status-badge">Coming Soon</span>
-          <button class="btn-download" data-platform="iOS" onclick="showDownloadModal('iOS')">Download for iOS</button>
         </div>
 
         <!-- Windows -->
@@ -660,7 +659,6 @@
           <h3>Windows</h3>
           <p>Study with Wassal on your Windows desktop or laptop.</p>
           <span class="status-badge">Coming Soon</span>
-          <button class="btn-download" data-platform="Windows" onclick="showDownloadModal('Windows')">Download for Windows</button>
         </div>
 
         <!-- macOS -->
@@ -671,7 +669,6 @@
           <h3>macOS</h3>
           <p>Study with Wassal on your Mac.</p>
           <span class="status-badge">Coming Soon</span>
-          <button class="btn-download" data-platform="macOS" onclick="showDownloadModal('macOS')">Download for macOS</button>
         </div>
 
       </div>
@@ -788,6 +785,36 @@
       <p class="modal-subtitle">Your beta application is still under review. You'll be able to download once you're verified.</p>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeBetaNotVerifiedModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BETA SIGN-IN REQUIRED MODAL -->
+  <div class="modal-overlay" id="beta-signin-modal">
+    <div class="modal-card beta-modal">
+      <div class="beta-notverified-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h3>Sign In Required</h3>
+      <p class="modal-subtitle">You need to sign in to apply for the Android beta program.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeBetaSigninModal()">Cancel</button>
+        <a href="login.html" class="btn-primary" style="text-decoration:none">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- BETA PREMIUM REQUIRED MODAL -->
+  <div class="modal-overlay" id="beta-premium-modal">
+    <div class="modal-card beta-modal">
+      <div class="beta-notverified-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <h3>Premium Required</h3>
+      <p class="modal-subtitle">The Android beta is exclusive to Wassal Pro members. Upgrade to Pro to get early access.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeBetaPremiumModal()">Cancel</button>
+        <a href="settings.html" class="btn-primary" style="text-decoration:none">Get Premium</a>
       </div>
     </div>
   </div>
