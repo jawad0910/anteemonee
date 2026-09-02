@@ -49,7 +49,23 @@ function updateAndroidCard(status) {
 
 /* ─── Beta Apply Modal ─── */
 
-function openBetaModal() {
+async function openBetaModal() {
+  if (!currentUser) {
+    document.getElementById('beta-signin-modal').classList.add('open');
+    return;
+  }
+
+  try {
+    const { data: ent } = await db.rpc('get_entitlement_snapshot');
+    const isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
+    if (!isPro) {
+      document.getElementById('beta-premium-modal').classList.add('open');
+      return;
+    }
+  } catch (e) {
+    console.log('[BETA] entitlement check failed:', e.message);
+  }
+
   const email = currentUser?.email || '';
   const input = document.getElementById('beta-email-input');
   if (input) input.value = email;
@@ -146,6 +162,18 @@ function closeBetaNotVerifiedModal() {
   document.getElementById('beta-notverified-modal').classList.remove('open');
 }
 
+/* ─── Beta Sign-In Required Modal ─── */
+
+function closeBetaSigninModal() {
+  document.getElementById('beta-signin-modal').classList.remove('open');
+}
+
+/* ─── Beta Premium Required Modal ─── */
+
+function closeBetaPremiumModal() {
+  document.getElementById('beta-premium-modal').classList.remove('open');
+}
+
 /* ─── Close modals on overlay click / Escape ─── */
 
 document.addEventListener('click', (e) => {
@@ -154,6 +182,8 @@ document.addEventListener('click', (e) => {
     closeBetaModal();
     closeBetaDownloadModal();
     closeBetaNotVerifiedModal();
+    closeBetaSigninModal();
+    closeBetaPremiumModal();
   }
 });
 
@@ -163,6 +193,8 @@ document.addEventListener('keydown', (e) => {
     closeBetaModal();
     closeBetaDownloadModal();
     closeBetaNotVerifiedModal();
+    closeBetaSigninModal();
+    closeBetaPremiumModal();
   }
 });
 
