@@ -65,7 +65,13 @@ function updateAndroidCard(status) {
 /* ─── Beta Apply Modal ─── */
 
 async function openBetaModal() {
+  const card = document.querySelector('.platform-card');
+  const btn = card?.querySelector('.btn-download');
+  const originalText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; btn.style.opacity = '0.6'; }
+
   if (!currentUser) {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = ''; }
     document.getElementById('beta-signin-modal').classList.add('open');
     return;
   }
@@ -74,12 +80,15 @@ async function openBetaModal() {
     const { data: ent } = await db.rpc('get_entitlement_snapshot');
     const isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
     if (!isPro) {
+      if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = ''; }
       document.getElementById('beta-premium-modal').classList.add('open');
       return;
     }
   } catch (e) {
     console.log('[BETA] entitlement check failed:', e.message);
   }
+
+  if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = ''; }
 
   const email = currentUser?.email || '';
   const input = document.getElementById('beta-email-input');
