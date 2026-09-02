@@ -1,38 +1,172 @@
 document.addEventListener('DOMContentLoaded', initDownload);
 
+const APK_URL = '#'; /* TODO: replace with actual APK download URL */
+
 function initDownload() {
-  // Page works for everyone, no auth required
+  checkBetaStatus();
 }
 
-function showDownloadModal(platform) {
-  const modal = document.getElementById('download-modal');
-  const nameEl = document.getElementById('modal-platform-name');
-  const iconEl = document.getElementById('modal-platform-icon');
+/* ─── Beta Status Check ─── */
 
-  nameEl.textContent = `Wassal for ${platform}`;
-
-  const icons = {
-    'Android': '🤖',
-    'iOS': '',
-    'Windows': '🪟',
-    'macOS': ''
-  };
-  iconEl.textContent = icons[platform] || '';
-
-  modal.classList.add('open');
+async function checkBetaStatus() {
+  const email = currentUser?.email;
+  if (!email) return;
+  try {
+    const { data } = await db.rpc('is_beta_verified', { p_email: email });
+    if (data === true) {
+      updateAndroidCard('verified');
+    } else {
+      const { data: row } = await db.from('beta_testers').select('id').eq('email', email).maybeSingle();
+      if (row) updateAndroidCard('applied');
+    }
+  } catch (e) {
+    console.log('[BETA] status check skipped:', e.message);
+  }
 }
 
-function closeDownloadModal() {
-  document.getElementById('download-modal').classList.remove('open');
+function updateAndroidCard(status) {
+  const card = document.querySelector('.platform-card');
+  if (!card) return;
+  const badge = card.querySelector('.status-badge');
+  const btn = card.querySelector('.btn-download');
+
+  if (status === 'verified') {
+    if (badge) { badge.textContent = 'Beta Access'; badge.className = 'status-badge beta-badge'; }
+    if (btn) {
+      btn.textContent = 'Download APK';
+      btn.className = 'btn-download btn-beta';
+      btn.onclick = () => openBetaDownloadModal();
+    }
+  } else if (status === 'applied') {
+    if (badge) { badge.textContent = 'Applied'; badge.className = 'status-badge'; }
+    if (btn) {
+      btn.textContent = 'Application Pending';
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+    }
+  }
 }
+
+/* ─── Beta Apply Modal ─── */
+
+function openBetaModal() {
+  const email = currentUser?.email || '';
+  const input = document.getElementById('beta-email-input');
+  if (input) input.value = email;
+  hideBetaMessages();
+  document.getElementById('beta-apply-modal').classList.add('open');
+}
+
+function closeBetaModal() {
+  document.getElementById('beta-apply-modal').classList.remove('open');
+  hideBetaMessages();
+}
+
+function hideBetaMessages() {
+  const err = document.getElementById('beta-error');
+  const suc = document.getElementById('beta-success');
+  if (err) { err.style.display = 'none'; err.textContent = ''; }
+  if (suc) { suc.style.display = 'none'; suc.textContent = ''; }
+}
+
+async function submitBetaApplication() {
+  const input = document.getElementById('beta-email-input');
+  const btn = document.getElementById('beta-submit-btn');
+  const errEl = document.getElementById('beta-error');
+  const sucEl = document.getElementById('beta-success');
+
+  const email = (input?.value || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Please enter a valid email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  hideBetaMessages();
+
+  try {
+    const { data: existing } = await db.from('beta_testers').select('id, is_verified').eq('email', email).maybeSingle();
+
+    if (existing) {
+      if (existing.is_verified) {
+        sucEl.textContent = 'You are already verified! You can download the APK.';
+        sucEl.style.display = 'block';
+        updateAndroidCard('verified');
+        setTimeout(closeBetaModal, 2000);
+      } else {
+        errEl.textContent = 'You have already applied. Your application is under review.';
+        errEl.style.display = 'block';
+        updateAndroidCard('applied');
+      }
+      return;
+    }
+
+    const { error } = await db.from('beta_testers').insert({
+      email: email,
+      user_id: currentUser?.id || null
+    });
+
+    if (error) throw error;
+
+    sucEl.textContent = 'Application submitted! We\'ll notify you once you\'re verified.';
+    sucEl.style.display = 'block';
+    updateAndroidCard('applied');
+
+    setTimeout(closeBetaModal, 2500);
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong. Please try again.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+/* ─── Beta Download Modal (verified) ─── */
+
+function openBetaDownloadModal() {
+  const link = document.getElementById('beta-download-link');
+  if (link) link.href = APK_URL;
+  document.getElementById('beta-download-modal').classList.add('open');
+}
+
+function closeBetaDownloadModal() {
+  document.getElementById('beta-download-modal').classList.remove('open');
+}
+
+/* ─── Beta Not Verified Modal ─── */
+
+function openBetaNotVerifiedModal() {
+  document.getElementById('beta-notverified-modal').classList.add('open');
+}
+
+function closeBetaNotVerifiedModal() {
+  document.getElementById('beta-notverified-modal').classList.remove('open');
+}
+
+/* ─── Close modals on overlay click / Escape ─── */
 
 document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('modal-overlay')) closeDownloadModal();
+  if (e.target.classList.contains('modal-overlay')) {
+    closeDownloadModal();
+    closeBetaModal();
+    closeBetaDownloadModal();
+    closeBetaNotVerifiedModal();
+  }
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDownloadModal();
+  if (e.key === 'Escape') {
+    closeDownloadModal();
+    closeBetaModal();
+    closeBetaDownloadModal();
+    closeBetaNotVerifiedModal();
+  }
 });
+
+/* ─── Roadmap animation ─── */
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
