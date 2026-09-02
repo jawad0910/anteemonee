@@ -127,12 +127,11 @@ async function submitBetaApplication() {
         updateAndroidCard('verified');
         setTimeout(closeBetaModal, 2000);
       } else if (existing.is_rejected) {
-        await db.from('beta_testers').delete().eq('id', existing.id);
-        const { error: insertErr } = await db.from('beta_testers').insert({
-          email: email,
-          user_id: currentUser?.id || null
-        });
-        if (insertErr) throw insertErr;
+        const { error: updateErr } = await db.from('beta_testers').update({
+          is_rejected: false,
+          user_id: currentUser?.id || existing.user_id
+        }).eq('id', existing.id);
+        if (updateErr) throw updateErr;
         sucEl.textContent = 'Re-application submitted! We\'ll review your request again.';
         sucEl.style.display = 'block';
         updateAndroidCard('applied');
