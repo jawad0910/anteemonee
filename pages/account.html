@@ -962,6 +962,14 @@
               <select id="edit-college"><option value="">Select college</option>${collegeOptions}</select>
             </div>
             <div class="edit-form-group">
+              <label>Exam Year</label>
+              <select id="edit-exam-year">
+                <option value="">Select year</option>
+                <option value="${new Date().getFullYear() + 1}">${new Date().getFullYear() + 1}</option>
+                <option value="${new Date().getFullYear() + 2}">${new Date().getFullYear() + 2}</option>
+              </select>
+            </div>
+            <div class="edit-form-group">
               <label>Academic Session</label>
               <select id="edit-session"><option value="">Select session</option>${sessionOptions}</select>
             </div>
@@ -1076,6 +1084,22 @@
         await loadSubjectsList(a.education_system_id, a.group_id);
         document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
       }
+      if (a.exam_year) {
+        const yrSelect = document.getElementById('edit-exam-year');
+        if (yrSelect) {
+          let found = false;
+          for (const opt of yrSelect.options) {
+            if (opt.value == a.exam_year) { opt.selected = true; found = true; break; }
+          }
+          if (!found) {
+            const opt = document.createElement('option');
+            opt.value = a.exam_year;
+            opt.text = a.exam_year;
+            opt.selected = true;
+            yrSelect.appendChild(opt);
+          }
+        }
+      }
       await loadAllColleges();
       document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
     }
@@ -1145,6 +1169,7 @@
         const grp = document.getElementById('edit-group').value || null;
         const college = document.getElementById('edit-college').value || null;
         const session = document.getElementById('edit-session').value || null;
+        const examYear = document.getElementById('edit-exam-year').value || null;
 
         const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
           user_id: currentUser.id,
@@ -1153,11 +1178,12 @@
           class_level_id: cls,
           group_id: grp,
           college_id: college,
-          academic_session_id: session
+          academic_session_id: session,
+          exam_year: examYear ? parseInt(examYear) : (acctData.acad?.exam_year || new Date().getFullYear())
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
-        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session };
+        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session, exam_year: examYear ? parseInt(examYear) : acctData.acad?.exam_year };
 
         renderCards();
         showToast('Academic profile updated!');
