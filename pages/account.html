@@ -1564,8 +1564,13 @@
       if (a?.education_system_id) {
         tasks.push(loadBoards(a.education_system_id));
         tasks.push(loadClassLevels(a.education_system_id));
-        tasks.push(loadGroups(a.education_system_id));
-        tasks.push(loadSubjectsList(a.education_system_id, a.group_id));
+        const sys = acctData.ref.education_systems.find(s => s.id == a.education_system_id);
+        if (sys?.code === 'ics') {
+          tasks.push(loadICSSubjectsList(a.education_system_id));
+        } else {
+          tasks.push(loadGroups(a.education_system_id));
+          tasks.push(loadSubjectsList(a.education_system_id, a.group_id));
+        }
       }
       if (p?.province_id) tasks.push(loadCities(p.province_id));
       tasks.push(loadAllColleges());
