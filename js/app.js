@@ -1382,6 +1382,13 @@ function setupOnboardingNav() {
   if (nextBtn) nextBtn.addEventListener('click', onboardingNext);
 }
 
+function showOnboardingLoading() {
+  const container = document.getElementById('onboarding-container');
+  if (container) {
+    container.innerHTML = '<div class="onboarding-loading"><div class="spinner"></div></div>';
+  }
+}
+
 async function onboardingNext() {
   const valid = await validateOnboardingStep(onboarding.currentStep);
   if (!valid) return;
@@ -1393,6 +1400,7 @@ async function onboardingNext() {
 
   await saveStepData(onboarding.currentStep);
   onboarding.currentStep++;
+  showOnboardingLoading();
   await loadStepData(onboarding.currentStep);
   renderOnboardingStep();
 }
@@ -1400,6 +1408,7 @@ async function onboardingNext() {
 async function onboardingPrev() {
   if (onboarding.currentStep <= 0) return;
   onboarding.currentStep--;
+  showOnboardingLoading();
   await loadStepData(onboarding.currentStep);
   renderOnboardingStep();
 }
