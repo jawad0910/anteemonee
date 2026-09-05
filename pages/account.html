@@ -838,9 +838,10 @@
       return classLabel.toLowerCase().includes('2nd');
     }
 
-    function getICSCompulsorySubjects() {
+    function getCompulsorySubjects() {
       const secondYear = isSecondYear();
-      return acctData.ref.subjects_list.filter(s => {
+      const allSubjects = acctData.ref.subjects_list.length ? acctData.ref.subjects_list : (acctData.subjectDetails || []);
+      return allSubjects.filter(s => {
         if (!s.is_compulsory) return false;
         const name = (s.name || '').toLowerCase();
         if (name.includes('pakistan studies')) return secondYear;
@@ -849,16 +850,23 @@
       });
     }
 
-    function getICSFullSubjectNames() {
-      const compulsory = getICSCompulsorySubjects();
-      const chosen = acctData.ref.subjects_list.filter(s => !s.is_compulsory && acctData.subjects.includes(s.id));
+    function getFullSubjectNames() {
       const secondYear = isSecondYear();
       const suffix = secondYear ? '-II' : '-I';
-      return [...compulsory, ...chosen].map(s => {
+      const allSubjects = acctData.ref.subjects_list.length ? acctData.ref.subjects_list : (acctData.subjectDetails || []);
+      const compulsory = getCompulsorySubjects();
+      const chosen = allSubjects.filter(s => !s.is_compulsory && acctData.subjects.includes(s.id));
+      const format = s => {
         const name = (s.name || '').toLowerCase();
         const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
         return noSuffix ? s.name : `${s.name} ${suffix}`;
-      });
+      };
+      const all = [...compulsory, ...chosen];
+      if (all.length) return all.map(format);
+      return acctData.subjects.map(sid => {
+        const s = (acctData.subjectDetails || []).find(x => x.id == sid);
+        return s ? format(s) : null;
+      }).filter(Boolean);
     }
 
     async function loadSubjectsList(systemId, groupId) {
@@ -930,18 +938,7 @@
       const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
       const isIcs = isICSAccount();
-      const subjectNames = isIcs ? getICSFullSubjectNames() : (() => {
-        const secondYear = isSecondYear();
-        const suffix = secondYear ? '-II' : '-I';
-        return acctData.subjects.map(sid => {
-          let s = r.subjects_list.find(x => x.id == sid);
-          if (!s) s = (acctData.subjectDetails || []).find(x => x.id == sid);
-          if (!s) return null;
-          const name = (s.name || '').toLowerCase();
-          const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
-          return noSuffix ? s.name : `${s.name} ${suffix}`;
-        }).filter(Boolean);
-      })();
+      const subjectNames = getFullSubjectNames();
 
       const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
       const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
@@ -1266,14 +1263,29 @@
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
-        if (ics && acadProfile?.id) {
-          const selectedOptChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected:not(.disabled)');
-          const subjectIds = Array.from(selectedOptChips).map(c => parseInt(c.dataset.id));
+        if (acadProfile?.id) {
           await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
-          if (subjectIds.length) {
-            await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+          if (ics) {
+            const selectedOptChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected:not(.disabled)');
+            const subjectIds = Array.from(selectedOptChips).map(c => parseInt(c.dataset.id));
+            const compulsory = getCompulsorySubjects().map(s => s.id);
+            const allIds = [...compulsory, ...subjectIds];
+            if (allIds.length) {
+              await db.from('student_subjects').insert(allIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+            }
+            acctData.subjects = allIds;
+          } else if (grp) {
+            await loadAllSubjects(eduSystem);
+            const groupSubjects = acctData.ref.subjects_list.filter(s => !s.is_compulsory && (s.group_id == grp || s.group_id === null));
+            const compulsory = acctData.ref.subjects_list.filter(s => s.is_compulsory);
+            const allIds = [...compulsory.map(s => s.id), ...groupSubjects.map(s => s.id)];
+            if (allIds.length) {
+              await db.from('student_subjects').insert(allIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+            }
+            acctData.subjects = allIds;
+          } else {
+            acctData.subjects = [];
           }
-          acctData.subjects = subjectIds;
         }
 
         acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session };
