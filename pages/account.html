@@ -1005,14 +1005,6 @@
               <select id="edit-college"><option value="">Select college</option>${collegeOptions}</select>
             </div>
             <div class="edit-form-group">
-              <label>Exam Year</label>
-              <select id="edit-exam-year">
-                <option value="">Select year</option>
-                <option value="${new Date().getFullYear() + 1}">${new Date().getFullYear() + 1}</option>
-                <option value="${new Date().getFullYear() + 2}">${new Date().getFullYear() + 2}</option>
-              </select>
-            </div>
-            <div class="edit-form-group">
               <label>Academic Session</label>
               <select id="edit-session"><option value="">Select session</option>${sessionOptions}</select>
             </div>
@@ -1052,23 +1044,29 @@
 
     async function onEduSystemChange() {
       const sid = document.getElementById('edit-edu-system').value;
-      if (sid) {
-        await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
-        document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
-        const sys = acctData.ref.education_systems.find(s => s.id == sid);
-        const isIcs = sys?.code === 'ics';
-        const grpWrap = document.getElementById('edit-group-wrap');
-        const subWrap = document.getElementById('edit-subjects-wrap');
-        if (isIcs) {
-          if (grpWrap) grpWrap.style.display = 'none';
-          if (subWrap) { subWrap.style.display = ''; await loadICSSubjectsList(sid); document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join(''); }
-        } else {
-          if (grpWrap) grpWrap.style.display = '';
-          if (subWrap) subWrap.style.display = 'none';
-          await loadGroups(sid);
-          document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-        }
+      if (!sid) return;
+      const prevBoard = document.getElementById('edit-board').value;
+      const prevClass = document.getElementById('edit-class').value;
+      const prevCollege = document.getElementById('edit-college').value;
+      const prevSession = document.getElementById('edit-session').value;
+      await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
+      document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${prevBoard == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+      document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${prevClass == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+      await loadAllColleges();
+      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${prevCollege == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      if (prevSession) document.getElementById('edit-session').value = prevSession;
+      const sys = acctData.ref.education_systems.find(s => s.id == sid);
+      const isIcs = sys?.code === 'ics';
+      const grpWrap = document.getElementById('edit-group-wrap');
+      const subWrap = document.getElementById('edit-subjects-wrap');
+      if (isIcs) {
+        if (grpWrap) grpWrap.style.display = 'none';
+        if (subWrap) { subWrap.style.display = ''; await loadICSSubjectsList(sid); document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join(''); }
+      } else {
+        if (grpWrap) grpWrap.style.display = '';
+        if (subWrap) subWrap.style.display = 'none';
+        await loadGroups(sid);
+        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
       }
     }
 
@@ -1125,22 +1123,6 @@
           document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
         }
       }
-      if (a.exam_year) {
-        const yrSelect = document.getElementById('edit-exam-year');
-        if (yrSelect) {
-          let found = false;
-          for (const opt of yrSelect.options) {
-            if (opt.value == a.exam_year) { opt.selected = true; found = true; break; }
-          }
-          if (!found) {
-            const opt = document.createElement('option');
-            opt.value = a.exam_year;
-            opt.text = a.exam_year;
-            opt.selected = true;
-            yrSelect.appendChild(opt);
-          }
-        }
-      }
       await loadAllColleges();
       document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
     }
@@ -1184,7 +1166,6 @@
       const grp = document.getElementById('edit-group')?.value || '';
       const college = document.getElementById('edit-college').value;
       const session = document.getElementById('edit-session').value;
-      const examYear = document.getElementById('edit-exam-year').value;
       const ics = isICSAccount();
 
       if (!eduSystem) { showToast('Please select an education system', true); return; }
@@ -1193,7 +1174,6 @@
       if (!ics && !grp) { showToast('Please select a group', true); return; }
       if (!college) { showToast('Please select a college', true); return; }
       if (!session) { showToast('Please select an academic session', true); return; }
-      if (!examYear) { showToast('Please select an exam year', true); return; }
       if (ics) {
         const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
         if (selectedChips.length < 3) { showToast('Please select exactly 3 subjects for ICS', true); return; }
@@ -1210,7 +1190,7 @@
           group_id: ics ? null : (grp || null),
           college_id: college,
           academic_session_id: session,
-          exam_year: examYear ? parseInt(examYear) : (acctData.acad?.exam_year || new Date().getFullYear())
+          exam_year: acctData.acad?.exam_year || new Date().getFullYear()
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
@@ -1224,7 +1204,7 @@
           acctData.subjects = subjectIds;
         }
 
-        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session, exam_year: examYear ? parseInt(examYear) : acctData.acad?.exam_year };
+        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session };
 
         renderCards();
         showToast('Academic profile updated!');
