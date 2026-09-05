@@ -31,6 +31,18 @@ const ORIGIN = window.location.origin;
 const ACCOUNT_URL = ORIGIN + '/';
 const ONBOARDING_URL = ORIGIN + '/pages/onboarding.html';
 
+function generateUsername(fullName, email) {
+  if (fullName && fullName.trim()) {
+    const cleaned = fullName.trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '')
+      .slice(0, 20);
+    if (cleaned.length >= 3) return cleaned;
+  }
+  return (email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+}
+
 function setStatus(text) {
   const el = document.getElementById('callback-status');
   if (el) el.textContent = text;
@@ -155,16 +167,14 @@ async function handleUser(user) {
 
     if (!profile) {
       setStatus('Creating your profile...');
-      const username = user.user_metadata?.username
-        || user.user_metadata?.preferred_username
-        || user.email?.split('@')[0]
-        || 'user';
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+      const username = generateUsername(fullName, user.email);
 
       const { error: insertError } = await db.from('profiles').insert({
         id: user.id,
-        username: username.toLowerCase(),
+        username: username,
         email: user.email,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+        full_name: fullName || null,
         profile_image_url: avatarUrl,
         personal_info_completed: false,
         academic_profile_completed: false,
@@ -173,12 +183,12 @@ async function handleUser(user) {
 
       if (insertError) {
         if (insertError.message?.includes('USERNAME_TAKEN') || insertError.code === '23505') {
-          const fallbackUsername = username.toLowerCase() + Math.floor(Math.random() * 9000 + 1000);
+          const fallbackUsername = username + Math.floor(Math.random() * 9000 + 1000);
           await db.from('profiles').insert({
             id: user.id,
             username: fallbackUsername,
             email: user.email,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            full_name: fullName || null,
             profile_image_url: avatarUrl,
             personal_info_completed: false,
             academic_profile_completed: false,
