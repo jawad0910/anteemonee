@@ -31,6 +31,7 @@ async function initSettings() {
   await renderSubscription();
   await renderCoupons();
   renderConnected();
+  renderAds();
   renderHelp();
   renderAbout();
   setupNavSidebar();
@@ -1189,7 +1190,197 @@ async function refreshUser() {
 }
 
 /* =========================
-   10. HELP & SUPPORT
+   10. ADS
+   ========================= */
+
+let adsWatched = 0;
+let adsBonusSessions = 0;
+let adTimerInterval = null;
+let adCooldownInterval = null;
+
+async function renderAds() {
+  const c = document.getElementById('settings-ads-content');
+  c.innerHTML = '';
+
+  // Load bonus sessions from entitlements
+  try {
+    const { data: ent } = await db.rpc('get_entitlement_snapshot');
+    if (ent) {
+      adsBonusSessions = ent.bonus_sessions || 0;
+    }
+  } catch {}
+
+  // Count today's ad views to determine position in current round
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: views } = await db.from('ad_views')
+      .select('id, ad_number')
+      .eq('user_id', currentUser.id)
+      .gte('watched_at', today + 'T00:00:00')
+      .lte('watched_at', today + 'T23:59:59');
+
+    adsWatched = views ? views.length : 0;
+  } catch {
+    adsWatched = 0;
+  }
+
+  const roundPos = adsWatched % 3; // 0, 1, or 2 — position in current round
+  const roundsCompleted = Math.floor(adsWatched / 3);
+  const nextAd = roundPos + 1; // which ad user needs to watch next (1, 2, or 3)
+
+  // Main card
+  const mainCard = document.createElement('div');
+  mainCard.className = 'settings-card';
+  mainCard.id = 'ads-main-card';
+  mainCard.innerHTML = `
+    <div style="padding:20px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">EARN FREE AI SESSIONS</div>
+      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px">Watch 3 ads to unlock 1 free AI session. Unlimited.</div>
+
+      <div id="ads-progress" style="display:flex;gap:12px;margin-bottom:20px">
+        ${[1,2,3].map(n => {
+          const done = n <= roundPos;
+          return `
+          <div style="flex:1;text-align:center">
+            <div id="ad-circle-${n}" style="width:56px;height:56px;border-radius:50%;border:3px solid ${done ? 'var(--accent)' : 'var(--border)'};display:flex;align-items:center;justify-content:center;margin:0 auto 8px;background:${done ? 'var(--accent)' : 'transparent'};transition:all 0.3s">
+              ${done
+                ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+                : `<span style="font-size:18px;font-weight:700;color:var(--text-secondary)">${n}</span>`
+              }
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary)">${done ? 'Done' : 'Ad ' + n}</div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div id="ads-counter" style="text-align:center;font-size:14px;color:var(--text-secondary);margin-bottom:16px">
+        ${roundPos === 0 && roundsCompleted > 0
+          ? `<span style="color:#35D399;font-weight:600">${roundsCompleted} session${roundsCompleted > 1 ? 's' : ''} earned today! Start new round.</span>`
+          : roundPos === 0
+            ? 'Watch 3 ads to earn a free AI session'
+            : `${roundPos}/3 ads in this round`
+        }
+      </div>
+
+      <div id="ads-timer-area" style="text-align:center;display:none">
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">Watching ad...</div>
+        <div id="ads-timer-display" style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">15s</div>
+        <div style="width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden">
+          <div id="ads-timer-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 1s linear"></div>
+        </div>
+      </div>
+
+      <div id="ads-btn-area" style="text-align:center">
+        <button class="btn-settings btn-settings-primary" id="ads-watch-btn" onclick="startAdWatch()">Watch Ad ${nextAd}</button>
+      </div>
+
+      ${adsBonusSessions > 0 ? `
+        <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <span style="font-size:13px;color:#35D399;font-weight:600">${adsBonusSessions} bonus session${adsBonusSessions > 1 ? 's' : ''} available</span>
+        </div>
+      ` : ''}
+    </div>`;
+  c.appendChild(mainCard);
+
+  // Info card
+  const infoCard = document.createElement('div');
+  infoCard.className = 'settings-card';
+  infoCard.innerHTML = `
+    <div class="settings-card-header">HOW IT WORKS</div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-title">Watch 3 ads</div>
+        <div class="setting-desc">Each ad takes about 15 seconds</div>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-title">Earn 1 free AI session</div>
+        <div class="setting-desc">Session added instantly to your quota</div>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-title">Unlimited — no daily cap</div>
+        <div class="setting-desc">Keep watching, keep earning</div>
+      </div>
+    </div>`;
+  c.appendChild(infoCard);
+}
+
+function startAdWatch() {
+  const btn = document.getElementById('ads-watch-btn');
+  const timerArea = document.getElementById('ads-timer-area');
+  const timerDisplay = document.getElementById('ads-timer-display');
+  const timerBar = document.getElementById('ads-timer-bar');
+
+  if (!btn || adsWatched >= 3) return;
+
+  btn.style.display = 'none';
+  timerArea.style.display = 'block';
+
+  // Trigger popunder ad
+  triggerPopunder();
+
+  let seconds = 15;
+  let elapsed = 0;
+  timerDisplay.textContent = seconds + 's';
+  timerBar.style.width = '0%';
+
+  adTimerInterval = setInterval(() => {
+    seconds--;
+    elapsed++;
+    timerDisplay.textContent = seconds + 's';
+    timerBar.style.width = ((elapsed / 15) * 100) + '%';
+
+    if (seconds <= 0) {
+      clearInterval(adTimerInterval);
+      adTimerInterval = null;
+      completeAdWatch();
+    }
+  }, 1000);
+}
+
+async function completeAdWatch() {
+  const timerArea = document.getElementById('ads-timer-area');
+  const nextAd = (adsWatched % 3) + 1;
+
+  try {
+    const { data, error } = await db.rpc('award_ad_session', { p_ad_number: nextAd });
+    if (error) throw error;
+
+    if (data?.ok) {
+      adsWatched = data.ads_watched || (adsWatched + 1);
+      if (data.session_earned) {
+        adsBonusSessions = data.bonus_sessions || (adsBonusSessions + 1);
+        showToastSettings('Free AI session earned!');
+      } else {
+        showToastSettings(`Ad ${nextAd} watched! ${data.ads_in_round}/3 in this round`);
+      }
+    } else {
+      showToastSettings(data?.error || 'Failed to record ad', true);
+    }
+  } catch (err) {
+    showToastSettings(err.message || 'Failed to record ad', true);
+  }
+
+  timerArea.style.display = 'none';
+  renderAds();
+}
+
+const ADSTERRA_SMARTLINK = 'https://www.profitableratecpmnetwork.com/rtnup6w1?key=6cf320c4d4cc97bfb228efe455c2a411';
+
+function triggerPopunder() {
+  try {
+    window.open(ADSTERRA_SMARTLINK, '_blank', 'noopener,noreferrer,width=800,height=600');
+  } catch (e) {
+    // Popup blocked — try direct navigation fallback
+    window.open(ADSTERRA_SMARTLINK, '_blank');
+  }
+}
+
+/* =========================
+   11. HELP & SUPPORT
    ========================= */
 
 function renderHelp() {
@@ -1272,7 +1463,7 @@ async function submitSupport() {
 }
 
 /* =========================
-   11. ABOUT
+   12. ABOUT
    ========================= */
 
 function renderAbout() {
@@ -1304,7 +1495,7 @@ function renderAbout() {
 }
 
 /* =========================
-   12. LOGOUT
+   13. LOGOUT
    ========================= */
 
 function settingsLogout() {
@@ -1316,7 +1507,7 @@ function settingsLogout() {
 }
 
 /* =========================
-   13. DELETE ACCOUNT
+   14. DELETE ACCOUNT
    ========================= */
 
 function openDeleteModal() {
