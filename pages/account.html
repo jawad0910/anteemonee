@@ -1655,6 +1655,21 @@
       if (p?.province_id) tasks.push(loadCities(p.province_id));
       tasks.push(loadAllColleges());
       await Promise.all(tasks);
+
+      if (a?.id && a?.education_system_id) {
+        const sys = acctData.ref.education_systems.find(s => s.id == a.education_system_id);
+        const allSubs = acctData.ref.subjects_list;
+        const mismatch = acctData.subjects.some(sid => !allSubs.find(s => s.id == sid));
+        if (mismatch && sys?.code !== 'ics') {
+          const { data: fixed } = await db.from('subjects').select('id').eq('education_system_id', a.education_system_id).or('group_id.is.null,group_id.eq.' + (a.group_id || ''));
+          const fixedIds = (fixed || []).map(s => s.id);
+          await db.from('student_subjects').delete().eq('academic_profile_id', a.id);
+          if (fixedIds.length) {
+            await db.from('student_subjects').insert(fixedIds.map(sid => ({ academic_profile_id: a.id, subject_id: sid })));
+          }
+          acctData.subjects = fixedIds;
+        }
+      }
     }
 
     (async function() {
