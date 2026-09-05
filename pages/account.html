@@ -1178,30 +1178,43 @@
 
     async function saveAcademic() {
       const btn = document.querySelector('#academic-edit .btn-save');
+      const eduSystem = document.getElementById('edit-edu-system').value;
+      const board = document.getElementById('edit-board').value;
+      const cls = document.getElementById('edit-class').value;
+      const grp = document.getElementById('edit-group')?.value || '';
+      const college = document.getElementById('edit-college').value;
+      const session = document.getElementById('edit-session').value;
+      const examYear = document.getElementById('edit-exam-year').value;
+      const ics = isICSAccount();
+
+      if (!eduSystem) { showToast('Please select an education system', true); return; }
+      if (!board) { showToast('Please select a board', true); return; }
+      if (!cls) { showToast('Please select a class', true); return; }
+      if (!ics && !grp) { showToast('Please select a group', true); return; }
+      if (!college) { showToast('Please select a college', true); return; }
+      if (!session) { showToast('Please select an academic session', true); return; }
+      if (!examYear) { showToast('Please select an exam year', true); return; }
+      if (ics) {
+        const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
+        if (selectedChips.length < 3) { showToast('Please select exactly 3 subjects for ICS', true); return; }
+      }
+
       btn.disabled = true;
       btn.textContent = 'Saving...';
       try {
-        const eduSystem = document.getElementById('edit-edu-system').value || null;
-        const board = document.getElementById('edit-board').value || null;
-        const cls = document.getElementById('edit-class').value || null;
-        const grp = document.getElementById('edit-group')?.value || null;
-        const college = document.getElementById('edit-college').value || null;
-        const session = document.getElementById('edit-session').value || null;
-        const examYear = document.getElementById('edit-exam-year').value || null;
-
         const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
           user_id: currentUser.id,
           education_system_id: eduSystem,
           board_id: board,
           class_level_id: cls,
-          group_id: grp,
+          group_id: ics ? null : (grp || null),
           college_id: college,
           academic_session_id: session,
           exam_year: examYear ? parseInt(examYear) : (acctData.acad?.exam_year || new Date().getFullYear())
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
-        if (isICSAccount() && acadProfile?.id) {
+        if (ics && acadProfile?.id) {
           const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
           const subjectIds = Array.from(selectedChips).map(c => parseInt(c.dataset.id));
           await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
