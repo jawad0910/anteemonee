@@ -370,6 +370,32 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
   border-radius: var(--radius-md); padding: 14px 16px; margin: 12px 0;
   overflow-x: auto; font-size: 0.8125rem; line-height: 1.6;
 }
+.msg-content .code-block {
+  position: relative; margin: 12px 0;
+}
+.msg-content .code-block pre {
+  margin: 0; border-top-left-radius: 0; border-top-right-radius: 0;
+}
+.msg-content .code-block-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px; background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  font-size: 0.75rem;
+}
+.msg-content .code-lang {
+  color: var(--text-tertiary); font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.msg-content .code-copy-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 6px;
+  color: var(--text-tertiary); font-size: 0.75rem; font-weight: 500;
+  transition: all var(--transition-fast);
+}
+.msg-content .code-copy-btn:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
+.msg-content .code-copy-btn.copied { color: var(--success, #22C55E); }
 .msg-content code:not(pre code) {
   background: var(--accent-soft); padding: 2px 6px; border-radius: 4px;
   font-size: 0.85em; color: var(--green);
