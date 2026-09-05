@@ -1275,14 +1275,12 @@
             }
             acctData.subjects = allIds;
           } else if (grp) {
-            await loadAllSubjects(eduSystem);
-            const groupSubjects = acctData.ref.subjects_list.filter(s => !s.is_compulsory && (s.group_id == grp || s.group_id === null));
-            const compulsory = acctData.ref.subjects_list.filter(s => s.is_compulsory);
-            const allIds = [...compulsory.map(s => s.id), ...groupSubjects.map(s => s.id)];
-            if (allIds.length) {
-              await db.from('student_subjects').insert(allIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+            const { data: groupSubjects } = await db.from('subjects').select('id').eq('education_system_id', eduSystem).or('group_id.is.null,group_id.eq.' + grp);
+            const subjectIds = (groupSubjects || []).map(s => s.id);
+            if (subjectIds.length) {
+              await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
             }
-            acctData.subjects = allIds;
+            acctData.subjects = subjectIds;
           } else {
             acctData.subjects = [];
           }
