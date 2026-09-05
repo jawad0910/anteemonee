@@ -2,100 +2,104 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wassal AI — Your AI Study Companion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wassal AI — Your Academic Companion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/ai-chatbot.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 <body>
 
   <header class="header">
     <div class="header-inner">
+      <button class="chat-history-btn" id="chat-history-btn" aria-label="Open chat history">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        <span>Chats</span>
+      </button>
       <a href="../index.html" class="logo-link">
         <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
         <span class="logo-text">Wassal</span>
       </a>
-
       <div class="header-actions">
-        <div class="auth-actions" id="auth-loading">
-          <div class="auth-shimmer"></div>
-        </div>
-
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
         <div class="auth-actions" id="auth-logged-out" style="display:none">
           <a href="login.html" class="btn-login">Login</a>
           <a href="signup.html" class="btn-signup">Sign Up</a>
         </div>
-
         <div class="auth-actions" id="auth-logged-in" style="display:none">
           <div class="profile-avatar-container" id="profile-avatar-container"></div>
         </div>
       </div>
 
-      <button class="mobile-menu-toggle" aria-label="Menu">
-        <span></span>
-      </button>
+      <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
     </div>
   </header>
 
   <!-- MOBILE MENU -->
   <div class="mobile-menu">
-    <div id="mobile-auth-loading">
-      <div class="auth-shimmer" style="margin:12px auto;width:100px"></div>
-    </div>
+    <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
     <div id="mobile-auth-logged-out" style="display:none">
       <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#ecosystem" class="mobile-nav-link">Features</a>
-      <a href="../index.html#ai-section" class="mobile-nav-link">AI</a>
+      <a href="../index.html#features" class="mobile-nav-link">Features</a>
+      <a href="ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
       <a href="download.html" class="mobile-nav-link">Download App</a>
       <div class="mobile-cta">
-        <a href="login.html" class="btn-login">Login</a>
+        <a href="login.html" class="btn-login">Log in</a>
         <a href="signup.html" class="btn-signup">Sign Up</a>
       </div>
     </div>
     <div id="mobile-auth-logged-in" style="display:none">
       <div id="mobile-profile-section"></div>
       <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#ecosystem" class="mobile-nav-link">Features</a>
-      <a href="../index.html#ai-section" class="mobile-nav-link">AI</a>
-      <a href="download.html" class="mobile-nav-link">Download App</a>
-      <a href="account.html">Account</a>
-      <a href="settings.html">Settings</a>
-      <button onclick="handleLogout()">Logout</button>
+      <a href="ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="account.html" class="mobile-nav-link">Account</a>
+      <a href="settings.html" class="mobile-nav-link">Settings</a>
+      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
     </div>
   </div>
 
   <div class="chatbot-layout">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <div class="sidebar-brand">
-          <img src="../assets/wassal.png" alt="Wassal AI" class="sidebar-brand-icon">
-          <span class="sidebar-brand-text">Wassal AI</span>
-        </div>
         <button class="btn-new-chat" id="btn-new-chat">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           New Chat
         </button>
       </div>
-
-      <div class="sidebar-history">
-        <p class="sidebar-history-empty">Your conversations will appear here. Coming Soon.</p>
+      <div class="sidebar-history" id="sidebar-history"></div>
+      <div class="session-panel" id="session-panel">
+        <div class="session-loading">
+          <div class="session-shimmer"></div>
+          <div class="session-shimmer short"></div>
+        </div>
       </div>
-
       <div class="sidebar-bottom">
-        <a href="download.html" class="sidebar-download-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Available on Mobile
-        </a>
+        <div class="model-selector" id="model-selector">
+          <div class="model-selector-trigger" id="model-selector-trigger">
+            <span class="model-dot" id="model-dot"></span>
+            <span class="model-selected-name" id="model-selected-name">Shehbaz Sharif</span>
+            <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="model-dropdown" id="model-dropdown">
+            <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
+              <span class="model-option-dot dot-blue"></span>
+              <span class="model-option-name">Shehbaz Sharif</span>
+              <span class="model-option-tag">Groq</span>
+            </button>
+            <button class="model-option" data-model="1" data-name="Imran Khan">
+              <span class="model-option-dot dot-orange"></span>
+              <span class="model-option-name">Imran Khan</span>
+              <span class="model-option-tag">Qwen</span>
+            </button>
+          </div>
+        </div>
       </div>
     </aside>
 
@@ -103,107 +107,89 @@
       <div class="chat-content" id="chat-content">
         <div class="chat-welcome" id="chat-welcome">
           <div class="welcome-icon">
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M32 2L56 16V48L32 62L8 48V16L32 2Z" stroke="url(#grad)" stroke-width="2" fill="none"/>
-              <path d="M32 18L38 28H42L36 34L38 44L32 38L26 44L28 34L22 28H26L32 18Z" fill="url(#grad)"/>
-              <defs>
-                <linearGradient id="grad" x1="8" y1="2" x2="56" y2="62">
-                  <stop offset="0%" stop-color="#6366f1"/>
-                  <stop offset="100%" stop-color="#a855f7"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <img src="../assets/wassal.png" alt="Wassal">
           </div>
           <h1 class="welcome-title">Wassal AI</h1>
-          <p class="welcome-subtitle">Your AI study companion is coming to the web.</p>
-          <p class="welcome-desc">The full Wassal AI experience will be available here soon.</p>
+          <p class="welcome-subtitle">Ask me anything about your studies.</p>
+          <div class="quick-actions" id="quick-actions">
+            <button class="quick-btn" data-prompt="Explain Newton's three laws of motion with examples">
+              <span>Explain a topic</span>
+            </button>
+            <button class="quick-btn" data-prompt="Quiz me on Physics chapter 1 — Electrostatics">
+              <span>Quiz me</span>
+            </button>
+            <button class="quick-btn" data-prompt="Help me plan a 2-week study schedule for my board exams">
+              <span>Plan my study</span>
+            </button>
+          </div>
         </div>
+        <div class="messages-list" id="messages-list"></div>
       </div>
 
       <div class="chat-input-area">
         <div class="chat-input-wrapper">
-          <button class="input-btn btn-voice" id="btn-voice" title="Voice input coming soon" disabled>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
-            </svg>
+          <textarea class="chat-input" id="chat-input" placeholder="Ask Wassal AI anything..." rows="1"></textarea>
+          <button class="input-btn btn-stop" id="btn-stop" title="Stop generating" style="display:none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
           </button>
-          <input type="text" class="chat-input" id="chat-input" placeholder="Ask Wassal AI anything..." disabled>
           <button class="input-btn btn-send" id="btn-send" title="Send" disabled>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
         </div>
-        <p class="chat-input-hint">AI for Web is Coming Soon</p>
+        <p class="chat-disclaimer">Wassal AI can make mistakes. Verify important information.</p>
       </div>
     </main>
-  </div>
-
-  <div class="modal-overlay" id="coming-soon-modal">
-    <div class="modal-card">
-      <div class="modal-icon">✨</div>
-      <h3>Coming Soon</h3>
-      <p>Wassal AI for Web is currently in development.</p>
-      <p>The full AI study experience will be available here soon.</p>
-      <div class="modal-actions">
-        <a href="download.html" class="btn-primary">Get the App</a>
-        <button class="btn-secondary" onclick="closeModal()">Close</button>
-      </div>
-    </div>
   </div>
 
   <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
   <div class="mobile-sidebar" id="mobile-sidebar">
     <div class="mobile-sidebar-header">
-      <div class="sidebar-brand">
-        <img src="../assets/wassal.png" alt="Wassal AI" class="sidebar-brand-icon">
-        <span class="sidebar-brand-text">Wassal AI</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="../assets/wassal.png" alt="Wassal" class="mobile-brand-logo">
+        <span class="mobile-brand-text">Wassal AI</span>
       </div>
       <button class="btn-close-sidebar" id="btn-close-sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
     <div class="sidebar-top">
       <button class="btn-new-chat" id="btn-new-chat-mobile">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         New Chat
       </button>
     </div>
-    <div class="sidebar-history">
-      <p class="sidebar-history-empty">Your conversations will appear here. Coming Soon.</p>
+    <div class="sidebar-history" id="sidebar-history-mobile"></div>
+    <div class="session-panel" id="session-panel-mobile">
+      <div class="session-loading">
+        <div class="session-shimmer"></div>
+        <div class="session-shimmer short"></div>
+      </div>
     </div>
     <div class="sidebar-bottom">
-      <a href="download.html" class="sidebar-download-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Available on Mobile
-      </a>
+      <div class="model-selector" id="model-selector-mobile">
+        <div class="model-selector-trigger" id="model-selector-trigger-mobile">
+          <span class="model-dot" id="model-dot-mobile"></span>
+          <span class="model-selected-name" id="model-selected-name-mobile">Shehbaz Sharif</span>
+          <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="model-dropdown" id="model-dropdown-mobile">
+          <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
+            <span class="model-option-dot dot-blue"></span>
+            <span class="model-option-name">Shehbaz Sharif</span>
+          </button>
+          <button class="model-option" data-model="1" data-name="Imran Khan">
+            <span class="model-option-dot dot-orange"></span>
+            <span class="model-option-name">Imran Khan</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <button class="mobile-menu-btn" id="mobile-menu-btn">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="3" y1="6" x2="21" y2="6"></line>
-      <line x1="3" y1="12" x2="21" y2="12"></line>
-      <line x1="3" y1="18" x2="21" y2="18"></line>
-    </svg>
-  </button>
-
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="../js/app.js"></script>
+  <script src="../js/ai-api-service.js"></script>
   <script src="../js/ai-chatbot.js"></script>
 </body>
 </html>

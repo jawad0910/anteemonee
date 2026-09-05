@@ -51,7 +51,7 @@
       left: 0;
       right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
     }
     .card-header {
       display: flex;
@@ -72,8 +72,8 @@
       gap: 6px;
       padding: 7px 14px;
       border-radius: var(--radius-pill);
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
       color: var(--text-secondary);
       font-size: 12px;
       font-weight: 500;
@@ -83,7 +83,7 @@
     }
     .edit-btn:hover {
       background: var(--accent-soft);
-      border-color: rgba(124, 92, 255, 0.2);
+      border-color: rgba(28, 138, 77, 0.3);
       color: var(--accent);
     }
     .edit-btn svg {
@@ -95,7 +95,7 @@
       align-items: center;
       gap: 24px;
       padding-bottom: 28px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--border);
       margin-bottom: 4px;
     }
     .profile-avatar-wrap {
@@ -118,7 +118,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #9B7BFF, #7C5CFF, #5B3EE8);
+      background: linear-gradient(135deg, var(--green), var(--accent));
       color: #fff;
       font-size: 32px;
       font-weight: 700;
@@ -149,7 +149,7 @@
       transition: background 0.2s;
     }
     .field-row:hover {
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--tag-bg);
     }
     .field-label {
       font-size: 14px;
@@ -163,7 +163,7 @@
       text-align: right;
       max-width: 55%;
       word-break: break-word;
-      color: var(--white);
+      color: var(--text);
     }
     .field-value.empty {
       color: var(--text-muted);
@@ -187,7 +187,7 @@
       gap: 10px;
       margin-top: 16px;
       padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-top: 1px solid var(--border);
     }
     .edit-actions button {
       flex: 1;
@@ -210,8 +210,8 @@
       font-family: 'Inter', sans-serif;
     }
     .btn-save:hover {
-      background: #6a4de6;
-      box-shadow: 0 6px 24px rgba(124, 92, 255, 0.3);
+      background: var(--accent-hover);
+      box-shadow: 0 6px 24px var(--glow);
     }
     .btn-save:disabled {
       opacity: 0.5;
@@ -225,7 +225,7 @@
       justify-content: center;
       padding: 12px 24px;
       border-radius: var(--radius-md);
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--tag-bg);
       border: 1px solid var(--border);
       color: var(--text-secondary);
       font-size: 14px;
@@ -236,10 +236,26 @@
       font-family: 'Inter', sans-serif;
     }
     .btn-cancel:hover {
-      background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(255, 255, 255, 0.15);
-      color: var(--white);
+      background: var(--bg-card-hover);
+      border-color: var(--border);
+      color: var(--text);
     }
+    .btn-verify {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-verify:hover { opacity: 0.9; }
+    .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
+    .phone-verified { color: #22c55e; font-weight: 600; }
+    .phone-unverified { color: #f59e0b; }
     .edit-form-group {
       display: flex;
       flex-direction: column;
@@ -261,7 +277,7 @@
       border-radius: var(--radius-sm);
       border: 1.1px solid var(--border);
       background: var(--surface);
-      color: var(--white);
+      color: var(--text);
       font-size: 14px;
       font-family: 'Inter', sans-serif;
       outline: none;
@@ -277,12 +293,12 @@
     }
     .edit-form-group select option {
       background: var(--surface);
-      color: var(--white);
+      color: var(--text);
     }
     .edit-form-group input:focus,
     .edit-form-group select:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
     .edit-form-group input::placeholder {
       color: var(--text-muted);
@@ -298,7 +314,7 @@
       gap: 6px;
       padding: 8px 14px;
       border-radius: var(--radius-pill);
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--tag-bg);
       border: 1px solid var(--border);
       color: var(--text-secondary);
       font-size: 13px;
@@ -308,12 +324,12 @@
       user-select: none;
     }
     .multi-select-chip:hover {
-      border-color: rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border);
+      background: var(--bg-card-hover);
     }
     .multi-select-chip.selected {
       background: var(--accent-soft);
-      border-color: rgba(124, 92, 255, 0.3);
+      border-color: rgba(28, 138, 77, 0.35);
       color: var(--accent);
     }
     .toast {
@@ -327,7 +343,7 @@
       color: #fff;
       font-size: 14px;
       font-weight: 600;
-      z-index: 9999;
+      z-index: 10001;
       opacity: 0;
       transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       pointer-events: none;
@@ -343,7 +359,7 @@
     }
     .section-divider {
       height: 1px;
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--border);
       margin: 4px 0;
     }
     .not-logged-in {
@@ -364,7 +380,7 @@
       padding: 20px;
       margin-top: 4px;
       background: var(--accent-soft);
-      border: 1px solid rgba(124, 92, 255, 0.15);
+      border: 1px solid rgba(28, 138, 77, 0.2);
       border-radius: var(--radius-md);
     }
     .onboarding-prompt p {
@@ -417,10 +433,10 @@
     .edit-profile-avatar-overlay svg { width: 24px; height: 24px; color: #fff; }
     .edit-form-group textarea {
       width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1.1px solid var(--border);
-      background: var(--surface); color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif;
+      background: var(--surface); color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif;
       outline: none; transition: all 0.2s; resize: vertical; min-height: 80px;
     }
-    .edit-form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1); }
+    .edit-form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
     .edit-form-group textarea::placeholder { color: var(--text-muted); }
     .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; }
     .username-status { font-size: 12px; margin-top: 4px; }
@@ -429,7 +445,7 @@
     .username-status.taken { color: var(--error); }
     .edit-profile-avatar-fallback {
       width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #9B7BFF, #7C5CFF, #5B3EE8);
+      background: linear-gradient(135deg, var(--green), var(--accent));
       color: #fff; font-size: 36px; font-weight: 700; border-radius: 50%; border: 2.5px solid var(--glass-border);
     }
     .img-upload-input { display: none; }
@@ -442,7 +458,7 @@
     }
     .ep-modal-sheet {
       position: relative; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
-      background: #111216; border: 1px solid var(--glass-border); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
       animation: slideUp 0.3s ease;
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -452,18 +468,25 @@
     .ep-modal-header h3 { font-size: 18px; font-weight: 700; }
     .ep-close-btn {
       display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
-      border-radius: var(--radius-sm); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm); background: var(--tag-bg); border: 1px solid var(--border);
       color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
     }
-    .ep-close-btn:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+    .ep-close-btn:hover { background: var(--bg-card-hover); color: var(--text); }
     .ep-modal-body { padding: 20px 24px; }
     .ep-avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; }
+    .ep-avatar-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ep-remove-photo-btn {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border: none; border-radius: var(--radius-sm);
+      background: rgba(255, 102, 117, 0.1); color: var(--error); font-size: 12px; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .ep-remove-photo-btn:hover { background: rgba(255, 102, 117, 0.2); }
     .ep-modal-footer { display: flex; gap: 12px; padding: 16px 24px 24px; }
     .ep-modal-footer button { flex: 1; }
     .ep-notice {
       display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-top: 8px;
       border-radius: var(--radius-sm); background: rgba(255, 199, 0, 0.06); border: 1px solid rgba(255, 199, 0, 0.12);
-      font-size: 12px; color: #FFC700; line-height: 1.5;
+      font-size: 12px; color: var(--warning); line-height: 1.5;
     }
     .ep-notice svg { flex-shrink: 0; margin-top: 1px; }
     .spinner {
@@ -497,12 +520,12 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
     }
     .shimmer-line {
       height: 14px;
       border-radius: 7px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
       background-size: 200% 100%;
       animation: shimmer-slide 1.5s infinite;
       margin-bottom: 16px;
@@ -515,7 +538,7 @@
     .shimmer-circle {
       width: 88px; height: 88px;
       border-radius: 50%;
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
       background-size: 200% 100%;
       animation: shimmer-slide 1.5s infinite;
       margin-bottom: 16px;
@@ -525,18 +548,18 @@
       justify-content: space-between;
       align-items: center;
       padding: 14px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--border);
     }
     .shimmer-row:last-child { border-bottom: none; }
     .shimmer-label {
       height: 12px; width: 90px; border-radius: 6px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
       background-size: 200% 100%;
       animation: shimmer-slide 1.5s infinite;
     }
     .shimmer-value {
       height: 12px; width: 120px; border-radius: 6px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
       background-size: 200% 100%;
       animation: shimmer-slide 1.5s infinite;
     }
@@ -552,10 +575,18 @@
     <div class="header-inner">
       <a href="../index.html" class="logo-link">
         <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
-        <span class="logo-text">Wassal</span>
+        <span class="logo-text-wrap">
+          <span class="logo-text">Wassal</span>
+          <span class="logo-sub">Student OS for Pakistan</span>
+        </span>
       </a>
 
       <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
         <div class="auth-actions" id="auth-loading">
           <div class="auth-shimmer"></div>
         </div>
@@ -583,8 +614,8 @@
     </div>
     <div id="mobile-auth-logged-out" style="display:none">
       <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#ecosystem" class="mobile-nav-link">Features</a>
-      <a href="../index.html#ai-section" class="mobile-nav-link">AI</a>
+      <a href="../index.html#features" class="mobile-nav-link">Features</a>
+      <a href="ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
       <a href="download.html" class="mobile-nav-link">Download App</a>
       <div class="mobile-cta">
         <a href="login.html" class="btn-login">Login</a>
@@ -594,12 +625,10 @@
     <div id="mobile-auth-logged-in" style="display:none">
       <div id="mobile-profile-section"></div>
       <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#ecosystem" class="mobile-nav-link">Features</a>
-      <a href="../index.html#ai-section" class="mobile-nav-link">AI</a>
-      <a href="download.html" class="mobile-nav-link">Download App</a>
-      <a href="account.html">Account</a>
-      <a href="settings.html">Settings</a>
-      <button onclick="handleLogout()">Logout</button>
+      <a href="ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="account.html" class="mobile-nav-link">Account</a>
+      <a href="settings.html" class="mobile-nav-link">Settings</a>
+      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
     </div>
   </div>
 
@@ -680,7 +709,13 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
           </div>
-          <p class="auth-field-note" style="text-align:center">Tap to change photo</p>
+          <div class="ep-avatar-actions">
+            <p class="auth-field-note" style="text-align:center">Tap to change photo</p>
+            <button type="button" class="ep-remove-photo-btn" id="ep-remove-photo-btn" onclick="removeProfilePhoto()" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Remove Photo
+            </button>
+          </div>
         </div>
 
         <div class="edit-form-group">
@@ -700,8 +735,18 @@
         </div>
         <div class="edit-form-group">
           <label>Phone</label>
-          <input type="tel" id="ep-phone" placeholder="+92 300 1234567">
-          <div class="auth-field-note">Include country code (e.g. +92)</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="tel" id="ep-phone" placeholder="0300 1234567" style="flex:1">
+            <button type="button" id="ep-phone-verify-btn" class="btn-verify" onclick="sendPhoneOtp()" style="display:none;white-space:nowrap">Verify</button>
+          </div>
+          <div id="ep-phone-status" class="auth-field-note" style="display:none"></div>
+          <div id="ep-otp-row" style="display:none;margin-top:8px;display:none;flex-direction:column;gap:6px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="ep-otp-input" placeholder="Enter 6-digit code" maxlength="6" style="flex:1;letter-spacing:4px;text-align:center;font-size:1.1rem">
+              <button type="button" class="btn-verify" onclick="verifyPhoneOtp()">Confirm</button>
+            </div>
+            <div class="auth-field-note" id="ep-otp-status"></div>
+          </div>
         </div>
         <div class="edit-form-group">
           <label>Bio</label>
@@ -1231,6 +1276,7 @@
 
     let epUsernameTimer = null;
     let epSelectedImage = null;
+    let epPhotoRemoved = false;
 
     function openEditProfile() {
       const p = acctData.profile;
@@ -1243,19 +1289,22 @@
       const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || '';
       const fullName = p?.full_name || '';
       const email = user?.email || '';
-      const phone = user?.phone || '';
+      const phone = p?.phone || '';
       const bio = p?.bio || '';
 
       const avatarImg = document.getElementById('ep-avatar-img');
       const avatarFallback = document.getElementById('ep-avatar-fallback');
+      const removeBtn = document.getElementById('ep-remove-photo-btn');
       if (imgUrl) {
         avatarImg.src = imgUrl;
         avatarImg.style.display = 'block';
         avatarFallback.style.display = 'none';
+        removeBtn.style.display = 'inline-flex';
       } else {
         avatarImg.style.display = 'none';
         avatarFallback.textContent = (fullName || username || 'U').charAt(0).toUpperCase();
         avatarFallback.style.display = 'flex';
+        removeBtn.style.display = 'none';
       }
 
       document.getElementById('ep-name').value = fullName;
@@ -1267,12 +1316,133 @@
       document.getElementById('ep-username-status').textContent = '';
       document.getElementById('ep-email-notice').style.display = 'none';
       epSelectedImage = null;
+
+      // Phone verification status
+      const verifyBtn = document.getElementById('ep-phone-verify-btn');
+      const phoneStatus = document.getElementById('ep-phone-status');
+      const otpRow = document.getElementById('ep-otp-row');
+      otpRow.style.display = 'none';
+      if (p?.phone_verified) {
+        verifyBtn.style.display = 'none';
+        phoneStatus.style.display = 'block';
+        phoneStatus.className = 'auth-field-note phone-verified';
+        phoneStatus.textContent = 'Phone verified';
+      } else if (phone) {
+        verifyBtn.style.display = 'inline-flex';
+        phoneStatus.style.display = 'none';
+      } else {
+        verifyBtn.style.display = 'none';
+        phoneStatus.style.display = 'none';
+      }
     }
 
     function closeEditProfile() {
       document.getElementById('edit-profile-modal').style.display = 'none';
       document.body.style.overflow = '';
       epSelectedImage = null;
+      epPhotoRemoved = false;
+    }
+
+    let phoneOtpSending = false;
+    async function sendPhoneOtp() {
+      if (phoneOtpSending) return;
+      const phone = document.getElementById('ep-phone').value.trim();
+      if (!phone) return alert('Enter a phone number first');
+      const btn = document.getElementById('ep-phone-verify-btn');
+      const status = document.getElementById('ep-phone-status');
+      const otpRow = document.getElementById('ep-otp-row');
+      phoneOtpSending = true;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      status.style.display = 'none';
+      try {
+        const raw = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
+        const parsed = raw ? JSON.parse(raw) : null;
+        const token = parsed?.access_token;
+        if (!token) throw new Error('Not logged in');
+        const res = await fetch(SUPABASE_URL + '/functions/v1/send-phone-otp', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Failed to send OTP');
+        otpRow.style.display = 'flex';
+        status.style.display = 'block';
+        status.className = 'auth-field-note';
+        status.textContent = `OTP sent to ${json.phone}`;
+        document.getElementById('ep-otp-input').focus();
+        window._phoneOtpRequestId = json.request_id;
+      } catch (e) {
+        status.style.display = 'block';
+        status.className = 'auth-field-note phone-unverified';
+        status.textContent = e.message || 'Failed to send OTP';
+      } finally {
+        phoneOtpSending = false;
+        btn.disabled = false;
+        btn.textContent = 'Verify';
+      }
+    }
+
+    let phoneOtpVerifying = false;
+    async function verifyPhoneOtp() {
+      if (phoneOtpVerifying) return;
+      const phone = document.getElementById('ep-phone').value.trim();
+      const code = document.getElementById('ep-otp-input').value.trim();
+      if (!code || code.length < 4) return alert('Enter the OTP code');
+      const otpStatus = document.getElementById('ep-otp-status');
+      const btn = event.target;
+      phoneOtpVerifying = true;
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      try {
+        const raw = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
+        const parsed = raw ? JSON.parse(raw) : null;
+        const token = parsed?.access_token;
+        if (!token) throw new Error('Not logged in');
+        const res = await fetch(SUPABASE_URL + '/functions/v1/verify-phone-otp', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone, code, request_id: window._phoneOtpRequestId }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Invalid OTP');
+        // Success
+        document.getElementById('ep-otp-row').style.display = 'none';
+        const phoneStatus = document.getElementById('ep-phone-status');
+        phoneStatus.style.display = 'block';
+        phoneStatus.className = 'auth-field-note phone-verified';
+        phoneStatus.textContent = 'Phone verified';
+        document.getElementById('ep-phone-verify-btn').style.display = 'none';
+        if (acctData.profile) acctData.profile.phone_verified = true;
+        if (currentProfile) currentProfile.phone_verified = true;
+        otpStatus.textContent = '';
+      } catch (e) {
+        otpStatus.textContent = e.message || 'Invalid code';
+        otpStatus.className = 'auth-field-note phone-unverified';
+      } finally {
+        phoneOtpVerifying = false;
+        btn.disabled = false;
+        btn.textContent = 'Confirm';
+      }
+    }
+
+    function removeProfilePhoto() {
+      epPhotoRemoved = true;
+      epSelectedImage = null;
+      const avatarImg = document.getElementById('ep-avatar-img');
+      const avatarFallback = document.getElementById('ep-avatar-fallback');
+      const removeBtn = document.getElementById('ep-remove-photo-btn');
+      avatarImg.style.display = 'none';
+      avatarFallback.textContent = (acctData.profile?.full_name || acctData.profile?.username || 'U').charAt(0).toUpperCase();
+      avatarFallback.style.display = 'flex';
+      removeBtn.style.display = 'none';
     }
 
     function epHandleImageSelect(e) {
@@ -1282,13 +1452,16 @@
       if (!file.type.startsWith('image/')) { showToast('Please select an image', true); return; }
 
       epSelectedImage = file;
+      epPhotoRemoved = false;
       const reader = new FileReader();
       reader.onload = function(ev) {
         const avatarImg = document.getElementById('ep-avatar-img');
         const avatarFallback = document.getElementById('ep-avatar-fallback');
+        const removeBtn = document.getElementById('ep-remove-photo-btn');
         avatarImg.src = ev.target.result;
         avatarImg.style.display = 'block';
         avatarFallback.style.display = 'none';
+        removeBtn.style.display = 'inline-flex';
       };
       reader.readAsDataURL(file);
       e.target.value = '';
@@ -1360,11 +1533,11 @@
         const phone = document.getElementById('ep-phone').value.trim();
         const bio = document.getElementById('ep-bio').value.trim();
 
-        if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
-          throw new Error('Username can only contain letters, numbers, and underscores');
+        if (!username || username.length < 3) {
+          throw new Error('Username is required and must be at least 3 characters');
         }
-        if (username && username.length < 3) {
-          throw new Error('Username must be at least 3 characters');
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          throw new Error('Username can only contain letters, numbers, and underscores');
         }
 
         const statusEl = document.getElementById('ep-username-status');
@@ -1376,13 +1549,16 @@
         if (epSelectedImage) {
           btn.innerHTML = '<span class="spinner"></span> Uploading image...';
           profileImageUrl = await uploadToCloudinary(epSelectedImage);
+        } else if (epPhotoRemoved) {
+          profileImageUrl = null;
         }
 
         const profileFields = {};
         if (fullName !== (acctData.profile?.full_name || '')) profileFields.full_name = fullName;
-        if (username && username !== (acctData.profile?.username || '')) profileFields.username = username;
+        if (username !== (acctData.profile?.username || '')) profileFields.username = username;
         if (bio !== (acctData.profile?.bio || '')) profileFields.bio = bio;
-        if (profileImageUrl !== (acctData.profile?.profile_image_url || '')) profileFields.profile_image_url = profileImageUrl;
+        if (phone !== (acctData.profile?.phone || '')) profileFields.phone = phone;
+        if (epPhotoRemoved || profileImageUrl !== (acctData.profile?.profile_image_url || '')) profileFields.profile_image_url = profileImageUrl;
 
         if (profileFields.username) {
           const { data: existing } = await db.from('profiles')
@@ -1412,14 +1588,13 @@
           }
           authFields.email = newEmail;
         }
-        if (phone && phone !== (currentUser?.phone || '')) authFields.phone = phone;
-
         if (Object.keys(authFields).length > 0) {
           const { error: authErr } = await db.auth.updateUser(authFields);
           if (authErr) throw authErr;
         }
 
         Object.assign(acctData.profile, profileFields);
+        if (currentProfile) Object.assign(currentProfile, profileFields);
         if (username) currentUser.user_metadata = { ...currentUser.user_metadata, username };
 
         renderProfileAvatar();
