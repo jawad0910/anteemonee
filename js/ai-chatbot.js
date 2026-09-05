@@ -282,6 +282,20 @@
     });
     // Flush any pending study time from previous unload
     flushPendingStudyTime();
+
+    // ── iOS keyboard handling: adjust layout when virtual keyboard opens/closes ──
+    const chatbotLayout = document.querySelector('.chatbot-layout');
+    if (window.visualViewport && chatbotLayout) {
+      const applyViewportHeight = () => {
+        const vv = window.visualViewport;
+        // Offset from bottom of layout viewport to bottom of visual viewport (keyboard height)
+        const bottomOffset = window.innerHeight - (vv.offsetTop + vv.height);
+        chatbotLayout.style.bottom = bottomOffset + 'px';
+      };
+      window.visualViewport.addEventListener('resize', applyViewportHeight);
+      window.visualViewport.addEventListener('scroll', applyViewportHeight);
+      applyViewportHeight();
+    }
   }
 
   async function flushPendingStudyTime() {
