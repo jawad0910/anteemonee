@@ -1218,7 +1218,8 @@ function getICSCompulsorySubjects() {
 
 function getICSAllSubjects(selectedIds) {
   const compulsory = getICSCompulsorySubjects();
-  const chosen = onboarding.ref.subjects.filter(s => selectedIds.includes(s.id));
+  const numIds = selectedIds.map(Number);
+  const chosen = onboarding.ref.subjects.filter(s => numIds.includes(s.id));
   return [...compulsory, ...chosen];
 }
 
