@@ -1038,16 +1038,22 @@ async function getOnboardingStep() {
     if (!acad || !acad.education_system_id) { console.log('[getOnboardingStep] no SAP or no edu_system → 2'); return 2; }
     if (!acad.board_id) { console.log('[getOnboardingStep] no board → 3'); return 3; }
     if (!acad.class_level_id) { console.log('[getOnboardingStep] no class_level → 4'); return 4; }
-    if (!acad.group_id) { console.log('[getOnboardingStep] no group → 5'); return 5; }
+
+    // For ICS: skip group check, go straight to subjects
+    const isIcsSystem = await db.from('education_systems').select('code').eq('id', acad.education_system_id).maybeSingle();
+    const icsMode = isIcsSystem?.data?.code === 'ics';
+
+    if (!icsMode && !acad.group_id) { console.log('[getOnboardingStep] no group → 5'); return 5; }
+
     if (acad.id) {
       const { count, error: countErr } = await db.from('student_subjects')
         .select('id', { count: 'exact', head: true })
         .eq('academic_profile_id', acad.id);
       if (countErr) { console.error('[getOnboardingStep] subjects query error:', countErr); return -1; }
       console.log('[getOnboardingStep] subject count:', count);
-      if (!count) return 6;
+      if (!count) return icsMode ? 5 : 6;
     } else {
-      return 6;
+      return icsMode ? 5 : 6;
     }
     if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session → 8'); return 8; }
     if (!profile.goals_completed) {
@@ -1178,6 +1184,22 @@ function isSecondYear() {
   return getClassYearValue() === 12;
 }
 
+function isICS() {
+  const sys = onboarding.ref.education_systems.find(s => s.id == onboarding.data.education_system_id);
+  return sys?.code === 'ics';
+}
+
+const ICS_SUBJECTS = ['Computer Science', 'Mathematics', 'Physics', 'Economics', 'Statistics'];
+
+async function loadICSSubjects(systemId) {
+  const { data } = await db.from('subjects')
+    .select('*')
+    .eq('education_system_id', systemId)
+    .eq('is_compulsory', false)
+    .order('name');
+  onboarding.ref.subjects = data || [];
+}
+
 function getOnboardingSubjects() {
   const secondYear = isSecondYear();
   const suffix = secondYear ? '-II' : '-I';
@@ -1276,16 +1298,28 @@ async function saveStepData(step) {
       break;
     }
     case 5: {
-      const row = await sapExists();
-      if (row) await db.from('student_academic_profiles').update({ group_id: d.group_id }).eq('user_id', currentUser.id);
+      if (isICS()) {
+        const row = await sapExists();
+        if (row) {
+          await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
+          if (d.selected_subjects.length) {
+            await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
+          }
+        }
+      } else {
+        const row = await sapExists();
+        if (row) await db.from('student_academic_profiles').update({ group_id: d.group_id }).eq('user_id', currentUser.id);
+      }
       break;
     }
     case 6: {
-      const row = await sapExists();
-      if (row) {
-        await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
-        if (d.selected_subjects.length) {
-          await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
+      if (!isICS()) {
+        const row = await sapExists();
+        if (row) {
+          await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
+          if (d.selected_subjects.length) {
+            await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
+          }
         }
       }
       break;
@@ -1382,11 +1416,21 @@ async function loadStepData(step) {
       if (d.education_system_id) await loadClassLevels(d.education_system_id);
       break;
     case 5:
-      if (d.education_system_id) await loadGroups(d.education_system_id);
+      if (d.education_system_id) {
+        if (isICS()) {
+          await loadICSSubjects(d.education_system_id);
+        } else {
+          await loadGroups(d.education_system_id);
+        }
+      }
       break;
     case 6:
-      if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
-      d.selected_subjects = getOnboardingSubjects().map(s => s.id);
+      if (isICS()) {
+        // ICS subjects already loaded in step 5, nothing to load
+      } else {
+        if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
+        d.selected_subjects = getOnboardingSubjects().map(s => s.id);
+      }
       break;
     case 7:
       await loadAllColleges();
@@ -1402,8 +1446,12 @@ async function loadStepData(step) {
           await loadBoards(d.education_system_id, province?.name);
         }
         if (!r.class_levels.length) await loadClassLevels(d.education_system_id);
-        if (!r.groups.length) await loadGroups(d.education_system_id);
-        if (!r.subjects.length) await loadSubjects(d.education_system_id, d.group_id);
+        if (isICS()) {
+          if (!r.subjects.length) await loadICSSubjects(d.education_system_id);
+        } else {
+          if (!r.groups.length) await loadGroups(d.education_system_id);
+          if (!r.subjects.length) await loadSubjects(d.education_system_id, d.group_id);
+        }
       }
       if (!r.colleges.length) await loadAllColleges();
       break;
@@ -1447,7 +1495,11 @@ async function validateOnboardingStep(step) {
       if (!d.class_level_id) { showMessage(errorEl, 'Please select your class.'); return false; }
       return true;
     case 5:
-      if (!d.group_id) { showMessage(errorEl, 'Please select your group.'); return false; }
+      if (isICS()) {
+        if (d.selected_subjects.length !== 3) { showMessage(errorEl, 'Please select exactly 3 subjects.'); return false; }
+      } else {
+        if (!d.group_id) { showMessage(errorEl, 'Please select your group.'); return false; }
+      }
       return true;
     case 6:
       return true;
@@ -1604,45 +1656,90 @@ function renderOnboardingStep() {
       break;
 
     case 5:
-      container.innerHTML = `
-        <h2 class="onboarding-title">Group</h2>
-        <p class="onboarding-subtitle">What is your group / stream?</p>
-        <div class="onboarding-options">
-          ${r.groups.map(g => `
-            <button class="onboarding-option ${d.group_id === g.id ? 'selected' : ''}" data-id="${g.id}">
-              <span class="option-name">${g.name}</span>
-              ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
-            </button>
-          `).join('')}
-        </div>
-      `;
-      container.querySelectorAll('.onboarding-option').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          d.group_id = btn.dataset.id;
-          d.selected_subjects = [];
-          container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-          await loadSubjects(d.education_system_id, d.group_id);
+      if (isICS()) {
+        container.innerHTML = `
+          <h2 class="onboarding-title">Choose Your Subjects</h2>
+          <p class="onboarding-subtitle">Select exactly 3 subjects.</p>
+          <div class="onboarding-options">
+            ${r.subjects.map(s => `
+              <button class="onboarding-option subject-option ${d.selected_subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}">
+                <span class="option-name">${s.name}</span>
+              </button>
+            `).join('')}
+          </div>
+          <p class="subject-count" style="font-size:13px;color:var(--text-muted);margin-top:14px">${d.selected_subjects.length} of 3 selected</p>
+        `;
+        container.querySelectorAll('.subject-option').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            if (d.selected_subjects.includes(id)) {
+              d.selected_subjects = d.selected_subjects.filter(x => x !== id);
+              btn.classList.remove('selected');
+            } else {
+              if (d.selected_subjects.length >= 3) return;
+              d.selected_subjects.push(id);
+              btn.classList.add('selected');
+            }
+            const countEl = container.querySelector('.subject-count');
+            if (countEl) countEl.textContent = d.selected_subjects.length + ' of 3 selected';
+          });
         });
-      });
+      } else {
+        container.innerHTML = `
+          <h2 class="onboarding-title">Group</h2>
+          <p class="onboarding-subtitle">What is your group / stream?</p>
+          <div class="onboarding-options">
+            ${r.groups.map(g => `
+              <button class="onboarding-option ${d.group_id === g.id ? 'selected' : ''}" data-id="${g.id}">
+                <span class="option-name">${g.name}</span>
+                ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
+              </button>
+            `).join('')}
+          </div>
+        `;
+        container.querySelectorAll('.onboarding-option').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            d.group_id = btn.dataset.id;
+            d.selected_subjects = [];
+            container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            await loadSubjects(d.education_system_id, d.group_id);
+          });
+        });
+      }
       break;
 
     case 6: {
-      const secondYear = isSecondYear();
-      const subjectList = getOnboardingSubjects();
-      container.innerHTML = `
-        <h2 class="onboarding-title">Confirm Your Subjects</h2>
-        <p class="onboarding-subtitle">These are your subjects based on your group selection.</p>
-        <div class="onboarding-review">
-          ${subjectList.map(s => `
-            <div class="review-row">
-              <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Group Subject'}</span>
-              <span class="review-value">${s.displayName}</span>
-            </div>
-          `).join('')}
-        </div>
-        <p style="font-size:12px;color:var(--text-muted);margin-top:14px">${secondYear ? 'Per Govt. of Pakistan notification, 2nd Year students study Pakistan Studies only.' : 'Per Govt. of Pakistan notification, 1st Year students study Islamiyat only.'}</p>
-      `;
+      if (isICS()) {
+        const secondYear = isSecondYear();
+        container.innerHTML = `
+          <h2 class="onboarding-title">Confirm Your Subjects</h2>
+          <p class="onboarding-subtitle">These are your chosen subjects.</p>
+          <div class="onboarding-review">
+            ${d.selected_subjects.map(id => {
+              const s = r.subjects.find(x => x.id == id);
+              return s ? `<div class="review-row"><span class="review-label">Subject</span><span class="review-value">${s.name}</span></div>` : '';
+            }).join('')}
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:14px">${secondYear ? 'Per Govt. of Pakistan notification, 2nd Year students study Pakistan Studies only.' : 'Per Govt. of Pakistan notification, 1st Year students study Islamiyat only.'}</p>
+        `;
+      } else {
+        const secondYear = isSecondYear();
+        const subjectList = getOnboardingSubjects();
+        container.innerHTML = `
+          <h2 class="onboarding-title">Confirm Your Subjects</h2>
+          <p class="onboarding-subtitle">These are your subjects based on your group selection.</p>
+          <div class="onboarding-review">
+            ${subjectList.map(s => `
+              <div class="review-row">
+                <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Group Subject'}</span>
+                <span class="review-value">${s.displayName}</span>
+              </div>
+            `).join('')}
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:14px">${secondYear ? 'Per Govt. of Pakistan notification, 2nd Year students study Pakistan Studies only.' : 'Per Govt. of Pakistan notification, 1st Year students study Islamiyat only.'}</p>
+        `;
+      }
       break;
     }
 
@@ -1719,8 +1816,9 @@ function renderOnboardingStep() {
           <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || '—'}</span></div>
+          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(x => x.id == id); return s ? s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>` : `
           <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>
+          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>`}
           <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.label || '—'}</span></div>
           <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || '—'}</span></div>
