@@ -811,9 +811,18 @@ function setupPasswordRequirements() {
     container = document.createElement('div');
     container.className = 'password-requirements';
     container.innerHTML = `
-      <div class="pw-req" data-req="length"><span class="pw-icon"></span>At least 8 characters</div>
-      <div class="pw-req" data-req="upper"><span class="pw-icon"></span>One uppercase letter</div>
-      <div class="pw-req" data-req="number"><span class="pw-icon"></span>One number</div>
+      <div class="pw-req" data-req="length">
+        <span class="pw-check"><svg viewBox="0 0 16 16" fill="none"><polyline points="3 8 7 12 13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>At least 8 characters</span>
+      </div>
+      <div class="pw-req" data-req="upper">
+        <span class="pw-check"><svg viewBox="0 0 16 16" fill="none"><polyline points="3 8 7 12 13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>One uppercase letter</span>
+      </div>
+      <div class="pw-req" data-req="number">
+        <span class="pw-check"><svg viewBox="0 0 16 16" fill="none"><polyline points="3 8 7 12 13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>One number</span>
+      </div>
     `;
     input.parentElement.parentElement.appendChild(container);
   }
