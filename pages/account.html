@@ -871,6 +871,11 @@
       acctData.ref.subjects_list = data || [];
     }
 
+    async function loadAllSubjects(systemId) {
+      const { data } = await db.from('subjects').select('*').eq('education_system_id', systemId).order('is_compulsory', { ascending: false }).order('name');
+      acctData.ref.subjects_list = data || [];
+    }
+
     async function loadAllColleges() {
       const { data } = await db.from('colleges').select('id,name,city_id').order('name').limit(500);
       acctData.ref.colleges = data || [];
@@ -914,7 +919,17 @@
       const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
       const isIcs = isICSAccount();
-      const subjectNames = isIcs ? getICSFullSubjectNames() : acctData.subjects.map(sid => { const s = r.subjects_list.find(x => x.id == sid); return s ? s.name : null; }).filter(Boolean);
+      const subjectNames = isIcs ? getICSFullSubjectNames() : (() => {
+        const secondYear = isSecondYear();
+        const suffix = secondYear ? '-II' : '-I';
+        return acctData.subjects.map(sid => {
+          const s = r.subjects_list.find(x => x.id == sid);
+          if (!s) return null;
+          const name = (s.name || '').toLowerCase();
+          const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
+          return noSuffix ? s.name : `${s.name} ${suffix}`;
+        }).filter(Boolean);
+      })();
 
       const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
       const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
@@ -1612,7 +1627,7 @@
           tasks.push(loadICSSubjectsList(a.education_system_id));
         } else {
           tasks.push(loadGroups(a.education_system_id));
-          tasks.push(loadSubjectsList(a.education_system_id, a.group_id));
+          tasks.push(loadAllSubjects(a.education_system_id));
         }
       }
       if (p?.province_id) tasks.push(loadCities(p.province_id));
