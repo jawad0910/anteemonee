@@ -821,7 +821,7 @@
       const { data } = await db.from('subjects')
         .select('*')
         .eq('education_system_id', systemId)
-        .eq('is_compulsory', false)
+        .order('is_compulsory', { ascending: false })
         .order('name');
       const seen = new Set();
       acctData.ref.subjects_list = (data || []).filter(s => {
@@ -829,6 +829,34 @@
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
+      });
+    }
+
+    function isSecondYear() {
+      const classLabel = acctData.ref.class_levels.find(c => c.id == acctData.acad?.class_level_id)?.label || '';
+      return classLabel.toLowerCase().includes('2nd');
+    }
+
+    function getICSCompulsorySubjects() {
+      const secondYear = isSecondYear();
+      return acctData.ref.subjects_list.filter(s => {
+        if (!s.is_compulsory) return false;
+        const name = (s.name || '').toLowerCase();
+        if (name.includes('pakistan studies')) return secondYear;
+        if (name.includes('islamiat') || name.includes('islamiyat')) return !secondYear;
+        return true;
+      });
+    }
+
+    function getICSFullSubjectNames() {
+      const compulsory = getICSCompulsorySubjects();
+      const chosen = acctData.ref.subjects_list.filter(s => !s.is_compulsory && acctData.subjects.includes(s.id));
+      const secondYear = isSecondYear();
+      const suffix = secondYear ? '-II' : '-I';
+      return [...compulsory, ...chosen].map(s => {
+        const name = (s.name || '').toLowerCase();
+        const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
+        return noSuffix ? s.name : `${s.name} ${suffix}`;
       });
     }
 
@@ -885,8 +913,8 @@
       const email = user?.email || '—';
       const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
-      const subjectNames = acctData.subjects.map(sid => { const s = r.subjects_list.find(x => x.id == sid); return s ? s.name : null; }).filter(Boolean);
       const isIcs = isICSAccount();
+      const subjectNames = isIcs ? getICSFullSubjectNames() : acctData.subjects.map(sid => { const s = r.subjects_list.find(x => x.id == sid); return s ? s.name : null; }).filter(Boolean);
 
       const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
       const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
@@ -897,7 +925,12 @@
       const collegeOptions = r.colleges.map(c => `<option value="${c.id}" ${a?.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       const sessionOptions = r.academic_sessions.map(s => `<option value="${s.id}" ${a?.academic_session_id == s.id ? 'selected' : ''}>${s.label}</option>`).join('');
 
-      const subjectChips = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+      const subjectChips = isIcs
+        ? acctData.ref.subjects_list.filter(s => !s.is_compulsory).map(s => {
+            const isSelected = acctData.subjects.includes(s.id);
+            return `<div class="multi-select-chip ${isSelected ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`;
+          }).join('')
+        : acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
 
       document.getElementById('account-cards').innerHTML = `
         <div class="account-card">
@@ -971,7 +1004,7 @@
             <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
             ${isIcs ? '' : `<div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>`}
-            ${isIcs ? `<div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>` : ''}
+            <div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">College</span><span class="field-value ${a?.college_id ? '' : 'empty'}">${a?.college_id ? resolveName(r.colleges, a.college_id, 'name') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'label') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Exam Year</span><span class="field-value ${a?.exam_year ? '' : 'empty'}">${a?.exam_year || 'Not set'}</span></div>
@@ -1042,6 +1075,13 @@
       }
     }
 
+    function renderICSChips() {
+      return acctData.ref.subjects_list.filter(s => !s.is_compulsory).map(s => {
+        const isSelected = acctData.subjects.includes(s.id);
+        return `<div class="multi-select-chip ${isSelected ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`;
+      }).join('');
+    }
+
     async function onEduSystemChange() {
       const sid = document.getElementById('edit-edu-system').value;
       if (!sid) return;
@@ -1062,7 +1102,7 @@
       const subWrap = document.getElementById('edit-subjects-wrap');
       if (isIcs) {
         if (grpWrap) grpWrap.style.display = 'none';
-        if (subWrap) { subWrap.style.display = ''; await loadICSSubjectsList(sid); document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join(''); }
+        if (subWrap) { subWrap.style.display = ''; await loadICSSubjectsList(sid); document.getElementById('edit-subjects').innerHTML = renderICSChips(); }
       } else {
         if (grpWrap) grpWrap.style.display = '';
         if (subWrap) subWrap.style.display = 'none';
@@ -1073,12 +1113,14 @@
 
     async function onClassChange() {
       const sid = document.getElementById('edit-edu-system').value;
+      const classId = document.getElementById('edit-class').value;
+      if (classId) acctData.acad.class_level_id = classId;
       if (sid) {
         const sys = acctData.ref.education_systems.find(s => s.id == sid);
         const isIcs = sys?.code === 'ics';
         if (isIcs) {
           await loadICSSubjectsList(sid);
-          document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+          document.getElementById('edit-subjects').innerHTML = renderICSChips();
         } else {
           await loadGroups(sid);
           document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
@@ -1115,7 +1157,7 @@
           if (subWrap) {
             subWrap.style.display = '';
             await loadICSSubjectsList(a.education_system_id);
-            document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+            document.getElementById('edit-subjects').innerHTML = renderICSChips();
           }
         } else {
           if (grpWrap) grpWrap.style.display = '';
@@ -1129,6 +1171,7 @@
     }
 
     function toggleSubjectChip(el) {
+      if (el.classList.contains('disabled')) return;
       el.classList.toggle('selected');
     }
 
@@ -1177,8 +1220,8 @@
       if (!college) { showToast('Please select a college', true); return; }
       if (!session) { showToast('Please select an academic session', true); return; }
       if (ics) {
-        const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
-        if (selectedChips.length < 3) { showToast('Please select exactly 3 subjects for ICS', true); return; }
+        const selectedOptChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected:not(.disabled)');
+        if (selectedOptChips.length !== 3) { showToast('Please select exactly 3 optional subjects for ICS', true); return; }
       }
 
       btn.disabled = true;
@@ -1197,8 +1240,8 @@
         if (acadErr) throw acadErr;
 
         if (ics && acadProfile?.id) {
-          const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
-          const subjectIds = Array.from(selectedChips).map(c => parseInt(c.dataset.id));
+          const selectedOptChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected:not(.disabled)');
+          const subjectIds = Array.from(selectedOptChips).map(c => parseInt(c.dataset.id));
           await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
           if (subjectIds.length) {
             await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
