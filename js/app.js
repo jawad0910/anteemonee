@@ -1220,7 +1220,13 @@ function getICSAllSubjects(selectedIds) {
   const compulsory = getICSCompulsorySubjects();
   const numIds = selectedIds.map(Number);
   const chosen = onboarding.ref.subjects.filter(s => numIds.includes(s.id));
-  return [...compulsory, ...chosen];
+  const secondYear = isSecondYear();
+  const suffix = secondYear ? '-II' : '-I';
+  return [...compulsory, ...chosen].map(s => {
+    const name = (s.name || '').toLowerCase();
+    const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
+    return { ...s, displayName: noSuffix ? s.name : `${s.name} ${suffix}` };
+  });
 }
 
 function getOnboardingSubjects() {
@@ -1745,7 +1751,7 @@ function renderOnboardingStep() {
             ${allSubjects.map(s => `
               <div class="review-row">
                 <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Selected'}</span>
-                <span class="review-value">${s.name}</span>
+                <span class="review-value">${s.displayName}</span>
               </div>
             `).join('')}
           </div>
@@ -1843,7 +1849,7 @@ function renderOnboardingStep() {
           <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || '—'}</span></div>
-          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${getICSAllSubjects(d.selected_subjects).map(s => s.name).join(', ') || '—'}</span></div>` : `
+          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${getICSAllSubjects(d.selected_subjects).map(s => s.displayName).join(', ') || '—'}</span></div>` : `
           <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>`}
           <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || '—'}</span></div>
