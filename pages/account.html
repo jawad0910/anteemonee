@@ -1046,12 +1046,13 @@
       const sid = document.getElementById('edit-edu-system').value;
       if (!sid) return;
       const prevBoard = document.getElementById('edit-board').value;
-      const prevClass = document.getElementById('edit-class').value;
+      const prevClassLabel = document.getElementById('edit-class').selectedOptions[0]?.text || '';
       const prevCollege = document.getElementById('edit-college').value;
       const prevSession = document.getElementById('edit-session').value;
       await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
       document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${prevBoard == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-      document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${prevClass == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+      const matchedClass = acctData.ref.class_levels.find(c => c.label === prevClassLabel);
+      document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${matchedClass && matchedClass.id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
       await loadAllColleges();
       document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${prevCollege == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       if (prevSession) document.getElementById('edit-session').value = prevSession;
