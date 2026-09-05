@@ -1688,10 +1688,10 @@ function renderOnboardingStep() {
         container.querySelectorAll('.onboarding-option').forEach(btn => {
           btn.addEventListener('click', async () => {
             d.group_id = btn.dataset.id;
-            d.selected_subjects = [];
             container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             await loadSubjects(d.education_system_id, d.group_id);
+            d.selected_subjects = getOnboardingSubjects().map(s => s.id);
           });
         });
       }
