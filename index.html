@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wassal — Your Student OS</title>
-  <meta name="description" content="Wassal brings your studies, learning tools, planning, textbooks, practice, and AI together in one connected experience.">
-  <meta name="theme-color" content="#07080C">
+  <meta name="description" content="Wassal is your all-in-one Student OS with an AI tutor, eBooks, past papers, mock tests and everything you need to learn, practice and progress.">
+  <meta name="theme-color" content="#FAF8F3">
   <link rel="icon" href="assets/wassal.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
   <link rel="stylesheet" href="css/style.css">
   <link rel="preload" href="https://unpkg.com/@supabase/supabase-js@2" as="script">
@@ -21,474 +21,321 @@
     <div class="header-inner">
       <a href="index.html" class="logo-link">
         <img src="assets/wassal.png" alt="Wassal" class="logo-img">
-        <span class="logo-text">Wassal</span>
+        <span class="logo-text-wrap">
+          <span class="logo-text">Wassal</span>
+          <span class="logo-sub">Student OS for Pakistan</span>
+        </span>
       </a>
 
-      <nav>
-        <ul class="nav-links">
-          <li><a href="#ecosystem">Features</a></li>
-          <li><a href="#ai-section">AI</a></li>
-        </ul>
+      <nav class="desktop-nav">
+        <a href="#features">Features</a>
+        <a href="pages/ai-chatbot.html">AI Chat</a>
+        <a href="#features">eBooks</a>
       </nav>
 
       <div class="header-actions">
-        <div class="auth-actions" id="auth-loading">
-          <div class="auth-shimmer"></div>
-        </div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
 
+        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
         <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login">Login</a>
-          <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+          <a href="pages/login.html" class="btn-login">Log in</a>
+          <a href="pages/download.html" class="btn-cta-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Get Wassal
+          </a>
         </div>
-
         <div class="auth-actions" id="auth-logged-in" style="display:none">
           <div class="profile-avatar-container" id="profile-avatar-container"></div>
         </div>
       </div>
 
-      <button class="mobile-menu-toggle" aria-label="Menu">
-        <span></span>
-      </button>
+      <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
     </div>
   </header>
 
   <!-- MOBILE MENU -->
   <div class="mobile-menu">
-    <div id="mobile-auth-loading">
-      <div class="auth-shimmer" style="margin:12px auto;width:100px"></div>
-    </div>
+    <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
     <div id="mobile-auth-logged-out" style="display:none">
       <a href="#hero" class="mobile-nav-link">Home</a>
-      <a href="#ecosystem" class="mobile-nav-link">Features</a>
-      <a href="#ai-section" class="mobile-nav-link">AI</a>
+      <a href="#features" class="mobile-nav-link">Features</a>
+      <a href="pages/ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
       <a href="pages/download.html" class="mobile-nav-link">Download App</a>
       <div class="mobile-cta">
-        <a href="pages/login.html" class="btn-login">Login</a>
-        <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+        <a href="pages/login.html" class="btn-login">Log in</a>
+        <a href="pages/download.html" class="btn-signup">Get Wassal</a>
       </div>
     </div>
     <div id="mobile-auth-logged-in" style="display:none">
       <div id="mobile-profile-section"></div>
       <a href="#hero" class="mobile-nav-link">Home</a>
-      <a href="#ecosystem" class="mobile-nav-link">Features</a>
-      <a href="#ai-section" class="mobile-nav-link">AI</a>
-      <a href="pages/download.html" class="mobile-nav-link">Download App</a>
-      <a href="pages/account.html">Account</a>
-      <a href="pages/settings.html">Settings</a>
-      <button onclick="handleLogout()">Logout</button>
+      <a href="pages/ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="pages/account.html" class="mobile-nav-link">Account</a>
+      <a href="pages/settings.html" class="mobile-nav-link">Settings</a>
+      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- USERNAME BANNER -->
+  <div class="username-banner" id="username-banner" style="display:none">
+    <div class="username-banner-inner">
+      <div class="username-banner-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="username-banner-text">
+        <strong>Set your username</strong>
+        <span>A username helps your friends find you and unlocks profile features.</span>
+      </div>
+      <a href="pages/account.html" class="username-banner-btn">Set Username</a>
+      <button class="username-banner-close" onclick="dismissUsernameBanner()" aria-label="Dismiss">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
     </div>
   </div>
 
   <!-- HERO -->
   <section class="hero" id="hero">
-    <div class="hero-glow hero-glow-1"></div>
-    <div class="hero-glow hero-glow-2"></div>
-    <div class="hero-glow hero-glow-3"></div>
-
-    <div class="hero-layout">
-      <div class="hero-text fade-in">
-        <div class="hero-badge">
-          <span class="hero-badge-dot"></span>
-          Student OS for Pakistan
-        </div>
-        <h1>YOUR STUDY.<br><span class="accent">CONNECTED.</span></h1>
-        <p>Wassal is an all-in-one Student OS with a curriculum-aware AI trained on class-specific eBooks, plus smart planning, practice, notes, flashcards, past papers, and more, all in one place.</p>
-        <div class="hero-actions">
-          <a href="pages/download.html" class="btn-primary btn-download-hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge fade-in"><svg class="flag-icon" width="20" height="14" viewBox="0 0 60 42" aria-hidden="true"><defs><clipPath id="pk-clip"><rect width="60" height="42" rx="4"/></clipPath></defs><g clip-path="url(#pk-clip)"><rect width="60" height="42" fill="#01411C"/><rect width="15" height="42" fill="#ffffff"/><circle cx="37" cy="21" r="8.5" fill="#ffffff"/><circle cx="39.5" cy="21" r="7" fill="#01411C"/><path d="M45.5 15.5l1.7 3.5 3.8.5-2.7 2.7.6 3.8-3.4-1.8-3.4 1.8.6-3.8-2.7-2.7 3.8-.5z" fill="#ffffff"/></g></svg> Built for Students in Pakistan</div>
+        <h1 class="fade-in fade-in-delay-1">Study Smart.<br><span class="green">Achieve More.</span></h1>
+        <p class="hero-desc fade-in fade-in-delay-2">Wassal is your all-in-one Student OS with an AI tutor, eBooks, past papers, mock tests and everything you need to learn, practice and progress.</p>
+        <div class="hero-actions fade-in fade-in-delay-3">
+          <a href="pages/download.html" class="btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download Wassal
           </a>
-          <button class="btn-secondary" onclick="scrollToSection('ecosystem')">Explore Features</button>
+          <a href="#features" class="btn-secondary">Explore Features
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="hero-chips fade-in fade-in-delay-3">
+          <span class="hero-chip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            AI Chat
+          </span>
+          <span class="hero-chip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            eBooks
+          </span>
+          <span class="hero-chip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Past Papers
+          </span>
+          <span class="hero-chip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+            Flashcards
+          </span>
+          <span class="hero-chip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Notes
+          </span>
+        </div>
+        <div class="hero-trust fade-in fade-in-delay-4">
+          <div class="trust-avatars" id="trust-avatars">
+            <span style="background:#0B4D2C">A</span>
+            <span style="background:#178A46">S</span>
+            <span style="background:#B45309">F</span>
+          </div>
+          <div>
+            <div class="trust-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <div class="trust-text">Trusted by <strong id="trust-count" class="is-loading">50,000+</strong> students across Pakistan</div>
+          </div>
         </div>
       </div>
 
       <div class="hero-visual fade-in fade-in-delay-2">
-        <div class="phone-mockup">
-          <div class="phone-frame">
-            <div class="phone-notch"></div>
-            <div class="phone-screen">
-              <div class="mock-header">
-                <span class="mock-greeting">Assalam o Alaikum</span>
-                <div class="mock-avatar"></div>
-              </div>
-              <div class="mock-priority">
-                <div class="mock-priority-label">Today's Priority</div>
-                <div class="mock-task">
-                  <div class="mock-task-dot violet"></div>
-                  <div class="mock-task-info">
-                    <span class="mock-task-name">Electrostatics</span>
-                    <span class="mock-task-sub">Physics &middot; 45 min</span>
-                  </div>
-                </div>
-                <div class="mock-task">
-                  <div class="mock-task-dot cyan"></div>
-                  <div class="mock-task-info">
-                    <span class="mock-task-name">Organic Chemistry</span>
-                    <span class="mock-task-sub">Chemistry &middot; 30 min</span>
-                  </div>
-                </div>
-                <div class="mock-task">
-                  <div class="mock-task-dot green"></div>
-                  <div class="mock-task-info">
-                    <span class="mock-task-name">Cell Structure</span>
-                    <span class="mock-task-sub">Biology &middot; 25 min</span>
-                  </div>
-                </div>
-              </div>
-              <div class="mock-stats">
-                <div class="mock-stat">
-                  <span class="mock-stat-val">12</span>
-                  <span class="mock-stat-label">AI Sessions</span>
-                </div>
-                <div class="mock-stat">
-                  <span class="mock-stat-val">85%</span>
-                  <span class="mock-stat-label">Accuracy</span>
-                </div>
-                <div class="mock-stat">
-                  <span class="mock-stat-val">2h 34m</span>
-                  <span class="mock-stat-label">Study Time</span>
-                </div>
-              </div>
+        <div class="dash-mock" id="dash-mock" aria-hidden="true">
+          <aside class="dash-side">
+            <div class="dash-side-logo">W</div>
+            <a class="active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Dashboard
+            </a>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              AI Chat
+            </a>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              eBooks
+            </a>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Past Papers
+            </a>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+              Flashcards
+            </a>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Notes
+            </a>
+            <div class="dash-side-sep"></div>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profile
+            </a>
+            <a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8L7 17M17 7l2.8-2.8"/></svg>
+              Settings
+            </a>
+            <div class="dash-credits">
+              AI Credits
+              <strong id="dash-credits-val" class="dash-credits-val is-loading">25 / 25</strong>
+              <div class="dash-credits-bar"><i id="dash-credits-bar" style="width:0"></i></div>
+              <span id="dash-credits-sub">Resets in 12h</span>
             </div>
-          </div>
-        </div>
-
-        <div class="float-card float-card-1 glass-card fade-in fade-in-delay-3">
-          <div class="float-icon violet">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-7 7v-1.27A2 2 0 0 1 13 22H4a2 2 0 0 1-2-2v-7.55A7 7 0 0 1 4 8h1V5.73C4.4 5.39 4 4.74 4 4a2 2 0 0 1 2-2h6z"/></svg>
-          </div>
-          <div>
-            <span class="float-label">AI Tutor</span>
-            <span class="float-desc">Ask anything</span>
-          </div>
-        </div>
-
-        <div class="float-card float-card-2 glass-card fade-in fade-in-delay-4">
-          <div class="float-icon cyan">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <div>
-            <span class="float-label">Progress</span>
-            <span class="float-desc">+12% this week</span>
-          </div>
-        </div>
-
-        <div class="float-card float-card-3 glass-card fade-in fade-in-delay-4">
-          <div class="float-icon green">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          </div>
-          <div>
-            <span class="float-label">Weak Areas</span>
-            <span class="float-desc">3 topics left</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ECOSYSTEM BENTO -->
-  <section class="section" id="ecosystem">
-    <div class="features-header fade-in">
-      <p class="section-label">The Ecosystem</p>
-      <h2 class="section-title">Everything for Your Study.<br><span class="accent">One Place.</span></h2>
-      <p class="section-desc">Wassal brings everything students need into one intelligent platform — from curriculum-aware AI learning to smart planning, practice, eBooks, and progress tracking, all designed around the way you study.</p>
-    </div>
-
-    <div class="bento-grid">
-      <!-- AI Learning - Large -->
-      <div class="bento-card bento-large fade-in">
-        <div class="bento-card-header">
-          <div class="bento-icon violet">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-7 7v-1.27A2 2 0 0 1 13 22H4a2 2 0 0 1-2-2v-7.55A7 7 0 0 1 4 8h1V5.73C4.4 5.39 4 4.74 4 4a2 2 0 0 1 2-2h6z"/></svg>
-          </div>
-          <span class="bento-label">AI-POWERED</span>
-        </div>
-        <h3>AI Learning</h3>
-        <p>Ask questions, get curriculum-aware explanations, and learn with an AI that knows your board, class, and subjects.</p>
-        <div class="bento-preview ai-preview">
-          <div class="ai-msg student">
-            <div class="ai-msg-avatar s">S</div>
-            <span>Explain electrostatics chapter 1</span>
-          </div>
-          <div class="ai-msg assistant">
-            <div class="ai-msg-avatar a">W</div>
-            <span>Electrostatics is the study of stationary electric charges...</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Smart Planner - Medium -->
-      <div class="bento-card bento-medium fade-in fade-in-delay-1">
-        <div class="bento-card-header">
-          <div class="bento-icon cyan">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <span class="bento-label">SMART</span>
-        </div>
-        <h3>Smart Planner</h3>
-        <p>Auto-scheduled study plans based on your exams, weaknesses, and goals.</p>
-        <div class="bento-preview planner-preview">
-          <div class="planner-item"><div class="planner-dot violet"></div><span>Electrostatics</span><span class="planner-time">45m</span></div>
-          <div class="planner-item"><div class="planner-dot cyan"></div><span>Organic Chemistry</span><span class="planner-time">30m</span></div>
-          <div class="planner-item"><div class="planner-dot green"></div><span>Cell Structure</span><span class="planner-time">25m</span></div>
-        </div>
-      </div>
-
-      <!-- Practice - Medium -->
-      <div class="bento-card bento-medium fade-in fade-in-delay-2">
-        <div class="bento-card-header">
-          <div class="bento-icon yellow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <span class="bento-label">PRACTICE</span>
-        </div>
-        <h3>Practice</h3>
-        <p>MCQs, short questions, long questions, numericals. Practice chapter-wise or mixed.</p>
-        <div class="bento-preview practice-preview">
-          <div class="practice-tag">MCQs</div>
-          <div class="practice-tag">Short Q</div>
-          <div class="practice-tag">Long Q</div>
-          <div class="practice-tag">Numericals</div>
-        </div>
-      </div>
-
-      <!-- Textbooks - Wide -->
-      <div class="bento-card bento-wide fade-in fade-in-delay-1">
-        <div class="bento-card-header">
-          <div class="bento-icon green">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          </div>
-          <span class="bento-label">TEXTBOOKS</span>
-        </div>
-        <h3>Your Full Curriculum</h3>
-        <p>Board-specific textbooks, syllabus, and topic-level organization — always up to date.</p>
-      </div>
-
-      <!-- Past Papers - Wide -->
-      <div class="bento-card bento-wide fade-in fade-in-delay-2">
-        <div class="bento-card-header">
-          <div class="bento-icon rose">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <span class="bento-label">PAST PAPERS</span>
-        </div>
-        <h3>Past Papers</h3>
-        <p>Structured past-paper questions searchable by board, year, chapter, and topic.</p>
-      </div>
-
-      <!-- Flashcards - Small -->
-      <div class="bento-card bento-small fade-in fade-in-delay-3">
-        <div class="bento-icon violet">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        </div>
-        <h3>Flashcards</h3>
-      </div>
-
-      <!-- Notes - Small -->
-      <div class="bento-card bento-small fade-in fade-in-delay-3">
-        <div class="bento-icon cyan">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </div>
-        <h3>Notes</h3>
-      </div>
-
-      <!-- Mock Tests - Small -->
-      <div class="bento-card bento-small fade-in fade-in-delay-3">
-        <div class="bento-icon yellow">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <h3>Mock Tests</h3>
-      </div>
-
-      <!-- Progress - Small -->
-      <div class="bento-card bento-small fade-in fade-in-delay-3">
-        <div class="bento-icon green">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        </div>
-        <h3>Progress</h3>
-      </div>
-    </div>
-  </section>
-
-  <!-- TODAY'S PRIORITY -->
-  <section class="section priority-section" id="priority">
-    <div class="priority-layout">
-      <div class="priority-text fade-in">
-        <p class="section-label">Today's Priority</p>
-        <h2 class="section-title">Know What to Study<br><span class="accent">Right Now.</span></h2>
-        <p class="section-desc">Instead of overwhelming you with endless to-do lists, Wassal helps you focus on what matters most today — using your study goals, progress, and learning needs to guide your next steps.</p>
-      </div>
-      <div class="priority-visual fade-in fade-in-delay-1">
-        <div class="priority-card glass-card">
-          <div class="priority-card-header">
-            <span class="priority-card-title">Today's Priority</span>
-            <span class="priority-card-date">3 tasks</span>
-          </div>
-          <div class="priority-task">
-            <div class="priority-task-left">
-              <div class="priority-task-dot violet"></div>
+          </aside>
+          <div class="dash-main">
+            <div class="dash-top">
               <div>
-                <span class="priority-task-name">Electrostatics</span>
-                <span class="priority-task-sub">Physics &middot; Chapter 1</span>
+                <div class="dash-hello" id="dash-hello">Assalam o Alaikum, Maryam &#x1F44B;</div>
+                <div class="dash-sub">Let's continue your learning journey today.</div>
+              </div>
+              <span class="dash-class" id="dash-class-pill">11th Class &#x25BE;</span>
+            </div>
+            <div class="dash-stats">
+              <div class="dash-stat">
+                <div class="dash-stat-head">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#178A46" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Study Time
+                </div>
+                <div class="dash-stat-val is-loading" id="dash-stat-time">2h 34m</div>
+                <div class="dash-stat-sub" id="dash-stat-time-sub">Today</div>
+              </div>
+              <div class="dash-stat">
+                <div class="dash-stat-head">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  AI Sessions
+                </div>
+                <div class="dash-stat-val is-loading" id="dash-stat-sessions">12</div>
+                <div class="dash-stat-sub" id="dash-stat-sessions-sub">Today</div>
+              </div>
+              <div class="dash-stat">
+                <div class="dash-stat-head">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#D97706"><path d="M12 22c4.4 0 8-3.6 8-8 0-5-4-9-8-12-4 3-8 7-8 12 0 4.4 3.6 8 8 8z"/></svg>
+                  Streak
+                </div>
+                <div class="dash-stat-val is-loading" id="dash-stat-streak">7 Days</div>
+                <div class="dash-stat-sub" id="dash-stat-streak-sub">Keep it up!</div>
               </div>
             </div>
-            <span class="priority-task-time">45 min</span>
-          </div>
-          <div class="priority-task">
-            <div class="priority-task-left">
-              <div class="priority-task-dot cyan"></div>
+            <div class="dash-explore-title">Explore &amp; Learn</div>
+            <div class="dash-explore-sub">Quick actions to continue your learning</div>
+            <div class="dash-explore">
+              <div class="dash-action t-green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#178A46" stroke-width="2"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1" fill="#178A46"/><circle cx="15" cy="12" r="1" fill="#178A46"/><path d="M9 16h6M12 7V4M8 4h8"/></svg>
+                <b>Chat with AI Tutor</b>
+                <span>Ask anything</span>
+              </div>
+              <div class="dash-action t-blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
+                <b>Read eBooks</b>
+                <span>Learn on the go</span>
+              </div>
+              <div class="dash-action t-purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <b>Generate Mock Test</b>
+                <span>Practice smart</span>
+              </div>
+              <div class="dash-action t-orange">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
+                <b>Review Flashcards</b>
+                <span>Memorize better</span>
+              </div>
+            </div>
+            <div class="dash-safe">
+              <div class="dash-safe-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              </div>
               <div>
-                <span class="priority-task-name">Chemical Bonding</span>
-                <span class="priority-task-sub">Chemistry &middot; Chapter 6</span>
+                <b>Your Data is Safe</b>
+                <span>We protect your data and privacy with top-notch security.</span>
               </div>
+              <span class="dash-safe-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </span>
             </div>
-            <span class="priority-task-time">30 min</span>
-          </div>
-          <div class="priority-task">
-            <div class="priority-task-left">
-              <div class="priority-task-dot green"></div>
-              <div>
-                <span class="priority-task-name">Cell Structure</span>
-                <span class="priority-task-sub">Biology &middot; Chapter 2</span>
-              </div>
-            </div>
-            <span class="priority-task-time">25 min</span>
-          </div>
-          <div class="priority-progress">
-            <div class="priority-progress-bar"><div class="priority-progress-fill" style="width:65%"></div></div>
-            <span class="priority-progress-text">65% weekly goal completed</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- AI SECTION -->
-  <section class="section ai-section" id="ai-section">
-    <div class="ai-layout">
-      <div class="ai-visual fade-in">
-        <div class="ai-chat-mock glass-card">
-          <div class="ai-chat-header">
-            <div class="ai-chat-avatar">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-7 7v-1.27A2 2 0 0 1 13 22H4a2 2 0 0 1-2-2v-7.55A7 7 0 0 1 4 8h1V5.73C4.4 5.39 4 4.74 4 4a2 2 0 0 1 2-2h6z"/></svg>
-            </div>
-            <div class="ai-chat-header-text">
-              <span class="ai-chat-title">Wassal AI</span>
-              <span class="ai-chat-status">Curriculum-aware tutor</span>
-            </div>
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <div class="features-head fade-in">
+        <p class="section-label">Everything You Need</p>
+        <h2 class="section-title">All-in-one tools for every student</h2>
+        <p class="section-desc">From learning to practice, Wassal has got you covered.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><path d="M9 16h6M12 7V4M8 4h8"/></svg>
           </div>
-          <div class="ai-chat-body">
-            <div class="ai-chat-msg user-msg">
-              <span>Explain Newton's Third Law with examples from our textbook</span>
-            </div>
-            <div class="ai-chat-msg ai-msg">
-              <span>Newton's Third Law states that for every action, there is an equal and opposite reaction. When a book rests on a table, the book exerts a downward force on the table (action), and the table exerts an equal upward force on the book (reaction)...</span>
-            </div>
-            <div class="ai-chat-msg user-msg">
-              <span>Can you simplify this for my board exam?</span>
-            </div>
-            <div class="ai-chat-msg ai-msg">
-              <span>Simple version: When you push a wall, the wall pushes you back with the same force. The forces are always in opposite directions and equal in size...</span>
-            </div>
-          </div>
-          <div class="ai-chat-input-mock">
-            <span>Ask Wassal AI anything...</span>
-            <div class="ai-send-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </div>
-          </div>
+          <h3>AI Chat</h3>
+          <p>Your smart study buddy. Ask anything, get clear explanations instantly.</p>
+          <a href="pages/ai-chatbot.html" class="feature-link">Start Chatting
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
         </div>
-      </div>
-      <div class="ai-text fade-in fade-in-delay-1">
-        <p class="section-label">AI Tutor</p>
-        <h2 class="section-title">Your Study Companion.<br><span class="accent">Always Ready.</span></h2>
-        <p class="section-desc">Ask any question about your curriculum. Wassal AI knows your board, class, and textbooks — and gives explanations that match your level.</p>
-        <div class="ai-features">
-          <div class="ai-feature">
-            <div class="ai-feature-check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span>Curriculum-aware answers</span>
+        <div class="feature-card fade-in fade-in-delay-1">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
           </div>
-          <div class="ai-feature">
-            <div class="ai-feature-check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span>Textbook page references</span>
-          </div>
-          <div class="ai-feature">
-            <div class="ai-feature-check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span>Adapts to your level</span>
-          </div>
-          <div class="ai-feature">
-            <div class="ai-feature-check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span>Board exam focused</span>
-          </div>
+          <h3>eBooks</h3>
+          <p>Curriculum-aware eBooks with notes and highlights. Learn anytime, anywhere.</p>
+          <a href="#" class="feature-link" data-coming-soon="eBooks are coming soon on website">Explore eBooks
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
         </div>
-        <a href="pages/download.html" class="btn-primary btn-download-hero" style="margin-top:32px">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Get the App
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- WHY STUDENTS NEED WASSAL -->
-  <section class="section" id="why-wassal">
-    <div class="features-header fade-in">
-      <p class="section-label">The Problem</p>
-      <h2 class="section-title">Too Many Apps.<br><span class="accent">No System.</span></h2>
-      <p class="section-desc">Students juggle notes apps, random PDFs, scattered planners, and search engines. None of them know your curriculum. Wassal does.</p>
-    </div>
-
-    <div class="problem-grid">
-      <div class="problem-card fade-in">
-        <div class="problem-icon">1</div>
-        <h3>Scattered Notes</h3>
-        <p>Notes in one app, PDFs in another, textbook photos in your gallery.</p>
-      </div>
-      <div class="problem-card fade-in fade-in-delay-1">
-        <div class="problem-icon">2</div>
-        <h3>No Study Plan</h3>
-        <p>No idea what to study today, this week, or before exams.</p>
-      </div>
-      <div class="problem-card fade-in fade-in-delay-2">
-        <div class="problem-icon">3</div>
-        <h3>Random Practice</h3>
-        <p>No organized way to practice questions or track what you've covered.</p>
-      </div>
-      <div class="problem-card fade-in fade-in-delay-3">
-        <div class="problem-icon">4</div>
-        <h3>Weakness Blindness</h3>
-        <p>No way to know which topics you're weak in or need to revise.</p>
-      </div>
-    </div>
-
-    <div class="problem-solution fade-in">
-      <p>Wassal brings it all together into <strong>one connected system</strong> that knows your curriculum and helps you study smarter.</p>
-    </div>
-  </section>
-
-  <!-- DOWNLOAD CTA -->
-  <section class="section download-section" id="download-cta">
-    <div class="download-glow"></div>
-    <div class="download-content fade-in">
-      <p class="section-label">Download Wassal</p>
-      <h2 class="section-title">Your Study System.<br><span class="accent">Go Where You Do.</span></h2>
-      <p class="section-desc">Take Wassal with you. AI-powered learning, smart planning, and your full curriculum — all in your pocket.</p>
-      <a href="pages/download.html" class="btn-primary btn-download-hero btn-download-large">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download Wassal
-      </a>
-      <div class="download-platforms">
-        <span class="platform-badge">Android</span>
-        <span class="platform-badge">iOS</span>
-        <span class="platform-badge">Windows</span>
-        <span class="platform-badge">macOS</span>
+        <div class="feature-card fade-in fade-in-delay-2">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Past Papers</h3>
+          <p>Access past papers of all boards and years. Practice smart.</p>
+          <a href="#" class="feature-link" data-coming-soon="Past Papers are coming soon on website">View Past Papers
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <h3>Mock Test Generator</h3>
+          <p>Create unlimited mock tests with AI. Custom topics, real exam feel.</p>
+          <a href="#" class="feature-link" data-coming-soon="Mock Test Generator is coming soon on website">Generate Test
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-1">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="18" height="14" rx="2"/><line x1="6" y1="10" x2="18" y2="10"/><line x1="6" y1="14" x2="14" y2="14"/></svg>
+          </div>
+          <h3>Flashcards</h3>
+          <p>Smart flashcards to revise faster and remember longer.</p>
+          <a href="#" class="feature-link" data-coming-soon="Flashcards are coming soon on website">Study Cards
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-2">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <h3>Notes</h3>
+          <p>Organized notes to keep your study on track.</p>
+          <a href="#" class="feature-link" data-coming-soon="Notes are coming soon on website">View Notes
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -500,21 +347,24 @@
         <div class="footer-brand">
           <a href="index.html" class="logo-link">
             <img src="assets/wassal.png" alt="Wassal" class="logo-img">
-            <span class="logo-text">Wassal</span>
+            <span class="logo-text-wrap">
+              <span class="logo-text">Wassal</span>
+              <span class="logo-sub">Student OS for Pakistan</span>
+            </span>
           </a>
           <p>The Student OS for Pakistan. Learn, practice, plan, and progress — all in one place.</p>
         </div>
         <div class="footer-links">
           <div class="footer-col">
             <h4>Product</h4>
-            <a href="#ecosystem">Features</a>
-            <a href="#ai-section">AI Tutor</a>
+            <a href="#features">Features</a>
+            <a href="pages/ai-chatbot.html">AI Chat</a>
             <a href="pages/download.html">Download App</a>
           </div>
           <div class="footer-col">
             <h4>Account</h4>
             <a href="pages/login.html">Login</a>
-            <a href="pages/signup.html" id="footer-signup-link">Sign Up</a>
+            <a href="pages/download.html" id="footer-signup-link">Sign Up</a>
             <a href="pages/account.html">Account</a>
           </div>
           <div class="footer-col">
@@ -526,15 +376,31 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Wassal. All rights reserved.</p>
-        <div class="footer-bottom-links">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-        </div>
       </div>
     </div>
   </footer>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="js/app.js"></script>
+  <div class="coming-toast" id="coming-toast" role="status"></div>
+  <script>
+    (function () {
+      var toast = document.getElementById('coming-toast');
+      var timer = null;
+      function show(msg) {
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.add('show');
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function () { toast.classList.remove('show'); }, 2600);
+      }
+      document.querySelectorAll('[data-coming-soon]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          show(el.getAttribute('data-coming-soon') || 'Coming soon on website');
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
