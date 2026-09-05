@@ -260,7 +260,7 @@ function renderSecurity() {
   const dangerCard = document.createElement('div');
   dangerCard.className = 'settings-danger-zone';
   dangerCard.innerHTML = `
-    <div class="settings-card-header">DANGER ZONE</div>
+    <div class="settings-card-header">DELETE ACCOUNT</div>
     <div class="setting-row">
       <div class="setting-info">
         <div class="setting-title">Delete Account</div>
@@ -682,16 +682,12 @@ function renderAI() {
   ];
   c.appendChild(buildCard('RESPONSE STYLE', responseRows));
 
-  const explanationLevel = localStorage.getItem('ai_explanation_level') || 'standard';
   const explRows = [
     buildRow('Explanation Level', 'Depth of concept explanations', buildSelect([
       { value: 'simple', label: 'Simple' },
       { value: 'standard', label: 'Standard' },
       { value: 'advanced', label: 'Advanced' },
-    ], explanationLevel, v => {
-      localStorage.setItem('ai_explanation_level', v);
-      showToastSettings('Explanation level saved');
-    })),
+    ], p.ai_explanation_level || 'standard', v => savePref('ai_explanation_level', v))),
   ];
   c.appendChild(buildCard('EXPLANATION', explRows));
 

@@ -9,8 +9,16 @@ function initDownload() {
 /* ─── Beta Status Check ─── */
 
 async function checkBetaStatus() {
-  const email = currentUser?.email;
+  // Read the session directly: the shared auth check may still be resolving.
+  let email = currentUser?.email;
+  if (!email) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      email = session?.user?.email;
+    } catch (_) {}
+  }
   if (!email) return;
+  setBetaCardLoading(true);
   try {
     const { data } = await db.rpc('is_beta_verified', { p_email: email });
     if (data?.is_verified === true) {
@@ -20,9 +28,40 @@ async function checkBetaStatus() {
     } else {
       const { data: row } = await db.from('beta_testers').select('id').eq('email', email).maybeSingle();
       if (row) updateAndroidCard('applied');
+      else resetAndroidCard();
     }
   } catch (e) {
     console.log('[BETA] status check skipped:', e.message);
+    resetAndroidCard();
+  } finally {
+    setBetaCardLoading(false);
+  }
+}
+
+function setBetaCardLoading(on) {
+  const card = document.querySelector('.platform-card');
+  if (!card) return;
+  const badge = card.querySelector('.status-badge');
+  const btn = card.querySelector('.btn-download');
+  if (badge) badge.classList.toggle('is-loading', on);
+  if (btn) {
+    btn.classList.toggle('is-loading', on);
+    if (on) btn.disabled = true;
+  }
+}
+
+function resetAndroidCard() {
+  const card = document.querySelector('.platform-card');
+  if (!card) return;
+  const badge = card.querySelector('.status-badge');
+  const btn = card.querySelector('.btn-download');
+  if (badge) { badge.textContent = 'Beta Available'; badge.className = 'status-badge beta-badge'; }
+  if (btn) {
+    btn.textContent = 'Apply for Beta';
+    btn.className = 'btn-download btn-beta';
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.onclick = () => openBetaModal();
   }
 }
 

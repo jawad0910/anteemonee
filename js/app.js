@@ -36,11 +36,218 @@ const RECOVERY_URL = BASE + '/pages/reset-password.html';
 document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
+  setupTheme();
   setupNav();
   setupScrollEffects();
   setupMobileMenu();
   setupIntersectionObserver();
+  setupFadeInObserver();
   await checkAuth();
+  loadHomepageData();
+}
+
+/* =========================
+   HOMEPAGE DYNAMIC DATA
+   ========================= */
+
+function homepageSetText(id, value) {
+  if (value === null || value === undefined) return;
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function escapeHtmlAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function loadHomepageData() {
+  const dashMock = document.getElementById('dash-mock');
+  const trustCount = document.getElementById('trust-count');
+  if (!dashMock && !trustCount) return;
+
+  // Trust row — public RPC, works logged in or out. Falls back to static HTML.
+  if (trustCount) {
+    trustCount.classList.add('is-loading');
+    try {
+      const { data, error } = await db.rpc('get_homepage_stats');
+      if (error) {
+        console.warn('[homepage] stats RPC failed:', error.message || error, '— run migration 0038_homepage_stats.sql');
+      }
+      if (!error && data) {
+        const count = Number(data.user_count || 0);
+        if (count > 0) trustCount.textContent = count.toLocaleString('en-US');
+        const avatarsEl = document.getElementById('trust-avatars');
+        const avatars = Array.isArray(data.avatars) ? data.avatars.filter(a => a && a.profile_image_url) : [];
+        if (avatarsEl && avatars.length) {
+          const colors = ['#0B4D2C', '#178A46', '#6D28D9'];
+          avatarsEl.innerHTML = avatars.slice(0, 3).map((a, i) => {
+            const initial = ((a.username || 'W').charAt(0) || 'W').toUpperCase();
+            return `<span style="background:${colors[i % colors.length]};overflow:hidden"><img src="${a.profile_image_url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${initial}'"></span>`;
+          }).join('');
+        }
+      }
+    } catch (_) {} finally {
+      trustCount.classList.remove('is-loading');
+    }
+  }
+
+  if (!dashMock) return;
+
+  // Personalized dashboard — logged-in users only.
+  if (!currentUser) {
+    const heroVisual = dashMock.closest('.hero-visual');
+    if (heroVisual) heroVisual.style.display = 'none';
+    const heroInner = dashMock.closest('.hero-inner');
+    if (heroInner) heroInner.classList.add('hero-centered');
+    return;
+  }
+
+  // Greeting: display name first, username (no @) as fallback.
+  try {
+    const { fullName, username } = getDisplayUser();
+    let display = '';
+    if (fullName && fullName.trim()) display = fullName.trim().split(/\s+/)[0];
+    else if (username) display = username;
+    const helloEl = document.getElementById('dash-hello');
+    if (helloEl && display) helloEl.innerHTML = `Assalam o Alaikum, ${escapeHtmlAttr(display)} &#x1F44B;`;
+  } catch (_) {}
+
+  const uid = currentUser.id;
+  async function safe(label, promise) {
+    try {
+      const res = await promise;
+      if (res && res.error) {
+        console.warn(`[homepage] ${label} query failed:`, res.error.message || res.error);
+        return null;
+      }
+      if (!res) return null;
+      if (res.data !== null && res.data !== undefined) return res.data;
+      if (typeof res.count === 'number') return res; // head-count queries carry count, not data
+      return null;
+    } catch (e) {
+      console.warn(`[homepage] ${label} query failed:`, (e && e.message) || e);
+      return null;
+    }
+  }
+
+  // Skeleton loaders on while the real numbers load.
+  const loaderIds = ['dash-stat-time', 'dash-stat-sessions', 'dash-stat-streak', 'dash-credits-val'];
+  loaderIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('is-loading');
+  });
+
+  try {
+    const [profileRes, sessCount, acad, entRes, streakRes] = await Promise.all([
+      safe('profile', db.from('profiles').select('study_time_seconds').eq('id', uid).maybeSingle()),
+      safe('ai_sessions', db.from('ai_sessions').select('id', { count: 'exact', head: true }).eq('user_id', uid)),
+      safe('academic_profile', db.from('student_academic_profiles').select('class_level:class_levels(label)').eq('user_id', uid).maybeSingle()),
+      safe('entitlement', db.rpc('get_entitlement_snapshot')),
+      safe('streak', db.rpc('get_user_streak')),
+    ]);
+
+    // Study time from profiles.study_time_seconds + pending localStorage
+    if (profileRes && typeof profileRes.study_time_seconds === 'number') {
+      let totalSec = profileRes.study_time_seconds;
+      // Add any pending seconds saved on chatbot page unload
+      try {
+        const pending = parseInt(localStorage.getItem('wassal_study_time_pending') || '0', 10);
+        if (pending > 0) totalSec += pending;
+      } catch (_) {}
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      let timeStr = '';
+      if (h > 0) timeStr += `${h}h `;
+      if (m > 0 || h > 0) timeStr += `${m}m `;
+      timeStr += `${s}s`;
+      homepageSetText('dash-stat-time', timeStr.trim());
+      homepageSetText('dash-stat-time-sub', 'Total');
+    } else {
+      homepageSetText('dash-stat-time', '0s');
+      homepageSetText('dash-stat-time-sub', 'Total');
+    }
+
+    // AI Sessions = rows in ai_sessions table (actual API sessions started).
+    const sCount = sessCount && typeof sessCount.count === 'number' ? sessCount.count : null;
+    if (sCount !== null) {
+      homepageSetText('dash-stat-sessions', String(sCount));
+      homepageSetText('dash-stat-sessions-sub', 'Total chats');
+    } else {
+      homepageSetText('dash-stat-sessions', '–');
+      homepageSetText('dash-stat-sessions-sub', 'Unavailable');
+    }
+
+    // Streak: from user_streaks table via RPC (auto-detects 24h break).
+    if (streakRes && typeof streakRes === 'object') {
+      const s = streakRes.current_streak || 0;
+      homepageSetText('dash-stat-streak', s === 1 ? '1 Day' : `${s} Days`);
+      homepageSetText('dash-stat-streak-sub', s > 0 ? 'Keep it up!' : 'Start today!');
+    } else {
+      homepageSetText('dash-stat-streak', '–');
+      homepageSetText('dash-stat-streak-sub', 'Unavailable');
+    }
+
+    // AI credits (same source as the app: entitlement snapshot).
+    if (entRes && typeof entRes === 'object') {
+      const used = Number(entRes.ai_used || 0);
+      const limit = Number(entRes.ai_limit || 25);
+      homepageSetText('dash-credits-val', `${used} / ${limit}`);
+      const bar = document.getElementById('dash-credits-bar');
+      if (bar && limit > 0) bar.style.width = `${Math.min(100, Math.round((used / limit) * 100))}%`;
+      startCreditsCountdown(entRes.period_end || null);
+    }
+    // Class pill from the academic profile.
+    const classLabel = acad && acad.class_level && acad.class_level.label;
+    const pill = document.getElementById('dash-class-pill');
+    if (pill) {
+      if (classLabel) pill.textContent = classLabel;
+      else pill.style.display = 'none';
+    }
+  } finally {
+    loaderIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('is-loading');
+    });
+  }
+}
+
+let creditsTimer = null;
+function startCreditsCountdown(periodEndIso) {
+  if (creditsTimer) { clearInterval(creditsTimer); creditsTimer = null; }
+  const el = document.getElementById('dash-credits-sub');
+  if (!el) return;
+  if (!periodEndIso) { el.textContent = 'Monthly'; return; }
+  function tick() {
+    const ms = new Date(periodEndIso).getTime() - Date.now();
+    if (isNaN(ms)) { el.textContent = 'Monthly'; return; }
+    if (ms <= 0) { el.textContent = 'Resets soon'; return; }
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor((ms % 86400000) / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    el.textContent = d > 0 ? `Resets in ${d}d ${h}h` : h > 0 ? `Resets in ${h}h ${m}m` : `Resets in ${m}m`;
+  }
+  tick();
+  creditsTimer = setInterval(tick, 60000);
+}
+
+function setupTheme() {
+  try {
+    const saved = localStorage.getItem('wassal_theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  } catch (e) {}
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-toggle');
+    if (!btn) return;
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('wassal_theme', next); } catch (err) {}
+  });
 }
 
 /* =========================
@@ -78,6 +285,18 @@ async function loadProfile() {
   }
 }
 
+function generateUsername(fullName, email) {
+  if (fullName && fullName.trim()) {
+    const cleaned = fullName.trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '')
+      .slice(0, 20);
+    if (cleaned.length >= 3) return cleaned;
+  }
+  return (email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+}
+
 async function ensureProfile() {
   if (!currentUser) return null;
   if (!currentProfile) await loadProfile();
@@ -89,13 +308,14 @@ async function ensureProfile() {
     }
     return currentProfile;
   }
-  const username = currentUser.user_metadata?.username || currentUser.user_metadata?.preferred_username || currentUser.email?.split('@')[0] || 'user';
+  const fullName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+  const username = generateUsername(fullName, currentUser.email);
   const avatarUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
   const { data, error } = await db.from('profiles').insert({
     id: currentUser.id,
-    username: username.toLowerCase(),
+    username: username,
     email: currentUser.email,
-    full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || null,
+    full_name: fullName || null,
     profile_image_url: avatarUrl,
     personal_info_completed: false,
     academic_profile_completed: false,
@@ -120,18 +340,44 @@ function updateAuthUI() {
     if (loggedOut) loggedOut.style.display = 'none';
     if (loggedIn) loggedIn.style.display = 'flex';
     if (mobileLoggedOut) mobileLoggedOut.style.display = 'none';
-    if (mobileLoggedIn) mobileLoggedIn.style.display = 'flex';
+    if (mobileLoggedIn) mobileLoggedIn.style.display = 'block';
     renderProfileAvatar();
     renderMobileProfile();
 
     const footerLink = document.getElementById('footer-signup-link');
     if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = 'pages/account.html'; }
+    checkUsernameBanner();
   } else {
     if (loggedOut) loggedOut.style.display = 'flex';
     if (loggedIn) loggedIn.style.display = 'none';
-    if (mobileLoggedOut) mobileLoggedOut.style.display = 'flex';
+    if (mobileLoggedOut) mobileLoggedOut.style.display = 'block';
     if (mobileLoggedIn) mobileLoggedIn.style.display = 'none';
   }
+}
+
+function checkUsernameBanner() {
+  const banner = document.getElementById('username-banner');
+  if (!banner || !currentUser || !currentProfile) return;
+
+  const username = currentProfile.username || '';
+  const dismissed = sessionStorage.getItem('wassal_username_banner_dismissed');
+
+  if (dismissed) return;
+
+  const isMissing = !username || username.length < 3;
+  const isAutoGenerated = /^[a-z]+\d{4,}$/.test(username) || username === 'user';
+  const emailPrefix = (currentUser.email || '').split('@')[0].toLowerCase();
+  const isEmailPrefix = username === emailPrefix;
+
+  if (isMissing || isAutoGenerated || isEmailPrefix) {
+    banner.style.display = 'block';
+  }
+}
+
+function dismissUsernameBanner() {
+  const banner = document.getElementById('username-banner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('wassal_username_banner_dismissed', '1');
 }
 
 /* =========================
@@ -278,18 +524,24 @@ function setupMobileMenu() {
   const toggle = document.querySelector('.mobile-menu-toggle');
   const panel = document.querySelector('.mobile-menu');
   if (!toggle || !panel) return;
+
+  function openMenu() {
+    panel.classList.add('open');
+    toggle.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMenu() {
+    panel.classList.remove('open');
+    toggle.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
   toggle.addEventListener('click', () => {
-    const isOpen = panel.classList.contains('open');
-    panel.classList.toggle('open');
-    toggle.classList.toggle('active');
-    document.body.style.overflow = isOpen ? '' : 'hidden';
+    panel.classList.contains('open') ? closeMenu() : openMenu();
   });
+
   panel.querySelectorAll('a, button').forEach(link => {
-    link.addEventListener('click', () => {
-      panel.classList.remove('open');
-      toggle.classList.remove('active');
-      document.body.style.overflow = '';
-    });
+    link.addEventListener('click', closeMenu);
   });
 }
 
@@ -309,6 +561,20 @@ function setupIntersectionObserver() {
     });
   }, { threshold: 0.3 });
   sections.forEach(s => observer.observe(s));
+}
+
+function setupFadeInObserver() {
+  const fadeEls = document.querySelectorAll('.fade-in');
+  if (!fadeEls.length) return;
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  fadeEls.forEach(el => obs.observe(el));
 }
 
 /* =========================
