@@ -229,7 +229,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 16px;
   font-family: inherit;
   padding: 8px 12px;
   width: 100%;
@@ -420,7 +420,7 @@ textarea.setting-input {
   border: 1px solid rgba(255,102,117,0.3);
   border-radius: 10px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   margin-top: 12px;
 }
