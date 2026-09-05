@@ -775,8 +775,7 @@
       profile: null,
       acad: null,
       subjects: [],
-      goals: [],
-      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], colleges: [], academic_sessions: [], goal_categories: [], goals_list: [], subjects_list: [] }
+      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], colleges: [], academic_sessions: [], subjects_list: [] }
     };
 
     function showToast(msg, isError) {
@@ -789,20 +788,14 @@
 
     async function loadAllRefData() {
       try {
-        const [sysRes, provRes, sessRes, goalsCatRes] = await Promise.all([
+        const [sysRes, provRes, sessRes] = await Promise.all([
           db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
           db.from('provinces').select('*').order('name'),
-          db.from('academic_sessions').select('*').order('start_year'),
-          db.from('goal_categories').select('*').order('sort_order')
+          db.from('academic_sessions').select('*').order('start_year')
         ]);
         acctData.ref.education_systems = sysRes.data || [];
         acctData.ref.provinces = provRes.data || [];
         acctData.ref.academic_sessions = sessRes.data || [];
-        const cats = goalsCatRes.data || [];
-        acctData.ref.goal_categories = cats;
-
-        const goalsResults = await Promise.all(cats.map(c => db.from('goals').select('*').eq('category_id', c.id).order('sort_order')));
-        acctData.ref.goals_list = cats.flatMap((c, i) => (goalsResults[i].data || []).map(g => ({ ...g, category_name: c.name })));
       } catch (e) {
         console.error('loadAllRefData error:', e);
       }
@@ -821,6 +814,30 @@
     async function loadGroups(systemId) {
       const { data } = await db.from('groups').select('*').eq('education_system_id', systemId).order('name');
       acctData.ref.groups = data || [];
+    }
+
+    function isICSAccount() {
+      const sysId = acctData.acad?.education_system_id;
+      if (!sysId) return false;
+      const sys = acctData.ref.education_systems.find(s => s.id == sysId);
+      return sys?.code === 'ics';
+    }
+
+    const ICS_SUBJECT_NAMES = ['Computer Science', 'Mathematics', 'Physics', 'Economics', 'Statistics'];
+
+    async function loadICSSubjectsList(systemId) {
+      const { data } = await db.from('subjects')
+        .select('*')
+        .eq('education_system_id', systemId)
+        .eq('is_compulsory', false)
+        .order('name');
+      const seen = new Set();
+      acctData.ref.subjects_list = (data || []).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
     async function loadSubjectsList(systemId, groupId) {
@@ -853,13 +870,10 @@
           const { data: subs } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
           acctData.subjects = subs?.map(s => s.subject_id) || [];
         }
-        const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', userId);
-        acctData.goals = goals || [];
       } catch (e) {
         console.error('loadAcademicData error:', e);
         acctData.acad = null;
         acctData.subjects = [];
-        acctData.goals = [];
       }
     }
 
@@ -879,11 +893,8 @@
       const email = user?.email || '—';
       const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
-      const goalsNames = acctData.goals.map(g => { const gl = acctData.ref.goals_list.find(x => x.id == g.goal_id); return gl ? (gl.label || gl.title || gl.name) : null; }).filter(Boolean);
-      const primaryGoal = acctData.goals.find(g => g.is_primary);
-      const primaryGoalName = primaryGoal ? (acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.label || acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.title || acctData.ref.goals_list.find(x => x.id == primaryGoal.goal_id)?.name || '—') : '—';
-
       const subjectNames = acctData.subjects.map(sid => { const s = r.subjects_list.find(x => x.id == sid); return s ? s.name : null; }).filter(Boolean);
+      const isIcs = isICSAccount();
 
       const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
       const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
@@ -894,16 +905,7 @@
       const collegeOptions = r.colleges.map(c => `<option value="${c.id}" ${a?.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       const sessionOptions = r.academic_sessions.map(s => `<option value="${s.id}" ${a?.academic_session_id == s.id ? 'selected' : ''}>${s.label}</option>`).join('');
 
-      const subjectChips = r.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
-
-      const goalsByCategory = {};
-      r.goal_categories.forEach(cat => { goalsByCategory[cat.id] = r.goals_list.filter(g => g.category_id === cat.id); });
-      const goalChipsHtml = r.goal_categories.map(cat => {
-        const goals = goalsByCategory[cat.id] || [];
-        if (!goals.length) return '';
-        const chips = goals.map(g => `<div class="multi-select-chip ${acctData.goals.some(x => x.goal_id == g.id) ? 'selected' : ''}" data-id="${g.id}" onclick="toggleGoalChip(this)">${g.label || g.title || g.name}</div>`).join('');
-        return `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">${cat.name}</div><div class="multi-select-grid">${chips}</div></div>`;
-      }).join('');
+      const subjectChips = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
 
       document.getElementById('account-cards').innerHTML = `
         <div class="account-card">
@@ -976,7 +978,7 @@
             <div class="field-row"><span class="field-label">Education System</span><span class="field-value ${a?.education_system_id ? '' : 'empty'}">${a?.education_system_id ? resolveName(r.education_systems, a.education_system_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>
+            ${isIcs ? '' : `<div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>`}
             <div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">College</span><span class="field-value ${a?.college_id ? '' : 'empty'}">${a?.college_id ? resolveName(r.colleges, a.college_id, 'name') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'label') : 'Not set'}</span></div>
@@ -998,9 +1000,13 @@
               <label>Class</label>
               <select id="edit-class" onchange="onClassChange()"><option value="">Select class</option>${classOptions}</select>
             </div>
-            <div class="edit-form-group">
+            <div class="edit-form-group" id="edit-group-wrap" style="${isIcs ? 'display:none' : ''}">
               <label>Group</label>
               <select id="edit-group" onchange="onGroupChange()"><option value="">Select group</option>${groupOptions}</select>
+            </div>
+            <div class="edit-form-group" id="edit-subjects-wrap" style="${isIcs ? '' : 'display:none'}">
+              <label>Subjects</label>
+              <div id="edit-subjects" class="multi-select-grid">${isIcs ? subjectChips : '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>'}</div>
             </div>
             <div class="edit-form-group">
               <label>College</label>
@@ -1024,34 +1030,6 @@
             </div>
           </div>
         </div>
-
-        <div class="account-card">
-          <div class="card-header">
-            <span class="card-title">Goals</span>
-            <button class="edit-btn" onclick="toggleSection('goals')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit
-            </button>
-          </div>
-          <div class="field-rows" id="goals-display">
-            <div class="field-row"><span class="field-label">Goals</span><span class="field-value ${goalsNames.length ? '' : 'empty'}">${goalsNames.length ? goalsNames.join(', ') : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Primary Goal</span><span class="field-value ${primaryGoal ? '' : 'empty'}">${primaryGoalName}</span></div>
-          </div>
-          <div class="field-row-edit" id="goals-edit">
-            <div class="edit-form-group">
-              <label>Select your goals</label>
-              <div id="edit-goals-chips">${goalChipsHtml}</div>
-            </div>
-            <div class="edit-form-group" id="primary-goal-wrap" style="display:none;margin-top:14px">
-              <label>Primary Goal</label>
-              <select id="edit-primary-goal"><option value="">Select primary goal</option></select>
-            </div>
-            <div class="edit-actions">
-              <button class="btn-cancel" onclick="toggleSection('goals')">Cancel</button>
-              <button class="btn-save" onclick="saveGoals()">Save</button>
-            </div>
-          </div>
-        </div>
       `;
       } catch (e) { console.error('[ACC] renderCards error:', e); }
     }
@@ -1067,7 +1045,6 @@
         display.classList.add('hidden');
         edit.classList.add('active');
         if (section === 'academic') preloadAcademicDependent();
-        if (section === 'goals') refreshPrimaryGoalSelect();
       }
     }
 
@@ -1087,17 +1064,36 @@
         await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
         document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
         document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
-        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>';
-        document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a class first</span>';
+        const sys = acctData.ref.education_systems.find(s => s.id == sid);
+        const isIcs = sys?.code === 'ics';
+        const grpWrap = document.getElementById('edit-group-wrap');
+        const subWrap = document.getElementById('edit-subjects-wrap');
+        if (grpWrap) grpWrap.style.display = isIcs ? 'none' : '';
+        if (subWrap) {
+          if (isIcs) {
+            subWrap.style.display = '';
+            await loadICSSubjectsList(sid);
+            document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+          } else {
+            subWrap.style.display = 'none';
+          }
+        }
       }
     }
 
     async function onClassChange() {
       const sid = document.getElementById('edit-edu-system').value;
       if (sid) {
-        await loadGroups(sid);
-        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-        document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>';
+        const sys = acctData.ref.education_systems.find(s => s.id == sid);
+        const isIcs = sys?.code === 'ics';
+        if (isIcs) {
+          await loadICSSubjectsList(sid);
+          document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+        } else {
+          await loadGroups(sid);
+          document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+          document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>';
+        }
       }
     }
 
@@ -1118,16 +1114,30 @@
     async function preloadAcademicDependent() {
       const a = acctData.acad;
       if (!a) return;
+      const isIcs = isICSAccount();
       if (a.education_system_id) {
         await Promise.all([loadBoards(a.education_system_id), loadClassLevels(a.education_system_id)]);
         document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${a.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
         document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
-        await loadGroups(a.education_system_id);
-        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
-      }
-      if (a.group_id && a.education_system_id) {
-        await loadSubjectsList(a.education_system_id, a.group_id);
-        document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+        const grpWrap = document.getElementById('edit-group-wrap');
+        const subWrap = document.getElementById('edit-subjects-wrap');
+        if (isIcs) {
+          if (grpWrap) grpWrap.style.display = 'none';
+          if (subWrap) {
+            subWrap.style.display = '';
+            await loadICSSubjectsList(a.education_system_id);
+            document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+          }
+        } else {
+          if (grpWrap) grpWrap.style.display = '';
+          if (subWrap) subWrap.style.display = '';
+          await loadGroups(a.education_system_id);
+          document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
+          if (a.group_id && a.education_system_id) {
+            await loadSubjectsList(a.education_system_id, a.group_id);
+            document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
+          }
+        }
       }
       if (a.exam_year) {
         const yrSelect = document.getElementById('edit-exam-year');
@@ -1151,29 +1161,6 @@
 
     function toggleSubjectChip(el) {
       el.classList.toggle('selected');
-    }
-
-    function toggleGoalChip(el) {
-      el.classList.toggle('selected');
-      refreshPrimaryGoalSelect();
-    }
-
-    function refreshPrimaryGoalSelect() {
-      const chips = document.querySelectorAll('#edit-goals-chips .multi-select-chip.selected');
-      const ids = Array.from(chips).map(c => c.dataset.id);
-      const wrap = document.getElementById('primary-goal-wrap');
-      const sel = document.getElementById('edit-primary-goal');
-      if (ids.length > 0) {
-        wrap.style.display = 'block';
-        const currentPrimary = acctData.goals.find(g => g.is_primary)?.goal_id || '';
-        sel.innerHTML = '<option value="">Select primary goal</option>' + ids.map(id => {
-          const g = acctData.ref.goals_list.find(x => x.id == id);
-          return g ? `<option value="${id}" ${currentPrimary == id ? 'selected' : ''}>${g.label || g.title || g.name}</option>` : '';
-        }).join('');
-      } else {
-        wrap.style.display = 'none';
-        sel.innerHTML = '';
-      }
     }
 
     async function savePersonal() {
@@ -1211,7 +1198,7 @@
         const eduSystem = document.getElementById('edit-edu-system').value || null;
         const board = document.getElementById('edit-board').value || null;
         const cls = document.getElementById('edit-class').value || null;
-        const grp = document.getElementById('edit-group').value || null;
+        const grp = document.getElementById('edit-group')?.value || null;
         const college = document.getElementById('edit-college').value || null;
         const session = document.getElementById('edit-session').value || null;
         const examYear = document.getElementById('edit-exam-year').value || null;
@@ -1228,40 +1215,20 @@
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
+        if (isICSAccount() && acadProfile?.id) {
+          const selectedChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected');
+          const subjectIds = Array.from(selectedChips).map(c => parseInt(c.dataset.id));
+          await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
+          if (subjectIds.length) {
+            await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+          }
+          acctData.subjects = subjectIds;
+        }
+
         acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session, exam_year: examYear ? parseInt(examYear) : acctData.acad?.exam_year };
 
         renderCards();
         showToast('Academic profile updated!');
-      } catch (e) {
-        showToast(e.message || 'Failed to save', true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Save';
-      }
-    }
-
-    async function saveGoals() {
-      const btn = document.querySelector('#goals-edit .btn-save');
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-      try {
-        const selectedChips = document.querySelectorAll('#edit-goals-chips .multi-select-chip.selected');
-        const goalIds = Array.from(selectedChips).map(c => c.dataset.id);
-        const primaryGoalId = document.getElementById('edit-primary-goal')?.value || null;
-
-        await db.from('academic_goals').delete().eq('user_id', currentUser.id);
-        if (goalIds.length) {
-          const { error } = await db.from('academic_goals').insert(goalIds.map(gid => ({
-            user_id: currentUser.id,
-            goal_id: gid,
-            is_primary: gid === primaryGoalId
-          })));
-          if (error) throw error;
-        }
-
-        acctData.goals = goalIds.map(gid => ({ goal_id: gid, is_primary: gid === primaryGoalId }));
-        renderCards();
-        showToast('Goals updated!');
       } catch (e) {
         showToast(e.message || 'Failed to save', true);
       } finally {
