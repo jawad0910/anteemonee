@@ -1167,7 +1167,8 @@
       const grp = document.getElementById('edit-group')?.value || '';
       const college = document.getElementById('edit-college').value;
       const session = document.getElementById('edit-session').value;
-      const ics = isICSAccount();
+      const sys = acctData.ref.education_systems.find(s => s.id == eduSystem);
+      const ics = sys?.code === 'ics';
 
       if (!eduSystem) { showToast('Please select an education system', true); return; }
       if (!board) { showToast('Please select a board', true); return; }
