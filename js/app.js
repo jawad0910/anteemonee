@@ -1197,7 +1197,13 @@ async function loadICSSubjects(systemId) {
     .eq('education_system_id', systemId)
     .eq('is_compulsory', false)
     .order('name');
-  onboarding.ref.subjects = data || [];
+  const seen = new Set();
+  onboarding.ref.subjects = (data || []).filter(s => {
+    const key = s.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function getOnboardingSubjects() {
