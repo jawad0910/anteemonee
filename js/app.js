@@ -1063,7 +1063,7 @@ async function getOnboardingStep() {
       if (goalsErr) { console.error('[getOnboardingStep] goals query error:', goalsErr); return -1; }
       console.log('[getOnboardingStep] goals count:', count, 'goals_completed:', profile.goals_completed);
       if (!count) return 10;
-      return 11;
+      return -1;
     }
     console.log('[getOnboardingStep] all complete → -1');
     return -1;
@@ -1079,7 +1079,7 @@ async function getOnboardingStep() {
 
 const onboarding = {
   currentStep: 0,
-  totalSteps: 12,
+  totalSteps: 11,
   data: {
     dob: '',
     province_id: null,
@@ -1486,7 +1486,6 @@ async function loadStepData(step) {
       if (!r.colleges.length) await loadAllColleges();
       break;
     case 10:
-    case 11:
       if (!r.goal_categories.length) await loadOnboardingRefData();
       break;
   }
@@ -1543,9 +1542,6 @@ async function validateOnboardingStep(step) {
       return true;
     case 10:
       if (!d.selected_goals.length) { showMessage(errorEl, 'Please select at least one goal.'); return false; }
-      return true;
-    case 11:
-      if (!d.primary_goal_id) { showMessage(errorEl, 'Please select your primary goal.'); return false; }
       return true;
     default:
       return true;
@@ -1896,32 +1892,6 @@ function renderOnboardingStep() {
             d.selected_goals.push(id);
             btn.classList.add('selected');
           }
-        });
-      });
-      break;
-
-    case 11:
-      container.innerHTML = `
-        <h2 class="onboarding-title">Primary Goal</h2>
-        <p class="onboarding-subtitle">Which one matters most to you right now?</p>
-        <div class="onboarding-options">
-          ${d.selected_goals.map(id => {
-            const goal = r.goals.find(g => g.id == id);
-            if (!goal) return '';
-            return `
-              <button class="onboarding-option ${d.primary_goal_id === id ? 'selected' : ''}" data-id="${id}">
-                <span class="option-name">${goal.label}</span>
-                ${goal.description ? `<span class="option-desc">${goal.description}</span>` : ''}
-              </button>
-            `;
-          }).join('')}
-        </div>
-      `;
-      container.querySelectorAll('.onboarding-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          d.primary_goal_id = btn.dataset.id;
-          container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
         });
       });
       break;
