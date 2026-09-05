@@ -533,6 +533,24 @@ body { overflow-x: hidden; }
 }
 .coming-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* Password requirements */
+.password-requirements { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.pw-req {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.8rem; color: var(--text-muted); transition: color 0.2s;
+}
+.pw-req.met { color: var(--success, #22C55E); }
+.pw-check {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--text-muted); color: transparent;
+  transition: all 0.25s ease;
+}
+.pw-req.met .pw-check {
+  border-color: var(--success, #22C55E); background: var(--success, #22C55E); color: #fff;
+}
+.pw-check svg { width: 11px; height: 11px; }
+
 /* ===== AUTH PAGES ===== */
 .header-auth { border-bottom: 1px solid var(--border); }
 .auth-page {
