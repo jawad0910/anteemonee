@@ -767,6 +767,7 @@
       profile: null,
       acad: null,
       subjects: [],
+      subjectDetails: [],
       ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], colleges: [], academic_sessions: [], subjects_list: [] }
     };
 
@@ -893,12 +894,22 @@
         acctData.acad = acad;
         if (acad?.id) {
           const { data: subs } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
-          acctData.subjects = subs?.map(s => s.subject_id) || [];
+          const subjectIds = subs?.map(s => s.subject_id) || [];
+          acctData.subjects = subjectIds;
+          if (subjectIds.length) {
+            const { data: subDetails } = await db.from('subjects').select('id,name').in('id', subjectIds);
+            acctData.subjectDetails = subDetails || [];
+          } else {
+            acctData.subjectDetails = [];
+          }
+        } else {
+          acctData.subjectDetails = [];
         }
       } catch (e) {
         console.error('loadAcademicData error:', e);
         acctData.acad = null;
         acctData.subjects = [];
+        acctData.subjectDetails = [];
       }
     }
 
@@ -923,7 +934,8 @@
         const secondYear = isSecondYear();
         const suffix = secondYear ? '-II' : '-I';
         return acctData.subjects.map(sid => {
-          const s = r.subjects_list.find(x => x.id == sid);
+          let s = r.subjects_list.find(x => x.id == sid);
+          if (!s) s = (acctData.subjectDetails || []).find(x => x.id == sid);
           if (!s) return null;
           const name = (s.name || '').toLowerCase();
           const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
