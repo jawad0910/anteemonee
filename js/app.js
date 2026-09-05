@@ -1195,7 +1195,6 @@ async function loadICSSubjects(systemId) {
   const { data } = await db.from('subjects')
     .select('*')
     .eq('education_system_id', systemId)
-    .eq('is_compulsory', false)
     .order('name');
   const seen = new Set();
   onboarding.ref.subjects = (data || []).filter(s => {
@@ -1204,6 +1203,23 @@ async function loadICSSubjects(systemId) {
     seen.add(key);
     return true;
   });
+}
+
+function getICSCompulsorySubjects() {
+  const secondYear = isSecondYear();
+  return onboarding.ref.subjects.filter(s => {
+    if (!s.is_compulsory) return false;
+    const name = (s.name || '').toLowerCase();
+    if (name.includes('pakistan studies')) return secondYear;
+    if (name.includes('islamiat') || name.includes('islamiyat')) return !secondYear;
+    return true;
+  });
+}
+
+function getICSAllSubjects(selectedIds) {
+  const compulsory = getICSCompulsorySubjects();
+  const chosen = onboarding.ref.subjects.filter(s => selectedIds.includes(s.id));
+  return [...compulsory, ...chosen];
 }
 
 function getOnboardingSubjects() {
@@ -1308,8 +1324,9 @@ async function saveStepData(step) {
         const row = await sapExists();
         if (row) {
           await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
-          if (d.selected_subjects.length) {
-            await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
+          const allIds = getICSAllSubjects(d.selected_subjects).map(s => s.id);
+          if (allIds.length) {
+            await db.from('student_subjects').insert(allIds.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
           }
         }
       } else {
@@ -1663,11 +1680,12 @@ function renderOnboardingStep() {
 
     case 5:
       if (isICS()) {
+        const optionalSubjects = r.subjects.filter(s => !s.is_compulsory);
         container.innerHTML = `
           <h2 class="onboarding-title">Choose Your Subjects</h2>
           <p class="onboarding-subtitle">Select exactly 3 subjects.</p>
           <div class="onboarding-options">
-            ${r.subjects.map(s => `
+            ${optionalSubjects.map(s => `
               <button class="onboarding-option subject-option ${d.selected_subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}">
                 <span class="option-name">${s.name}</span>
               </button>
@@ -1718,16 +1736,18 @@ function renderOnboardingStep() {
     case 6: {
       if (isICS()) {
         const secondYear = isSecondYear();
+        const allSubjects = getICSAllSubjects(d.selected_subjects);
         container.innerHTML = `
           <h2 class="onboarding-title">Confirm Your Subjects</h2>
-          <p class="onboarding-subtitle">These are your chosen subjects.</p>
+          <p class="onboarding-subtitle">These are your subjects.</p>
           <div class="onboarding-review">
-            ${d.selected_subjects.map(id => {
-              const s = r.subjects.find(x => x.id == id);
-              return s ? `<div class="review-row"><span class="review-label">Subject</span><span class="review-value">${s.name}</span></div>` : '';
-            }).join('')}
+            ${allSubjects.map(s => `
+              <div class="review-row">
+                <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Selected'}</span>
+                <span class="review-value">${s.name}</span>
+              </div>
+            `).join('')}
           </div>
-          <p style="font-size:12px;color:var(--text-muted);margin-top:14px">${secondYear ? 'Per Govt. of Pakistan notification, 2nd Year students study Pakistan Studies only.' : 'Per Govt. of Pakistan notification, 1st Year students study Islamiyat only.'}</p>
         `;
       } else {
         const secondYear = isSecondYear();
@@ -1822,7 +1842,7 @@ function renderOnboardingStep() {
           <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || '—'}</span></div>
-          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(x => x.id == id); return s ? s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>` : `
+          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${getICSAllSubjects(d.selected_subjects).map(s => s.name).join(', ') || '—'}</span></div>` : `
           <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || '—'}</span></div>
           <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>`}
           <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || '—'}</span></div>
