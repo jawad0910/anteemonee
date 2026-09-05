@@ -1291,7 +1291,7 @@ async function loadOnboardingData() {
     if (goals?.length) {
       onboarding.data.selected_goals = goals.map(g => g.goal_id);
       const primary = goals.find(g => g.is_primary);
-      onboarding.data.primary_goal_id = primary?.goal_id || null;
+      onboarding.data.primary_goal_id = primary?.goal_id || goals[0]?.goal_id || null;
     }
   } catch (e) {
     console.error('loadOnboardingData error:', e);
@@ -1366,8 +1366,9 @@ async function saveStepData(step) {
     }
     case 10:
       await db.from('academic_goals').delete().eq('user_id', currentUser.id);
-      if (d.selected_goals.length) {
-        await db.from('academic_goals').insert(d.selected_goals.map(gid => ({ user_id: currentUser.id, goal_id: gid, is_primary: gid === d.primary_goal_id })));
+      if (d.primary_goal_id) {
+        await db.from('academic_goals').insert({ user_id: currentUser.id, goal_id: d.primary_goal_id, is_primary: true });
+        d.selected_goals = [d.primary_goal_id];
       }
       break;
   }
@@ -1550,7 +1551,7 @@ async function validateOnboardingStep(step) {
     case 9:
       return true;
     case 10:
-      if (!d.selected_goals.length) { showMessage(errorEl, 'Please select at least one goal.'); return false; }
+      if (!d.primary_goal_id) { showMessage(errorEl, 'Please select your primary goal.'); return false; }
       return true;
     default:
       return true;
@@ -1871,8 +1872,8 @@ function renderOnboardingStep() {
       });
 
       container.innerHTML = `
-        <h2 class="onboarding-title">Your Goals</h2>
-        <p class="onboarding-subtitle">Select what you want to achieve.</p>
+        <h2 class="onboarding-title">Primary Goal</h2>
+        <p class="onboarding-subtitle">Which one matters most to you right now?</p>
         ${r.goal_categories.map(cat => {
           const goals = goalsByCategory[cat.id] || [];
           if (!goals.length) return '';
@@ -1881,7 +1882,7 @@ function renderOnboardingStep() {
               <h3 class="goal-category-name">${cat.name}</h3>
               <div class="onboarding-options onboarding-options-multi">
                 ${goals.map(g => `
-                  <button class="onboarding-option ${d.selected_goals.includes(g.id) ? 'selected' : ''}" data-id="${g.id}">
+                  <button class="onboarding-option ${String(d.primary_goal_id) === String(g.id) ? 'selected' : ''}" data-id="${g.id}">
                     <span class="option-name">${g.label}</span>
                     ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
                   </button>
@@ -1893,14 +1894,10 @@ function renderOnboardingStep() {
       `;
       container.querySelectorAll('.onboarding-option').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          if (d.selected_goals.includes(id)) {
-            d.selected_goals = d.selected_goals.filter(g => g !== id);
-            btn.classList.remove('selected');
-          } else {
-            d.selected_goals.push(id);
-            btn.classList.add('selected');
-          }
+          d.primary_goal_id = btn.dataset.id;
+          d.selected_goals = [btn.dataset.id];
+          container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
         });
       });
       break;
@@ -1974,18 +1971,18 @@ async function saveOnboarding() {
     }
 
     await db.from('academic_goals').delete().eq('user_id', currentUser.id);
-    if (d.selected_goals.length) {
-      const goalRows = d.selected_goals.map(gid => ({
+    const finalGoalId = d.primary_goal_id || (d.selected_goals.length ? d.selected_goals[0] : null);
+    if (finalGoalId) {
+      const { error: goalErr } = await db.from('academic_goals').insert({
         user_id: currentUser.id,
-        goal_id: Number(gid),
-        is_primary: gid === d.primary_goal_id
-      }));
-      const { error: goalErr } = await db.from('academic_goals').insert(goalRows);
+        goal_id: Number(finalGoalId),
+        is_primary: true
+      });
       if (goalErr) {
         console.error('[saveOnboarding] Goals insert error:', goalErr);
         throw goalErr;
       }
-      console.log('[saveOnboarding] Goals saved:', goalRows.length);
+      console.log('[saveOnboarding] Goal saved:', finalGoalId);
     }
 
     await loadProfile();
