@@ -668,10 +668,8 @@
           <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
           <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
           <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
-          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
-          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
-          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
         </div>
+      </div>
         <div class="card-shimmer">
           <div style="margin-bottom:20px"><div class="shimmer-line w50" style="height:10px"></div></div>
           <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
@@ -979,7 +977,7 @@
             <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
             ${isIcs ? '' : `<div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>`}
-            <div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>
+            ${isIcs ? `<div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>` : ''}
             <div class="field-row"><span class="field-label">College</span><span class="field-value ${a?.college_id ? '' : 'empty'}">${a?.college_id ? resolveName(r.colleges, a.college_id, 'name') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'label') : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Exam Year</span><span class="field-value ${a?.exam_year ? '' : 'empty'}">${a?.exam_year || 'Not set'}</span></div>
@@ -1068,15 +1066,14 @@
         const isIcs = sys?.code === 'ics';
         const grpWrap = document.getElementById('edit-group-wrap');
         const subWrap = document.getElementById('edit-subjects-wrap');
-        if (grpWrap) grpWrap.style.display = isIcs ? 'none' : '';
-        if (subWrap) {
-          if (isIcs) {
-            subWrap.style.display = '';
-            await loadICSSubjectsList(sid);
-            document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
-          } else {
-            subWrap.style.display = 'none';
-          }
+        if (isIcs) {
+          if (grpWrap) grpWrap.style.display = 'none';
+          if (subWrap) { subWrap.style.display = ''; await loadICSSubjectsList(sid); document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join(''); }
+        } else {
+          if (grpWrap) grpWrap.style.display = '';
+          if (subWrap) subWrap.style.display = 'none';
+          await loadGroups(sid);
+          document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
         }
       }
     }
@@ -1092,7 +1089,6 @@
         } else {
           await loadGroups(sid);
           document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-          document.getElementById('edit-subjects').innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>';
         }
       }
     }
@@ -1130,13 +1126,9 @@
           }
         } else {
           if (grpWrap) grpWrap.style.display = '';
-          if (subWrap) subWrap.style.display = '';
+          if (subWrap) subWrap.style.display = 'none';
           await loadGroups(a.education_system_id);
           document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
-          if (a.group_id && a.education_system_id) {
-            await loadSubjectsList(a.education_system_id, a.group_id);
-            document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
-          }
         }
       }
       if (a.exam_year) {
