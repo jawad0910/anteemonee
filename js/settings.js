@@ -823,12 +823,12 @@ function renderSubscriptionContent(container, planCard) {
   const ent = settingsEntitlements;
   const isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
 
-  const newPlanCard = document.createElement('div');
-  newPlanCard.className = 'settings-card';
+  const currentCard = document.createElement('div');
+  currentCard.className = 'settings-card';
   if (isPro) {
     const expires = ent.expires_at || ent.premium_expires_at;
     const expiresStr = expires ? new Date(expires).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' }) : 'No expiry';
-    newPlanCard.innerHTML = `
+    currentCard.innerHTML = `
       <div class="plan-card">
         <div class="plan-icon pro">&#10024;</div>
         <div class="plan-info">
@@ -837,7 +837,7 @@ function renderSubscriptionContent(container, planCard) {
         </div>
       </div>`;
   } else {
-    newPlanCard.innerHTML = `
+    currentCard.innerHTML = `
       <div class="plan-card">
         <div class="plan-icon free">&#128218;</div>
         <div class="plan-info">
@@ -845,14 +845,33 @@ function renderSubscriptionContent(container, planCard) {
           <p>Limited AI sessions and features</p>
         </div>
       </div>`;
-    const upgradeBtn = document.createElement('button');
-    upgradeBtn.className = 'btn-settings btn-settings-primary';
-    upgradeBtn.textContent = 'Join Premium Waitlist';
-    upgradeBtn.style.cssText = 'margin:0 20px 16px;';
-    upgradeBtn.addEventListener('click', joinWaitlist);
-    newPlanCard.appendChild(upgradeBtn);
   }
-  container.appendChild(newPlanCard);
+  container.appendChild(currentCard);
+
+  if (!isPro) {
+    const upgradeCard = document.createElement('div');
+    upgradeCard.className = 'settings-card';
+    upgradeCard.innerHTML = `
+      <div style="padding:16px 20px 0">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">WASSAL PREMIUM</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">Unlock the full power of your Student OS</div>
+      </div>
+      <div style="padding:0 20px 20px">
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:20px">
+          <span style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">Rs 400</span>
+          <span style="font-size:14px;color:var(--text-secondary)">/month</span>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:14px">
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>250 AI Tutor sessions per month</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>200 AI Question Scans per month</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>30-minute AI sessions (vs 10 min free)</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Priority access to new features</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Ad-free experience</span></li>
+        </ul>
+        <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Premium — Rs 400/mo</a>
+      </div>`;
+    container.appendChild(upgradeCard);
+  }
 
   const aiUsed = ent?.ai_used ?? '—';
   const aiLimit = ent?.ai_limit ?? '—';
@@ -871,16 +890,6 @@ function renderSubscriptionContent(container, planCard) {
     usageRows.push(buildRow('Expiry Date', new Date(exp).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })));
   }
   container.appendChild(buildCard('USAGE', usageRows));
-}
-
-async function joinWaitlist() {
-  try {
-    const { error } = await db.from('premium_waitlist').insert({ user_id: currentUser.id });
-    if (error && error.code !== '23505') throw error;
-    showToastSettings('You have been added to the premium waitlist!');
-  } catch (e) {
-    showToastSettings(e.message || 'Failed to join waitlist', true);
-  }
 }
 
 /* =========================
