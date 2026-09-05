@@ -317,15 +317,15 @@ ul { list-style: none; }
 }
 .hero-chip:hover { transform: translateY(-2px); border-color: var(--accent); }
 .hero-chip svg { color: var(--green); }
-.hero-trust { display: flex; align-items: center; gap: 12px; }
-.trust-avatars { display: flex; }
+.hero-trust { display: flex; align-items: center; gap: 8px; }
+.trust-avatars { display: flex; flex-shrink: 0; }
 .trust-avatars span {
   width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #fff; margin-left: -9px; border: 2.5px solid var(--bg);
 }
 .trust-avatars span:first-child { margin-left: 0; }
-.trust-stars { color: #F5A623; font-size: 13px; letter-spacing: 2px; }
-.trust-text { font-size: 13px; color: var(--text-secondary); }
+.trust-stars { color: #F5A623; font-size: 13px; letter-spacing: 1px; flex-shrink: 0; }
+.trust-text { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
 .trust-text strong { color: var(--text); }
 
 /* ===== DASHBOARD MOCK ===== */
