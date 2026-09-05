@@ -606,7 +606,7 @@ When asked about their own subjects, class, board or goals, answer directly from
       .replace(/>/g, '&gt;');
 
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-      `<pre><code class="lang-${lang}">${code.trim()}</code></pre>`
+      `<div class="code-block"><div class="code-block-header"><span class="code-lang">${lang || 'code'}</span><button class="code-copy-btn" onclick="copyCodeBlock(this)" title="Copy code"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy</span></button></div><pre><code class="lang-${lang}">${code.trim()}</code></pre></div>`
     );
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -638,6 +638,8 @@ When asked about their own subjects, class, board or goals, answer directly from
     html = html.replace(/<p><\/p>/g, '');
     html = html.replace(/<p>(<h[1-3]>)/g, '$1');
     html = html.replace(/(<\/h[1-3]>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<div class="code-block">)/g, '$1');
+    html = html.replace(/(<\/pre><\/div>)<\/p>/g, '$1');
     html = html.replace(/<p>(<pre>)/g, '$1');
     html = html.replace(/(<\/pre>)<\/p>/g, '$1');
     html = html.replace(/<p>(<ul>)/g, '$1');
@@ -1412,3 +1414,15 @@ When asked about their own subjects, class, board or goals, answer directly from
     document.body.style.overflow = '';
   }
 })();
+
+function copyCodeBlock(btn) {
+  const codeBlock = btn.closest('.code-block');
+  const code = codeBlock.querySelector('code');
+  navigator.clipboard.writeText(code.textContent).then(() => {
+    const label = btn.querySelector('span');
+    const original = label.textContent;
+    label.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { label.textContent = original; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {});
+}
