@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Premium — Wassal</title>
+  <meta name="theme-color" content="#07080C">
+  <link rel="icon" href="../assets/wassal.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preload" href="https://unpkg.com/@supabase/supabase-js@2" as="script">
+  <style>
+    .payment-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 20px 60px;
+    }
+
+    .payment-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 40px 36px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.06);
+    }
+
+    .payment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(15,77,44,.08);
+      color: var(--accent);
+      margin-bottom: 20px;
+      letter-spacing: .02em;
+    }
+
+    .payment-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .payment-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 6px;
+      line-height: 1.2;
+    }
+
+    .payment-subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin: 0 0 28px;
+    }
+
+    .payment-price {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+
+    .payment-price .amount {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .payment-price .period {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .payment-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 0 0 24px;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 32px;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .feature-list .check {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    .pay-btn {
+      width: 100%;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+      margin-bottom: 16px;
+    }
+
+    .pay-btn:hover { opacity: .88; }
+    .pay-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .pay-btn .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .cancel-link {
+      display: block;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .cancel-link:hover { color: var(--text-primary); }
+
+    .already-premium {
+      text-align: center;
+    }
+
+    .already-premium .check-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 28px;
+    }
+
+    .already-premium h2 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+
+    .already-premium p {
+      color: var(--text-secondary);
+      margin: 0 0 24px;
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .error-msg {
+      text-align: center;
+      color: #e53935;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .not-auth {
+      text-align: center;
+    }
+
+    .not-auth h2 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+
+    .not-auth p {
+      color: var(--text-secondary);
+      margin: 0 0 24px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
+        <span class="logo-text-wrap">
+          <span class="logo-text">Wassal</span>
+          <span class="logo-sub">Student OS for Pakistan</span>
+        </span>
+      </a>
+      <nav class="desktop-nav">
+        <a href="../index.html#features">Features</a>
+        <a href="ai-chatbot.html">AI Chat</a>
+        <a href="download.html">Download</a>
+        <a href="account.html">Account</a>
+      </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
+        <div class="auth-actions" id="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login">Login</a>
+          <a href="signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div class="auth-actions" id="auth-logged-in" style="display:none">
+          <div class="profile-avatar-container" id="profile-avatar-container"></div>
+        </div>
+      </div>
+      <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
+    </div>
+  </header>
+
+  <div class="mobile-menu">
+    <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
+    <div id="mobile-auth-logged-out" style="display:none">
+      <a href="../index.html" class="mobile-nav-link">Home</a>
+      <a href="../index.html#features" class="mobile-nav-link">Features</a>
+      <a href="ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="download.html" class="mobile-nav-link">Download App</a>
+      <div class="mobile-cta">
+        <a href="login.html" class="btn-login">Log in</a>
+        <a href="signup.html" class="btn-signup">Sign Up</a>
+      </div>
+    </div>
+    <div id="mobile-auth-logged-in" style="display:none">
+      <div id="mobile-profile-section"></div>
+      <a href="../index.html" class="mobile-nav-link">Home</a>
+      <a href="ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="account.html" class="mobile-nav-link">Account</a>
+      <a href="settings.html" class="mobile-nav-link">Settings</a>
+      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- NOT AUTH -->
+  <div id="payment-not-auth" style="display:none" class="payment-page">
+    <div class="payment-card not-auth">
+      <h2>Sign in required</h2>
+      <p>Please sign in to purchase Wassal Premium.</p>
+      <a href="login.html" class="back-btn">Sign In</a>
+    </div>
+  </div>
+
+  <!-- PAYMENT CONTENT -->
+  <div id="payment-content" class="payment-page">
+    <div class="payment-card">
+
+      <!-- Already Premium -->
+      <div id="already-premium" style="display:none" class="already-premium">
+        <div class="check-icon">✓</div>
+        <h2>You're already Premium!</h2>
+        <p>Your subscription is active. Enjoy all the features.</p>
+        <a href="settings.html" class="back-btn">Back to Settings</a>
+      </div>
+
+      <!-- Checkout -->
+      <div id="checkout-section">
+        <div class="payment-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Wassal Premium
+        </div>
+
+        <h1 class="payment-title">Upgrade to Premium</h1>
+        <p class="payment-subtitle">Unlock the full power of your Student OS.</p>
+
+        <div class="payment-price">
+          <span class="amount">Rs 400</span>
+          <span class="period">/month</span>
+        </div>
+
+        <div class="payment-divider"></div>
+
+        <ul class="feature-list">
+          <li><span class="check">✓</span>250 AI Tutor sessions per month</li>
+          <li><span class="check">✓</span>200 AI Question Scans per month</li>
+          <li><span class="check">✓</span>30-minute AI sessions (vs 10 min free)</li>
+          <li><span class="check">✓</span>Priority access to new features</li>
+          <li><span class="check">✓</span>Ad-free experience</li>
+        </ul>
+
+        <div id="payment-error" class="error-msg" style="display:none"></div>
+
+        <button id="pay-btn" class="pay-btn" onclick="handlePay()">
+          Pay Now — Rs 400/mo
+        </button>
+
+        <a href="settings.html" class="cancel-link">Cancel — back to Settings</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/payment.js"></script>
+</body>
+</html>
