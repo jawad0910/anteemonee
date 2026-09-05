@@ -1051,20 +1051,12 @@ async function getOnboardingStep() {
         .eq('academic_profile_id', acad.id);
       if (countErr) { console.error('[getOnboardingStep] subjects query error:', countErr); return -1; }
       console.log('[getOnboardingStep] subject count:', count);
-      if (!count) return icsMode ? 5 : 6;
+      if (!count) return 5;
     } else {
-      return icsMode ? 5 : 6;
+      return 5;
     }
-    if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session → 8'); return 8; }
-    if (!profile.goals_completed) {
-      const { count, error: goalsErr } = await db.from('academic_goals')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', currentUser.id);
-      if (goalsErr) { console.error('[getOnboardingStep] goals query error:', goalsErr); return -1; }
-      console.log('[getOnboardingStep] goals count:', count, 'goals_completed:', profile.goals_completed);
-      if (!count) return 10;
-      return -1;
-    }
+    if (!acad.college_id) { console.log('[getOnboardingStep] no college → 6'); return 6; }
+    if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session → 7'); return 7; }
     console.log('[getOnboardingStep] all complete → -1');
     return -1;
   } catch (e) {
@@ -1079,7 +1071,7 @@ async function getOnboardingStep() {
 
 const onboarding = {
   currentStep: 0,
-  totalSteps: 11,
+  totalSteps: 9,
   data: {
     dob: '',
     province_id: null,
@@ -1287,12 +1279,6 @@ async function loadOnboardingData() {
         onboarding.data.selected_subjects = subjects?.map(s => s.subject_id) || [];
       }
     }
-    const { data: goals } = await db.from('academic_goals').select('goal_id, is_primary').eq('user_id', currentUser.id);
-    if (goals?.length) {
-      onboarding.data.selected_goals = goals.map(g => g.goal_id);
-      const primary = goals.find(g => g.is_primary);
-      onboarding.data.primary_goal_id = primary?.goal_id || goals[0]?.goal_id || null;
-    }
   } catch (e) {
     console.error('loadOnboardingData error:', e);
   }
@@ -1343,34 +1329,15 @@ async function saveStepData(step) {
       break;
     }
     case 6: {
-      if (!isICS()) {
-        const row = await sapExists();
-        if (row) {
-          await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
-          if (d.selected_subjects.length) {
-            await db.from('student_subjects').insert(d.selected_subjects.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
-          }
-        }
-      }
-      break;
-    }
-    case 7: {
       const row = await sapExists();
       if (row) await db.from('student_academic_profiles').update({ college_id: d.college_id }).eq('user_id', currentUser.id);
       break;
     }
-    case 8: {
+    case 7: {
       const row = await sapExists();
       if (row) await db.from('student_academic_profiles').update({ academic_session_id: d.academic_session_id, exam_year: parseInt(d.exam_year) || new Date().getFullYear() }).eq('user_id', currentUser.id);
       break;
     }
-    case 10:
-      await db.from('academic_goals').delete().eq('user_id', currentUser.id);
-      if (d.primary_goal_id) {
-        await db.from('academic_goals').insert({ user_id: currentUser.id, goal_id: d.primary_goal_id, is_primary: true });
-        d.selected_goals = [d.primary_goal_id];
-      }
-      break;
   }
 }
 
@@ -1465,19 +1432,11 @@ async function loadStepData(step) {
       }
       break;
     case 6:
-      if (isICS()) {
-        // ICS subjects already loaded in step 5, nothing to load
-      } else {
-        if (d.education_system_id) await loadSubjects(d.education_system_id, d.group_id);
-        d.selected_subjects = getOnboardingSubjects().map(s => s.id);
-      }
-      break;
-    case 7:
       await loadAllColleges();
       break;
-    case 8:
+    case 7:
       break;
-    case 9:
+    case 8:
       if (!r.education_systems.length) await loadOnboardingRefData();
       if (d.province_id && !r.cities.length) await loadCities(d.province_id);
       if (d.education_system_id) {
@@ -1494,9 +1453,6 @@ async function loadStepData(step) {
         }
       }
       if (!r.colleges.length) await loadAllColleges();
-      break;
-    case 10:
-      if (!r.goal_categories.length) await loadOnboardingRefData();
       break;
   }
 }
@@ -1541,17 +1497,12 @@ async function validateOnboardingStep(step) {
       }
       return true;
     case 6:
-      return true;
-    case 7:
       if (!d.college_id) { showMessage(errorEl, 'Please select your college.'); return false; }
       return true;
-    case 8:
+    case 7:
       if (!d.academic_session_id) { showMessage(errorEl, 'Please select your academic session.'); return false; }
       return true;
-    case 9:
-      return true;
-    case 10:
-      if (!d.primary_goal_id) { showMessage(errorEl, 'Please select your primary goal.'); return false; }
+    case 8:
       return true;
     default:
       return true;
@@ -1746,43 +1697,7 @@ function renderOnboardingStep() {
       }
       break;
 
-    case 6: {
-      if (isICS()) {
-        const secondYear = isSecondYear();
-        const allSubjects = getICSAllSubjects(d.selected_subjects);
-        container.innerHTML = `
-          <h2 class="onboarding-title">Confirm Your Subjects</h2>
-          <p class="onboarding-subtitle">These are your subjects.</p>
-          <div class="onboarding-review">
-            ${allSubjects.map(s => `
-              <div class="review-row">
-                <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Selected'}</span>
-                <span class="review-value">${s.displayName}</span>
-              </div>
-            `).join('')}
-          </div>
-        `;
-      } else {
-        const secondYear = isSecondYear();
-        const subjectList = getOnboardingSubjects();
-        container.innerHTML = `
-          <h2 class="onboarding-title">Confirm Your Subjects</h2>
-          <p class="onboarding-subtitle">These are your subjects based on your group selection.</p>
-          <div class="onboarding-review">
-            ${subjectList.map(s => `
-              <div class="review-row">
-                <span class="review-label">${s.is_compulsory ? 'Compulsory' : 'Group Subject'}</span>
-                <span class="review-value">${s.displayName}</span>
-              </div>
-            `).join('')}
-          </div>
-          <p style="font-size:12px;color:var(--text-muted);margin-top:14px">${secondYear ? 'Per Govt. of Pakistan notification, 2nd Year students study Pakistan Studies only.' : 'Per Govt. of Pakistan notification, 1st Year students study Islamiyat only.'}</p>
-        `;
-      }
-      break;
-    }
-
-    case 7:
+    case 6:
       container.innerHTML = `
         <h2 class="onboarding-title">College</h2>
         <p class="onboarding-subtitle">Which college do you attend?</p>
@@ -1797,7 +1712,7 @@ function renderOnboardingStep() {
       document.getElementById('onb-college')?.addEventListener('change', e => { d.college_id = e.target.value || null; });
       break;
 
-    case 8: {
+    case 7: {
       const classLevel = r.class_levels.find(c => c.id == d.class_level_id);
       const classValue = classLevel?.value || 0;
       const isFirstYear = classValue === 11;
@@ -1844,7 +1759,7 @@ function renderOnboardingStep() {
       break;
     }
 
-    case 9:
+    case 8:
       container.innerHTML = `
         <h2 class="onboarding-title">Review Your Profile</h2>
         <p class="onboarding-subtitle">Check that everything looks correct.</p>
@@ -1863,43 +1778,6 @@ function renderOnboardingStep() {
           <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || '—'}</span></div>
         </div>
       `;
-      break;
-
-    case 10:
-      const goalsByCategory = {};
-      r.goal_categories.forEach(cat => {
-        goalsByCategory[cat.id] = r.goals.filter(g => g.category_id === cat.id);
-      });
-
-      container.innerHTML = `
-        <h2 class="onboarding-title">Primary Goal</h2>
-        <p class="onboarding-subtitle">Which one matters most to you right now?</p>
-        ${r.goal_categories.map(cat => {
-          const goals = goalsByCategory[cat.id] || [];
-          if (!goals.length) return '';
-          return `
-            <div class="onboarding-goal-category">
-              <h3 class="goal-category-name">${cat.name}</h3>
-              <div class="onboarding-options onboarding-options-multi">
-                ${goals.map(g => `
-                  <button class="onboarding-option ${String(d.primary_goal_id) === String(g.id) ? 'selected' : ''}" data-id="${g.id}">
-                    <span class="option-name">${g.label}</span>
-                    ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
-                  </button>
-                `).join('')}
-              </div>
-            </div>
-          `;
-        }).join('')}
-      `;
-      container.querySelectorAll('.onboarding-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          d.primary_goal_id = btn.dataset.id;
-          d.selected_goals = [btn.dataset.id];
-          container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-        });
-      });
       break;
   }
 }
@@ -1938,8 +1816,7 @@ async function saveOnboarding() {
       province_id: d.province_id ? Number(d.province_id) : null,
       city_id: d.city_id ? Number(d.city_id) : null,
       personal_info_completed: true,
-      academic_profile_completed: true,
-      goals_completed: true
+      academic_profile_completed: true
     }).eq('id', currentUser.id);
     if (profileErr) {
       console.error('[saveOnboarding] Profile update error:', profileErr);
@@ -1958,31 +1835,19 @@ async function saveOnboarding() {
 
     if (acadProfile?.id && d.selected_subjects.length) {
       await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
-      const subjectRows = d.selected_subjects.map(sid => ({
+      const finalSubjectIds = isICS() ? getICSAllSubjects(d.selected_subjects).map(s => s.id) : d.selected_subjects.map(Number);
+      const subjectRows = finalSubjectIds.map(sid => ({
         academic_profile_id: acadProfile.id,
         subject_id: Number(sid)
       }));
-      const { error: subErr } = await db.from('student_subjects').insert(subjectRows);
-      if (subErr) {
-        console.error('[saveOnboarding] Subjects insert error:', subErr);
-        throw subErr;
+      if (subjectRows.length) {
+        const { error: subErr } = await db.from('student_subjects').insert(subjectRows);
+        if (subErr) {
+          console.error('[saveOnboarding] Subjects insert error:', subErr);
+          throw subErr;
+        }
+        console.log('[saveOnboarding] Subjects saved:', subjectRows.length);
       }
-      console.log('[saveOnboarding] Subjects saved:', subjectRows.length);
-    }
-
-    await db.from('academic_goals').delete().eq('user_id', currentUser.id);
-    const finalGoalId = d.primary_goal_id || (d.selected_goals.length ? d.selected_goals[0] : null);
-    if (finalGoalId) {
-      const { error: goalErr } = await db.from('academic_goals').insert({
-        user_id: currentUser.id,
-        goal_id: Number(finalGoalId),
-        is_primary: true
-      });
-      if (goalErr) {
-        console.error('[saveOnboarding] Goals insert error:', goalErr);
-        throw goalErr;
-      }
-      console.log('[saveOnboarding] Goal saved:', finalGoalId);
     }
 
     await loadProfile();
