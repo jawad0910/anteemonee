@@ -141,7 +141,27 @@
     explanationLevel: 'standard',
     language: 'mixed',
     studySuggestions: true,
+    memoryEnabled: true,
   };
+
+  // ── AI Memory (durable facts remembered from past chats) ──
+  let aiMemories = [];
+
+  async function loadAiMemories() {
+    aiMemories = [];
+    try {
+      if (!aiPrefs.memoryEnabled) return;
+      if (typeof currentUser === 'undefined' || !currentUser || typeof db === 'undefined' || !db) return;
+      const { data, error } = await db.from('user_ai_memories')
+        .select('fact')
+        .eq('user_id', currentUser.id)
+        .order('updated_at', { ascending: false })
+        .limit(30);
+      if (!error && Array.isArray(data)) {
+        aiMemories = data.map(r => r && r.fact).filter(Boolean);
+      }
+    } catch (_) {}
+  }
 
   async function loadAiPrefs() {
     try {
@@ -152,6 +172,7 @@
           if (['simple', 'standard', 'advanced'].includes(data.ai_explanation_level)) aiPrefs.explanationLevel = data.ai_explanation_level;
           if (['english', 'urdu', 'roman_urdu', 'mixed'].includes(data.ai_language)) aiPrefs.language = data.ai_language;
           if (typeof data.ai_study_recommendations === 'boolean') aiPrefs.studySuggestions = data.ai_study_recommendations;
+          if (typeof data.ai_memory_enabled === 'boolean') aiPrefs.memoryEnabled = data.ai_memory_enabled;
         }
       }
     } catch (_) {}
@@ -221,6 +242,7 @@
     } catch (_) {}
     await loadStudentContext();
     await loadAiPrefs();
+    await loadAiMemories();
 
     // ── 1. Load from localStorage FIRST (instant, no flicker) ──
     const cached = loadSessionState();
@@ -562,6 +584,11 @@ BEHAVIOR:
 - Exam Year: ${studentContext.examYear || 'Not set'}
 
 When asked about their own subjects, class, board or goals, answer directly from the above context - NEVER claim you don't have access.`;
+    }
+
+    if (aiPrefs.memoryEnabled && aiMemories.length) {
+      ctx += `\n\nSTUDENT MEMORY (things remembered from past chats - use them naturally to personalize, NEVER recite as a list unless asked, NEVER claim you don't remember these):
+${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     return ctx;
@@ -1010,6 +1037,8 @@ When asked about their own subjects, class, board or goals, answer directly from
       api.setAccessToken(token);
       updateSessionPanel();
       saveSessionState();
+      // Fresh window, fresh memory context (background, never blocks).
+      loadAiMemories();
       return true;
     } catch (e) {
       console.error('[Session] start failed:', e);

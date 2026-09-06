@@ -1865,6 +1865,7 @@ const DEFAULT_PREFS = {
   ai_response_style: 'balanced', ai_language: 'english',
   ai_voice_enabled: true, ai_voice_speed: 100,
   ai_study_recommendations: true, ai_autoplay_voice: false,
+  ai_memory_enabled: true,
   planner_daily_goal_minutes: 120, planner_default_session_min: 45,
   planner_week_starts_on: 1, planner_break_preference: 'short_breaks',
   planner_auto_schedule: true, planner_exam_prep_mode: 'balanced',

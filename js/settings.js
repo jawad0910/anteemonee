@@ -718,6 +718,24 @@ function renderAI() {
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),
   ];
   c.appendChild(buildCard('SUGGESTIONS', prefRows));
+
+  const memRows = [
+    buildRow('AI Memory', 'Remember details from chats to personalize answers', buildToggle('t-ai_memory', p.ai_memory_enabled !== false, v => savePref('ai_memory_enabled', v))),
+    buildClickableRow('Clear AI Memory', 'Delete everything the AI remembers about you', clearAiMemory),
+  ];
+  c.appendChild(buildCard('MEMORY', memRows));
+}
+
+async function clearAiMemory() {
+  if (!currentUser) return;
+  if (!confirm('Delete all AI memories? The tutor will forget everything it learned about you. This cannot be undone.')) return;
+  try {
+    const { error } = await db.from('user_ai_memories').delete().eq('user_id', currentUser.id);
+    if (error) throw error;
+    showToastSettings('AI memory cleared');
+  } catch (e) {
+    showToastSettings('Failed to clear memory', true);
+  }
 }
 
 /* =========================
