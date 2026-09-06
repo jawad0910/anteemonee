@@ -551,44 +551,64 @@ async function loadSessions() {
     return;
   }
 
+  // "This device": match by row id (string-safe) first, then by live device
+  // fingerprint as fallback (covers new tabs before reconcile runs).
   const currentId = sessionStorage.getItem('wassal_session_id');
-  const current = sessions.find(s => s.id === currentId || s.is_current);
-  const others = sessions.filter(s => s !== current);
+  let info = { browser: '', os: '', device_type: '' };
+  try { if (typeof parseUserAgent === 'function') info = parseUserAgent(); } catch (_) {}
+  const isMine = (s) => !s.logged_out_at && (
+    String(s.id) === String(currentId) ||
+    (s.browser === info.browser && s.os === info.os && s.device_type === info.device_type)
+  );
+  const byRecent = (a, b) => new Date(b.last_active_at) - new Date(a.last_active_at);
+  const current = sessions.filter(isMine).sort(byRecent)[0] || null;
+  const activeOthers = sessions.filter(s => s !== current && !s.logged_out_at).sort(byRecent);
+  const loggedOut = sessions
+    .filter(s => s !== current && s.logged_out_at)
+    .sort((a, b) => new Date(b.logged_out_at) - new Date(a.logged_out_at));
 
-  if (current) {
+  const locOf = (s) => [s.city, s.country].filter(Boolean).join(', ');
+  const descFor = (s, forceActive) => {
+    const fresh = (Date.now() - new Date(s.last_active_at).getTime()) < 5 * 60 * 1000;
+    const when = s.logged_out_at
+      ? `Logged out ${timeAgo(s.logged_out_at)}`
+      : (forceActive || fresh ? 'Active now' : timeAgo(s.last_active_at));
+    const loc = locOf(s);
+    return loc ? `${when} • ${loc}` : when;
+  };
+  const rowFor = (s, badgeHtml, dim, forceActive) => {
     const row = document.createElement('div');
     row.className = 'provider-row';
-    const icon = document.createElement('div');
-    icon.className = 'provider-icon email';
-    icon.innerHTML = getDeviceIcon(current);
-    const info = document.createElement('div');
-    info.className = 'setting-info';
-    info.innerHTML = `<div class="setting-title">${getDeviceLabel(current)} ${badge('active', 'This device')}</div><div class="setting-desc">Active now</div>`;
-    row.appendChild(icon);
-    row.appendChild(info);
-    card.appendChild(row);
-  }
-
-  others.forEach(s => {
-    const row = document.createElement('div');
-    row.className = 'provider-row';
+    if (dim) row.style.opacity = '0.55';
     const icon = document.createElement('div');
     icon.className = 'provider-icon email';
     icon.innerHTML = getDeviceIcon(s);
-    const info = document.createElement('div');
-    info.className = 'setting-info';
-    info.innerHTML = `<div class="setting-title">${getDeviceLabel(s)}</div><div class="setting-desc">${timeAgo(s.last_active_at)}</div>`;
+    const infoEl = document.createElement('div');
+    infoEl.className = 'setting-info';
+    const title = document.createElement('div');
+    title.className = 'setting-title';
+    title.textContent = getDeviceLabel(s);
+    if (badgeHtml) title.insertAdjacentHTML('beforeend', ' ' + badgeHtml);
+    const desc = document.createElement('div');
+    desc.className = 'setting-desc';
+    desc.textContent = descFor(s, forceActive);
+    infoEl.appendChild(title);
+    infoEl.appendChild(desc);
     row.appendChild(icon);
-    row.appendChild(info);
+    row.appendChild(infoEl);
     card.appendChild(row);
-  });
+  };
 
-  if (others.length) {
+  if (current) rowFor(current, badge('active', 'This device'), false, true);
+  activeOthers.forEach(s => rowFor(s, '', false, false));
+  loggedOut.forEach(s => rowFor(s, badge('inactive', 'Logged out'), true, false));
+
+  if (activeOthers.length) {
     const divider = document.createElement('div');
     divider.style.padding = '8px 20px 16px';
     const signOutBtn = document.createElement('button');
     signOutBtn.className = 'btn-settings btn-settings-danger';
-    signOutBtn.textContent = `Sign out ${others.length} other session${others.length > 1 ? 's' : ''}`;
+    signOutBtn.textContent = `Sign out ${activeOthers.length} other session${activeOthers.length > 1 ? 's' : ''}`;
     signOutBtn.addEventListener('click', async () => {
       if (!confirm('Sign out all other devices?')) return;
       setLoading(signOutBtn, true);
@@ -702,17 +722,8 @@ function renderAI() {
   ];
   c.appendChild(buildCard('LANGUAGE', langRows));
 
-  const voiceRows = [
-    buildRow('Voice Speed', 'Default speaking speed', buildSelect([
-      { value: 75, label: '0.75x' },
-      { value: 100, label: '1x (Normal)' },
-      { value: 125, label: '1.25x' },
-      { value: 150, label: '1.5x' },
-    ], p.ai_voice_speed, v => savePref('ai_voice_speed', parseInt(v)))),
-    buildRow('Voice Enabled', 'Enable voice responses', buildToggle('t-ai_voice', p.ai_voice_enabled, v => savePref('ai_voice_enabled', v))),
-    buildRow('Autoplay Voice', 'Auto-play AI voice responses', buildToggle('t-ai_autoplay', p.ai_autoplay_voice, v => savePref('ai_autoplay_voice', v))),
-  ];
-  c.appendChild(buildCard('VOICE', voiceRows));
+  // Voice controls are hidden for now (voice responses stay on by default).
+  // const voiceRows = [...] (removed from UI)
 
   const prefRows = [
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),

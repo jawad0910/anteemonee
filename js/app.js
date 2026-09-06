@@ -487,6 +487,18 @@ document.addEventListener('click', (e) => {
 
 async function handleLogout() {
   try {
+    // Mark this device row logged out so it shows correctly in sessions.
+    try {
+      const sid = sessionStorage.getItem('wassal_session_id');
+      if (sid && currentUser && db) {
+        await withTimeout(
+          db.from('session_activity').update({ is_current: false, logged_out_at: new Date().toISOString() }).eq('id', sid).eq('user_id', currentUser.id),
+          5000, 'logout-mark'
+        );
+      }
+    } catch (_) {}
+    sessionStorage.removeItem('wassal_session_id');
+    stopActivityTracking();
     await db.auth.signOut();
     currentUser = null;
     currentProfile = null;
@@ -1915,24 +1927,28 @@ function applyPrefsToUI() {
    ========================= */
 
 function parseUserAgent() {
-  const ua = navigator.userAgent;
+  const ua = navigator.userAgent || '';
   let browser = 'Unknown';
-  if (ua.includes('Firefox/')) browser = 'Firefox';
-  else if (ua.includes('Edg/')) browser = 'Edge';
-  else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
-  else if (ua.includes('Chrome/')) browser = 'Chrome';
-  else if (ua.includes('Safari/')) browser = 'Safari';
+  if (/Firefox\/|FxiOS\//.test(ua)) browser = 'Firefox';
+  else if (/EdgiOS\//.test(ua)) browser = 'Edge';
+  else if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\/|Opera|OPiOS\//.test(ua)) browser = 'Opera';
+  else if (/CriOS\//.test(ua)) browser = 'Chrome';
+  else if (/Chrome\//.test(ua)) browser = 'Chrome';
+  else if (/Safari\//.test(ua)) browser = 'Safari';
 
+  // Mobile OSes MUST be checked before desktop: an iPhone UA contains
+  // "like Mac OS X", which naive substring checks mistake for macOS.
   let os = 'Unknown';
-  if (ua.includes('Windows')) os = 'Windows';
-  else if (ua.includes('Mac OS')) os = 'macOS';
-  else if (ua.includes('Linux')) os = 'Linux';
-  else if (ua.includes('Android')) os = 'Android';
-  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/Windows/.test(ua)) os = 'Windows';
+  else if (/Mac OS|Macintosh/.test(ua)) os = 'macOS';
+  else if (/Linux/.test(ua)) os = 'Linux';
 
   let deviceType = 'desktop';
-  if (ua.includes('Mobile') || ua.includes('Android')) deviceType = 'mobile';
-  else if (ua.includes('iPad') || ua.includes('Tablet')) deviceType = 'tablet';
+  if (/Tablet|iPad/.test(ua) && !/Mobile/.test(ua)) deviceType = 'tablet';
+  else if (/Mobile|Android|iPhone|iPod/.test(ua)) deviceType = 'mobile';
 
   return { browser, os, device_type: deviceType };
 }
@@ -1943,7 +1959,7 @@ function getDeviceLabel(session) {
 
 function getDeviceIcon(session) {
   if (session.device_type === 'mobile') return '&#128241;';
-  if (session.device_type === 'tablet') return '&#128195;';
+  if (session.device_type === 'tablet') return '&#128241;';
   return '&#128187;';
 }
 
@@ -1965,37 +1981,81 @@ function timeAgo(dateStr) {
 let _activityTimer = null;
 
 async function recordSessionActivity() {
-  if (!currentUser) return;
+  if (!currentUser || !db) return;
   try {
     const info = parseUserAgent();
-    const sessionId = sessionStorage.getItem('wassal_session_id');
-    if (sessionId) {
-      await db.from('session_activity').update({ last_active_at: new Date().toISOString(), is_current: true }).eq('id', sessionId);
-      return;
+    const now = new Date().toISOString();
+
+    // Fast path: this tab already owns a live row, just touch it.
+    const knownId = sessionStorage.getItem('wassal_session_id');
+    if (knownId) {
+      const { data: own } = await db.from('session_activity')
+        .select('id, logged_out_at')
+        .eq('id', knownId)
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      if (own && !own.logged_out_at) {
+        await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', knownId);
+        return;
+      }
+      sessionStorage.removeItem('wassal_session_id');
     }
+
+    // Slow path (new tab / new device / after sign-out elsewhere):
+    // adopt the newest live row with the same device fingerprint instead of
+    // inserting a duplicate. sessionStorage is per-tab, so id-matching
+    // alone multiplies rows for the same browser.
     const { data: existing } = await db.from('session_activity')
       .select('id')
       .eq('user_id', currentUser.id)
       .eq('browser', info.browser)
       .eq('os', info.os)
       .eq('device_type', info.device_type)
-      .eq('is_current', true)
+      .is('logged_out_at', null)
+      .order('last_active_at', { ascending: false })
       .limit(1);
-    if (existing?.length) {
-      sessionStorage.setItem('wassal_session_id', existing[0].id);
-      await db.from('session_activity').update({ last_active_at: new Date().toISOString() }).eq('id', existing[0].id);
-      return;
+    let rowId = existing?.length ? existing[0].id : null;
+
+    if (rowId) {
+      await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', rowId);
+    } else {
+      // Brand-new device row: resolve approximate location once (best-effort).
+      let city = null, country = null;
+      try {
+        const loc = await Promise.race([
+          fetch('https://ipapi.co/json/').then(r => (r.ok ? r.json() : null)),
+          new Promise(res => setTimeout(() => res(null), 4000)),
+        ]);
+        if (loc) { city = loc.city || null; country = loc.country_name || null; }
+      } catch (_) {}
+      const { data: inserted } = await db.from('session_activity').insert({
+        user_id: currentUser.id,
+        browser: info.browser,
+        os: info.os,
+        device_type: info.device_type,
+        is_current: true,
+        last_active_at: now,
+        city,
+        country,
+      }).select('id').single();
+      rowId = inserted?.id || null;
     }
-    await db.from('session_activity').update({ is_current: false }).eq('user_id', currentUser.id).eq('is_current', true);
-    const { data: inserted } = await db.from('session_activity').insert({
-      user_id: currentUser.id,
-      browser: info.browser,
-      os: info.os,
-      device_type: info.device_type,
-      is_current: true,
-      last_active_at: new Date().toISOString()
-    }).select('id').single();
-    if (inserted?.id) sessionStorage.setItem('wassal_session_id', inserted.id);
+
+    if (rowId) {
+      sessionStorage.setItem('wassal_session_id', String(rowId));
+      // This is the current device: clear stale flags, merge any same-device
+      // duplicates left by races, prune logged-out rows older than 30 days.
+      await db.from('session_activity').update({ is_current: false })
+        .eq('user_id', currentUser.id).neq('id', rowId);
+      await db.from('session_activity').delete()
+        .eq('user_id', currentUser.id)
+        .eq('browser', info.browser).eq('os', info.os).eq('device_type', info.device_type)
+        .neq('id', rowId).is('logged_out_at', null);
+      await db.from('session_activity').delete()
+        .eq('user_id', currentUser.id)
+        .not('logged_out_at', 'is', null)
+        .lt('logged_out_at', new Date(Date.now() - 30 * 864e5).toISOString());
+    }
   } catch (e) {
     console.error('recordSessionActivity error:', e);
   }
@@ -2016,18 +2076,23 @@ async function fetchSessions() {
     const { data } = await db.from('session_activity')
       .select('*')
       .eq('user_id', currentUser.id)
-      .order('last_active_at', { ascending: false });
+      .order('last_active_at', { ascending: false })
+      .limit(25);
     return data || [];
   } catch (e) { return []; }
 }
 
 async function signOutOtherSessions() {
-  if (!currentUser) return;
+  if (!currentUser || !db) return;
   try {
+    // Mark (don't delete) so signed-out devices show as logged out.
     const currentSessionId = sessionStorage.getItem('wassal_session_id');
-    await db.from('session_activity').delete()
+    let q = db.from('session_activity')
+      .update({ is_current: false, logged_out_at: new Date().toISOString() })
       .eq('user_id', currentUser.id)
-      .neq('id', currentSessionId || -1);
+      .is('logged_out_at', null);
+    if (currentSessionId) q = q.neq('id', currentSessionId);
+    await q;
     await db.auth.signOut({ scope: 'others' });
     await db.from('security_events').insert({ user_id: currentUser.id, kind: 'signed_out_others' });
   } catch (e) { console.error('signOutOtherSessions error:', e); }
