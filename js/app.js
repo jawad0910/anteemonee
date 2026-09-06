@@ -1990,23 +1990,40 @@ async function recordSessionActivity() {
     const knownId = sessionStorage.getItem('wassal_session_id');
     if (knownId) {
       const { data: own } = await db.from('session_activity')
-        .select('id, logged_out_at')
+        .select('id, logged_out_at, city, country')
         .eq('id', knownId)
         .eq('user_id', currentUser.id)
         .maybeSingle();
       if (own && !own.logged_out_at) {
         await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', knownId);
+        // Backfill location once for rows created before geo existed.
+        if (!own.city || !own.country) backfillRowLocation(knownId);
         return;
       }
       sessionStorage.removeItem('wassal_session_id');
     }
 
-    // Slow path (new tab / new device / after sign-out elsewhere):
-    // adopt the newest live row with the same device fingerprint instead of
+    // Slow path (new tab / new device / after sign-out elsewhere).
+    const rowId = await reconcileSessionRows();
+    if (rowId) sessionStorage.setItem('wassal_session_id', String(rowId));
+  } catch (e) {
+    console.error('recordSessionActivity error:', e);
+  }
+}
+
+// Adopts (or creates) this device's row, heals duplicates, prunes old
+// logged-out rows. Returns this device's row id. Fully idempotent, so the
+// settings page calls it on every visit to guarantee a clean list.
+async function reconcileSessionRows() {
+  if (!currentUser || !db) return null;
+  try {
+    const info = parseUserAgent();
+    const now = new Date().toISOString();
+    // Adopt the newest live row with the same device fingerprint instead of
     // inserting a duplicate. sessionStorage is per-tab, so id-matching
     // alone multiplies rows for the same browser.
     const { data: existing } = await db.from('session_activity')
-      .select('id')
+      .select('id, city, country')
       .eq('user_id', currentUser.id)
       .eq('browser', info.browser)
       .eq('os', info.os)
@@ -2018,16 +2035,10 @@ async function recordSessionActivity() {
 
     if (rowId) {
       await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', rowId);
+      if (!existing[0].city || !existing[0].country) await backfillRowLocation(rowId);
     } else {
       // Brand-new device row: resolve approximate location once (best-effort).
-      let city = null, country = null;
-      try {
-        const loc = await Promise.race([
-          fetch('https://ipapi.co/json/').then(r => (r.ok ? r.json() : null)),
-          new Promise(res => setTimeout(() => res(null), 4000)),
-        ]);
-        if (loc) { city = loc.city || null; country = loc.country_name || null; }
-      } catch (_) {}
+      const loc = await resolveApproxLocation();
       const { data: inserted } = await db.from('session_activity').insert({
         user_id: currentUser.id,
         browser: info.browser,
@@ -2035,14 +2046,13 @@ async function recordSessionActivity() {
         device_type: info.device_type,
         is_current: true,
         last_active_at: now,
-        city,
-        country,
+        city: loc.city,
+        country: loc.country,
       }).select('id').single();
       rowId = inserted?.id || null;
     }
 
     if (rowId) {
-      sessionStorage.setItem('wassal_session_id', String(rowId));
       // This is the current device: clear stale flags, merge any same-device
       // duplicates left by races, prune logged-out rows older than 30 days.
       await db.from('session_activity').update({ is_current: false })
@@ -2056,9 +2066,31 @@ async function recordSessionActivity() {
         .not('logged_out_at', 'is', null)
         .lt('logged_out_at', new Date(Date.now() - 30 * 864e5).toISOString());
     }
+    return rowId;
   } catch (e) {
-    console.error('recordSessionActivity error:', e);
+    console.error('reconcileSessionRows error:', e);
+    return null;
   }
+}
+
+async function resolveApproxLocation() {
+  try {
+    const loc = await Promise.race([
+      fetch('https://ipapi.co/json/').then(r => (r.ok ? r.json() : null)),
+      new Promise(res => setTimeout(() => res(null), 4000)),
+    ]);
+    if (loc) return { city: loc.city || null, country: loc.country_name || null };
+  } catch (_) {}
+  return { city: null, country: null };
+}
+
+async function backfillRowLocation(rowId) {
+  try {
+    const loc = await resolveApproxLocation();
+    if ((loc.city || loc.country) && db) {
+      await db.from('session_activity').update({ city: loc.city, country: loc.country }).eq('id', rowId);
+    }
+  } catch (_) {}
 }
 
 function startActivityTracking() {

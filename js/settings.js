@@ -538,6 +538,9 @@ async function disable2FA() {
 
 async function loadSessions() {
   const card = document.getElementById('settings-sessions-card');
+  // Reconcile first: merges duplicates, backfills missing locations, fixes
+  // flags — so the list below always reflects the healed state.
+  try { if (typeof reconcileSessionRows === 'function') await reconcileSessionRows(); } catch (_) {}
   const sessions = await fetchSessions();
   card.innerHTML = '';
   const header = document.createElement('div');
