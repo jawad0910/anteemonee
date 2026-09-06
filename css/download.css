@@ -1,3 +1,7 @@
+/* =========================================================
+   WASSAL DOWNLOAD - Neomorphic Design System
+   ========================================================= */
+
 .download-page {
   min-height: 100vh;
   padding-top: 64px;
@@ -6,15 +10,13 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ─── Hero ─── */
-
+/* ─── Hero — neomorphic ─── */
 .download-hero {
   text-align: center;
   padding: 80px 24px 60px;
   position: relative;
   overflow: hidden;
 }
-
 .download-hero h1 {
   font-family: 'Fraunces', Georgia, serif;
   font-size: 48px;
@@ -23,7 +25,6 @@
   margin-bottom: 16px;
   color: var(--text);
 }
-
 .download-hero p {
   color: var(--text-secondary);
   font-size: 18px;
@@ -31,7 +32,6 @@
   margin: 0 auto;
   line-height: 1.6;
 }
-
 .download-hero-glow {
   position: absolute;
   top: -100px;
@@ -44,107 +44,55 @@
 }
 
 /* ─── Platforms Grid ─── */
-
 .platforms-section {
   padding: 0 24px 80px;
   max-width: 1100px;
   margin: 0 auto;
 }
-
 .platforms-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-/* ─── Platform Card ─── */
-
+/* ─── Platform Card — neomorphic ─── */
 .platform-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 32px;
   text-align: center;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--neo-shadow-raised);
 }
-
 .platform-card:hover {
-  border-color: var(--green);
   transform: translateY(-4px);
+  box-shadow: var(--neo-shadow-raised-lg);
 }
 
-.platform-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--green), transparent);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.platform-card:hover::before {
-  opacity: 1;
-}
-
-/* ─── Platform Icon ─── */
-
+/* ─── Platform Icon — neomorphic ─── */
 .platform-icon {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
-
-.platform-icon svg {
-  width: 32px;
-  height: 32px;
-}
-
-.platform-icon.android {
-  background: rgba(61, 220, 132, 0.1);
-  color: #3DDC84;
-}
-
-.platform-icon.ios {
-  background: var(--tag-bg);
-  color: var(--text);
-}
-
-.platform-icon.windows {
-  background: rgba(2, 132, 199, 0.1);
-  color: var(--cyan);
-}
-
-.platform-icon.macos {
-  background: var(--tag-bg);
-  color: var(--text);
-}
+.platform-icon svg { width: 32px; height: 32px; }
+.platform-icon.android { background: rgba(61, 220, 132, 0.1); color: #3DDC84; }
+.platform-icon.ios { background: var(--surface); color: var(--text); }
+.platform-icon.windows { background: rgba(2, 132, 199, 0.1); color: var(--cyan); }
+.platform-icon.macos { background: var(--surface); color: var(--text); }
 
 /* ─── Card Content ─── */
+.platform-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.platform-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
 
-.platform-card h3 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.platform-card p {
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 16px;
-}
-
-/* ─── Status Badge ─── */
-
+/* ─── Status Badge — neomorphic ─── */
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -157,133 +105,76 @@
   color: var(--accent);
   margin-bottom: 20px;
 }
+.status-badge.available { background: rgba(53, 211, 153, 0.1); color: var(--success); }
+.status-badge.coming-soon { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
 
-.status-badge.available {
-  background: rgba(53, 211, 153, 0.1);
-  color: var(--success);
-}
-
-.status-badge.coming-soon {
-  background: var(--tag-bg);
-  color: var(--text-secondary);
-}
-
-/* ─── Download Button ─── */
-
+/* ─── Download Button — neomorphic ─── */
 .btn-download {
   width: 100%;
   padding: 12px 24px;
-  background: var(--tag-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius-md);
   color: var(--text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
   font-family: inherit;
+  box-shadow: var(--neo-shadow-raised-sm);
+  transition: all 0.2s;
 }
-
 .btn-download:hover {
   background: var(--accent);
-  border-color: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised);
+  transform: translateY(-1px);
 }
+.btn-download:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-download:disabled:hover { background: var(--surface); color: var(--text); box-shadow: var(--neo-shadow-raised-sm); transform: none; }
 
-.btn-download:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-download:disabled:hover {
-  background: var(--tag-bg);
-  border-color: var(--border);
-  color: var(--text);
-}
-
-/* ─── Beta Badge & Button ─── */
-
-.beta-badge {
-  background: rgba(53, 211, 153, 0.1) !important;
-  color: var(--success) !important;
-}
-
+/* ─── Beta Badge & Button — neomorphic ─── */
+.beta-badge { background: rgba(53, 211, 153, 0.1) !important; color: var(--success) !important; }
 .btn-beta {
   background: var(--accent) !important;
-  border-color: var(--accent) !important;
   color: #fff !important;
+  box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm) !important;
 }
-
 .btn-beta:hover {
   background: var(--accent-hover) !important;
-  box-shadow: 0 4px 20px var(--glow);
+  box-shadow: 0 6px 24px rgba(31,160,85,0.4), var(--neo-shadow-raised) !important;
+  transform: translateY(-1px);
 }
-
-.rejected-badge {
-  background: rgba(255, 102, 117, 0.1) !important;
-  color: var(--error) !important;
-}
-
+.rejected-badge { background: rgba(255, 102, 117, 0.1) !important; color: var(--error) !important; }
 .btn-reapply {
   background: rgba(255, 102, 117, 0.1) !important;
-  border-color: rgba(255, 102, 117, 0.25) !important;
   color: var(--error) !important;
+  box-shadow: var(--neo-shadow-raised-sm) !important;
 }
+.btn-reapply:hover { background: rgba(255, 102, 117, 0.2) !important; box-shadow: var(--neo-shadow-raised) !important; }
 
-.btn-reapply:hover {
-  background: rgba(255, 102, 117, 0.2) !important;
-  border-color: rgba(255, 102, 117, 0.4) !important;
-}
-
-/* ─── Beta Modal ─── */
-
-.beta-modal {
-  text-align: center;
-  max-width: 420px;
-}
-
-.beta-modal h3 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.modal-subtitle {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin-bottom: 24px;
-  line-height: 1.5;
-}
-
-.beta-form {
-  text-align: left;
-}
-
-.beta-input-group {
-  margin-bottom: 16px;
-}
-
+/* ─── Beta Modal — neomorphic ─── */
+.beta-modal { text-align: center; max-width: 420px; }
+.beta-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.modal-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+.beta-form { text-align: left; }
+.beta-input-group { margin-bottom: 16px; }
 .beta-input-group input {
   width: 100%;
   padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--surface-recessed);
+  border: none;
+  border-radius: var(--radius-md);
   color: var(--text);
   font-size: 15px;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s;
   box-sizing: border-box;
+  box-shadow: var(--neo-shadow-recessed);
+  transition: box-shadow 0.2s;
 }
-
-.beta-input-group input:focus {
-  border-color: var(--accent);
-}
-
-.beta-input-group input::placeholder {
-  color: var(--text-muted);
-}
+.beta-input-group input:focus { box-shadow: var(--neo-shadow-recessed), 0 0 0 2px var(--accent-soft); }
+.beta-input-group input::placeholder { color: var(--text-muted); }
 
 .beta-error {
   color: var(--error);
@@ -291,30 +182,21 @@
   margin-bottom: 12px;
   padding: 10px 14px;
   background: rgba(255, 102, 117, 0.08);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 102, 117, 0.15);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
-
 .beta-success {
   color: var(--success);
   font-size: 13px;
   margin-bottom: 12px;
   padding: 10px 14px;
   background: rgba(53, 211, 154, 0.08);
-  border-radius: 8px;
-  border: 1px solid rgba(53, 211, 154, 0.15);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
 
-.btn-beta-submit {
-  flex: 1;
-}
-
-.btn-beta-submit.loading {
-  position: relative;
-  color: transparent;
-  pointer-events: none;
-}
-
+.btn-beta-submit { flex: 1; }
+.btn-beta-submit.loading { position: relative; color: transparent; pointer-events: none; }
 .btn-beta-submit.loading::after {
   content: '';
   position: absolute;
@@ -326,43 +208,25 @@
   animation: spin 0.6s linear infinite;
 }
 
-.beta-verified-icon,
-.beta-notverified-icon {
-  margin-bottom: 16px;
-}
-
-.btn-download-apk {
-  text-decoration: none;
-}
+.beta-verified-icon, .beta-notverified-icon { margin-bottom: 16px; }
+.btn-download-apk { text-decoration: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Roadmap Section ─── */
-
+/* ─── Roadmap Section — neomorphic ─── */
 .roadmap-section {
   padding: 60px 24px 80px;
   max-width: 700px;
   margin: 0 auto;
   text-align: center;
 }
-
-.roadmap-section h2 {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.roadmap-section > p {
-  color: var(--text-secondary);
-  font-size: 15px;
-  margin-bottom: 40px;
-}
+.roadmap-section h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.roadmap-section > p { color: var(--text-secondary); font-size: 15px; margin-bottom: 40px; }
 
 .roadmap-timeline {
   position: relative;
   padding-left: 44px;
 }
-
 .roadmap-timeline::before {
   content: '';
   position: absolute;
@@ -370,18 +234,11 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--glass-border);
+  background: var(--border);
 }
 
-.roadmap-item {
-  position: relative;
-  padding: 0 0 32px 0;
-  text-align: left;
-}
-
-.roadmap-item:last-child {
-  padding-bottom: 0;
-}
+.roadmap-item { position: relative; padding: 0 0 32px 0; text-align: left; }
+.roadmap-item:last-child { padding-bottom: 0; }
 
 .roadmap-dot {
   position: absolute;
@@ -390,33 +247,19 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--tag-bg);
-  border: 2px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
-
 .roadmap-item.active .roadmap-dot {
   background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 12px var(--glow);
+  box-shadow: 0 0 12px var(--glow), var(--neo-shadow-raised-sm);
 }
 
-.roadmap-content h4 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
+.roadmap-content h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.roadmap-content p { font-size: 13px; color: var(--text-secondary); }
+.roadmap-item.active .roadmap-content p { color: var(--accent); }
 
-.roadmap-content p {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.roadmap-item.active .roadmap-content p {
-  color: var(--accent);
-}
-
-/* ─── Modal ─── */
-
+/* ─── Modal — neomorphic ─── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -428,50 +271,35 @@
   padding: 20px;
   backdrop-filter: blur(8px);
 }
-
-.modal-overlay.show {
-  display: flex;
-}
+.modal-overlay.show { display: flex; }
 
 .modal-card {
   background: var(--bg-card);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   padding: 40px;
   max-width: 420px;
   width: 100%;
   text-align: center;
+  box-shadow: var(--neo-shadow-float);
   animation: modalIn 0.3s ease;
 }
-
 @keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-platform-icon {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
   font-size: 32px;
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
-
-.modal-card h3 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
+.modal-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .modal-status {
   display: inline-block;
   padding: 4px 12px;
@@ -484,140 +312,72 @@
   color: var(--accent);
   margin-bottom: 16px;
 }
-
-.modal-card p {
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 8px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 24px;
-}
+.modal-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+.modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
 
 .btn-secondary {
   padding: 12px 24px;
-  background: var(--tag-bg);
+  background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: none;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: var(--neo-shadow-raised-sm);
   transition: all 0.2s;
 }
-
-.btn-secondary:hover {
-  background: var(--bg-card-hover);
-}
+.btn-secondary:hover { box-shadow: var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-secondary:active { box-shadow: var(--neo-shadow-pressed); transform: translateY(0); }
 
 .btn-primary {
   padding: 12px 24px;
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
   transition: all 0.2s;
 }
+.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 24px rgba(31,160,85,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-primary:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
 
-.btn-primary:hover {
-  background: var(--accent-hover);
-}
-
-/* ─── Footer ─── */
-
+/* ─── Footer — neomorphic ─── */
 .download-footer {
   padding: 32px 24px;
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--border);
   text-align: center;
 }
-
-.download-footer p {
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.download-footer .footer-links {
-  display: flex;
-  gap: 24px;
-  justify-content: center;
-}
-
+.download-footer p { color: var(--text-secondary); font-size: 13px; margin-bottom: 12px; }
+.download-footer .footer-links { display: flex; gap: 24px; justify-content: center; }
 .download-footer .footer-links a {
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-decoration: none;
-  transition: color 0.2s;
+  color: var(--text-secondary); font-size: 13px; text-decoration: none;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  transition: all 0.15s;
 }
-
-.download-footer .footer-links a:hover {
-  color: var(--text);
-}
+.download-footer .footer-links a:hover { color: var(--text); background: var(--neo-highlight); }
 
 /* ─── Mobile Responsive ─── */
-
 @media (max-width: 768px) {
-  .download-hero {
-    padding: 60px 20px 40px;
-  }
-
-  .download-hero h1 {
-    font-size: 32px;
-  }
-
-  .download-hero p {
-    font-size: 16px;
-  }
-
-  .platforms-section {
-    padding: 0 16px 60px;
-  }
-
-  .platforms-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .platform-card {
-    padding: 24px;
-  }
-
-  .roadmap-section {
-    padding: 40px 16px 60px;
-  }
-
-  .roadmap-section h2 {
-    font-size: 24px;
-  }
-
-  .modal-card {
-    padding: 32px 24px;
-    max-width: 100%;
-  }
-
-  .download-footer .footer-links {
-    flex-direction: column;
-    gap: 12px;
-  }
+  .download-hero { padding: 60px 20px 40px; }
+  .download-hero h1 { font-size: 32px; }
+  .download-hero p { font-size: 16px; }
+  .platforms-section { padding: 0 16px 60px; }
+  .platforms-grid { grid-template-columns: 1fr; }
+  .platform-card { padding: 24px; }
+  .roadmap-section { padding: 40px 16px 60px; }
+  .roadmap-section h2 { font-size: 24px; }
+  .modal-card { padding: 32px 24px; max-width: 100%; }
+  .download-footer .footer-links { flex-direction: column; gap: 12px; }
 }
 
 /* ─── Reduced Motion ─── */
-
 @media (prefers-reduced-motion: reduce) {
-  .platform-card {
-    transition: none;
-  }
-
-  .modal-card {
-    animation: none;
-  }
+  .platform-card { transition: none; }
+  .modal-card { animation: none; }
 }

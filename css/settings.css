@@ -1,5 +1,5 @@
 /* =========================================================
-   WASSAL SETTINGS - Premium Glass Morphism Design System
+   WASSAL SETTINGS - Neomorphic Design System
    ========================================================= */
 
 /* --- Layout Shell --- */
@@ -30,16 +30,14 @@
   align-items: start;
 }
 
-/* --- Sidebar --- */
+/* --- Sidebar — neomorphic --- */
 .settings-sidebar {
   position: sticky;
   top: 88px;
-  background: var(--glass-bg, rgba(255,255,255,0.03));
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.06));
-  border-radius: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   padding: 8px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--neo-shadow-raised);
 }
 .settings-nav-item {
   display: flex;
@@ -52,7 +50,7 @@
   color: var(--text-secondary);
   font-size: 13.5px;
   font-weight: 500;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
@@ -60,12 +58,13 @@
 }
 .settings-nav-item:hover {
   color: var(--text);
-  background: var(--tag-bg);
+  background: var(--neo-highlight);
 }
 .settings-nav-item.active {
   color: var(--green);
   background: var(--accent-soft);
   font-weight: 600;
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
 .settings-nav-item .nav-icon {
   width: 18px;
@@ -76,7 +75,7 @@
 .settings-nav-item.active .nav-icon { opacity: 1; }
 .settings-nav-divider {
   height: 1px;
-  background: var(--glass-border, rgba(255,255,255,0.06));
+  background: var(--border);
   margin: 6px 12px;
 }
 
@@ -107,14 +106,14 @@
   font-size: 14px;
 }
 
-/* --- Cards / Sections --- */
+/* --- Cards / Sections — neomorphic --- */
 .settings-card {
-  background: var(--glass-bg, rgba(255,255,255,0.03));
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.06));
-  border-radius: 14px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   padding: 0;
   margin-bottom: 16px;
   overflow: hidden;
+  box-shadow: var(--neo-shadow-raised);
 }
 .settings-card-header {
   padding: 16px 20px 0;
@@ -137,7 +136,7 @@
 }
 .setting-row:last-child { border-bottom: none; }
 .setting-row.clickable { cursor: pointer; transition: background 0.15s; }
-.setting-row.clickable:hover { background: var(--tag-bg); }
+.setting-row.clickable:hover { background: var(--neo-highlight); }
 .setting-info { flex: 1; min-width: 0; }
 .setting-title {
   font-size: 14px;
@@ -163,7 +162,7 @@
   font-size: 16px;
 }
 
-/* --- Toggle Switch --- */
+/* --- Toggle Switch — neomorphic --- */
 .toggle {
   position: relative;
   width: 44px;
@@ -179,10 +178,11 @@
 .toggle-slider {
   position: absolute;
   inset: 0;
-  background: var(--border);
+  background: var(--surface-recessed);
   border-radius: 24px;
   cursor: pointer;
   transition: background 0.2s;
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
 .toggle-slider::before {
   content: '';
@@ -194,50 +194,56 @@
   background: #fff;
   border-radius: 50%;
   transition: transform 0.2s;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 .toggle input:checked + .toggle-slider {
-  background: var(--accent, #7C5CFF);
+  background: var(--accent);
+  box-shadow: 0 2px 8px rgba(31,160,85,0.3);
 }
 .toggle input:checked + .toggle-slider::before {
   transform: translateX(20px);
 }
 
-/* --- Select --- */
+/* --- Select — neomorphic --- */
 .setting-select {
   appearance: none;
-  background: var(--tag-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--surface-recessed);
+  border: none;
+  border-radius: var(--radius-sm);
   color: var(--text);
   font-size: 13px;
   font-family: inherit;
   padding: 8px 32px 8px 12px;
   cursor: pointer;
+  box-shadow: var(--neo-shadow-recessed-sm);
   background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b8fa3' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   min-width: 130px;
+  transition: box-shadow 0.15s ease;
 }
 .setting-select:focus {
   outline: none;
-  border-color: var(--accent, #7C5CFF);
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft);
 }
 
-/* --- Text Input --- */
+/* --- Text Input — neomorphic --- */
 .setting-input {
-  background: var(--tag-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--surface-recessed);
+  border: none;
+  border-radius: var(--radius-sm);
   color: var(--text);
   font-size: 16px;
   font-family: inherit;
   padding: 8px 12px;
   width: 100%;
   max-width: 320px;
+  box-shadow: var(--neo-shadow-recessed-sm);
+  transition: box-shadow 0.15s ease;
 }
 .setting-input:focus {
   outline: none;
-  border-color: var(--accent, #7C5CFF);
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft);
 }
 .setting-input::placeholder { color: var(--text-secondary); opacity: 0.5; }
 
@@ -246,7 +252,7 @@ textarea.setting-input {
   min-height: 80px;
 }
 
-/* --- Buttons --- */
+/* --- Buttons — neomorphic --- */
 .btn-settings {
   display: inline-flex;
   align-items: center;
@@ -254,7 +260,7 @@ textarea.setting-input {
   gap: 8px;
   padding: 10px 20px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 13.5px;
   font-weight: 600;
   font-family: inherit;
@@ -262,29 +268,36 @@ textarea.setting-input {
   transition: all 0.15s;
 }
 .btn-settings-primary {
-  background: var(--accent, #7C5CFF);
+  background: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 14px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
 }
-.btn-settings-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-settings-primary:hover { box-shadow: 0 6px 20px rgba(31,160,85,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-settings-primary:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+
 .btn-settings-secondary {
-  background: var(--tag-bg);
+  background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--border);
+  box-shadow: var(--neo-shadow-raised-sm);
 }
-.btn-settings-secondary:hover { background: var(--bg-card-hover); }
+.btn-settings-secondary:hover { box-shadow: var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-settings-secondary:active { box-shadow: var(--neo-shadow-pressed); transform: translateY(0); }
+
 .btn-settings-danger {
   background: rgba(255,102,117,0.1);
   color: #FF6675;
-  border: 1px solid rgba(255,102,117,0.2);
+  box-shadow: var(--neo-shadow-raised-sm);
 }
-.btn-settings-danger:hover { background: rgba(255,102,117,0.18); }
+.btn-settings-danger:hover { background: rgba(255,102,117,0.18); box-shadow: var(--neo-shadow-raised); }
+
 .btn-settings-ghost {
   background: none;
   color: var(--text-secondary);
   padding: 8px 12px;
 }
-.btn-settings-ghost:hover { color: var(--text); }
+.btn-settings-ghost:hover { color: var(--text); background: var(--neo-highlight); }
 .btn-settings:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-settings:disabled:hover { box-shadow: none; }
 .btn-settings.loading { pointer-events: none; opacity: 0.7; }
 
 /* --- Status Badge --- */
@@ -298,50 +311,46 @@ textarea.setting-input {
   font-weight: 600;
 }
 .status-badge.active { background: rgba(53,211,153,0.12); color: #35D399; }
-.status-badge.inactive { background: var(--tag-bg); color: var(--text-secondary); }
+.status-badge.inactive { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
 .status-badge.warning { background: rgba(251,191,36,0.12); color: #FBBF24; }
 .status-badge.premium { background: var(--accent-soft); color: var(--accent); }
 
-/* --- Danger Zone --- */
+/* --- Danger Zone — neomorphic --- */
 .settings-danger-zone {
   border: 1px solid rgba(255,102,117,0.2);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .settings-danger-zone .setting-row { border-bottom-color: rgba(255,102,117,0.08); }
 .settings-danger-zone .setting-title { color: #FF6675; }
 
-/* --- Toast --- */
+/* --- Toast — neomorphic --- */
 .settings-toast {
   position: fixed;
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   padding: 12px 24px;
-  background: rgba(53,211,153,0.15);
-  border: 1px solid rgba(53,211,153,0.25);
+  background: var(--bg-card);
   color: #35D399;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
   z-index: 9999;
   opacity: 0;
   transition: all 0.25s ease;
   pointer-events: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--neo-shadow-float);
 }
 .settings-toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
 .settings-toast.error {
-  background: rgba(255,102,117,0.15);
-  border-color: rgba(255,102,117,0.25);
   color: #FF6675;
 }
 
-/* --- Profile Card (Account) --- */
+/* --- Profile Card — neomorphic --- */
 .settings-profile-card {
   display: flex;
   align-items: center;
@@ -358,6 +367,7 @@ textarea.setting-input {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--neo-shadow-raised);
 }
 .settings-profile-avatar img {
   width: 100%;
@@ -372,7 +382,7 @@ textarea.setting-input {
 .settings-profile-info h3 { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
 .settings-profile-info p { font-size: 13px; color: var(--text-secondary); }
 
-/* --- Modal Overlay --- */
+/* --- Modal — neomorphic --- */
 .settings-modal-overlay {
   display: none;
   position: fixed;
@@ -387,14 +397,14 @@ textarea.setting-input {
 }
 .settings-modal-overlay.show { display: flex; }
 .settings-modal {
-  background: var(--bg, #07080C);
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.06));
-  border-radius: 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 28px;
   max-width: 440px;
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: var(--neo-shadow-float);
 }
 .settings-modal h3 {
   font-size: 18px;
@@ -416,25 +426,26 @@ textarea.setting-input {
 .settings-modal .confirm-input {
   width: 100%;
   padding: 10px 14px;
-  background: var(--tag-bg);
-  border: 1px solid rgba(255,102,117,0.3);
-  border-radius: 10px;
+  background: var(--surface-recessed);
+  border: none;
+  border-radius: var(--radius-sm);
   color: var(--text);
   font-size: 16px;
   font-family: inherit;
   margin-top: 12px;
+  box-shadow: var(--neo-shadow-recessed-sm);
 }
 .settings-modal .confirm-input:focus {
   outline: none;
-  border-color: #FF6675;
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px rgba(255,102,117,0.3);
 }
 
 /* --- Skeleton Loading --- */
 .skeleton {
-  background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s infinite;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 @keyframes skeletonShimmer {
   0% { background-position: 200% 0; }
@@ -453,7 +464,7 @@ textarea.setting-input {
 .skeleton-text.w-60 { width: 60%; }
 .skeleton-text.h-8 { height: 8px; }
 
-/* --- Connected Accounts --- */
+/* --- Connected Accounts — neomorphic --- */
 .provider-row {
   display: flex;
   align-items: center;
@@ -465,7 +476,7 @@ textarea.setting-input {
 .provider-icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -492,7 +503,7 @@ textarea.setting-input {
 }
 .settings-mobile-back svg { width: 18px; height: 18px; }
 
-/* --- Plan Card --- */
+/* --- Plan Card — neomorphic --- */
 .plan-card {
   padding: 20px;
   display: flex;
@@ -502,15 +513,15 @@ textarea.setting-input {
 .plan-icon {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
   flex-shrink: 0;
 }
-.plan-icon.free { background: var(--tag-bg); }
-.plan-icon.pro { background: var(--accent-soft); }
+.plan-icon.free { background: var(--surface); box-shadow: var(--neo-shadow-recessed-sm); }
+.plan-icon.pro { background: var(--accent-soft); box-shadow: var(--neo-shadow-raised-sm); }
 .plan-info h4 { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
 .plan-info p { font-size: 13px; color: var(--text-secondary); }
 
@@ -525,7 +536,7 @@ textarea.setting-input {
   margin-bottom: 6px;
 }
 
-/* --- Coupon Input --- */
+/* --- Coupon Input — neomorphic --- */
 .coupon-input-group {
   display: flex;
   gap: 8px;
@@ -552,7 +563,8 @@ textarea.setting-input {
     overflow-y: auto;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-    background: var(--bg, #07080C);
+    background: var(--bg);
+    box-shadow: none;
   }
   .settings-sidebar.open { transform: translateX(0); }
 
