@@ -1,5 +1,5 @@
 /* =========================================================
-   WASSAL SETTINGS — Complete Settings Logic
+   WASSAL SETTINGS - Complete Settings Logic
    ========================================================= */
 
 let settingsPrefs = null;
@@ -353,7 +353,7 @@ function render2FA(card) {
   if (enabled) {
     info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc">Protects your account with a TOTP code</div>`;
   } else if (hasUnverified) {
-    info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc" style="color:#FBBF24">Setup incomplete — finish or restart setup</div>`;
+    info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc" style="color:#FBBF24">Setup incomplete - finish or restart setup</div>`;
   } else {
     info.innerHTML = `<div class="setting-title">Authenticator App</div><div class="setting-desc">Add an extra layer of security</div>`;
   }
@@ -865,11 +865,11 @@ function renderSubscriptionContent(container, planCard) {
         <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:14px">
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>250 AI Tutor sessions per month</span></li>
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>200 AI Question Scans per month</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>30-minute AI sessions (vs 10 min free)</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>60-minute AI sessions (vs 45 min free)</span></li>
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Priority access to new features</span></li>
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Ad-free experience</span></li>
         </ul>
-        <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Premium — Rs 400/mo</a>
+        <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Premium - Rs 400/mo</a>
       </div>`;
     container.appendChild(upgradeCard);
   }
@@ -923,7 +923,7 @@ async function renderCoupons() {
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-title" style="color:#35D399">Coupon Redeemed</div>
-            <div class="setting-desc">Premium active from ${start} — expires ${expiry}</div>
+            <div class="setting-desc">Premium active from ${start} - expires ${expiry}</div>
           </div>
           <span class="status-badge premium">Premium</span>
         </div>`;
@@ -1301,7 +1301,7 @@ async function renderAds() {
     </div>
     <div class="setting-row">
       <div class="setting-info">
-        <div class="setting-title">Unlimited — no daily cap</div>
+            <div class="setting-title">Unlimited - no daily cap</div>
         <div class="setting-desc">Keep watching, keep earning</div>
       </div>
     </div>`;
@@ -1488,8 +1488,8 @@ function renderAbout() {
   c.appendChild(buildCard('APP INFORMATION', infoRows));
 
   const legalRows = [
-    buildClickableRow('Privacy Policy', 'How we handle your data', () => showToastSettings('Privacy Policy page coming soon')),
-    buildClickableRow('Terms of Service', 'Terms of use', () => showToastSettings('Terms page coming soon')),
+    buildClickableRow('Privacy Policy', 'How we handle your data', () => window.open('privacy.html', '_blank')),
+    buildClickableRow('Terms of Service', 'Terms of use', () => window.open('terms.html', '_blank')),
   ];
   c.appendChild(buildCard('LEGAL', legalRows));
 }

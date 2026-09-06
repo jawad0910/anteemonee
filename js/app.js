@@ -1,7 +1,28 @@
-const { createClient } = supabase;
 const SUPABASE_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Guarded client creation: if the Supabase CDN fails, the site must still
+// boot (theme/nav/auth UI in logged-out state) instead of dying entirely.
+let db = null;
+try {
+  if (typeof supabase === 'undefined' || !supabase.createClient) throw new Error('Supabase CDN failed to load');
+  db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+  console.error('[wassal] database unavailable:', (e && e.message) || e);
+}
+
+// Rejects a hung network request so the UI can never get stuck on skeletons.
+function withTimeout(promise, ms, label) {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error((label || 'request') + ' timed out')), ms);
+  });
+  const clear = () => { if (timer) clearTimeout(timer); };
+  return Promise.race([promise, timeout]).then(
+    (v) => { clear(); return v; },
+    (e) => { clear(); throw e; }
+  );
+}
 
 let currentUser = null;
 let currentProfile = null;
@@ -38,10 +59,12 @@ document.addEventListener('DOMContentLoaded', initApp);
 async function initApp() {
   setupTheme();
   setupNav();
-  setupScrollEffects();
   setupMobileMenu();
-  setupIntersectionObserver();
-  setupFadeInObserver();
+  if (!db) {
+    // CDN failed: still render the logged-out UI instead of hanging.
+    updateAuthUI();
+    return;
+  }
   await checkAuth();
   loadHomepageData();
 }
@@ -65,7 +88,7 @@ async function loadHomepageData() {
   const trustCount = document.getElementById('trust-count');
   if (!dashMock && !trustCount) return;
 
-  // Trust row — public RPC, works logged in or out. Falls back to static HTML.
+  // Trust row - public RPC, works logged in or out. Falls back to static HTML.
   if (trustCount) {
     trustCount.classList.add('is-loading');
     try {
@@ -93,7 +116,7 @@ async function loadHomepageData() {
 
   if (!dashMock) return;
 
-  // Personalized dashboard — logged-in users only.
+  // Personalized dashboard - logged-in users only.
   if (!currentUser) {
     const heroVisual = dashMock.closest('.hero-visual');
     if (heroVisual) heroVisual.style.display = 'none';
@@ -138,12 +161,17 @@ async function loadHomepageData() {
   });
 
   try {
-    const [profileRes, sessCount, acad, entRes, streakRes] = await Promise.all([
-      safe('profile', db.from('profiles').select('study_time_seconds').eq('id', uid).maybeSingle()),
-      safe('ai_sessions', db.from('ai_sessions').select('id', { count: 'exact', head: true }).eq('user_id', uid)),
-      safe('academic_profile', db.from('student_academic_profiles').select('class_level:class_levels(label)').eq('user_id', uid).maybeSingle()),
-      safe('entitlement', db.rpc('get_entitlement_snapshot')),
-      safe('streak', db.rpc('get_user_streak')),
+    // Bounded wait: if the network stalls, fall back to nulls so the
+    // finally block below clears the skeletons instead of hanging forever.
+    const [profileRes, sessCount, acad, entRes, streakRes] = await Promise.race([
+      Promise.all([
+        safe('profile', db.from('profiles').select('study_time_seconds').eq('id', uid).maybeSingle()),
+        safe('ai_sessions', db.from('ai_sessions').select('id', { count: 'exact', head: true }).eq('user_id', uid)),
+        safe('academic_profile', db.from('student_academic_profiles').select('class_level:class_levels(label)').eq('user_id', uid).maybeSingle()),
+        safe('entitlement', db.rpc('get_entitlement_snapshot')),
+        safe('streak', db.rpc('get_user_streak')),
+      ]),
+      new Promise((resolve) => setTimeout(() => resolve([null, null, null, null, null]), 15000)),
     ]);
 
     // Study time from profiles.study_time_seconds + pending localStorage
@@ -256,7 +284,7 @@ function setupTheme() {
 
 async function checkAuth() {
   try {
-    const { data: { session } } = await db.auth.getSession();
+    const { data: { session } } = await withTimeout(db.auth.getSession(), 10000, 'session');
     if (session?.user) {
       currentUser = session.user;
       await loadProfile();
@@ -480,20 +508,6 @@ function setupNav() {
   }, { passive: true });
 }
 
-function setupScrollEffects() {
-  const elements = document.querySelectorAll('.fade-in');
-  if (!elements.length) return;
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-  elements.forEach(el => observer.observe(el));
-}
-
 function setupMobileMenu() {
   const toggle = document.querySelector('.mobile-menu-toggle');
   const panel = document.querySelector('.mobile-menu');
@@ -519,37 +533,7 @@ function setupMobileMenu() {
   });
 }
 
-function setupIntersectionObserver() {
-  const sections = document.querySelectorAll('section[id]');
-  if (!sections.length) return;
-  const navLinks = document.querySelectorAll('.nav-links a, .mobile-menu a[href^="#"]');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.getAttribute('id');
-        navLinks.forEach(link => {
-          link.classList.remove('active');
-          if (link.getAttribute('href') === `#${id}`) link.classList.add('active');
-        });
-      }
-    });
-  }, { threshold: 0.3 });
-  sections.forEach(s => observer.observe(s));
-}
-
-function setupFadeInObserver() {
-  const fadeEls = document.querySelectorAll('.fade-in');
-  if (!fadeEls.length) return;
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        obs.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-  fadeEls.forEach(el => obs.observe(el));
-}
+function setupIntersectionObserver() {}
 
 /* =========================
    HOMEPAGE HELPERS

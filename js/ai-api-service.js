@@ -1,5 +1,5 @@
 /* ==========================================
-   Wassal AI — Dual API Failover Service
+   Wassal AI - Dual API Failover Service
    Routes through Supabase Edge Function
    Detects incomplete streams and auto-falls back
    ========================================== */

@@ -1,5 +1,5 @@
 /* ==========================================
-   Wassal AI Chatbot — Full Implementation
+   Wassal AI Chatbot - Full Implementation
    ========================================== */
 
 (function () {
@@ -61,7 +61,7 @@
   }
 
   // ── AI Session State ──
-  const TOKEN_LIMIT = 120000;
+  const TOKEN_LIMIT = 100000;
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
@@ -561,7 +561,7 @@ BEHAVIOR:
 - Group: ${studentContext.group || 'Not set'}
 - Exam Year: ${studentContext.examYear || 'Not set'}
 
-When asked about their own subjects, class, board or goals, answer directly from the above context — NEVER claim you don't have access.`;
+When asked about their own subjects, class, board or goals, answer directly from the above context - NEVER claim you don't have access.`;
     }
 
     return ctx;
@@ -712,7 +712,7 @@ When asked about their own subjects, class, board or goals, answer directly from
       let title = '';
       const existingTitles = conversations.map(c => c.title).filter(Boolean).join(', ');
       const titleMessages = [
-        { role: 'system', content: `Generate a short, unique chat title (max 4 words) that describes the USER's topic or intent. Rules: plain text only, no quotes, no emoji, no punctuation at end, lowercase. Be specific — not generic words like "greeting" or "chat". If the message is a simple greeting, pick the most relevant topic the user might discuss. Existing titles to avoid duplicating: [${existingTitles}]` },
+        { role: 'system', content: `Generate a short, unique chat title (max 4 words) that describes the USER's topic or intent. Rules: plain text only, no quotes, no emoji, no punctuation at end, lowercase. Be specific - not generic words like "greeting" or "chat". If the message is a simple greeting, pick the most relevant topic the user might discuss. Existing titles to avoid duplicating: [${existingTitles}]` },
         { role: 'user', content: clean },
       ];
       for await (const chunk of api.streamChat(titleMessages, getActivePersona().providerIndex)) {
@@ -954,7 +954,8 @@ When asked about their own subjects, class, board or goals, answer directly from
         }
         if (activeSession && estimatedTokensUsed >= TOKEN_LIMIT) {
           chatInput.disabled = true;
-          chatInput.placeholder = 'Token limit reached for this session';
+          chatInput.placeholder = 'Tokens exhausted - start a new session';
+          showTokenExhaustedBanner();
         }
         saveSessionState();
       }
@@ -1040,10 +1041,10 @@ When asked about their own subjects, class, board or goals, answer directly from
   }
 
   // ── Cost calculation ──
-  // 120,000 tokens = $0.018 → $0.00000015 per token
+  // 100,000 tokens = $0.018 → $0.00000018 per token
   // PKR rate (update periodically)
   const USD_TO_PKR = 280;
-  const COST_PER_TOKEN_USD = 0.018 / 120000;
+  const COST_PER_TOKEN_USD = 0.018 / 100000;
 
   function formatCostPKR(tokens) {
     const pkr = tokens * COST_PER_TOKEN_USD * USD_TO_PKR;
@@ -1109,7 +1110,7 @@ When asked about their own subjects, class, board or goals, answer directly from
           <span class="session-header-dot inactive"></span>
           <span>No Active Session</span>
         </div>
-        <div class="session-idle-hint">Send a message to start a 30 min session</div>
+        <div class="session-idle-hint">Send a message to start a 45 min session</div>
         <div class="session-divider"></div>
         <div class="session-row">
           <span class="session-label">Streak</span>
@@ -1166,6 +1167,7 @@ When asked about their own subjects, class, board or goals, answer directly from
         estimatedTokensUsed = 0;
         stopStudyTimer(); // ← stop counting study time
         clearSessionState();
+        removeTokenExhaustedBanner();
         updateSessionPanel();
       }
     }, 1000);
@@ -1194,6 +1196,47 @@ When asked about their own subjects, class, board or goals, answer directly from
     } catch (_) {}
   }
 
+  // ── Token Exhausted Banner ──
+  function showTokenExhaustedBanner() {
+    removeTokenExhaustedBanner();
+    const banner = document.createElement('div');
+    banner.className = 'token-exhausted-banner';
+    banner.id = 'token-exhausted-banner';
+    banner.innerHTML = `
+      <div class="token-exhausted-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="token-exhausted-text">
+        <span class="token-exhausted-title">Tokens exhausted</span>
+        <span class="token-exhausted-sub">Session is still running. Start a new session to keep chatting.</span>
+      </div>
+      <button class="token-exhausted-btn" id="btn-start-new-session">New Session</button>
+    `;
+    const chatMain = document.querySelector('.chat-main');
+    if (chatMain) {
+      const inputArea = chatMain.querySelector('.chat-input-area');
+      if (inputArea) {
+        chatMain.insertBefore(banner, inputArea);
+      }
+    }
+    document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
+      removeTokenExhaustedBanner();
+      const started = await startSession();
+      if (started) {
+        chatInput.disabled = false;
+        chatInput.placeholder = 'Ask Wassal AI anything...';
+        chatInput.focus();
+        estimatedTokensUsed = 0;
+        updateSessionPanel();
+      }
+    });
+  }
+
+  function removeTokenExhaustedBanner() {
+    const existing = document.getElementById('token-exhausted-banner');
+    if (existing) existing.remove();
+  }
+
   // ── Send / Stop ──
   async function handleSend() {
     const text = chatInput.value.trim();
@@ -1213,7 +1256,9 @@ When asked about their own subjects, class, board or goals, answer directly from
     // ── Token budget check ──
     const estInput = estimateInputTokens(text + (studentContext ? JSON.stringify(studentContext) : ''));
     if (estimatedTokensUsed + estInput >= TOKEN_LIMIT) {
-      showSessionError(`Token limit reached (${formatTokens(TOKEN_LIMIT)}). Wait for the next session.`);
+      showTokenExhaustedBanner();
+      chatInput.disabled = true;
+      chatInput.placeholder = 'Tokens exhausted - start a new session';
       return;
     }
 
@@ -1315,6 +1360,19 @@ When asked about their own subjects, class, board or goals, answer directly from
         handleSend();
         return;
       }
+      // ── TOKEN_LIMIT: tokens exhausted but session still running ──
+      if (error.message && error.message.includes('TOKEN_LIMIT')) {
+        console.warn('[AI] Token limit reached. Session still active.');
+        finalizeStreamingMessage(streamDiv, 'Token limit reached for this session. Start a new session to continue.');
+        messages.pop();
+        showTokenExhaustedBanner();
+        isStreaming = false;
+        btnStop.style.display = 'none';
+        btnSend.style.display = 'flex';
+        chatInput.disabled = true;
+        chatInput.placeholder = 'Tokens exhausted - start a new session';
+        return;
+      }
       // If incomplete stream — auto-retry with fallback
       if (error instanceof IncompleteStreamError && fullResponse.length > 0) {
         const fallbackIndex = selectedProviderIndex === 0 ? 1 : 0;
@@ -1324,7 +1382,7 @@ When asked about their own subjects, class, board or goals, answer directly from
         const continuationMessages = [
           ...apiMessages,
           { role: 'assistant', content: fullResponse },
-          { role: 'user', content: 'Your previous response was cut off. Please continue from where you left off. Do not repeat what was already said — just continue the explanation.' },
+          { role: 'user', content: 'Your previous response was cut off. Please continue from where you left off. Do not repeat what was already said - just continue the explanation.' },
         ];
 
         try {

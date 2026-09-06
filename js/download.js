@@ -6,7 +6,7 @@ function initDownload() {
   checkBetaStatus();
 }
 
-/* ─── Beta Status Check ─── */
+/* ---- Beta Status Check ---- */
 
 async function checkBetaStatus() {
   // Read the session directly: the shared auth check may still be resolving.
@@ -101,7 +101,7 @@ function updateAndroidCard(status) {
   }
 }
 
-/* ─── Beta Apply Modal ─── */
+/* ---- Beta Apply Modal ---- */
 
 async function openBetaModal() {
   const card = document.querySelector('.platform-card');
@@ -213,7 +213,7 @@ async function submitBetaApplication() {
   }
 }
 
-/* ─── Beta Download Modal (verified) ─── */
+/* ---- Beta Download Modal (verified) ---- */
 
 function openBetaDownloadModal() {
   const link = document.getElementById('beta-download-link');
@@ -225,7 +225,7 @@ function closeBetaDownloadModal() {
   document.getElementById('beta-download-modal').classList.remove('open');
 }
 
-/* ─── Beta Not Verified Modal ─── */
+/* ---- Beta Not Verified Modal ---- */
 
 function openBetaNotVerifiedModal() {
   document.getElementById('beta-notverified-modal').classList.add('open');
@@ -235,19 +235,24 @@ function closeBetaNotVerifiedModal() {
   document.getElementById('beta-notverified-modal').classList.remove('open');
 }
 
-/* ─── Beta Sign-In Required Modal ─── */
+/* ---- Beta Sign-In Required Modal ---- */
 
 function closeBetaSigninModal() {
   document.getElementById('beta-signin-modal').classList.remove('open');
 }
 
-/* ─── Beta Premium Required Modal ─── */
+/* ---- Beta Premium Required Modal ---- */
 
 function closeBetaPremiumModal() {
   document.getElementById('beta-premium-modal').classList.remove('open');
 }
 
-/* ─── Close modals on overlay click / Escape ─── */
+/* ---- Close modals on overlay click / Escape ---- */
+
+function closeDownloadModal() {
+  const modal = document.getElementById('download-modal');
+  if (modal) modal.classList.remove('open');
+}
 
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('modal-overlay')) {
@@ -269,22 +274,4 @@ document.addEventListener('keydown', (e) => {
     closeBetaSigninModal();
     closeBetaPremiumModal();
   }
-});
-
-/* ─── Roadmap animation ─── */
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = '1';
-      entry.target.style.transform = 'translateY(0)';
-    }
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.roadmap-item').forEach(item => {
-  item.style.opacity = '0';
-  item.style.transform = 'translateY(20px)';
-  item.style.transition = 'all 0.5s ease';
-  observer.observe(item);
 });

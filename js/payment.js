@@ -92,6 +92,6 @@ async function handlePay() {
     errorMsg.textContent = e.message || 'Failed to start checkout. Please try again.';
     errorMsg.style.display = 'block';
     payBtn.disabled = false;
-    payBtn.innerHTML = 'Pay Now — Rs 400/mo';
+    payBtn.innerHTML = 'Pay Now - Rs 400/mo';
   }
 }
