@@ -541,7 +541,7 @@ async function loadSessions() {
   // Reconcile first: merges duplicates, backfills missing locations, fixes
   // flags — so the list below always reflects the healed state.
   try { if (typeof reconcileSessionRows === 'function') await reconcileSessionRows(); } catch (_) {}
-  const sessions = await fetchSessions();
+  const sessions = (await fetchSessions()).filter(s => !s.logged_out_at);
   card.innerHTML = '';
   const header = document.createElement('div');
   header.className = 'settings-card-header';
@@ -565,10 +565,7 @@ async function loadSessions() {
   );
   const byRecent = (a, b) => new Date(b.last_active_at) - new Date(a.last_active_at);
   const current = sessions.filter(isMine).sort(byRecent)[0] || null;
-  const activeOthers = sessions.filter(s => s !== current && !s.logged_out_at).sort(byRecent);
-  const loggedOut = sessions
-    .filter(s => s !== current && s.logged_out_at)
-    .sort((a, b) => new Date(b.logged_out_at) - new Date(a.logged_out_at));
+  const activeOthers = sessions.filter(s => s !== current).sort(byRecent);
 
   const locOf = (s) => [s.city, s.country].filter(Boolean).join(', ');
   const descFor = (s, forceActive) => {
@@ -604,7 +601,6 @@ async function loadSessions() {
 
   if (current) rowFor(current, badge('active', 'This device'), false, true);
   activeOthers.forEach(s => rowFor(s, '', false, false));
-  loggedOut.forEach(s => rowFor(s, badge('inactive', 'Logged out'), true, false));
 
   if (activeOthers.length) {
     const divider = document.createElement('div');

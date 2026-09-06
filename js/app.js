@@ -487,13 +487,13 @@ document.addEventListener('click', (e) => {
 
 async function handleLogout() {
   try {
-    // Mark this device row logged out so it shows correctly in sessions.
+    // Delete this device row so it disappears from the sessions list.
     try {
       const sid = sessionStorage.getItem('wassal_session_id');
       if (sid && currentUser && db) {
         await withTimeout(
-          db.from('session_activity').update({ is_current: false, logged_out_at: new Date().toISOString() }).eq('id', sid).eq('user_id', currentUser.id),
-          5000, 'logout-mark'
+          db.from('session_activity').delete().eq('id', sid).eq('user_id', currentUser.id),
+          5000, 'logout-cleanup'
         );
       }
     } catch (_) {}
@@ -1996,8 +1996,8 @@ async function recordSessionActivity() {
         .maybeSingle();
       if (own && !own.logged_out_at) {
         await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', knownId);
-        // Backfill location once for rows created before geo existed.
-        if (!own.city || !own.country) backfillRowLocation(knownId);
+        // Keep location fresh on every visit (fire-and-forget).
+        syncRowLocation(knownId, own);
         return;
       }
       sessionStorage.removeItem('wassal_session_id');
@@ -2035,7 +2035,7 @@ async function reconcileSessionRows() {
 
     if (rowId) {
       await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', rowId);
-      if (!existing[0].city || !existing[0].country) await backfillRowLocation(rowId);
+      await syncRowLocation(rowId, existing[0]);
     } else {
       // Brand-new device row: resolve approximate location once (best-effort).
       const loc = await resolveApproxLocation();
@@ -2053,18 +2053,17 @@ async function reconcileSessionRows() {
     }
 
     if (rowId) {
-      // This is the current device: clear stale flags, merge any same-device
-      // duplicates left by races, prune logged-out rows older than 30 days.
+      // This is the current device: clear stale flags, delete ALL
+      // logged-out rows (any age) and merge same-device duplicates.
       await db.from('session_activity').update({ is_current: false })
         .eq('user_id', currentUser.id).neq('id', rowId);
       await db.from('session_activity').delete()
         .eq('user_id', currentUser.id)
         .eq('browser', info.browser).eq('os', info.os).eq('device_type', info.device_type)
-        .neq('id', rowId).is('logged_out_at', null);
+        .neq('id', rowId);
       await db.from('session_activity').delete()
         .eq('user_id', currentUser.id)
-        .not('logged_out_at', 'is', null)
-        .lt('logged_out_at', new Date(Date.now() - 30 * 864e5).toISOString());
+        .not('logged_out_at', 'is', null);
     }
     return rowId;
   } catch (e) {
@@ -2073,23 +2072,46 @@ async function reconcileSessionRows() {
   }
 }
 
-async function resolveApproxLocation() {
-  try {
-    const loc = await Promise.race([
-      fetch('https://ipapi.co/json/').then(r => (r.ok ? r.json() : null)),
-      new Promise(res => setTimeout(() => res(null), 4000)),
-    ]);
-    if (loc) return { city: loc.city || null, country: loc.country_name || null };
-  } catch (_) {}
-  return { city: null, country: null };
+// Approximate location, resolved once per page load and raced across
+// several free providers (single providers like ipapi.co are aggressively
+// rate-limited in Pakistan, so one source alone keeps failing).
+let _geoPromise = null;
+function resolveApproxLocation() {
+  if (!_geoPromise) {
+    _geoPromise = (async () => {
+      const sources = [
+        'https://ipwho.is/',
+        'https://ipapi.co/json/',
+        'https://freeipapi.com/api/json',
+        'https://ipinfo.io/json',
+      ];
+      try {
+        const results = await Promise.all(sources.map(url =>
+          Promise.race([
+            fetch(url).then(r => (r.ok ? r.json() : null)).catch(() => null),
+            new Promise(res => setTimeout(() => res(null), 2500)),
+          ])
+        ));
+        for (const data of results) {
+          if (!data) continue;
+          const city = data.city || data.cityName || null;
+          const country = data.country_name || data.countryName || data.country || null;
+          if (city || country) return { city, country };
+        }
+      } catch (_) {}
+      return { city: null, country: null };
+    })();
+  }
+  return _geoPromise;
 }
 
-async function backfillRowLocation(rowId) {
+// Refreshes a row's location whenever it is missing or has changed.
+async function syncRowLocation(rowId, stored) {
   try {
     const loc = await resolveApproxLocation();
-    if ((loc.city || loc.country) && db) {
-      await db.from('session_activity').update({ city: loc.city, country: loc.country }).eq('id', rowId);
-    }
+    if ((!loc.city && !loc.country) || !db) return;
+    if (stored && stored.city === loc.city && stored.country === loc.country) return;
+    await db.from('session_activity').update({ city: loc.city, country: loc.country }).eq('id', rowId);
   } catch (_) {}
 }
 
@@ -2117,12 +2139,9 @@ async function fetchSessions() {
 async function signOutOtherSessions() {
   if (!currentUser || !db) return;
   try {
-    // Mark (don't delete) so signed-out devices show as logged out.
+    // Delete other rows outright so signed-out devices vanish from the list.
     const currentSessionId = sessionStorage.getItem('wassal_session_id');
-    let q = db.from('session_activity')
-      .update({ is_current: false, logged_out_at: new Date().toISOString() })
-      .eq('user_id', currentUser.id)
-      .is('logged_out_at', null);
+    let q = db.from('session_activity').delete().eq('user_id', currentUser.id);
     if (currentSessionId) q = q.neq('id', currentSessionId);
     await q;
     await db.auth.signOut({ scope: 'others' });
