@@ -24,11 +24,10 @@
     .payment-card {
       width: 100%;
       max-width: 460px;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
+      background: var(--bg-card);
       border-radius: 20px;
       padding: 40px 36px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.06);
+      box-shadow: var(--neo-shadow-raised-lg);
     }
 
     .payment-badge {
@@ -39,10 +38,11 @@
       border-radius: 99px;
       font-size: 12px;
       font-weight: 600;
-      background: rgba(15,77,44,.08);
+      background: var(--accent-soft);
       color: var(--accent);
       margin-bottom: 20px;
       letter-spacing: .02em;
+      box-shadow: var(--neo-shadow-raised-sm);
     }
 
     .payment-badge svg {
@@ -51,7 +51,7 @@
     }
 
     .payment-title {
-      font-family: var(--font-display);
+      font-family: 'Fraunces', Georgia, serif;
       font-size: 28px;
       font-weight: 700;
       margin: 0 0 6px;
@@ -72,7 +72,7 @@
     }
 
     .payment-price .amount {
-      font-family: var(--font-display);
+      font-family: 'Fraunces', Georgia, serif;
       font-size: 36px;
       font-weight: 700;
       color: var(--accent);
@@ -85,7 +85,7 @@
 
     .payment-divider {
       height: 1px;
-      background: var(--border-color);
+      background: var(--border);
       margin: 0 0 24px;
     }
 
@@ -101,7 +101,7 @@
       gap: 10px;
       padding: 8px 0;
       font-size: 14px;
-      color: var(--text-primary);
+      color: var(--text);
     }
 
     .feature-list .check {
@@ -126,12 +126,13 @@
       border-radius: 14px;
       background: var(--accent);
       color: #fff;
-      font-family: var(--font-body);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: opacity .2s;
       margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
     }
 
     .pay-btn:hover { opacity: .88; }
@@ -161,7 +162,7 @@
       transition: color .2s;
     }
 
-    .cancel-link:hover { color: var(--text-primary); }
+    .cancel-link:hover { color: var(--text); }
 
     .already-premium {
       text-align: center;
@@ -181,7 +182,7 @@
     }
 
     .already-premium h2 {
-      font-family: var(--font-display);
+      font-family: 'Fraunces', Georgia, serif;
       font-size: 24px;
       margin: 0 0 8px;
     }
@@ -204,7 +205,7 @@
 
     .error-msg {
       text-align: center;
-      color: #e53935;
+      color: var(--error);
       font-size: 14px;
       margin-bottom: 16px;
     }
@@ -214,7 +215,7 @@
     }
 
     .not-auth h2 {
-      font-family: var(--font-display);
+      font-family: 'Fraunces', Georgia, serif;
       font-size: 24px;
       margin: 0 0 8px;
     }

@@ -24,12 +24,11 @@
     .payment-card {
       width: 100%;
       max-width: 440px;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
+      background: var(--bg-card);
       border-radius: 20px;
       padding: 44px 36px;
       text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,.06);
+      box-shadow: var(--neo-shadow-raised-lg);
     }
 
     .result-icon {
@@ -44,7 +43,7 @@
     }
 
     .result-icon.processing {
-      border: 3px solid var(--border-color);
+      border: 3px solid var(--border);
       border-top-color: var(--accent);
       animation: spin 1s linear infinite;
       font-size: 0;
@@ -56,17 +55,17 @@
     }
 
     .result-icon.pending {
-      background: #f59e0b;
+      background: var(--warning);
       color: #fff;
     }
 
     .result-icon.fail {
-      background: #e53935;
+      background: var(--error);
       color: #fff;
     }
 
     .result-title {
-      font-family: var(--font-display);
+      font-family: 'Fraunces', Georgia, serif;
       font-size: 24px;
       font-weight: 700;
       margin: 0 0 8px;
@@ -86,7 +85,7 @@
       background: var(--accent);
       color: #fff;
       text-decoration: none;
-      font-family: var(--font-body);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 15px;
       font-weight: 600;
       transition: opacity .2s;
@@ -95,9 +94,9 @@
     .result-btn:hover { opacity: .88; }
 
     .result-btn.secondary {
-      background: transparent;
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--neo-shadow-raised-sm);
       margin-left: 12px;
     }
 

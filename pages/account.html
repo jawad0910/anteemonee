@@ -34,24 +34,13 @@
       font-size: 15px;
     }
     .account-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
+      background: var(--bg-card);
       border-radius: var(--radius-xl);
-      backdrop-filter: blur(var(--glass-blur));
-      -webkit-backdrop-filter: blur(var(--glass-blur));
+      box-shadow: var(--neo-shadow-raised);
       padding: 32px;
       margin-bottom: 20px;
       position: relative;
       overflow: hidden;
-    }
-    .account-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
     }
     .card-header {
       display: flex;
@@ -72,8 +61,9 @@
       gap: 6px;
       padding: 7px 14px;
       border-radius: var(--radius-pill);
-      background: var(--tag-bg);
-      border: 1px solid var(--border);
+      background: var(--surface);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
       color: var(--text-secondary);
       font-size: 12px;
       font-weight: 500;
@@ -83,7 +73,7 @@
     }
     .edit-btn:hover {
       background: var(--accent-soft);
-      border-color: rgba(28, 138, 77, 0.3);
+      box-shadow: var(--neo-shadow-raised);
       color: var(--accent);
     }
     .edit-btn svg {
@@ -208,10 +198,11 @@
       transition: all 0.2s;
       min-height: 48px;
       font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
     }
     .btn-save:hover {
       background: var(--accent-hover);
-      box-shadow: 0 6px 24px var(--glow);
+      box-shadow: 0 6px 24px rgba(31,160,85,0.4), var(--neo-shadow-raised);
     }
     .btn-save:disabled {
       opacity: 0.5;
@@ -225,8 +216,9 @@
       justify-content: center;
       padding: 12px 24px;
       border-radius: var(--radius-md);
-      background: var(--tag-bg);
-      border: 1px solid var(--border);
+      background: var(--surface);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
       color: var(--text-secondary);
       font-size: 14px;
       font-weight: 600;
@@ -237,7 +229,7 @@
     }
     .btn-cancel:hover {
       background: var(--bg-card-hover);
-      border-color: var(--border);
+      box-shadow: var(--neo-shadow-raised);
       color: var(--text);
     }
     .btn-verify {
@@ -254,8 +246,8 @@
     }
     .btn-verify:hover { opacity: 0.9; }
     .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
-    .phone-verified { color: #22c55e; font-weight: 600; }
-    .phone-unverified { color: #f59e0b; }
+    .phone-verified { color: var(--success); font-weight: 600; }
+    .phone-unverified { color: var(--warning); }
     .edit-form-group {
       display: flex;
       flex-direction: column;
@@ -275,8 +267,9 @@
       width: 100%;
       padding: 12px 14px;
       border-radius: var(--radius-sm);
-      border: 1.1px solid var(--border);
-      background: var(--surface);
+      border: none;
+      background: var(--surface-recessed);
+      box-shadow: var(--neo-shadow-recessed-sm);
       color: var(--text);
       font-size: 16px;
       font-family: 'Inter', sans-serif;
@@ -297,8 +290,7 @@
     }
     .edit-form-group input:focus,
     .edit-form-group select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft);
     }
     .edit-form-group input::placeholder {
       color: var(--text-muted);
@@ -314,8 +306,9 @@
       gap: 6px;
       padding: 8px 14px;
       border-radius: var(--radius-pill);
-      background: var(--tag-bg);
-      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--neo-shadow-raised-sm);
+      border: none;
       color: var(--text-secondary);
       font-size: 13px;
       font-weight: 500;
@@ -324,12 +317,12 @@
       user-select: none;
     }
     .multi-select-chip:hover {
-      border-color: var(--border);
       background: var(--bg-card-hover);
+      box-shadow: var(--neo-shadow-raised);
     }
     .multi-select-chip.selected {
       background: var(--accent-soft);
-      border-color: rgba(28, 138, 77, 0.35);
+      box-shadow: var(--neo-shadow-recessed-sm);
       color: var(--accent);
     }
     .toast {
@@ -347,7 +340,7 @@
       opacity: 0;
       transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       pointer-events: none;
-      box-shadow: 0 8px 32px rgba(53, 211, 153, 0.3);
+      box-shadow: var(--neo-shadow-float);
     }
     .toast.show {
       opacity: 1;
@@ -380,7 +373,8 @@
       padding: 20px;
       margin-top: 4px;
       background: var(--accent-soft);
-      border: 1px solid rgba(28, 138, 77, 0.2);
+      box-shadow: var(--neo-shadow-recessed-sm);
+      border: none;
       border-radius: var(--radius-md);
     }
     .onboarding-prompt p {
@@ -396,7 +390,8 @@
       padding: 16px 32px;
       border-radius: var(--radius-md);
       background: rgba(255, 102, 117, 0.08);
-      border: 1px solid rgba(255, 102, 117, 0.15);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
       color: var(--error);
       font-size: 15px;
       font-weight: 600;
@@ -432,11 +427,11 @@
     .edit-profile-avatar-wrap:hover .edit-profile-avatar-overlay { opacity: 1; }
     .edit-profile-avatar-overlay svg { width: 24px; height: 24px; color: #fff; }
     .edit-form-group textarea {
-      width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1.1px solid var(--border);
-      background: var(--surface); color: var(--text); font-size: 16px; font-family: 'Inter', sans-serif;
+      width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: none;
+      background: var(--surface-recessed); box-shadow: var(--neo-shadow-recessed-sm); color: var(--text); font-size: 16px; font-family: 'Inter', sans-serif;
       outline: none; transition: all 0.2s; resize: vertical; min-height: 80px;
     }
-    .edit-form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .edit-form-group textarea:focus { box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft); }
     .edit-form-group textarea::placeholder { color: var(--text-muted); }
     .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; }
     .username-status { font-size: 12px; margin-top: 4px; }
@@ -458,7 +453,7 @@
     }
     .ep-modal-sheet {
       position: relative; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
-      background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      background: var(--bg-card); border: none; box-shadow: var(--neo-shadow-float); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
       animation: slideUp 0.3s ease;
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -468,7 +463,7 @@
     .ep-modal-header h3 { font-size: 18px; font-weight: 700; }
     .ep-close-btn {
       display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
-      border-radius: var(--radius-sm); background: var(--tag-bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: var(--surface); border: none; box-shadow: var(--neo-shadow-raised-sm);
       color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
     }
     .ep-close-btn:hover { background: var(--bg-card-hover); color: var(--text); }
@@ -505,22 +500,13 @@
       .account-bottom-actions { flex-direction: column; }
     }
     .card-shimmer {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
+      background: var(--bg-card);
       border-radius: var(--radius-xl);
-      backdrop-filter: blur(var(--glass-blur));
-      -webkit-backdrop-filter: blur(var(--glass-blur));
+      box-shadow: var(--neo-shadow-raised);
       padding: 32px;
       margin-bottom: 20px;
       position: relative;
       overflow: hidden;
-    }
-    .card-shimmer::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
     }
     .shimmer-line {
       height: 14px;
@@ -1397,7 +1383,13 @@
           body: JSON.stringify({ phone }),
         });
         const json = await res.json();
-        if (!json.ok) throw new Error(json.error || 'Failed to send OTP');
+        if (!json.ok) {
+          if (json.error === 'rate_limited') {
+            const secs = json.retry_after_seconds || 600;
+            throw new Error(`Too many OTP requests. Try again in about ${Math.ceil(secs / 60)} minute(s).`);
+          }
+          throw new Error(json.error || 'Failed to send OTP');
+        }
         otpRow.style.display = 'flex';
         status.style.display = 'block';
         status.className = 'auth-field-note';
@@ -1440,7 +1432,13 @@
           body: JSON.stringify({ phone, code, request_id: window._phoneOtpRequestId }),
         });
         const json = await res.json();
-        if (!json.ok) throw new Error(json.error || 'Invalid OTP');
+        if (!json.ok) {
+          if (json.error === 'rate_limited') {
+            const secs = json.retry_after_seconds || 600;
+            throw new Error(`Too many attempts. Try again in about ${Math.ceil(secs / 60)} minute(s).`);
+          }
+          throw new Error(json.error || 'Invalid OTP');
+        }
         // Success
         document.getElementById('ep-otp-row').style.display = 'none';
         const phoneStatus = document.getElementById('ep-phone-status');

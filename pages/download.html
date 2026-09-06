@@ -89,9 +89,10 @@
     }
 
     .platform-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
+      background: var(--bg-card);
+      border: none;
       border-radius: var(--radius-lg);
+      box-shadow: var(--neo-shadow-raised);
       backdrop-filter: blur(var(--glass-blur));
       -webkit-backdrop-filter: blur(var(--glass-blur));
       padding: 36px 24px 28px;
@@ -115,9 +116,8 @@
     }
 
     .platform-card:hover {
-      border-color: var(--green);
       transform: translateY(-6px);
-      box-shadow: var(--shadow-card);
+      box-shadow: var(--neo-shadow-raised-lg);
     }
 
     .platform-icon {
@@ -129,6 +129,7 @@
       justify-content: center;
       margin-bottom: 20px;
       transition: all 0.3s ease;
+      box-shadow: var(--neo-shadow-recessed-sm);
     }
 
     .platform-icon svg {
@@ -142,8 +143,8 @@
     }
 
     .platform-icon.ios {
-      background: rgba(77, 141, 255, 0.08);
-      color: #4D8DFF;
+      background: rgba(2, 132, 199, 0.1);
+      color: var(--cyan);
     }
 
     .platform-icon.windows {
@@ -225,8 +226,8 @@
       width: 100%;
       padding: 13px 20px;
       border-radius: var(--radius-md);
-      background: var(--tag-bg);
-      border: 1px solid var(--border);
+      background: var(--surface);
+      border: none;
       color: var(--text-secondary);
       font-size: 14px;
       font-weight: 600;
@@ -234,17 +235,31 @@
       transition: all 0.2s;
       font-family: 'Inter', sans-serif;
       letter-spacing: 0.1px;
+      box-shadow: var(--neo-shadow-raised-sm);
     }
 
     .btn-download:hover {
-      background: var(--accent-soft);
-      border-color: rgba(28, 138, 77, 0.3);
-      color: var(--green);
-      box-shadow: 0 4px 16px rgba(28, 138, 77, 0.15);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised);
     }
 
     .btn-download:active {
       transform: scale(0.97);
+    }
+
+    .btn-beta {
+      box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
+    }
+
+    .btn-primary {
+      box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
     }
 
     /* ===== ROADMAP ===== */
@@ -306,6 +321,7 @@
       justify-content: center;
       margin-bottom: 16px;
       transition: all 0.3s ease;
+      box-shadow: var(--neo-shadow-recessed-sm);
     }
 
     .roadmap-dot::after {
@@ -370,13 +386,14 @@
       width: 100%;
       max-width: 400px;
       background: var(--bg-card);
-      border: 1px solid var(--glass-border);
+      border: none;
       border-radius: var(--radius-xl);
       padding: 40px 32px 32px;
       text-align: center;
       position: relative;
       transform: scale(0.95) translateY(12px);
       transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: var(--neo-shadow-float);
     }
 
     .modal-overlay.open .modal-card {
@@ -404,6 +421,7 @@
       margin: 0 auto 20px;
       background: rgba(255, 184, 77, 0.08);
       border: 1px solid rgba(255, 184, 77, 0.15);
+      box-shadow: var(--neo-shadow-recessed-sm);
     }
 
     .modal-platform-icon svg {
