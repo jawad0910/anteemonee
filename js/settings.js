@@ -731,9 +731,45 @@ function renderAI() {
 
   const memRows = [
     buildRow('AI Memory', 'Remember details from chats to personalize answers', buildToggle('t-ai_memory', p.ai_memory_enabled !== false, v => savePref('ai_memory_enabled', v))),
-    buildClickableRow('What AI knows about me', 'Download everything the AI remembers about you', downloadAiMemoryProfile),
     buildClickableRow('Clear AI Memory', 'Delete everything the AI remembers about you', clearAiMemory),
   ];
+
+  // What AI knows about me — custom row with download button
+  const knowRow = document.createElement('div');
+  knowRow.className = 'setting-row';
+  knowRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-title">What AI knows about me</div>
+      <div class="setting-desc" id="memory-last-updated">Loading...</div>
+    </div>
+    <button id="btn-download-ai-profile" style="
+      display:flex;align-items:center;gap:6px;
+      padding:7px 16px;border-radius:8px;border:none;
+      background:var(--accent);color:#fff;font-size:12px;font-weight:600;
+      cursor:pointer;transition:all .2s;white-space:nowrap;
+      box-shadow:0 2px 8px rgba(31,160,85,.3);
+    ">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download
+    </button>`;
+  knowRow.querySelector('#btn-download-ai-profile').addEventListener('click', (e) => {
+    e.stopPropagation();
+    downloadAiMemoryProfile();
+  });
+  knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseenter', (e) => {
+    e.currentTarget.style.transform = 'translateY(-1px)';
+    e.currentTarget.style.boxShadow = '0 4px 12px rgba(31,160,85,.4)';
+  });
+  knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseleave', (e) => {
+    e.currentTarget.style.transform = 'translateY(0)';
+    e.currentTarget.style.boxShadow = '0 2px 8px rgba(31,160,85,.3)';
+  });
+  memRows.push(knowRow);
+
   const memCard = buildCard('MEMORY', memRows);
   memCard.id = 'memory-card';
   c.appendChild(memCard);
@@ -748,7 +784,8 @@ async function clearAiMemory() {
     const { error } = await db.from('user_ai_memories').delete().eq('user_id', currentUser.id);
     if (error) throw error;
     showToastSettings('AI memory cleared');
-    document.getElementById('memory-last-updated')?.remove();
+    const el = document.getElementById('memory-last-updated');
+    if (el) el.textContent = 'No memories stored yet';
   } catch (e) {
     showToastSettings('Failed to clear memory', true);
   }
@@ -858,6 +895,7 @@ async function downloadAiMemoryProfile() {
 
 async function loadMemoryLastUpdated() {
   if (!currentUser) return;
+  const el = document.getElementById('memory-last-updated');
   try {
     const { data } = await db.from('user_ai_memories')
       .select('updated_at')
@@ -867,18 +905,13 @@ async function loadMemoryLastUpdated() {
       .maybeSingle();
     if (data?.updated_at) {
       const ts = new Date(data.updated_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-      const card = document.getElementById('memory-card');
-      if (card) {
-        const existing = document.getElementById('memory-last-updated');
-        if (existing) existing.remove();
-        const el = document.createElement('div');
-        el.id = 'memory-last-updated';
-        el.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:-12px;padding:0 20px 12px;';
-        el.textContent = 'Last updated: ' + ts;
-        card.appendChild(el);
-      }
+      if (el) el.textContent = 'Last updated: ' + ts;
+    } else if (el) {
+      el.textContent = 'No memories stored yet';
     }
-  } catch (_) {}
+  } catch (_) {
+    if (el) el.textContent = '';
+  }
 }
 
 /* =========================
