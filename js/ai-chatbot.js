@@ -61,7 +61,7 @@
   }
 
   // ── AI Session State ──
-  const TOKEN_LIMIT = 100000;
+  const TOKEN_LIMIT = 120000;
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
@@ -1163,11 +1163,15 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       const { data, error } = await db.rpc('start_ai_session');
       if (error) throw error;
       if (!data?.ok) {
+        const retrySecs = data?.retry_after_seconds || 0;
+        const retryTxt = retrySecs > 0 ? ` Try again in ${formatRetryAfter(retrySecs)}.` : '';
         const msg = data?.error === 'LIMIT_REACHED'
-          ? `No sessions left this month. Resets ${formatPeriodEnd(data.resets_at)}.`
-          : data?.error === 'NOT_AUTHENTICATED'
-            ? 'Please log in to use AI chat.'
-            : 'Could not start session. Please try again.';
+          ? `You've used all your AI sessions for this month. Resets ${formatPeriodEnd(data.resets_at)}.`
+          : data?.error === 'RATE_LIMITED'
+            ? `You're starting sessions a little too fast.${retryTxt}`
+            : data?.error === 'NOT_AUTHENTICATED'
+              ? 'Please log in to use AI chat.'
+              : 'Could not start session. Please try again.';
         showSessionError(msg);
         return false;
       }
@@ -1327,6 +1331,15 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function formatTokens(n) {
     if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'K';
     return String(n);
+  }
+
+  // Display-only helper: turns server retry_after_seconds into friendly text.
+  function formatRetryAfter(secs) {
+    const s = Math.max(1, Math.round(Number(secs) || 30));
+    if (s < 60) return `${s} second${s === 1 ? '' : 's'}`;
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return r ? `${m} minute${m === 1 ? '' : 's'} ${r}s` : `${m} minute${m === 1 ? '' : 's'}`;
   }
 
   function estimateInputTokens(text) {
@@ -1568,6 +1581,21 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         btnSend.style.display = 'flex';
         chatInput.disabled = true;
         chatInput.placeholder = 'Tokens exhausted - start a new session';
+        return;
+      }
+      // ── RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only ──
+      if (error.message && (error.message.includes('RATE_LIMITED') || error.message.includes('CONCURRENT_LIMIT'))) {
+        const secs = (error.retryAfter && Number(error.retryAfter)) || 30;
+        const friendly = error.message.includes('CONCURRENT_LIMIT')
+          ? 'Another reply is still generating. Wait for it to finish, then try again.'
+          : `You're moving a little too fast. Try again in ${formatRetryAfter(secs)}.`;
+        console.warn('[AI] Throttled:', error.message);
+        finalizeStreamingMessage(streamDiv, friendly);
+        messages.pop();
+        isStreaming = false;
+        btnStop.style.display = 'none';
+        btnSend.style.display = 'flex';
+        chatInput.disabled = false;
         return;
       }
       // If incomplete stream — auto-retry with fallback

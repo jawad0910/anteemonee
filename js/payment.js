@@ -83,7 +83,13 @@ async function handlePay() {
     });
 
     const data = await res.json();
-    if (!res.ok || data?.error) throw new Error(data?.error || 'Checkout failed');
+    if (!res.ok || data?.error) {
+      if (data?.error === 'rate_limited') {
+        const secs = data?.retry_after_seconds || 60;
+        throw new Error(`Too many checkout attempts. Please try again in about ${Math.ceil(secs / 60)} minute(s).`);
+      }
+      throw new Error(data?.error || 'Checkout failed');
+    }
     if (!data?.url) throw new Error('No checkout URL returned');
 
     window.location.href = data.url;

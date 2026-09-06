@@ -73,8 +73,20 @@ class AiApiService {
       ? `Bearer ${this._accessToken}`
       : `Bearer ${this.supabaseKey}`;
 
+    // Idempotency key: lets the server treat network retries as one request.
+    // Display-only concern client-side; the SERVER decides replay vs. new.
+    let requestId = null;
+    try {
+      requestId = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
+    } catch (_) {
+      requestId = 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
+    }
+
     const body = { messages, providerIndex };
     if (this._sessionId) body.sessionId = this._sessionId;
+    if (requestId) body.requestId = requestId;
 
     const res = await fetch(this.edgeFunctionUrl, {
       method: 'POST',
@@ -91,8 +103,18 @@ class AiApiService {
       try { detail = await res.text(); } catch (_) {}
       let msg = detail;
       let code = '';
-      try { const parsed = JSON.parse(detail); msg = parsed.error || detail; code = parsed.code || ''; } catch (_) {}
-      throw new Error(`Error ${res.status}: ${String(msg).slice(0, 300)}${code ? ' [' + code + ']' : ''}`);
+      let retryAfter = 0;
+      try {
+        const parsed = JSON.parse(detail);
+        msg = parsed.error || detail;
+        code = parsed.code || parsed.reason || '';
+        retryAfter = parsed.retry_after_seconds || 0;
+      } catch (_) {}
+      const err = new Error(`Error ${res.status}: ${String(msg).slice(0, 300)}${code ? ' [' + code + ']' : ''}`);
+      err.code = code;
+      err.retryAfter = retryAfter;
+      err.status = res.status;
+      throw err;
     }
 
     const contentType = res.headers.get('content-type') || '';

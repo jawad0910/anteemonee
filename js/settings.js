@@ -1159,6 +1159,7 @@ async function redeemCoupon() {
     ALREADY_USED: 'You\'ve already used this coupon.',
     IP_USED: 'This coupon has already been redeemed from this network.',
     NOT_AUTHENTICATED: 'Please sign in first.',
+    RATE_LIMITED: 'Too many attempts. Please wait a little and try again.',
     REDEEM_FAILED: 'Couldn\'t redeem the coupon. Please try again.',
   };
 
@@ -1551,6 +1552,9 @@ async function completeAdWatch() {
       } else {
         showToastSettings(`Ad ${nextAd} watched! ${data.ads_in_round}/3 in this round`);
       }
+    } else if (data?.error === 'RATE_LIMITED') {
+      const secs = data?.retry_after_seconds || 60;
+      showToastSettings(`Too many requests. Try again in about ${Math.ceil(secs / 60)} minute(s).`, true);
     } else {
       showToastSettings(data?.error || 'Failed to record ad', true);
     }
