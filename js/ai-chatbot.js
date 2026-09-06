@@ -1485,6 +1485,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       console.warn('[AI] Textbook search failed:', e);
     }
 
+    // Fresh memory reload — picks up extractions from OTHER chats too.
+    await loadAiMemories();
+
     const systemPrompt = buildSystemPrompt() + textbookContext;
 
     const apiMessages = [
