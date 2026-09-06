@@ -770,7 +770,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     messagesList.innerHTML = '';
     welcome.style.display = 'none';
     messagesList.style.display = 'flex';
-    messages.forEach(m => appendMessage(m.role, m.content, false));
+    messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null }));
     scrollToBottom();
     renderHistory();
     closeMobileSidebar();
@@ -887,14 +887,16 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
   }
 
-  function appendMessage(role, content, animate = true) {
+  function appendMessage(role, content, animate = true, opts = {}) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
+    if (opts.idx !== undefined && opts.idx !== null) div.dataset.idx = opts.idx;
+    const quoteHtml = quoteBlockHtml(opts.quote || null);
 
     if (role === 'assistant') {
       div.innerHTML = `
         <div class="msg-avatar assistant-avatar"><img src="../assets/wassal.png" alt="Wassal"></div>
-        <div class="msg-body"><div class="msg-content">${renderMarkdown(content)}</div></div>
+        <div class="msg-body">${quoteHtml}<div class="msg-content">${renderMarkdown(content)}</div></div>
       `;
     } else {
       const imgUrl = getUserAvatarUrl();
@@ -904,7 +906,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         : `<div class="avatar-fallback-msg">${initial}</div>`;
       div.innerHTML = `
         <div class="msg-avatar user-avatar">${avatarHtml}</div>
-        <div class="msg-body"><div class="msg-content">${escapeHtml(content)}</div></div>
+        <div class="msg-body">${quoteHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
     }
     if (!animate) div.style.animation = 'none';
@@ -915,6 +917,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function createStreamingMessage() {
     const div = document.createElement('div');
     div.className = 'message assistant';
+    // Index of the assistant message about to be pushed (user msg already in).
+    div.dataset.idx = messages.length;
     div.innerHTML = `
       <div class="msg-avatar assistant-avatar"><img src="../assets/wassal.png" alt="Wassal"></div>
       <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div></div></div>
@@ -931,6 +935,156 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function finalizeStreamingMessage(div, text) {
     const content = div.querySelector('.msg-content');
     content.innerHTML = renderMarkdown(text);
+  }
+
+  // ── Text Selection: Reply + Flashcard ──
+  let pendingQuote = null; // { role: 'assistant'|'user', text }
+  let pendingSel = null;
+  let selToolbar = null;
+
+  function getSelToolbar() {
+    if (selToolbar) return selToolbar;
+    selToolbar = document.createElement('div');
+    selToolbar.id = 'sel-toolbar';
+    selToolbar.innerHTML = `
+      <button class="sel-tool-btn sel-reply" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+        <span>Reply</span>
+      </button>
+      <button class="sel-tool-btn sel-disabled" type="button" aria-disabled="true" title="Flashcards coming soon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
+        <span>Flashcard</span><em class="sel-soon">Soon</em>
+      </button>`;
+    document.body.appendChild(selToolbar);
+    selToolbar.querySelector('.sel-reply').addEventListener('click', onReplyFromToolbar);
+    return selToolbar;
+  }
+
+  function hideSelToolbar() {
+    if (selToolbar) selToolbar.classList.remove('show');
+    pendingSel = null;
+  }
+
+  function currentSelectionInChat() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
+    const text = sel.toString().trim();
+    if (!text) return null;
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const anchorEl = node.nodeType === 1 ? node : node.parentElement;
+    if (!anchorEl || !anchorEl.closest || !anchorEl.closest('#messages-list')) return null;
+    const msgEl = anchorEl.closest('.message');
+    if (!msgEl || msgEl.dataset.idx === undefined || msgEl.dataset.idx === '') return null;
+    const idx = parseInt(msgEl.dataset.idx, 10);
+    const msg = messages[idx];
+    if (!msg) return null;
+    return { text, role: msg.role, rect: range.getBoundingClientRect() };
+  }
+
+  function refreshSelToolbar() {
+    const bar = getSelToolbar();
+    const found = currentSelectionInChat();
+    if (!found || isStreaming) { hideSelToolbar(); return; }
+    pendingSel = found;
+    bar.classList.add('show');
+    const bw = bar.offsetWidth, bh = bar.offsetHeight;
+    let top = found.rect.top - bh - 10;
+    if (top < 8) top = found.rect.bottom + 10;
+    let left = found.rect.left + (found.rect.width / 2) - (bw / 2);
+    left = Math.max(8, Math.min(window.innerWidth - bw - 8, left));
+    bar.style.top = Math.max(8, top) + 'px';
+    bar.style.left = left + 'px';
+  }
+
+  function onReplyFromToolbar() {
+    if (!pendingSel) return;
+    pendingQuote = { role: pendingSel.role, text: pendingSel.text };
+    renderQuoteChip();
+    try { window.getSelection().removeAllRanges(); } catch (_) {}
+    hideSelToolbar();
+    chatInput.focus();
+  }
+
+  function renderQuoteChip() {
+    let chip = document.getElementById('reply-chip');
+    if (!pendingQuote) { if (chip) chip.remove(); return; }
+    if (!chip) {
+      chip = document.createElement('div');
+      chip.id = 'reply-chip';
+      chip.innerHTML = `<div class="reply-chip-bar"></div>
+        <div class="reply-chip-body"><div class="reply-chip-label"></div><div class="reply-chip-text"></div></div>
+        <button class="reply-chip-cancel" type="button" aria-label="Cancel reply">×</button>`;
+      const area = document.querySelector('.chat-input-area');
+      const wrapper = document.querySelector('.chat-input-wrapper');
+      if (area && wrapper) area.insertBefore(chip, wrapper);
+      chip.querySelector('.reply-chip-cancel').addEventListener('click', (e) => {
+        e.stopPropagation();
+        pendingQuote = null;
+        renderQuoteChip();
+        chatInput.focus();
+      });
+      chip.querySelector('.reply-chip-body').addEventListener('click', () => {
+        if (pendingQuote) openQuoteModal(pendingQuote.role, pendingQuote.text);
+      });
+    }
+    chip.querySelector('.reply-chip-label').textContent =
+      'Replying to ' + (pendingQuote.role === 'assistant' ? 'AI' : 'you');
+    chip.querySelector('.reply-chip-text').textContent = pendingQuote.text;
+  }
+
+  function quoteBlockHtml(quote) {
+    if (!quote || !quote.text) return '';
+    const label = quote.role === 'assistant' ? 'AI' : 'You';
+    return `<div class="msg-quote" data-role="${quote.role === 'assistant' ? 'assistant' : 'user'}" data-full="${encodeURIComponent(quote.text)}" title="View quoted message">` +
+      `<span class="msg-quote-label">${label}</span>` +
+      `<span class="msg-quote-text">${escapeHtml(quote.text)}</span></div>`;
+  }
+
+  function openQuoteModal(role, text) {
+    let ov = document.getElementById('quote-modal-overlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'quote-modal-overlay';
+      ov.innerHTML = `<div class="quote-modal" role="dialog" aria-modal="true">
+        <div class="quote-modal-head"><span class="quote-modal-title"></span><button class="quote-modal-close" type="button" aria-label="Close">×</button></div>
+        <div class="quote-modal-body"></div></div>`;
+      document.body.appendChild(ov);
+      ov.addEventListener('click', (e) => {
+        if (e.target === ov || e.target.closest('.quote-modal-close')) closeQuoteModal();
+      });
+    }
+    ov.querySelector('.quote-modal-title').textContent =
+      'Quoted from ' + (role === 'assistant' ? 'AI' : 'you');
+    ov.querySelector('.quote-modal-body').textContent = text;
+    ov.classList.add('show');
+  }
+
+  function closeQuoteModal() {
+    const ov = document.getElementById('quote-modal-overlay');
+    if (ov) ov.classList.remove('show');
+  }
+
+  document.addEventListener('mouseup', (e) => {
+    if (e.target && e.target.closest && e.target.closest('#sel-toolbar')) return;
+    setTimeout(refreshSelToolbar, 10);
+  });
+  document.addEventListener('touchend', () => setTimeout(refreshSelToolbar, 350));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { hideSelToolbar(); closeQuoteModal(); }
+  });
+  if (typeof chatContent !== 'undefined' && chatContent) {
+    chatContent.addEventListener('scroll', hideSelToolbar, { passive: true });
+  }
+  if (typeof messagesList !== 'undefined' && messagesList) {
+    messagesList.addEventListener('click', (e) => {
+      const q = e.target && e.target.closest ? e.target.closest('.msg-quote') : null;
+      if (q) {
+        try {
+          openQuoteModal(q.dataset.role || 'assistant', decodeURIComponent(q.dataset.full || ''));
+        } catch (_) {}
+      }
+    });
   }
 
   // ── Session Management ──
@@ -1270,6 +1424,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   async function handleSend() {
     const text = chatInput.value.trim();
     if (!text || isStreaming) return;
+    const quote = pendingQuote;
+    hideSelToolbar();
 
     // ── Session gate: must have an active session ──
     if (!activeSession || new Date(activeSession.expires_at).getTime() <= Date.now()) {
@@ -1283,7 +1439,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     // ── Token budget check ──
-    const estInput = estimateInputTokens(text + (studentContext ? JSON.stringify(studentContext) : ''));
+    const estInput = estimateInputTokens(text + (quote ? quote.text : '') + (studentContext ? JSON.stringify(studentContext) : ''));
     if (estimatedTokensUsed + estInput >= TOKEN_LIMIT) {
       showTokenExhaustedBanner();
       chatInput.disabled = true;
@@ -1301,8 +1457,10 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       messagesList.style.display = 'flex';
     }
 
-    appendMessage('user', text);
-    messages.push({ role: 'user', content: text });
+    appendMessage('user', text, true, { idx: messages.length, quote: quote || null });
+    messages.push(quote ? { role: 'user', content: text, quote } : { role: 'user', content: text });
+    pendingQuote = null;
+    renderQuoteChip();
     scrollToBottom();
 
     isStreaming = true;
@@ -1331,7 +1489,12 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
     const apiMessages = [
       { role: 'system', content: systemPrompt },
-      ...messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+      ...messages.slice(-10).map(m => ({
+        role: m.role,
+        content: m.quote
+          ? `[Replying to ${m.quote.role === 'assistant' ? 'AI' : 'you'}: "${m.quote.text}"]\n${m.content}`
+          : m.content,
+      })),
     ];
 
     let fullResponse = '';
@@ -1386,6 +1549,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         if (failedBubbles.length > 1) failedBubbles[failedBubbles.length - 2]?.remove();
         isStreaming = false;
         chatInput.value = text;
+        pendingQuote = quote;
+        renderQuoteChip();
         handleSend();
         return;
       }
