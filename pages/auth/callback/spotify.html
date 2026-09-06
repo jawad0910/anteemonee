@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connecting with Spotify — Wassal</title>
+  <title>Connecting with Spotify - Wassal</title>
   <meta name="theme-color" content="#07080C">
   <link rel="icon" href="../../../assets/wassal.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
   <link rel="stylesheet" href="../../css/style.css">
-  <link rel="preload" href="https://unpkg.com/@supabase/supabase-js@2" as="script">
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
     .callback-page {
       min-height: 100vh;
@@ -24,25 +24,13 @@
     .callback-card {
       width: 100%;
       max-width: 400px;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
+      background: var(--bg-card);
       border-radius: var(--radius-xl);
-      backdrop-filter: blur(var(--glass-blur));
-      -webkit-backdrop-filter: blur(var(--glass-blur));
+      box-shadow: var(--neo-shadow-raised-lg);
       padding: 48px 36px;
       text-align: center;
       position: relative;
       z-index: 1;
-    }
-    .callback-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
-      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     }
     .callback-logo {
       width: 64px;
@@ -60,7 +48,7 @@
       height: 48px;
       border-radius: 50%;
       background: rgba(29, 185, 84, 0.08);
-      border: 1px solid rgba(29, 185, 84, 0.15);
+      box-shadow: var(--neo-shadow-recessed-sm);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -90,7 +78,7 @@
     .callback-spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid var(--border);
+      border: 3px solid var(--surface);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -118,6 +106,7 @@
       justify-content: center;
       font-size: 28px;
       animation: scaleIn 0.3s ease;
+      box-shadow: var(--neo-shadow-raised-sm);
     }
     @keyframes scaleIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .success-message {
@@ -141,6 +130,7 @@
       align-items: center;
       justify-content: center;
       font-size: 28px;
+      box-shadow: var(--neo-shadow-raised-sm);
     }
     .error-message {
       font-size: 15px;
@@ -195,7 +185,7 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="callback.js"></script>
 </body>
 </html>
