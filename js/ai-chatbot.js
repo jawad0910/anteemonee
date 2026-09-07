@@ -134,6 +134,10 @@
   const modelDot = document.getElementById('model-dot');
   const modelDropdown = document.getElementById('model-dropdown');
   const modelTrigger = document.getElementById('model-selector-trigger');
+  const scrollDownBtn = document.getElementById('scroll-down-btn');
+  // True when the user is reading near the newest message. Streaming only
+  // auto-scrolls in that case, so it never yanks the user away mid-read.
+  let userNearBottom = true;
 
   // ── AI Preferences (from Settings → AI Preferences, stored in user_preferences) ──
   let aiPrefs = {
@@ -334,6 +338,22 @@
     btnSend.addEventListener('click', handleSend);
     btnStop.addEventListener('click', handleStop);
 
+    // Scroll-to-bottom button: show only when the user scrolled up.
+    if (chatContent) {
+      chatContent.addEventListener('scroll', () => {
+        const dist = chatContent.scrollHeight - chatContent.scrollTop - chatContent.clientHeight;
+        userNearBottom = dist < 120;
+        if (scrollDownBtn) scrollDownBtn.classList.toggle('show', dist > 250);
+      }, { passive: true });
+    }
+    if (scrollDownBtn) {
+      scrollDownBtn.addEventListener('click', () => {
+        userNearBottom = true;
+        scrollToBottom();
+        scrollDownBtn.classList.remove('show');
+      });
+    }
+
     chatInput.addEventListener('input', () => {
       autoResize();
       btnSend.disabled = !chatInput.value.trim();
@@ -365,6 +385,8 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeMobileSidebar();
     });
+
+    setupKeyboardAwareLayout();
 
     // Desktop model selector
     modelTrigger.addEventListener('click', (e) => {
@@ -645,12 +667,14 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     html = html.replace(/^---$/gm, '<hr>');
     html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
     html = html.replace(/^(\|.+\|)\n(\|[-| :]+\|)\n((?:\|.+\|\n?)+)/gm, (_, header, sep, body) => {
-      const ths = header.split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
+      const labels = header.split('|').filter(c => c.trim()).map(c => c.trim());
+      const ths = labels.map(c => `<th>${c}</th>`).join('');
       const rows = body.trim().split('\n').map(row => {
-        const tds = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+        const cells = row.split('|').filter(c => c.trim()).map(c => c.trim());
+        const tds = cells.map((c, i) => `<td data-label="${(labels[i] || '').replace(/"/g, '&quot;')}">${c}</td>`).join('');
         return `<tr>${tds}</tr>`;
       }).join('');
-      return `<table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>`;
+      return `<div class="table-wrap"><table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table></div>`;
     });
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
     html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (match) => {
@@ -673,6 +697,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     html = html.replace(/(<\/ul>)<\/p>/g, '$1');
     html = html.replace(/<p>(<table>)/g, '$1');
     html = html.replace(/(<\/table>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<div class="table-wrap">)/g, '$1');
+    html = html.replace(/(<\/table><\/div>)<\/p>/g, '$1');
     html = html.replace(/<p>(<blockquote>)/g, '$1');
     html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
     html = html.replace(/<p>(<hr>)/g, '$1');
@@ -1537,12 +1563,14 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         }
         fullResponse += chunk;
         updateStreamingMessage(streamDiv, fullResponse);
-        scrollToBottom();
+        if (userNearBottom) scrollToBottom();
       }
 
       finalizeStreamingMessage(streamDiv, fullResponse);
       messages.push({ role: 'assistant', content: fullResponse });
       updateTokensAfterResponse(text, fullResponse);
+      userNearBottom = true;
+      if (scrollDownBtn) scrollDownBtn.classList.remove('show');
     } catch (error) {
       // ── Auto-retry on NO_SESSION: session exists locally but not in DB ──
       if (error.message && error.message.includes('NO_SESSION')) {
@@ -1626,7 +1654,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
             }
             fullResponse += chunk;
             updateStreamingMessage(streamDiv, fullResponse);
-            scrollToBottom();
+            if (userNearBottom) scrollToBottom();
           }
         } catch (fallbackError) {
           fullResponse += '\n\n*[Response continued but may be incomplete]*';
@@ -1677,6 +1705,34 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     requestAnimationFrame(() => {
       chatContent.scrollTop = chatContent.scrollHeight;
     });
+  }
+
+  // ── Mobile keyboard: lift the fixed chat layout above the keyboard ──
+  // Chrome Android is handled by interactive-widget=resizes-content in the
+  // viewport meta. iOS Safari ignores that, so mirror the keyboard height
+  // into --kb-offset (consumed by .chatbot-layout bottom) via visualViewport.
+  function setupKeyboardAwareLayout() {
+    try {
+      if (!window.visualViewport) return;
+      if (!window.matchMedia || !window.matchMedia('(pointer: coarse)').matches) return;
+      const vv = window.visualViewport;
+      const layout = document.querySelector('.chatbot-layout');
+      const applyOffset = () => {
+        const offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        if (layout) layout.style.setProperty('--kb-offset', offset + 'px');
+        if (offset > 40) {
+          userNearBottom = true;
+          scrollToBottom();
+          if (scrollDownBtn) scrollDownBtn.classList.remove('show');
+        }
+      };
+      vv.addEventListener('resize', applyOffset);
+      vv.addEventListener('scroll', applyOffset);
+      chatInput.addEventListener('focus', () => setTimeout(applyOffset, 120));
+      chatInput.addEventListener('blur', () => {
+        if (layout) layout.style.setProperty('--kb-offset', '0px');
+      });
+    } catch (_) {}
   }
 
   function escapeHtml(text) {
