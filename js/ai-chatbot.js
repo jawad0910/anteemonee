@@ -12,6 +12,7 @@
   let messages = [];
   let isStreaming = false;
   let studentContext = null;
+  const pendingImages = []; // Array of base64 data URLs, max 3
 
   // ── Per-user localStorage keys ──
   function chatStorageKey() {
@@ -61,7 +62,7 @@
   }
 
   // ── AI Session State ──
-  const TOKEN_LIMIT = 120000;
+  const TOKEN_LIMIT = 100000;
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
@@ -111,12 +112,17 @@
   // ── Model / Persona State ──
   const PERSONAS = [
     {
-      name: 'Shehbaz Sharif', provider: 'Groq', providerIndex: 0,
+      name: 'Shehbaz Sharif', providerIndex: 0,
       background: 'Your name comes from Shehbaz Sharif, the Pakistani politician: president of PML-N, Prime Minister of Pakistan, and former Chief Minister of Punjab (known for infrastructure projects like metro bus systems and a hands-on administrative style). If a student asks about him, answer factually and neutrally using these facts plus your general knowledge. Keep it brief and offer to return to studies.',
     },
     {
-      name: 'Imran Khan', provider: 'Qwen', providerIndex: 1,
+      name: 'Imran Khan', providerIndex: 1,
       background: 'Your name comes from Imran Khan, the Pakistani politician and former cricketer: founder and chairman of PTI, Prime Minister of Pakistan (2018 to 2022), captain of the 1992 Cricket World Cup winning team, and founder of Shaukat Khanum Memorial Cancer Hospital. If a student asks about him, answer factually and neutrally using these facts plus your general knowledge. Keep it brief and offer to return to studies.',
+    },
+    {
+      name: 'Zardari', providerIndex: 2,
+      background: 'Your name comes from Asif Ali Zardari, the President of Pakistan and co-chairman of the Pakistan Peoples Party (PPP), husband of Benazir Bhutto. He served as President from 2008 to 2013. If a student asks about him, answer factually and neutrally.',
+      codingOnly: true,
     },
   ];
   let activePersonaIndex = 0;
@@ -342,7 +348,7 @@
 
     chatInput.addEventListener('input', () => {
       autoResize();
-      btnSend.disabled = !chatInput.value.trim();
+      btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0;
     });
 
     chatInput.addEventListener('keydown', (e) => {
@@ -351,6 +357,98 @@
         if (!btnSend.disabled && !isStreaming) handleSend();
       }
     });
+
+    // ── Image attachment ──
+    const imageFileInput = document.getElementById('image-file-input');
+    const btnAttach = document.getElementById('btn-attach');
+    const imagePreviewBar = document.getElementById('image-preview-bar');
+
+    btnAttach.addEventListener('click', () => {
+      if (pendingImages.length >= 3) return;
+      imageFileInput.click();
+    });
+
+    imageFileInput.addEventListener('change', (e) => {
+      handleImageFiles(e.target.files);
+      imageFileInput.value = '';
+    });
+
+    // Paste handler for images
+    chatInput.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageFiles = [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        handleImageFiles(imageFiles);
+      }
+    });
+
+    function handleImageFiles(files) {
+      const remaining = 3 - pendingImages.length;
+      if (remaining <= 0) return;
+      const toProcess = Array.from(files).slice(0, remaining);
+
+      toProcess.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        if (file.size > 10 * 1024 * 1024) {
+          console.warn('[Image] File too large (>10MB):', file.name);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          pendingImages.push(reader.result);
+          renderImagePreview();
+          updateAttachButton();
+          updateSendButton();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderImagePreview() {
+      imagePreviewBar.innerHTML = '';
+      if (pendingImages.length === 0) {
+        imagePreviewBar.style.display = 'none';
+        return;
+      }
+      imagePreviewBar.style.display = 'flex';
+      pendingImages.forEach((dataUrl, idx) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'preview-thumb';
+        thumb.innerHTML = `
+          <img src="${dataUrl}" alt="Image ${idx + 1}">
+          <button class="preview-remove" data-idx="${idx}" title="Remove">&times;</button>
+        `;
+        thumb.querySelector('.preview-remove').addEventListener('click', () => {
+          pendingImages.splice(idx, 1);
+          renderImagePreview();
+          updateAttachButton();
+          updateSendButton();
+        });
+        imagePreviewBar.appendChild(thumb);
+      });
+    }
+
+    function updateAttachButton() {
+      btnAttach.classList.toggle('has-images', pendingImages.length > 0);
+    }
+
+    function updateSendButton() {
+      btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0;
+    }
+
+    function clearPendingImages() {
+      pendingImages.length = 0;
+      renderImagePreview();
+      updateAttachButton();
+    }
 
     document.getElementById('btn-new-chat').addEventListener('click', newChat);
     document.getElementById('btn-new-chat-mobile').addEventListener('click', () => { closeMobileSidebar(); newChat(); });
@@ -418,21 +516,38 @@
   // ── Model / Persona ──
   function updatePersonaUI() {
     const persona = PERSONAS[activePersonaIndex];
-    modelSelectedName.textContent = persona.name;
-    modelDot.style.background = persona.providerIndex === 0 ? '#3B82F6' : '#F59E0B';
+    const dotColors = ['#3B82F6', '#F59E0B', '#1FA055'];
+    modelSelectedName.textContent = persona.name + (persona.codingOnly ? ' (Coding Agent)' : '');
+    modelDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
     document.querySelectorAll('#model-dropdown .model-option').forEach((el, i) => {
       el.classList.toggle('active', i === activePersonaIndex);
     });
     const mobileName = document.getElementById('model-selected-name-mobile');
     const mobileDot = document.getElementById('model-dot-mobile');
-    if (mobileName) mobileName.textContent = persona.name;
-    if (mobileDot) mobileDot.style.background = persona.providerIndex === 0 ? '#3B82F6' : '#F59E0B';
+    if (mobileName) mobileName.textContent = persona.name + (persona.codingOnly ? ' (Coding Agent)' : '');
+    if (mobileDot) mobileDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
     const mobileDropdown = document.getElementById('model-dropdown-mobile');
     if (mobileDropdown) {
       mobileDropdown.querySelectorAll('.model-option').forEach((el, i) => {
         el.classList.toggle('active', i === activePersonaIndex);
       });
     }
+    // Update welcome subtitle based on active persona
+    const subtitle = document.querySelector('.welcome-subtitle');
+    if (subtitle) {
+      subtitle.textContent = persona.codingOnly
+        ? 'Ask me anything about coding, programming, or building projects.'
+        : 'Ask me anything about your studies.';
+    }
+    // Update quick actions visibility
+    document.querySelectorAll('.quick-btn').forEach(btn => {
+      const isCoding = btn.dataset.prompt.toLowerCase().includes('python') || btn.dataset.prompt.toLowerCase().includes('code');
+      if (persona.codingOnly) {
+        btn.style.display = isCoding ? '' : 'none';
+      } else {
+        btn.style.display = isCoding ? 'none' : '';
+      }
+    });
   }
 
   function getActivePersona() {
@@ -566,6 +681,46 @@ Only include the References section when textbook content was found. If no textb
   // ── System Prompt ──
   function buildSystemPrompt() {
     const persona = getActivePersona();
+
+    // Zardari is coding-only — different system prompt
+    if (persona.codingOnly) {
+      let ctx = `You are Zardari, Wassal's dedicated Coding Agent. You are an expert software engineer, full-stack developer, and programming tutor. You write production-quality code and help students build real projects.
+
+IDENTITY: Your name is "Zardari". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "Zardari is trained by Wassal Pakistan."
+
+STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler — go straight to the content.
+
+CORE EXPERTISE:
+- Languages: Python, JavaScript, TypeScript, C, C++, Java, Dart, Kotlin, Swift, HTML, CSS, SQL, Bash, Go, Rust, PHP, Ruby
+- Frameworks: Flutter, React, Next.js, Node.js, Express, Django, Flask, Laravel, Vue, Angular, Svelte
+- Databases: PostgreSQL, MySQL, MongoDB, SQLite, Firebase, Supabase
+- Tools: Git, Docker, Linux, VS Code, CI/CD, AWS, Vercel, Netlify
+- Concepts: Data structures, algorithms, OOP, functional programming, system design, APIs, REST, GraphQL, web sockets, authentication, security
+
+WHAT YOU DO:
+- Generate complete, working, production-ready code — not snippets, real code
+- Build projects from scratch: websites, apps, games, tools, CLI programs, APIs
+- Debug code — find and fix errors, explain why they happened
+- Review code — suggest improvements, performance fixes, security issues
+- Explain programming concepts step-by-step with examples
+- Help students with assignments, projects, and homework involving code
+- Create file structures, database schemas, and architecture diagrams (text-based)
+- Write tests, documentation, and README files
+- Convert designs/mockups to code
+- Optimize code for speed and efficiency
+
+NON-CODING RULES:
+- For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Zardari, the coding expert. Switch to Shehbaz Sharif or Imran Khan for academic questions — they handle Physics, Chemistry, Biology, and Math theory better."
+- NEVER answer non-coding academic questions, even if you know the answer
+- You CAN help with: computational math, data science, scientific computing, numerical methods, simulations, and anything that involves writing code
+
+RESPONSE FORMAT:
+- For code: Use markdown code blocks with language tag. Include file name as comment at top if relevant.
+- For explanations: Be concise and technical. Use examples.
+- For projects: Break into files, show structure, explain architecture.
+- For debugging: Show the error, explain the cause, provide the fix.`;
+      return ctx;
+    }
 
     let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (x₀, v², √2), no LaTeX, no HTML.
 
@@ -905,6 +1060,16 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     if (opts.idx !== undefined && opts.idx !== null) div.dataset.idx = opts.idx;
     const quoteHtml = quoteBlockHtml(opts.quote || null);
 
+    // Build image thumbnails HTML if images were sent
+    let imagesHtml = '';
+    if (opts.images && opts.images.length > 0) {
+      imagesHtml = '<div class="msg-images">';
+      opts.images.forEach(dataUrl => {
+        imagesHtml += `<img src="${dataUrl}" alt="Attached image" class="msg-image-thumb">`;
+      });
+      imagesHtml += '</div>';
+    }
+
     if (role === 'assistant') {
       div.innerHTML = `
         <div class="msg-avatar assistant-avatar"><img src="../assets/wassal.png" alt="Wassal"></div>
@@ -918,7 +1083,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         : `<div class="avatar-fallback-msg">${initial}</div>`;
       div.innerHTML = `
         <div class="msg-avatar user-avatar">${avatarHtml}</div>
-        <div class="msg-body">${quoteHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
+        <div class="msg-body">${quoteHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
     }
     if (!animate) div.style.animation = 'none';
@@ -1448,8 +1613,10 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   // ── Send / Stop ──
   async function handleSend() {
     const text = chatInput.value.trim();
-    if (!text || isStreaming) return;
+    const hasImages = pendingImages.length > 0;
+    if ((!text && !hasImages) || isStreaming) return;
     const quote = pendingQuote;
+    const imagesToSend = [...pendingImages]; // snapshot before clearing
     hideSelToolbar();
 
     // ── Session gate: must have an active session ──
@@ -1476,14 +1643,15 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     autoResize();
     btnSend.disabled = true;
     chatInput.disabled = true;
+    clearPendingImages();
 
     if (welcome.style.display !== 'none') {
       welcome.style.display = 'none';
       messagesList.style.display = 'flex';
     }
 
-    appendMessage('user', text, true, { idx: messages.length, quote: quote || null });
-    messages.push(quote ? { role: 'user', content: text, quote } : { role: 'user', content: text });
+    appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null });
+    messages.push(quote ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null } : { role: 'user', content: text, images: hasImages ? imagesToSend : null });
     pendingQuote = null;
     renderQuoteChip();
     scrollToBottom();
@@ -1533,7 +1701,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     api.setAccessToken(getAccessToken());
 
     try {
-      for await (const chunk of api.streamChat(apiMessages, selectedProviderIndex)) {
+    for await (const chunk of api.streamChat(apiMessages, selectedProviderIndex, hasImages ? imagesToSend : null)) {
         // Check for streak event from Edge Function
         if (chunk && chunk.includes('"type":"streak"')) {
           try {
@@ -1605,6 +1773,17 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           : `You're moving a little too fast. Try again in ${formatRetryAfter(secs)}.`;
         console.warn('[AI] Throttled:', error.message);
         finalizeStreamingMessage(streamDiv, friendly);
+        messages.pop();
+        isStreaming = false;
+        btnStop.style.display = 'none';
+        btnSend.style.display = 'flex';
+        chatInput.disabled = false;
+        return;
+      }
+      // ── IMAGE_LIMIT: daily image cap reached ──
+      if (error.message && error.message.includes('IMAGE_LIMIT')) {
+        console.warn('[AI] Image limit reached');
+        finalizeStreamingMessage(streamDiv, 'Daily image limit reached. Upgrade to Premium for more images per day.');
         messages.pop();
         isStreaming = false;
         btnStop.style.display = 'none';

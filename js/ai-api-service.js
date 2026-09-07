@@ -1,5 +1,5 @@
 /* ==========================================
-   Wassal AI - Dual API Failover Service
+   Wassal AI - Triple API Failover Service
    Routes through Supabase Edge Function
    Detects incomplete streams and auto-falls back
    ========================================== */
@@ -13,10 +13,11 @@ class AiApiService {
     this._currentAbort = null;
     this._accessToken = null;
     this._sessionId = null;
+    this.totalProviders = 3;
   }
 
   get currentProvider() {
-    const names = ['Groq', 'Qwen'];
+    const names = ['Groq', 'Qwen', 'Mistral'];
     return { name: names[this.activeProvider] || 'AI' };
   }
 
@@ -39,16 +40,16 @@ class AiApiService {
    * If the primary provider's stream cuts off mid-response (no [DONE]),
    * it throws an IncompleteStreamError so the caller can retry with fallback.
    */
-  async *streamChat(messages, providerIndex = null) {
+  async *streamChat(messages, providerIndex = null, images = null) {
     const startIndex = providerIndex !== null ? providerIndex : this.activeProvider;
     let lastError = null;
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const idx = (startIndex + attempt) % 2;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const idx = (startIndex + attempt) % this.totalProviders;
 
       try {
         this.activeProvider = idx;
-        yield* this._streamFromEdge(messages, idx);
+        yield* this._streamFromEdge(messages, idx, images);
         return; // success
       } catch (error) {
         console.warn(`[AI] Provider ${idx} failed:`, error.message);
@@ -64,7 +65,7 @@ class AiApiService {
     throw new Error(lastError?.message || 'All AI providers are currently unavailable. Please try again.');
   }
 
-  async *_streamFromEdge(messages, providerIndex) {
+  async *_streamFromEdge(messages, providerIndex, images = null) {
     const controller = new AbortController();
     this._currentAbort = controller;
 
@@ -87,6 +88,7 @@ class AiApiService {
     const body = { messages, providerIndex };
     if (this._sessionId) body.sessionId = this._sessionId;
     if (requestId) body.requestId = requestId;
+    if (images && images.length > 0) body.images = images;
 
     const res = await fetch(this.edgeFunctionUrl, {
       method: 'POST',
