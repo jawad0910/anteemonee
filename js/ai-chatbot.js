@@ -308,20 +308,6 @@
     });
     // Flush any pending study time from previous unload
     flushPendingStudyTime();
-
-    // ── iOS keyboard handling: adjust layout when virtual keyboard opens/closes ──
-    const chatbotLayout = document.querySelector('.chatbot-layout');
-    if (window.visualViewport && chatbotLayout) {
-      const applyViewportHeight = () => {
-        const vv = window.visualViewport;
-        // Offset from bottom of layout viewport to bottom of visual viewport (keyboard height)
-        const bottomOffset = window.innerHeight - (vv.offsetTop + vv.height);
-        chatbotLayout.style.bottom = bottomOffset + 'px';
-      };
-      window.visualViewport.addEventListener('resize', applyViewportHeight);
-      window.visualViewport.addEventListener('scroll', applyViewportHeight);
-      applyViewportHeight();
-    }
   }
 
   async function flushPendingStudyTime() {
@@ -1707,30 +1693,53 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     });
   }
 
-  // ── Mobile keyboard: lift the fixed chat layout above the keyboard ──
-  // Chrome Android is handled by interactive-widget=resizes-content in the
-  // viewport meta. iOS Safari ignores that, so mirror the keyboard height
-  // into --kb-offset (consumed by .chatbot-layout bottom) via visualViewport.
+  // ── Mobile keyboard: lift the fixed chat layout above the virtual keyboard ──
+  // Chrome Android handles interactive-widget=resizes-content in the viewport meta.
+  // iOS Safari ignores that entirely, so we read the visual viewport shrink and
+  // mirror it into --kb-offset (consumed by .chatbot-layout bottom).
   function setupKeyboardAwareLayout() {
     try {
       if (!window.visualViewport) return;
-      if (!window.matchMedia || !window.matchMedia('(pointer: coarse)').matches) return;
-      const vv = window.visualViewport;
-      const layout = document.querySelector('.chatbot-layout');
-      const applyOffset = () => {
-        const offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-        if (layout) layout.style.setProperty('--kb-offset', offset + 'px');
-        if (offset > 40) {
+      var vv = window.visualViewport;
+      var layout = document.querySelector('.chatbot-layout');
+      if (!layout) return;
+      var rafId = null;
+
+      function applyOffset() {
+        var kbHeight = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        layout.style.setProperty('--kb-offset', kbHeight + 'px');
+        if (kbHeight > 40) {
           userNearBottom = true;
           scrollToBottom();
           if (scrollDownBtn) scrollDownBtn.classList.remove('show');
         }
-      };
+      }
+
+      // visualViewport fires on resize (keyboard open/close) and scroll (scroll-snap)
       vv.addEventListener('resize', applyOffset);
       vv.addEventListener('scroll', applyOffset);
-      chatInput.addEventListener('focus', () => setTimeout(applyOffset, 120));
-      chatInput.addEventListener('blur', () => {
-        if (layout) layout.style.setProperty('--kb-offset', '0px');
+
+      // On iOS Safari the keyboard animation can lag behind the focus event.
+      // Poll for a few animation frames after focus to catch the final height.
+      function onInputFocus() {
+        applyOffset();
+        var frames = 0;
+        function poll() {
+          applyOffset();
+          frames++;
+          if (frames < 12) rafId = requestAnimationFrame(poll);
+        }
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(poll);
+      }
+
+      chatInput.addEventListener('focus', onInputFocus);
+      chatInput.addEventListener('blur', function () {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        // Reset after a tick so the transition looks clean
+        setTimeout(function () {
+          layout.style.setProperty('--kb-offset', '0px');
+        }, 50);
       });
     } catch (_) {}
   }
