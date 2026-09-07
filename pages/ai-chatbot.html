@@ -92,12 +92,14 @@
             <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
               <span class="model-option-dot dot-blue"></span>
               <span class="model-option-name">Shehbaz Sharif</span>
-              <span class="model-option-tag">Groq</span>
             </button>
             <button class="model-option" data-model="1" data-name="Imran Khan">
               <span class="model-option-dot dot-orange"></span>
               <span class="model-option-name">Imran Khan</span>
-              <span class="model-option-tag">Qwen</span>
+            </button>
+            <button class="model-option" data-model="2" data-name="Zardari">
+              <span class="model-option-dot dot-green"></span>
+              <span class="model-option-name">Zardari (Coding Agent)</span>
             </button>
           </div>
         </div>
@@ -122,6 +124,9 @@
             <button class="quick-btn" data-prompt="Help me plan a 2-week study schedule for my board exams">
               <span>Plan my study</span>
             </button>
+            <button class="quick-btn" data-prompt="Write a Python function to solve quadratic equations">
+              <span>Coding help</span>
+            </button>
           </div>
         </div>
         <div class="messages-list" id="messages-list"></div>
@@ -132,7 +137,12 @@
       </button>
 
       <div class="chat-input-area">
+        <div class="image-preview-bar" id="image-preview-bar" style="display:none"></div>
         <div class="chat-input-wrapper">
+          <input type="file" id="image-file-input" accept="image/*" multiple style="display:none">
+          <button class="input-btn btn-attach" id="btn-attach" title="Attach image (max 3)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          </button>
           <textarea class="chat-input" id="chat-input" placeholder="Ask Wassal AI anything..." rows="1"></textarea>
           <button class="input-btn btn-stop" id="btn-stop" title="Stop generating" style="display:none">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
@@ -185,6 +195,10 @@
           <button class="model-option" data-model="1" data-name="Imran Khan">
             <span class="model-option-dot dot-orange"></span>
             <span class="model-option-name">Imran Khan</span>
+          </button>
+          <button class="model-option" data-model="2" data-name="Zardari">
+            <span class="model-option-dot dot-green"></span>
+            <span class="model-option-name">Zardari (Coding Agent)</span>
           </button>
         </div>
       </div>
