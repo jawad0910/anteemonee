@@ -352,6 +352,19 @@
     </div>
   </footer>
 
+  <!-- Cookie Consent -->
+  <div class="cookie-consent" id="cookie-consent">
+    <div class="cookie-consent-inner">
+      <div class="cookie-consent-text">
+        <strong>We use cookies</strong> to improve your experience, remember your preferences, and analyze site traffic. By clicking "Accept", you consent to our use of cookies.
+      </div>
+      <div class="cookie-consent-actions">
+        <button class="cookie-btn cookie-btn-accept" id="cookie-accept">Accept</button>
+        <button class="cookie-btn cookie-btn-decline" id="cookie-decline">Decline</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="js/app.js"></script>
   <div class="coming-toast" id="coming-toast" role="status"></div>
@@ -371,6 +384,24 @@
           e.preventDefault();
           show(el.getAttribute('data-coming-soon') || 'Coming soon on website');
         });
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      if (localStorage.getItem('wassal_cookie_consent')) return;
+      var el = document.getElementById('cookie-consent');
+      if (!el) return;
+      setTimeout(function () { el.classList.add('show'); }, 1500);
+      document.getElementById('cookie-accept').addEventListener('click', function () {
+        localStorage.setItem('wassal_cookie_consent', 'accepted');
+        el.classList.remove('show');
+        setTimeout(function () { el.remove(); }, 400);
+      });
+      document.getElementById('cookie-decline').addEventListener('click', function () {
+        localStorage.setItem('wassal_cookie_consent', 'declined');
+        el.classList.remove('show');
+        setTimeout(function () { el.remove(); }, 400);
       });
     })();
   </script>
