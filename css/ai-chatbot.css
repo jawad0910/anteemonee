@@ -205,11 +205,12 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
 .model-option-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .model-option-dot.dot-blue { background: #3B82F6; }
 .model-option-dot.dot-orange { background: #F59E0B; }
+.model-option-dot.dot-green { background: #1FA055; }
 .model-option-name { flex: 1; font-weight: 500; }
 .model-option-tag {
   font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px;
   background: var(--tag-bg); color: var(--text-tertiary);
-  font-weight: 500; display: none;
+  font-weight: 500;
 }
 
 /* Chat Main */
@@ -419,6 +420,57 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
 .btn-stop { color: var(--error); }
 .btn-stop:hover { background: rgba(255, 102, 117, 0.1); }
 
+/* Image attach button */
+.btn-attach { color: var(--text-secondary); }
+.btn-attach:hover { background: var(--neo-highlight); color: var(--accent); }
+.btn-attach.has-images { color: var(--accent); }
+
+/* Image preview bar */
+.image-preview-bar {
+  display: flex; gap: 8px; padding: 8px 4px 4px;
+  overflow-x: auto; max-width: 800px; margin: 0 auto;
+  scrollbar-width: none;
+}
+.image-preview-bar::-webkit-scrollbar { display: none; }
+
+.preview-thumb {
+  position: relative; flex-shrink: 0;
+  width: 64px; height: 64px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--neo-shadow-sm);
+  border: 2px solid var(--border-glass);
+}
+.preview-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.preview-thumb .preview-remove {
+  position: absolute; top: 2px; right: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.65);
+  color: white;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1;
+  transition: background 0.15s;
+}
+.preview-thumb .preview-remove:hover { background: var(--error); }
+
+/* Message image thumbnails */
+.msg-images {
+  display: flex; gap: 6px; padding-bottom: 6px; flex-wrap: wrap;
+}
+.msg-image-thumb {
+  width: 80px; height: 80px; object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--neo-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.msg-image-thumb:hover { transform: scale(1.05); }
+
 .chat-disclaimer { text-align: center; font-size: 0.7rem; color: var(--text-tertiary); margin-top: 8px; max-width: 800px; margin-left: auto; margin-right: auto; }
 
 /* Token Exhausted Banner — neomorphic */
@@ -494,6 +546,8 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
   .welcome-title { font-size: 1.5rem; }
   .quick-actions { max-width: 100%; }
   .chat-input-area { padding: 10px 16px 14px; }
+  .image-preview-bar { max-width: 100%; }
+  .preview-thumb { width: 56px; height: 56px; }
   .messages-list > .message.user .msg-body { max-width: 85%; }
   .chat-welcome { padding: 24px 16px; }
   .mobile-sidebar-header { padding: 16px 20px; }
