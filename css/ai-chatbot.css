@@ -603,6 +603,21 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* ── iOS Safari keyboard helpers ── */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari: position:fixed doesn't reflow when keyboard opens.
+     Force the input area to pin to the bottom of the visual viewport. */
+  .chat-input-area {
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+  }
+  /* Prevent rubber-band overscroll behind the input */
+  .chat-content {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Quote modal — neomorphic */
 #quote-modal-overlay {
   position: fixed; inset: 0; z-index: 10000;
