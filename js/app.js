@@ -585,7 +585,9 @@ function setupMobileAccountDropdown() {
       const userId = item.getAttribute('data-user-id');
       const isCurrent = item.getAttribute('data-current') === 'true';
       if (!isCurrent) {
-        closeMobileSidebar();
+        const panel = document.querySelector('.mobile-menu');
+        if (panel) panel.classList.remove('open');
+        document.body.style.overflow = '';
         switchToAccount(userId);
       }
     });
@@ -594,7 +596,9 @@ function setupMobileAccountDropdown() {
   if (addBtn) {
     addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      closeMobileSidebar();
+      const panel = document.querySelector('.mobile-menu');
+      if (panel) panel.classList.remove('open');
+      document.body.style.overflow = '';
       addAnotherAccount();
     });
   }
