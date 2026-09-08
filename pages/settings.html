@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/settings.css">
+  <link rel="stylesheet" href="../css/style.css?v=3">
+  <link rel="stylesheet" href="../css/settings.css?v=3">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
 </head>
 <body>
@@ -132,6 +132,10 @@
         <button class="settings-nav-item" data-cat="connected">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           Connected Accounts
+        </button>
+        <button class="settings-nav-item" data-cat="accounts">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Accounts
         </button>
         <div class="settings-nav-divider"></div>
         <button class="settings-nav-item" data-cat="help">
@@ -269,6 +273,19 @@
           <div id="settings-connected-content"></div>
         </div>
 
+        <!-- ============ ACCOUNTS ============ -->
+        <div class="settings-category" data-cat="accounts">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>Accounts</h2>
+            <p>Manage accounts signed in on this browser.</p>
+          </div>
+          <div id="settings-accounts-content"></div>
+        </div>
+
         <!-- ============ ADS ============ -->
         <div class="settings-category" data-cat="ads">
           <button class="settings-mobile-back" onclick="showSidebar()">
@@ -330,7 +347,8 @@
   <div class="settings-toast" id="settings-toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/app.js"></script>
-  <script src="../js/settings.js"></script>
+  <script src="../js/account-manager.js?v=3"></script>
+  <script src="../js/app.js?v=3"></script>
+  <script src="../js/settings.js?v=3"></script>
 </body>
 </html>

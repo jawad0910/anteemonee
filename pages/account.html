@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=3">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
     .account-page {
@@ -747,7 +747,8 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/app.js"></script>
+  <script src="../js/account-manager.js?v=3"></script>
+  <script src="../js/app.js?v=3"></script>
   <script>
     let acctData = {
       profile: null,
@@ -1057,8 +1058,50 @@
             </div>
           </div>
         </div>
+
+        <div class="account-card" id="accounts-card">
+          <div class="card-header">
+            <span class="card-title">Accounts</span>
+          </div>
+          <div id="accounts-card-content" style="padding:0 16px 16px;"></div>
+        </div>
       `;
+      renderAccountsCard();
       } catch (e) { console.error('[ACC] renderCards error:', e); }
+    }
+
+    function renderAccountsCard() {
+      const container = document.getElementById('accounts-card-content');
+      if (!container || typeof AccountManager === 'undefined') return;
+
+      const accounts = AccountManager.getSavedAccounts();
+      const activeId = AccountManager.getActiveUserId();
+
+      let html = '';
+      accounts.forEach(acc => {
+        const isActive = acc.userId === activeId;
+        const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
+        html += `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${!isActive ? 'opacity:0.7;' : ''}">
+            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">
+              ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
+                ${acc.displayName || acc.email}
+                ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(31,160,85,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
+            </div>
+            ${!isActive ? `<button class="edit-btn" style="font-size:12px;padding:5px 10px;" onclick="switchToAccount('${acc.userId}')">Switch</button>` : ''}
+          </div>`;
+      });
+
+      if (AccountManager.hasAvailableSlot()) {
+        html += `<button class="edit-btn" style="width:100%;justify-content:center;margin-top:8px;padding:10px;" onclick="addAnotherAccount()">+ Add another account</button>`;
+      }
+
+      container.innerHTML = html;
     }
 
     function toggleSection(section) {
