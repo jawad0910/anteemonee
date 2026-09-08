@@ -302,6 +302,8 @@ ul { list-style: none; }
   transition: box-shadow 0.2s ease; margin-bottom: 4px; text-align: left;
 }
 .mobile-acc-toggle:hover { box-shadow: var(--neo-shadow-recessed); }
+.mobile-acc-toggle.no-dropdown { cursor: default; }
+.mobile-acc-toggle.no-dropdown:hover { box-shadow: var(--neo-shadow-recessed-sm); }
 .mobile-acc-toggle-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .mobile-acc-chevron {
   color: var(--text-muted); flex-shrink: 0; transition: transform 0.25s ease;
