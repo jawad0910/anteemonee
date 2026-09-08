@@ -1039,12 +1039,14 @@ function setupAddAccountBanner() {
     if (firstAccount) {
       const initial = (firstAccount.displayName || firstAccount.email || '?')[0].toUpperCase();
       banner.innerHTML = `
-        <div class="add-account-banner-avatar">
-          ${firstAccount.avatarUrl ? `<img src="${firstAccount.avatarUrl}" alt="">` : `<span>${initial}</span>`}
-        </div>
-        <div class="add-account-banner-info">
-          <span class="add-account-banner-name">Currently signed in as ${firstAccount.displayName || firstAccount.email}</span>
-          <span class="add-account-banner-email">${firstAccount.email}</span>
+        <div class="add-account-banner-top">
+          <div class="add-account-banner-avatar">
+            ${firstAccount.avatarUrl ? `<img src="${firstAccount.avatarUrl}" alt="">` : `<span>${initial}</span>`}
+          </div>
+          <div class="add-account-banner-info">
+            <span class="add-account-banner-name">Currently signed in as ${firstAccount.displayName || firstAccount.email}</span>
+            <span class="add-account-banner-email">${firstAccount.email}</span>
+          </div>
         </div>
         <button class="add-account-banner-back" onclick="window.location.href='${BASE}/index.html'">&larr; Back to ${firstAccount.displayName || 'account'}</button>
       `;
