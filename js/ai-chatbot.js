@@ -1012,7 +1012,17 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       if (conv) { conv.messages = [...messages]; }
       else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, messages: [...messages] });
     }
-    localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
+    try {
+      localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        // Strip images from old conversations to free space, then retry
+        for (let i = conversations.length - 1; i >= 0; i--) {
+          conversations[i].messages.forEach(m => { m.images = null; });
+        }
+        try { localStorage.setItem(chatStorageKey(), JSON.stringify(conversations)); } catch (_) {}
+      }
+    }
     renderHistory();
   }
 
@@ -1056,7 +1066,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     messagesList.innerHTML = '';
     welcome.style.display = 'none';
     messagesList.style.display = 'flex';
-    messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null }));
+    messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null }));
     scrollToBottom();
     renderHistory();
     closeMobileSidebar();
