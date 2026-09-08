@@ -513,7 +513,7 @@ function renderMobileProfile() {
   const accounts = AccountManager.getSavedAccounts();
 
   let accountsListHTML = '';
-  accounts.forEach(acc => {
+  accounts.filter(acc => acc.userId !== currentUser.id).forEach(acc => {
     const isCurrent = acc.userId === currentUser.id;
     const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
     accountsListHTML += `
@@ -530,11 +530,13 @@ function renderMobileProfile() {
     `;
   });
 
+  const otherAccounts = accounts.filter(a => a.userId !== currentUser.id);
   const hasSlot = AccountManager.hasAvailableSlot();
+  const showDropdown = otherAccounts.length > 0 || hasSlot;
 
   container.innerHTML = `
-    <div class="mobile-acc-dropdown" id="mobile-acc-dropdown">
-      <button class="mobile-acc-toggle" id="mobile-acc-toggle">
+    <div class="mobile-acc-dropdown ${showDropdown ? '' : 'mobile-acc-single'}" id="mobile-acc-dropdown">
+      <button class="mobile-acc-toggle ${showDropdown ? '' : 'no-dropdown'}" id="mobile-acc-toggle">
         <div class="mobile-acc-toggle-left">
           <div class="mobile-avatar">
             <img src="${imgUrl}" alt="${username}" class="mobile-avatar-img"
@@ -546,7 +548,7 @@ function renderMobileProfile() {
             <span class="mobile-email">${currentUser?.email || ''}</span>
           </div>
         </div>
-        <svg class="mobile-acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        ${showDropdown ? '<svg class="mobile-acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' : ''}
       </button>
       <div class="mobile-acc-list" id="mobile-acc-list">
         ${accountsListHTML}
