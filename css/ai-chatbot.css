@@ -580,6 +580,32 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
 }
 .msg-image-thumb:hover { transform: scale(1.05); }
 
+/* Image lightbox */
+.image-lightbox {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out;
+  animation: lbFadeIn 0.2s ease;
+}
+.image-lightbox.active { display: flex; }
+.image-lightbox img {
+  max-width: 92vw; max-height: 90vh;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  object-fit: contain;
+}
+.image-lightbox .lb-close {
+  position: absolute; top: 16px; right: 20px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: none; cursor: pointer; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.image-lightbox .lb-close:hover { background: rgba(255,255,255,0.3); }
+@keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
 .chat-disclaimer { text-align: center; font-size: 0.7rem; color: var(--text-tertiary); margin-top: 8px; max-width: 800px; margin-left: auto; margin-right: auto; }
 
 /* Token Exhausted Banner — neomorphic */
