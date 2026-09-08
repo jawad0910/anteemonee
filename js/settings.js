@@ -703,7 +703,7 @@ function renderAI() {
         <div class="setting-title">Tell the AI how you want it to behave</div>
         <div class="setting-desc">E.g. "I'm a visual learner, use diagrams. Be friendly. Speak simply. I prefer Roman Urdu for chemistry terms."</div>
       </div>
-      <textarea id="ai-personalization-input" class="setting-input" rows="4" placeholder="Type how you want your AI to respond, teach, explain..."></textarea>
+      <textarea id="ai-personalization-input" class="setting-input" rows="6" placeholder="Type how you want your AI to respond, teach, explain..." style="font-size:13px;min-height:120px;width:100%;max-width:none;"></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span id="ai-personalization-status" style="font-size:11px;color:var(--text-muted);"></span>
         <button id="btn-save-personalization" class="btn-settings btn-settings-primary">Save</button>
