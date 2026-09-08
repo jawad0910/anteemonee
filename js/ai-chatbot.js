@@ -465,6 +465,31 @@
       });
     }
 
+    // ── Image lightbox ──
+    const lightbox = document.getElementById('image-lightbox');
+    const lbImg = document.getElementById('lb-img');
+    const lbClose = document.getElementById('lb-close');
+
+    messagesList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('msg-image-thumb')) {
+        lbImg.src = e.target.src;
+        lightbox.classList.add('active');
+      }
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      lbImg.src = '';
+    }
+
+    lbClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
     document.getElementById('btn-new-chat').addEventListener('click', newChat);
     document.getElementById('btn-new-chat-mobile').addEventListener('click', () => { closeMobileSidebar(); newChat(); });
 
