@@ -522,7 +522,7 @@ function renderMobileProfile() {
           ${acc.imgUrl ? `<img src="${acc.imgUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback" style="display:none">${initial}</div>` : `<div class="avatar-fallback">${initial}</div>`}
         </div>
         <div class="mobile-acc-info">
-          <span class="mobile-acc-name">${acc.displayName || 'User'}</span>
+          <span class="mobile-acc-name">${acc.username || acc.displayName || 'User'}</span>
           <span class="mobile-acc-email">${acc.email || ''}</span>
         </div>
         ${isCurrent ? '<svg class="mobile-acc-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
@@ -1057,7 +1057,7 @@ function setupAddAccountBanner() {
       html += '<div style="margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Continue as</div>';
       html += '<div style="display:flex;flex-direction:column;gap:6px;">';
       accounts.forEach(acc => {
-        const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
+    const initial = (acc.username || acc.displayName || acc.email || '?')[0].toUpperCase();
         html += `
           <button class="switcher-account-row" style="border:1px solid var(--border);background:var(--bg-card);" onclick="quickLogin('${acc.userId}')">
             <div class="switcher-avatar">
