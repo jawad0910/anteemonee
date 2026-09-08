@@ -1048,7 +1048,9 @@ function setupAddAccountBanner() {
             <span class="add-account-banner-email">${firstAccount.email}</span>
           </div>
         </div>
-        <button class="add-account-banner-back" onclick="window.location.href='${BASE}/index.html'">&larr; Back to ${firstAccount.displayName || 'account'}</button>
+        <div class="add-account-banner-back-row">
+          <button class="add-account-banner-back" onclick="window.location.href='${BASE}/index.html'">&larr; Back to ${firstAccount.displayName || 'account'}</button>
+        </div>
       `;
       banner.style.display = 'flex';
     }
