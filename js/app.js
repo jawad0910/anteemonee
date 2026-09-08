@@ -517,7 +517,7 @@ function renderMobileProfile() {
     const isCurrent = acc.userId === currentUser.id;
     const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
     accountsListHTML += `
-      <div class="mobile-acc-item ${isCurrent ? 'mobile-acc-current' : ''}" onclick="${isCurrent ? '' : `closeMobileSidebar(); switchToAccount('${acc.userId}')`}">
+      <div class="mobile-acc-item ${isCurrent ? 'mobile-acc-current' : ''}" data-user-id="${acc.userId}" data-current="${isCurrent}">
         <div class="mobile-acc-avatar">
           ${acc.imgUrl ? `<img src="${acc.imgUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback" style="display:none">${initial}</div>` : `<div class="avatar-fallback">${initial}</div>`}
         </div>
@@ -533,8 +533,8 @@ function renderMobileProfile() {
   const hasSlot = AccountManager.hasAvailableSlot();
 
   container.innerHTML = `
-    <div class="mobile-acc-dropdown">
-      <button class="mobile-acc-toggle" onclick="document.getElementById('mobile-profile-section').classList.toggle('open')">
+    <div class="mobile-acc-dropdown" id="mobile-acc-dropdown">
+      <button class="mobile-acc-toggle" id="mobile-acc-toggle">
         <div class="mobile-acc-toggle-left">
           <div class="mobile-avatar">
             <img src="${imgUrl}" alt="${username}" class="mobile-avatar-img"
@@ -548,20 +548,54 @@ function renderMobileProfile() {
         </div>
         <svg class="mobile-acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="mobile-acc-list">
+      <div class="mobile-acc-list" id="mobile-acc-list">
         ${accountsListHTML}
         ${hasSlot ? `
         <div class="mobile-acc-divider"></div>
-        <button class="mobile-acc-item mobile-acc-add" onclick="closeMobileSidebar(); addAnotherAccount();">
+        <div class="mobile-acc-item mobile-acc-add" id="mobile-acc-add">
           <div class="mobile-acc-avatar mobile-acc-add-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </div>
           <span class="mobile-acc-name">Add another account</span>
-        </button>
+        </div>
         ` : ''}
       </div>
     </div>
   `;
+
+  setupMobileAccountDropdown();
+}
+
+function setupMobileAccountDropdown() {
+  const toggle = document.getElementById('mobile-acc-toggle');
+  const dropdown = document.getElementById('mobile-acc-dropdown');
+  const addBtn = document.getElementById('mobile-acc-add');
+  if (!toggle || !dropdown) return;
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  dropdown.querySelectorAll('.mobile-acc-item[data-user-id]').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const userId = item.getAttribute('data-user-id');
+      const isCurrent = item.getAttribute('data-current') === 'true';
+      if (!isCurrent) {
+        closeMobileSidebar();
+        switchToAccount(userId);
+      }
+    });
+  });
+
+  if (addBtn) {
+    addBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeMobileSidebar();
+      addAnotherAccount();
+    });
+  }
 }
 
 /* =========================
