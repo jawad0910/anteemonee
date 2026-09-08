@@ -664,7 +664,7 @@ async function handleLogout() {
 
 let _switchingAccount = false;
 
-async function switchToAccount(userId) {
+async function switchToAccount(userId, options = {}) {
   if (_switchingAccount) return;
   _switchingAccount = true;
 
@@ -675,6 +675,7 @@ async function switchToAccount(userId) {
     if (!accountData || !accountData.session) {
       hideAccountSwitchOverlay();
       _switchingAccount = false;
+      if (options.silent) throw new Error('NO_SESSION');
       const accounts = AccountManager.getSavedAccounts();
       const acc = accounts.find(a => a.userId === userId);
       if (acc) showSessionExpiredModal(acc);
@@ -696,6 +697,7 @@ async function switchToAccount(userId) {
         console.error('[AccountSwitch] setSession failed:', retryError);
         hideAccountSwitchOverlay();
         _switchingAccount = false;
+        if (options.silent) throw new Error('SESSION_EXPIRED');
         const accounts = AccountManager.getSavedAccounts();
         const acc = accounts.find(a => a.userId === userId);
         showSessionExpiredModal(acc || { userId, email: 'Unknown', displayName: 'Unknown' });
@@ -720,6 +722,8 @@ async function switchToAccount(userId) {
     console.error('[AccountSwitch] failed:', e);
     hideAccountSwitchOverlay();
     _switchingAccount = false;
+    throw e;
+  }
   }
 }
 
@@ -1085,8 +1089,16 @@ function setupAddAccountBanner() {
 }
 
 async function quickLogin(userId) {
-  // Always try to switch — Supabase can refresh expired sessions with a valid refresh token
-  await switchToAccount(userId);
+  // Already logged in as this account — just go home
+  if (currentUser && currentUser.id === userId) {
+    window.location.href = BASE + '/index.html';
+    return;
+  }
+  try {
+    await switchToAccount(userId, { silent: true });
+  } catch (e) {
+    window.location.href = BASE + '/pages/login.html';
+  }
 }
 
 /* ---- LOGIN ---- */
