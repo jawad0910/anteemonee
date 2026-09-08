@@ -981,7 +981,7 @@ body { overflow-x: hidden; }
   display: flex; align-items: center; gap: 12px;
   padding: 12px 16px; border-radius: var(--radius-md);
   background: var(--accent-soft); border: 1px solid rgba(31,160,85,0.2);
-  margin-bottom: 20px; flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 .add-account-banner-avatar {
   width: 36px; height: 36px; border-radius: 50%;
@@ -991,18 +991,19 @@ body { overflow-x: hidden; }
 }
 .add-account-banner-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .add-account-banner-info { flex: 1; min-width: 0; }
-.add-account-banner-name { display: block; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.add-account-banner-email { display: block; font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.add-account-banner-name { display: block; font-size: 14px; font-weight: 600; color: var(--text); }
+.add-account-banner-email { display: block; font-size: 12px; color: var(--text-secondary); }
 .add-account-banner-back {
   padding: 6px 14px; border-radius: 8px; border: none;
   background: var(--accent); color: #fff; font-size: 12px; font-weight: 600;
   cursor: pointer; white-space: nowrap; font-family: inherit;
-  transition: all 0.15s; width: 100%; text-align: center; margin-top: 4px;
+  transition: all 0.15s; flex-shrink: 0;
 }
 .add-account-banner-back:hover { opacity: 0.9; transform: translateY(-1px); }
-@media (min-width: 481px) {
-  .add-account-banner { flex-wrap: nowrap; }
-  .add-account-banner-back { width: auto; margin-top: 0; flex-shrink: 0; }
+@media (max-width: 480px) {
+  .add-account-banner { flex-wrap: wrap; }
+  .add-account-banner-info { flex-basis: calc(100% - 48px); }
+  .add-account-banner-back { width: 100%; text-align: center; margin-top: 4px; }
 }
 
 /* Mobile responsive */
