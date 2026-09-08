@@ -724,7 +724,6 @@ async function switchToAccount(userId, options = {}) {
     _switchingAccount = false;
     throw e;
   }
-  }
 }
 
 async function addAnotherAccount() {
