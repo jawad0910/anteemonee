@@ -984,6 +984,7 @@ body { overflow-x: hidden; }
   margin-bottom: 20px;
 }
 .add-account-banner-top { display: flex; align-items: center; gap: 12px; }
+.add-account-banner-back-row { padding-left: 48px; }
 .add-account-banner-avatar {
   width: 36px; height: 36px; border-radius: 50%;
   overflow: hidden; flex-shrink: 0;
