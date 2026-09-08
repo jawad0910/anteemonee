@@ -312,7 +312,8 @@
       if (studyTimerAccumulated > 0) {
         // Save to localStorage as fallback (sendBeacon can't carry auth headers)
         try {
-          const key = 'wassal_study_time_pending';
+          const userId = (typeof currentUser !== 'undefined' && currentUser?.id) ? currentUser.id : 'anon';
+          const key = `wassal_study_time_pending_${userId}`;
           const prev = parseInt(localStorage.getItem(key) || '0', 10);
           localStorage.setItem(key, String(prev + studyTimerAccumulated));
           studyTimerAccumulated = 0;
@@ -325,10 +326,12 @@
 
   async function flushPendingStudyTime() {
     try {
-      const pending = parseInt(localStorage.getItem('wassal_study_time_pending') || '0', 10);
+      const userId = (typeof currentUser !== 'undefined' && currentUser?.id) ? currentUser.id : 'anon';
+      const key = `wassal_study_time_pending_${userId}`;
+      const pending = parseInt(localStorage.getItem(key) || '0', 10);
       if (pending > 0) {
         await db.rpc('add_study_time', { p_seconds: pending });
-        localStorage.removeItem('wassal_study_time_pending');
+        localStorage.removeItem(key);
       }
     } catch (_) {}
   }
@@ -1454,10 +1457,14 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   // ── Session Management ──
   function getAccessToken() {
     try {
-      const raw = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return parsed?.access_token || null;
+      // Use Supabase client to get the current session (always the active account)
+      if (typeof db !== 'undefined' && db && db.auth) {
+        // Synchronous check of the in-memory session cache
+        const sessionStr = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
+        if (sessionStr) {
+          const parsed = JSON.parse(sessionStr);
+          return parsed?.access_token || null;
+        }
       }
     } catch (_) {}
     return null;

@@ -31,6 +31,7 @@ async function initSettings() {
   await renderSubscription();
   await renderCoupons();
   renderConnected();
+  renderAccounts();
   renderAds();
   renderHelp();
   renderAbout();
@@ -1434,6 +1435,206 @@ async function disconnectProvider(provider, identity) {
 async function refreshUser() {
   const { data: { user } } = await db.auth.getUser();
   if (user) currentUser = user;
+}
+
+/* =========================
+   9b. ACCOUNTS (Multi-Account)
+   ========================= */
+
+function renderAccounts() {
+  const c = document.getElementById('settings-accounts-content');
+  if (!c) return;
+  c.innerHTML = '';
+
+  const accounts = AccountManager.getSavedAccounts();
+  const activeId = AccountManager.getActiveUserId();
+
+  // Accounts list card
+  const listCard = document.createElement('div');
+  listCard.className = 'settings-card';
+
+  let accountsHtml = '<div class="settings-card-header">SIGNED IN ACCOUNTS</div>';
+
+  accounts.forEach(acc => {
+    const isActive = acc.userId === activeId;
+    const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
+    accountsHtml += `
+      <div class="setting-row" style="gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">
+            ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
+          </div>
+          <div style="min-width:0;">
+            <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
+              ${acc.displayName || acc.email}
+              ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(31,160,85,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
+              ${acc.sessionStatus === 'expired' ? '<span style="font-size:11px;font-weight:600;color:#ff6675;background:rgba(255,102,117,0.1);padding:1px 6px;border-radius:6px;">Expired</span>' : ''}
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${!isActive ? `<button class="btn-settings btn-settings-secondary" style="font-size:12px;padding:6px 12px;" onclick="settingsSwitchAccount('${acc.userId}')">Switch</button>` : ''}
+          ${!isActive ? `<button class="btn-settings btn-settings-danger" style="font-size:12px;padding:6px 12px;" onclick="settingsRemoveAccount('${acc.userId}')">Remove</button>` : ''}
+        </div>
+      </div>`;
+  });
+
+  listCard.innerHTML = accountsHtml;
+  c.appendChild(listCard);
+
+  // Actions card
+  const actionsCard = document.createElement('div');
+  actionsCard.className = 'settings-card';
+  let actionsHtml = '<div class="settings-card-header">ACTIONS</div>';
+
+  if (AccountManager.hasAvailableSlot()) {
+    actionsHtml += `
+      <div class="setting-row clickable" onclick="settingsAddAccount()">
+        <div class="setting-info">
+          <div class="setting-title" style="color:var(--accent);">+ Add another account</div>
+          <div class="setting-desc">Sign in to another Wassal account on this browser</div>
+        </div>
+      </div>`;
+  } else {
+    actionsHtml += `
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-title" style="color:var(--text-secondary);">Account limit reached</div>
+          <div class="setting-desc">Maximum 3 accounts per browser. Remove an account to add a new one.</div>
+        </div>
+      </div>`;
+  }
+
+  actionsHtml += `
+    <div class="setting-row clickable" onclick="settingsLogoutCurrent()">
+      <div class="setting-info">
+        <div class="setting-title">Log out current account</div>
+        <div class="setting-desc">Sign out of ${accounts.find(a => a.userId === activeId)?.displayName || accounts.find(a => a.userId === activeId)?.email || 'this account'}</div>
+      </div>
+    </div>
+    <div class="setting-row clickable" onclick="settingsLogoutAll()">
+      <div class="setting-info">
+        <div class="setting-title" style="color:#ff6675;">Log out of all accounts</div>
+        <div class="setting-desc">Remove all saved accounts from this browser</div>
+      </div>
+    </div>`;
+
+  actionsCard.innerHTML = actionsHtml;
+  c.appendChild(actionsCard);
+}
+
+async function settingsSwitchAccount(userId) {
+  const modal = document.createElement('div');
+  modal.className = 'account-modal-overlay';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="account-modal">
+      <div class="account-modal-header">
+        <h3>Switch account</h3>
+        <button class="account-modal-close" onclick="this.closest('.account-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="account-modal-body">
+        <p>Switching will reload the page with the selected account's data.</p>
+      </div>
+      <div class="account-modal-footer">
+        <button class="btn-settings btn-settings-secondary" onclick="this.closest('.account-modal-overlay').remove()">Cancel</button>
+        <button class="btn-settings btn-settings-primary" onclick="this.closest('.account-modal-overlay').remove(); switchToAccount('${userId}')">Switch</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+function settingsRemoveAccount(userId) {
+  const accounts = AccountManager.getSavedAccounts();
+  const acc = accounts.find(a => a.userId === userId);
+  if (!acc) return;
+
+  const modal = document.createElement('div');
+  modal.className = 'account-modal-overlay';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="account-modal">
+      <div class="account-modal-header">
+        <h3>Remove account</h3>
+        <button class="account-modal-close" onclick="this.closest('.account-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="account-modal-body">
+        <p>Remove <strong>${acc.displayName || acc.email}</strong> from this browser?</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--text-secondary);">This only removes the saved login from this browser. The Wassal account and all its data remain untouched.</p>
+      </div>
+      <div class="account-modal-footer">
+        <button class="btn-settings btn-settings-secondary" onclick="this.closest('.account-modal-overlay').remove()">Cancel</button>
+        <button class="btn-settings btn-settings-danger" onclick="this.closest('.account-modal-overlay').remove(); doRemoveAccount('${userId}')">Remove</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+async function doRemoveAccount(userId) {
+  const result = await AccountManager.removeAccount(userId);
+  if (result.removedActive && result.nextAccount) {
+    await switchToAccount(result.nextAccount.userId);
+  } else {
+    renderAccounts();
+    showToastSettings('Account removed from this browser');
+  }
+}
+
+function settingsAddAccount() {
+  addAnotherAccount();
+}
+
+async function settingsLogoutCurrent() {
+  const accounts = AccountManager.getSavedAccounts();
+  const activeId = AccountManager.getActiveUserId();
+  const active = accounts.find(a => a.userId === activeId);
+
+  const modal = document.createElement('div');
+  modal.className = 'account-modal-overlay';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="account-modal">
+      <div class="account-modal-header">
+        <h3>Log out</h3>
+        <button class="account-modal-close" onclick="this.closest('.account-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="account-modal-body">
+        <p>Log out of <strong>${active?.displayName || active?.email || 'this account'}</strong>?</p>
+        ${accounts.length > 1 ? `<p style="margin-top:8px;font-size:13px;color:var(--text-secondary);">Other saved accounts will remain available.</p>` : ''}
+      </div>
+      <div class="account-modal-footer">
+        <button class="btn-settings btn-settings-secondary" onclick="this.closest('.account-modal-overlay').remove()">Cancel</button>
+        <button class="btn-settings btn-settings-primary" onclick="this.closest('.account-modal-overlay').remove(); handleLogout()">Log out</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+function settingsLogoutAll() {
+  const modal = document.createElement('div');
+  modal.className = 'account-modal-overlay';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="account-modal">
+      <div class="account-modal-header">
+        <h3>Log out of all accounts</h3>
+        <button class="account-modal-close" onclick="this.closest('.account-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="account-modal-body">
+        <p>Log out of all accounts on this browser?</p>
+        <p style="margin-top:8px;font-size:13px;color:var(--text-secondary);">This will remove all saved accounts. You'll need to sign in again.</p>
+      </div>
+      <div class="account-modal-footer">
+        <button class="btn-settings btn-settings-secondary" onclick="this.closest('.account-modal-overlay').remove()">Cancel</button>
+        <button class="btn-settings btn-settings-danger" onclick="this.closest('.account-modal-overlay').remove(); handleLogoutAllAccounts()">Log out all</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
 
 /* =========================

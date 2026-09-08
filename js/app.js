@@ -65,6 +65,7 @@ async function initApp() {
     updateAuthUI();
     return;
   }
+  await AccountManager.init();
   await checkAuth();
   checkCookieConsent();
   loadHomepageData();
@@ -187,9 +188,10 @@ async function loadHomepageData() {
     // Study time from profiles.study_time_seconds + pending localStorage
     if (profileRes && typeof profileRes.study_time_seconds === 'number') {
       let totalSec = profileRes.study_time_seconds;
-      // Add any pending seconds saved on chatbot page unload
+      // Add any pending seconds saved on chatbot page unload (scoped per user)
       try {
-        const pending = parseInt(localStorage.getItem('wassal_study_time_pending') || '0', 10);
+        const pendingKey = currentUser ? `wassal_study_time_pending_${currentUser.id}` : 'wassal_study_time_pending';
+        const pending = parseInt(localStorage.getItem(pendingKey) || '0', 10);
         if (pending > 0) totalSec += pending;
       } catch (_) {}
       const h = Math.floor(totalSec / 3600);
@@ -271,7 +273,12 @@ function startCreditsCountdown(periodEndIso) {
 
 function setupTheme() {
   try {
-    const saved = localStorage.getItem('wassal_theme');
+    // Try user-scoped theme first, then fall back to generic
+    let saved = null;
+    if (typeof currentUser !== 'undefined' && currentUser?.id) {
+      saved = localStorage.getItem(`wassal_theme_${currentUser.id}`);
+    }
+    if (!saved) saved = localStorage.getItem('wassal_theme');
     if (saved) {
       document.documentElement.setAttribute('data-theme', saved);
     } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
@@ -284,7 +291,13 @@ function setupTheme() {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    try { localStorage.setItem('wassal_theme', next); } catch (err) {}
+    try {
+      // Save per-user if logged in, otherwise generic
+      if (typeof currentUser !== 'undefined' && currentUser?.id) {
+        localStorage.setItem(`wassal_theme_${currentUser.id}`, next);
+      }
+      localStorage.setItem('wassal_theme', next); // fallback for pre-auth
+    } catch (err) {}
   });
 }
 
@@ -321,6 +334,8 @@ async function checkAuth() {
     if (session?.user) {
       currentUser = session.user;
       await loadProfile();
+      // Save/refresh this session in the multi-account store
+      await AccountManager.saveCurrentSession(session.user, session);
     }
   } catch (e) {
     console.error('Auth check failed:', e);
@@ -430,6 +445,7 @@ function renderProfileAvatar() {
   const container = document.getElementById('profile-avatar-container');
   if (!container) return;
   const { fullName, username, imgUrl } = getDisplayUser();
+  const accountCount = AccountManager.getAccountCount();
 
   container.innerHTML = `
     <button class="profile-btn" onclick="toggleProfileDropdown()" aria-label="Profile menu">
@@ -452,6 +468,19 @@ function renderProfileAvatar() {
         </div>
       </div>
       <div class="dropdown-divider"></div>
+      ${accountCount > 1 ? `
+        <button class="dropdown-item" onclick="toggleProfileDropdown(); showAccountSwitcherModal();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Switch account
+        </button>
+      ` : ''}
+      ${AccountManager.hasAvailableSlot() ? `
+        <button class="dropdown-item" onclick="toggleProfileDropdown(); addAnotherAccount();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add another account
+        </button>
+      ` : ''}
+      ${accountCount > 1 || AccountManager.hasAvailableSlot() ? '<div class="dropdown-divider"></div>' : ''}
       <a href="${BASE}/pages/account.html" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Account
@@ -481,17 +510,55 @@ function renderMobileProfile() {
   const container = document.getElementById('mobile-profile-section');
   if (!container || !currentUser) return;
   const { username, imgUrl } = getDisplayUser();
+  const accounts = AccountManager.getSavedAccounts();
+
+  let accountsListHTML = '';
+  accounts.forEach(acc => {
+    const isCurrent = acc.userId === currentUser.id;
+    const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
+    accountsListHTML += `
+      <div class="mobile-acc-item ${isCurrent ? 'mobile-acc-current' : ''}" onclick="${isCurrent ? '' : `closeMobileSidebar(); switchToAccount('${acc.userId}')`}">
+        <div class="mobile-acc-avatar">
+          ${acc.imgUrl ? `<img src="${acc.imgUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback" style="display:none">${initial}</div>` : `<div class="avatar-fallback">${initial}</div>`}
+        </div>
+        <div class="mobile-acc-info">
+          <span class="mobile-acc-name">${acc.displayName || 'User'}</span>
+          <span class="mobile-acc-email">${acc.email || ''}</span>
+        </div>
+        ${isCurrent ? '<svg class="mobile-acc-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+      </div>
+    `;
+  });
+
+  const hasSlot = AccountManager.hasAvailableSlot();
 
   container.innerHTML = `
-    <div class="mobile-profile-info">
-      <div class="mobile-avatar">
-        <img src="${imgUrl}" alt="${username}" class="mobile-avatar-img"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-        <div class="avatar-fallback mobile-avatar-fallback" style="${imgUrl ? 'display:none' : ''}">${username.charAt(0).toUpperCase()}</div>
-      </div>
-      <div class="mobile-profile-text">
-        <span class="mobile-username">${username}</span>
-        <span class="mobile-email">${currentUser?.email || ''}</span>
+    <div class="mobile-acc-dropdown">
+      <button class="mobile-acc-toggle" onclick="document.getElementById('mobile-profile-section').classList.toggle('open')">
+        <div class="mobile-acc-toggle-left">
+          <div class="mobile-avatar">
+            <img src="${imgUrl}" alt="${username}" class="mobile-avatar-img"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+            <div class="avatar-fallback mobile-avatar-fallback" style="${imgUrl ? 'display:none' : ''}">${username.charAt(0).toUpperCase()}</div>
+          </div>
+          <div class="mobile-profile-text">
+            <span class="mobile-username">${username}</span>
+            <span class="mobile-email">${currentUser?.email || ''}</span>
+          </div>
+        </div>
+        <svg class="mobile-acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="mobile-acc-list">
+        ${accountsListHTML}
+        ${hasSlot ? `
+        <div class="mobile-acc-divider"></div>
+        <button class="mobile-acc-item mobile-acc-add" onclick="closeMobileSidebar(); addAnotherAccount();">
+          <div class="mobile-acc-avatar mobile-acc-add-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <span class="mobile-acc-name">Add another account</span>
+        </button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -532,13 +599,304 @@ async function handleLogout() {
     } catch (_) {}
     sessionStorage.removeItem('wassal_session_id');
     stopActivityTracking();
+
+    // Remove this account from multi-account store
+    const removed = await AccountManager.removeAccount(currentUser?.id);
+
+    await db.auth.signOut();
+    currentUser = null;
+    currentProfile = null;
+
+    // If other accounts remain, switch to the next one
+    if (removed && removed.nextAccount) {
+      await switchToAccount(removed.nextAccount.userId);
+    } else {
+      window.location.href = BASE + '/index.html';
+    }
+  } catch (e) {
+    console.error('Logout failed:', e);
+  }
+}
+
+/* =========================
+   MULTI-ACCOUNT SWITCHING
+   ========================= */
+
+let _switchingAccount = false;
+
+async function switchToAccount(userId) {
+  if (_switchingAccount) return;
+  _switchingAccount = true;
+
+  try {
+    showAccountSwitchOverlay();
+
+    const accountData = await AccountManager.switchAccount(userId);
+    if (!accountData || !accountData.session) {
+      hideAccountSwitchOverlay();
+      _switchingAccount = false;
+      const accounts = AccountManager.getSavedAccounts();
+      const acc = accounts.find(a => a.userId === userId);
+      if (acc) showSessionExpiredModal(acc);
+      return;
+    }
+
+    // Apply the session — Supabase will auto-refresh if needed
+    const { error } = await db.auth.setSession({
+      access_token: accountData.session.access_token,
+      refresh_token: accountData.session.refresh_token,
+    });
+
+    if (error) {
+      // Try with just refresh token (Supabase can issue new access token)
+      const { error: retryError } = await db.auth.setSession({
+        refresh_token: accountData.session.refresh_token,
+      });
+      if (retryError) {
+        console.error('[AccountSwitch] setSession failed:', retryError);
+        hideAccountSwitchOverlay();
+        _switchingAccount = false;
+        const accounts = AccountManager.getSavedAccounts();
+        const acc = accounts.find(a => a.userId === userId);
+        showSessionExpiredModal(acc || { userId, email: 'Unknown', displayName: 'Unknown' });
+        return;
+      }
+    }
+
+    // Refresh global state
+    currentUser = (await db.auth.getUser()).data.user;
+    currentProfile = null;
+    await loadProfile();
+
+    // Update saved account metadata with fresh info
+    await AccountManager.saveCurrentSession(currentUser, (await db.auth.getSession()).data.session);
+
+    sessionStorage.removeItem('wassal_session_id');
+    updateAuthUI();
+    hideAccountSwitchOverlay();
+    _switchingAccount = false;
+    window.location.reload();
+  } catch (e) {
+    console.error('[AccountSwitch] failed:', e);
+    hideAccountSwitchOverlay();
+    _switchingAccount = false;
+  }
+}
+
+async function addAnotherAccount() {
+  if (!AccountManager.hasAvailableSlot()) {
+    showAccountLimitModal();
+    return;
+  }
+
+  // Save current URL so we can return after adding
+  const returnTo = window.location.href;
+  sessionStorage.setItem('wassal_add_account_return', returnTo);
+  sessionStorage.setItem('wassal_adding_account', 'true');
+
+  // Redirect to login page in "add account" mode
+  window.location.href = BASE + '/pages/login.html?mode=add_account';
+}
+
+async function logoutAllAccounts() {
+  try {
+    // Clean up session activity
+    const sid = sessionStorage.getItem('wassal_session_id');
+    if (sid && currentUser && db) {
+      try {
+        await withTimeout(
+          db.from('session_activity').delete().eq('id', sid).eq('user_id', currentUser.id),
+          5000, 'logout-cleanup'
+        );
+      } catch (_) {}
+    }
+    sessionStorage.removeItem('wassal_session_id');
+    stopActivityTracking();
+
+    await AccountManager.logoutAll();
     await db.auth.signOut();
     currentUser = null;
     currentProfile = null;
     window.location.href = BASE + '/index.html';
   } catch (e) {
-    console.error('Logout failed:', e);
+    console.error('[LogoutAll] failed:', e);
   }
+}
+
+function showAccountSwitchOverlay() {
+  let overlay = document.getElementById('account-switch-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'account-switch-overlay';
+    overlay.innerHTML = `
+      <div class="switch-overlay-content">
+        <div class="switch-spinner"></div>
+        <div class="switch-text">Switching account...</div>
+      </div>`;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+
+function hideAccountSwitchOverlay() {
+  const overlay = document.getElementById('account-switch-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function showAccountLimitModal() {
+  const accounts = AccountManager.getSavedAccounts();
+  let modal = document.getElementById('account-limit-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'account-limit-modal';
+    modal.className = 'account-modal-overlay';
+    modal.innerHTML = `
+      <div class="account-modal">
+        <div class="account-modal-header">
+          <h3>Account limit reached</h3>
+          <button class="account-modal-close" onclick="closeAccountLimitModal()">&times;</button>
+        </div>
+        <div class="account-modal-body">
+          <p>You can have up to 3 accounts signed in on this browser.</p>
+          <div class="account-modal-accounts" id="limit-modal-accounts"></div>
+        </div>
+        <div class="account-modal-footer">
+          <button class="btn-settings btn-settings-secondary" onclick="closeAccountLimitModal()">Close</button>
+          <button class="btn-settings btn-settings-primary" onclick="closeAccountLimitModal(); window.location.href='${BASE}/pages/settings.html#accounts'">Manage accounts</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  const listEl = modal.querySelector('#limit-modal-accounts');
+  listEl.innerHTML = accounts.map(a => `
+    <div class="limit-account-row">
+      <div class="limit-account-avatar">${a.avatarUrl ? `<img src="${a.avatarUrl}" alt="">` : `<span>${(a.displayName || a.email || '?')[0].toUpperCase()}</span>`}</div>
+      <div class="limit-account-info">
+        <span class="limit-account-name">${a.displayName || a.email}</span>
+        <span class="limit-account-email">${a.email}</span>
+      </div>
+    </div>
+  `).join('');
+
+  modal.style.display = 'flex';
+}
+
+function closeAccountLimitModal() {
+  const modal = document.getElementById('account-limit-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function showSessionExpiredModal(account) {
+  let modal = document.getElementById('session-expired-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'session-expired-modal';
+    modal.className = 'account-modal-overlay';
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+  }
+
+  const initial = (account.displayName || account.email || '?')[0].toUpperCase();
+  modal.innerHTML = `
+    <div class="account-modal">
+      <div class="account-modal-header">
+        <h3>Session expired</h3>
+        <button class="account-modal-close" onclick="document.getElementById('session-expired-modal').remove()">&times;</button>
+      </div>
+      <div class="account-modal-body">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;">
+            ${account.avatarUrl ? `<img src="${account.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);">${account.displayName || account.email}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">${account.email}</div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);">The session for this account has expired. Please sign in again to continue.</p>
+      </div>
+      <div class="account-modal-footer">
+        <button class="btn-settings btn-settings-secondary" onclick="document.getElementById('session-expired-modal').remove()">Cancel</button>
+        <button class="btn-settings btn-settings-primary" onclick="document.getElementById('session-expired-modal').remove(); reAuthAccount('${account.userId}')">Sign in again</button>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+async function reAuthAccount(userId) {
+  // Remove the expired account, then redirect to login in add-account mode
+  await AccountManager.removeAccount(userId);
+  const returnTo = window.location.href;
+  sessionStorage.setItem('wassal_add_account_return', returnTo);
+  sessionStorage.setItem('wassal_adding_account', 'true');
+  window.location.href = BASE + '/pages/login.html?mode=add_account';
+}
+
+function showAccountSwitcherModal() {
+  const accounts = AccountManager.getSavedAccounts();
+  const activeId = AccountManager.getActiveUserId();
+  let modal = document.getElementById('account-switcher-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'account-switcher-modal';
+    modal.className = 'account-modal-overlay';
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeAccountSwitcherModal();
+    });
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="account-modal">
+      <div class="account-modal-header">
+        <h3>Switch account</h3>
+        <button class="account-modal-close" onclick="closeAccountSwitcherModal()">&times;</button>
+      </div>
+      <div class="account-modal-body">
+        <div class="switcher-accounts-list" id="switcher-accounts-list">
+          ${accounts.map(a => `
+            <button class="switcher-account-row ${a.userId === activeId ? 'active' : ''}" data-user-id="${a.userId}" onclick="handleSwitchAccount('${a.userId}')">
+              <div class="switcher-avatar">${a.avatarUrl ? `<img src="${a.avatarUrl}" alt="">` : `<span>${(a.displayName || a.email || '?')[0].toUpperCase()}</span>`}</div>
+              <div class="switcher-info">
+                <span class="switcher-name">${a.displayName || a.email}</span>
+                <span class="switcher-email">${a.email}</span>
+              </div>
+              ${a.userId === activeId ? '<span class="switcher-active-badge">Current</span>' : ''}
+              ${a.sessionStatus === 'expired' ? '<span class="switcher-expired-badge">Expired</span>' : ''}
+            </button>
+          `).join('')}
+        </div>
+        ${AccountManager.hasAvailableSlot() ? `
+          <button class="switcher-add-btn" onclick="closeAccountSwitcherModal(); addAnotherAccount();">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add another account
+          </button>
+        ` : `
+          <div class="switcher-limit-note">Maximum 3 accounts reached</div>
+        `}
+      </div>
+      <div class="account-modal-footer">
+        <button class="btn-settings btn-settings-danger" onclick="closeAccountSwitcherModal(); handleLogoutAllAccounts();">Log out all accounts</button>
+      </div>
+    </div>`;
+
+  modal.style.display = 'flex';
+}
+
+function closeAccountSwitcherModal() {
+  const modal = document.getElementById('account-switcher-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function handleSwitchAccount(userId) {
+  closeAccountSwitcherModal();
+  await switchToAccount(userId);
+}
+
+async function handleLogoutAllAccounts() {
+  if (!confirm('Log out of all accounts? This will remove all saved accounts from this browser.')) return;
+  await logoutAllAccounts();
 }
 
 /* =========================
@@ -574,7 +932,10 @@ function setupMobileMenu() {
   });
 
   panel.querySelectorAll('a, button').forEach(link => {
-    link.addEventListener('click', closeMenu);
+    link.addEventListener('click', (e) => {
+      if (e.target.closest('.mobile-acc-toggle')) return;
+      closeMenu();
+    });
   });
 }
 
@@ -616,6 +977,76 @@ function setupAuthPages() {
   setupResendVerification();
   setupPasswordRequirements();
   setupUsernameAvailability();
+  setupAddAccountBanner();
+}
+
+function setupAddAccountBanner() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAddMode = urlParams.get('mode') === 'add_account';
+  const isLoginPage = !!document.getElementById('login-form');
+  const isSignupPage = !!document.getElementById('signup-form');
+
+  const banner = document.getElementById('add-account-banner');
+
+  if (isAddMode && banner) {
+    // Add-account mode: show current account + back button
+    const accounts = AccountManager.getSavedAccounts();
+    const firstAccount = accounts[0];
+
+    if (firstAccount) {
+      const initial = (firstAccount.displayName || firstAccount.email || '?')[0].toUpperCase();
+      banner.innerHTML = `
+        <div class="add-account-banner-avatar">
+          ${firstAccount.avatarUrl ? `<img src="${firstAccount.avatarUrl}" alt="">` : `<span>${initial}</span>`}
+        </div>
+        <div class="add-account-banner-info">
+          <span class="add-account-banner-name">Currently signed in as ${firstAccount.displayName || firstAccount.email}</span>
+          <span class="add-account-banner-email">${firstAccount.email}</span>
+        </div>
+        <button class="add-account-banner-back" onclick="window.location.href='${BASE}/index.html'">&larr; Back to ${firstAccount.displayName || 'account'}</button>
+      `;
+      banner.style.display = 'flex';
+    }
+
+    const title = document.getElementById('login-title') || document.getElementById('signup-title');
+    const subtitle = document.getElementById('login-subtitle') || document.getElementById('signup-subtitle');
+    if (title) title.textContent = 'Add another account';
+    if (subtitle) subtitle.textContent = 'Sign in to another Wassal account';
+    return;
+  }
+
+  // Normal login page (not add-account mode): show saved accounts for quick sign-in
+  if (isLoginPage && !isAddMode && banner) {
+    const accounts = AccountManager.getSavedAccounts();
+    if (accounts.length > 0) {
+      let html = '<div style="width:100%;">';
+      html += '<div style="margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Continue as</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      accounts.forEach(acc => {
+        const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
+        html += `
+          <button class="switcher-account-row" style="border:1px solid var(--border);background:var(--bg-card);" onclick="quickLogin('${acc.userId}')">
+            <div class="switcher-avatar">
+              ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="">` : `<span>${initial}</span>`}
+            </div>
+            <div class="switcher-info">
+              <span class="switcher-name">${acc.displayName || acc.email}</span>
+              <span class="switcher-email">${acc.email}</span>
+            </div>
+          </button>`;
+      });
+      html += '</div>';
+      html += '<div class="auth-divider" style="margin:14px 0;"><span>or sign in to another account</span></div>';
+      html += '</div>';
+      banner.innerHTML = html;
+      banner.style.display = 'block';
+    }
+  }
+}
+
+async function quickLogin(userId) {
+  // Always try to switch — Supabase can refresh expired sessions with a valid refresh token
+  await switchToAccount(userId);
 }
 
 /* ---- LOGIN ---- */
@@ -659,6 +1090,17 @@ async function handleLogin(e) {
 
     await checkAuth();
     await ensureProfile();
+
+    // Check if we're in "add account" mode
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'add_account') {
+      const returnTo = sessionStorage.getItem('wassal_add_account_return');
+      sessionStorage.removeItem('wassal_add_account_return');
+      sessionStorage.removeItem('wassal_adding_account');
+      window.location.href = returnTo || BASE + '/index.html';
+      return;
+    }
+
     const step = await getOnboardingStep();
     if (step >= 0) {
       window.location.href = ONBOARDING_URL;
@@ -730,6 +1172,17 @@ async function handleSignup(e) {
       currentUser = data.user;
       await checkAuth();
       await ensureProfile();
+
+      // Check if we're in "add account" mode
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('mode') === 'add_account') {
+        const returnTo = sessionStorage.getItem('wassal_add_account_return');
+        sessionStorage.removeItem('wassal_add_account_return');
+        sessionStorage.removeItem('wassal_adding_account');
+        window.location.href = returnTo || BASE + '/index.html';
+        return;
+      }
+
       const step = await getOnboardingStep();
       window.location.href = step >= 0 ? ONBOARDING_URL : REDIRECT_URL;
       return;
