@@ -590,6 +590,7 @@ body { overflow-x: hidden; }
 .hero-inner.hero-centered .hero-chips { max-width: 560px; margin-left: auto; margin-right: auto; }
 
 /* Skeleton loader */
+.dash-hello.is-loading,
 .dash-stat-val.is-loading,
 .dash-credits-val.is-loading,
 #trust-count.is-loading {
@@ -602,6 +603,10 @@ body { overflow-x: hidden; }
   min-height: 1em;
   display: inline-block;
   user-select: none;
+}
+.dash-hello.is-loading {
+  min-width: 280px;
+  min-height: 1.4em;
 }
 @keyframes dashShimmer { to { background-position: -200% 0; } }
 
