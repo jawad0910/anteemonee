@@ -88,7 +88,12 @@ class AiApiService {
     const body = { messages, providerIndex };
     if (this._sessionId) body.sessionId = this._sessionId;
     if (requestId) body.requestId = requestId;
-    if (images && images.length > 0) body.images = images;
+    if (images && images.length > 0) {
+      body.images = images;
+      console.log('[Edge] Sending', images.length, 'images, sizes:', images.map(i => i.length));
+    } else {
+      console.log('[Edge] No images to send');
+    }
 
     const res = await fetch(this.edgeFunctionUrl, {
       method: 'POST',

@@ -66,6 +66,7 @@ async function initApp() {
     return;
   }
   await checkAuth();
+  checkCookieConsent();
   loadHomepageData();
 }
 
@@ -122,6 +123,12 @@ async function loadHomepageData() {
     if (heroVisual) heroVisual.style.display = 'none';
     const heroInner = dashMock.closest('.hero-inner');
     if (heroInner) heroInner.classList.add('hero-centered');
+    // Remove loading skeleton for non-logged-in users
+    const helloEl = document.getElementById('dash-hello');
+    if (helloEl) {
+      helloEl.classList.remove('is-loading');
+      helloEl.innerHTML = 'Welcome to Wassal &#x1F44B;';
+    }
     return;
   }
 
@@ -132,7 +139,10 @@ async function loadHomepageData() {
     if (fullName && fullName.trim()) display = fullName.trim().split(/\s+/)[0];
     else if (username) display = username;
     const helloEl = document.getElementById('dash-hello');
-    if (helloEl && display) helloEl.innerHTML = `Assalam o Alaikum, ${escapeHtmlAttr(display)} &#x1F44B;`;
+    if (helloEl) {
+      helloEl.classList.remove('is-loading');
+      if (display) helloEl.innerHTML = `Assalam o Alaikum, ${escapeHtmlAttr(display)} &#x1F44B;`;
+    }
   } catch (_) {}
 
   const uid = currentUser.id;
@@ -276,6 +286,29 @@ function setupTheme() {
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('wassal_theme', next); } catch (err) {}
   });
+}
+
+/* =========================
+   COOKIE CONSENT (DB-backed)
+   ========================= */
+
+async function checkCookieConsent() {
+  // Already decided in this browser?
+  if (localStorage.getItem('wassal_cookie_consent')) return;
+
+  // If logged in, check DB
+  if (currentUser && db) {
+    try {
+      const { data } = await db.from('profiles').select('cookie_consent').eq('id', currentUser.id).maybeSingle();
+      if (data && data.cookie_consent) {
+        localStorage.setItem('wassal_cookie_consent', data.cookie_consent);
+        return;
+      }
+    } catch (_) {}
+  }
+
+  // Not yet decided — show the popup
+  if (typeof window.__showCookieConsent === 'function') window.__showCookieConsent();
 }
 
 /* =========================

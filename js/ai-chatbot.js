@@ -13,6 +13,8 @@
   let isStreaming = false;
   let studentContext = null;
   const pendingImages = []; // Array of base64 data URLs, max 3
+  let thinkMode = false;
+  let researchMode = false;
 
   // ── Per-user localStorage keys ──
   function chatStorageKey() {
@@ -28,15 +30,14 @@
     return 'wassal_ai_session_anon';
   }
 
-  // ── Persist session state to localStorage ──
+  // ── Persist session state to localStorage (no tokens — always from DB) ──
   function saveSessionState() {
     try {
       const state = {
-        activeSession,
+        activeSession: activeSession ? { id: activeSession.id, started_at: activeSession.started_at, expires_at: activeSession.expires_at, messages_count: activeSession.messages_count } : null,
         sessionUsage,
         streakCount,
         longestStreak,
-        estimatedTokensUsed,
       };
       localStorage.setItem(sessionStateKey(), JSON.stringify(state));
     } catch (_) {}
@@ -55,7 +56,6 @@
       if (raw) {
         const state = JSON.parse(raw);
         state.activeSession = null;
-        state.estimatedTokensUsed = 0;
         localStorage.setItem(sessionStateKey(), JSON.stringify(state));
       }
     } catch (_) {}
@@ -141,6 +141,12 @@
   const modelDropdown = document.getElementById('model-dropdown');
   const modelTrigger = document.getElementById('model-selector-trigger');
   const scrollDownBtn = document.getElementById('scroll-down-btn');
+  const imagePreviewBar = document.getElementById('image-preview-bar');
+  const btnAttach = document.getElementById('btn-attach');
+  const btnModes = document.getElementById('btn-modes');
+  const modesLabel = document.getElementById('modes-label');
+  const modesWrapper = document.getElementById('modes-select-wrapper');
+  const modesDropdown = document.getElementById('modes-dropdown');
   // True when the user is reading near the newest message. Streaming only
   // auto-scrolls in that case, so it never yanks the user away mid-read.
   let userNearBottom = true;
@@ -261,11 +267,10 @@
       sessionUsage = cached.sessionUsage;
       streakCount = cached.streakCount || 0;
       longestStreak = cached.longestStreak || 0;
-      estimatedTokensUsed = cached.estimatedTokensUsed || 0;
+      // Tokens always come from DB — not cached in localStorage
       // If cached session is expired, clear it
       if (activeSession && new Date(activeSession.expires_at).getTime() <= Date.now()) {
         activeSession = null;
-        estimatedTokensUsed = 0;
       }
       updateSessionPanel();
       // Auto-start study timer if session is still active and page is visible
@@ -326,6 +331,45 @@
     } catch (_) {}
   }
 
+  // ── Image helpers (IIFE-level so handleSend can access them) ──
+  function renderImagePreview() {
+    imagePreviewBar.innerHTML = '';
+    if (pendingImages.length === 0) {
+      imagePreviewBar.style.display = 'none';
+      return;
+    }
+    imagePreviewBar.style.display = 'flex';
+    pendingImages.forEach((dataUrl, idx) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'preview-thumb';
+      thumb.innerHTML = `
+        <img src="${dataUrl}" alt="Image ${idx + 1}">
+        <button class="preview-remove" data-idx="${idx}" title="Remove">&times;</button>
+      `;
+      thumb.querySelector('.preview-remove').addEventListener('click', () => {
+        pendingImages.splice(idx, 1);
+        renderImagePreview();
+        updateAttachButton();
+        updateSendButton();
+      });
+      imagePreviewBar.appendChild(thumb);
+    });
+  }
+
+  function updateAttachButton() {
+    btnAttach.classList.toggle('has-images', pendingImages.length > 0);
+  }
+
+  function updateSendButton() {
+    btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0;
+  }
+
+  function clearPendingImages() {
+    pendingImages.length = 0;
+    renderImagePreview();
+    updateAttachButton();
+  }
+
   function bindEvents() {
     btnSend.addEventListener('click', handleSend);
     btnStop.addEventListener('click', handleStop);
@@ -335,7 +379,18 @@
       chatContent.addEventListener('scroll', () => {
         const dist = chatContent.scrollHeight - chatContent.scrollTop - chatContent.clientHeight;
         userNearBottom = dist < 120;
-        if (scrollDownBtn) scrollDownBtn.classList.toggle('show', dist > 250);
+        if (isStreaming) {
+          // During streaming: always show button, show/hide based on scroll
+          if (scrollDownBtn) {
+            scrollDownBtn.classList.add('generating');
+            scrollDownBtn.classList.toggle('show', !userNearBottom);
+          }
+        } else {
+          if (scrollDownBtn) {
+            scrollDownBtn.classList.remove('generating');
+            scrollDownBtn.classList.toggle('show', dist > 250);
+          }
+        }
       }, { passive: true });
     }
     if (scrollDownBtn) {
@@ -360,8 +415,6 @@
 
     // ── Image attachment ──
     const imageFileInput = document.getElementById('image-file-input');
-    const btnAttach = document.getElementById('btn-attach');
-    const imagePreviewBar = document.getElementById('image-preview-bar');
 
     btnAttach.addEventListener('click', () => {
       if (pendingImages.length >= 3) return;
@@ -410,44 +463,6 @@
         };
         reader.readAsDataURL(file);
       });
-    }
-
-    function renderImagePreview() {
-      imagePreviewBar.innerHTML = '';
-      if (pendingImages.length === 0) {
-        imagePreviewBar.style.display = 'none';
-        return;
-      }
-      imagePreviewBar.style.display = 'flex';
-      pendingImages.forEach((dataUrl, idx) => {
-        const thumb = document.createElement('div');
-        thumb.className = 'preview-thumb';
-        thumb.innerHTML = `
-          <img src="${dataUrl}" alt="Image ${idx + 1}">
-          <button class="preview-remove" data-idx="${idx}" title="Remove">&times;</button>
-        `;
-        thumb.querySelector('.preview-remove').addEventListener('click', () => {
-          pendingImages.splice(idx, 1);
-          renderImagePreview();
-          updateAttachButton();
-          updateSendButton();
-        });
-        imagePreviewBar.appendChild(thumb);
-      });
-    }
-
-    function updateAttachButton() {
-      btnAttach.classList.toggle('has-images', pendingImages.length > 0);
-    }
-
-    function updateSendButton() {
-      btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0;
-    }
-
-    function clearPendingImages() {
-      pendingImages.length = 0;
-      renderImagePreview();
-      updateAttachButton();
     }
 
     document.getElementById('btn-new-chat').addEventListener('click', newChat);
@@ -511,6 +526,56 @@
 
       document.addEventListener('click', () => mobileDropdown.classList.remove('active'));
     }
+
+    // ── Modes dropdown (Think / Research) ──
+    btnModes.addEventListener('click', (e) => {
+      e.stopPropagation();
+      modesWrapper.classList.toggle('open');
+    });
+
+    modesDropdown.querySelectorAll('.modes-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mode = opt.dataset.mode;
+        if (mode === 'think') {
+          thinkMode = !thinkMode;
+          if (thinkMode) researchMode = false;
+        } else if (mode === 'research') {
+          researchMode = !researchMode;
+          if (researchMode) thinkMode = false;
+        }
+        updateModesUI();
+        modesWrapper.classList.remove('open');
+      });
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if (!modesWrapper.contains(e.target)) {
+        modesWrapper.classList.remove('open');
+      }
+    });
+  }
+
+  // ── Modes UI (Think / Research dropdown) ──
+  function updateModesUI() {
+    const hasMode = thinkMode || researchMode;
+    btnModes.classList.toggle('active', hasMode);
+
+    if (thinkMode) {
+      modesLabel.textContent = 'Think';
+    } else if (researchMode) {
+      modesLabel.textContent = 'Research';
+    } else {
+      modesLabel.textContent = '';
+    }
+
+    // Update active state on options
+    modesDropdown.querySelectorAll('.modes-option').forEach(opt => {
+      const isActive = (opt.dataset.mode === 'think' && thinkMode)
+                    || (opt.dataset.mode === 'research' && researchMode);
+      opt.classList.toggle('active', isActive);
+    });
   }
 
   // ── Model / Persona ──
@@ -642,12 +707,14 @@ ${sections.join('\n\n---\n\n')}
 1. Study the textbook content above carefully. It is from the student's actual course book.
 2. Explain the concept step-by-step, using the textbook content as your PRIMARY source.
 3. Add your own knowledge to enhance the explanation (examples, analogies, further clarification).
-4. At the END of your response, include a "References" section like this:
+4. CRITICAL: At the VERY END of your response, you MUST include a References section in this EXACT format:
 
+---
 **References:**
 - [Book Name], p. [page number]
+---
 
-Only include the References section when textbook content was found. If no textbook content is provided, do NOT include any references.`;
+This References section is MANDATORY. Every response that uses textbook content MUST end with it. List ALL books and pages you referenced. Do NOT skip this step.`;
   }
 
   // ── AI preference rules injected into the system prompt ──
@@ -665,15 +732,15 @@ Only include the References section when textbook content was found. If no textb
     }[aiPrefs.explanationLevel] || 'EXPLANATION LEVEL is standard: explain at FSc board-exam level.';
 
     const langRule = {
-      english: 'LANGUAGE SETTING is English: ALWAYS reply in English, no matter what language the student writes in.',
-      urdu: 'LANGUAGE SETTING is Urdu: ALWAYS reply in Urdu script, no matter what language the student writes in.',
-      roman_urdu: 'LANGUAGE SETTING is Roman Urdu: ALWAYS reply in Roman Urdu (never Urdu script), no matter what language the student writes in.',
-      mixed: 'LANGUAGE: Match the student exact script. English goes to English. Roman Urdu goes to Roman Urdu (never Urdu script). Urdu script goes to Urdu script. Never switch mid-conversation.',
-    }[aiPrefs.language] || 'LANGUAGE: Match the student exact script.';
+      english: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in English. Every single word, sentence, heading, bullet point, explanation — everything must be in English. Do NOT use any Urdu words, Urdu script, or Roman Urdu. Write as if you are an English-speaking tutor.',
+      urdu: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in Urdu script (اردو). Every single word, sentence, heading, bullet point, explanation — everything must be in Urdu script. Do NOT use any English words or Roman Urdu. Write as if you are an اردو-speaking tutor.',
+      roman_urdu: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in Roman Urdu (English letters used to write Urdu words). Every single word, sentence, heading, bullet point, explanation — everything must be in Roman Urdu. Do NOT use Urdu script. Do NOT use formal English. Write as if you are talking to a friend in Lahore.',
+      mixed: 'LANGUAGE RULE: Match the student exact script. If they write in English, reply in English. If they write in Roman Urdu, reply in Roman Urdu (never Urdu script). If they write in Urdu script, reply in Urdu script. Never switch mid-response.',
+    }[aiPrefs.language] || 'LANGUAGE RULE: Match the student exact script.';
 
     const suggestRule = aiPrefs.studySuggestions
-      ? 'STUDY SUGGESTIONS are ON: end study-related answers with 1 or 2 short follow-up suggestions (for example: want to practice MCQs on this, revise a related topic, or try a quick quiz).'
-      : 'STUDY SUGGESTIONS are OFF: NEVER add follow-up suggestions, recommendations, or closers like want more, or what to study next lines. Just answer and stop.';
+      ? 'STUDY SUGGESTIONS: After finishing your main answer, add 1-2 short follow-up sentences like "Want me to quiz you on this?" or "Should I explain [related topic]?". Do NOT create a separate section header for this — just add them as natural closing sentences at the very end of your response.'
+      : 'STUDY SUGGESTIONS: NEVER add follow-up suggestions, recommendations, or closing lines. Just answer the question and stop. No "want more?" or "what to study next" lines.';
 
     return `${styleRule}\n\n${levelRule}\n\n${langRule}\n\n${suggestRule}`;
   }
@@ -719,6 +786,17 @@ RESPONSE FORMAT:
 - For explanations: Be concise and technical. Use examples.
 - For projects: Break into files, show structure, explain architecture.
 - For debugging: Show the error, explain the cause, provide the fix.`;
+      // Add language rule for Zardari too
+      const zardariLangRule = {
+        english: 'Write code comments and explanations in English.',
+        urdu: 'Write code comments in English (required), but explanations in Urdu script.',
+        roman_urdu: 'Write code comments in English (required), but explanations in Roman Urdu.',
+        mixed: 'Match the user language for explanations, code comments always in English.',
+      }[aiPrefs.language] || 'Match the user language for explanations, code comments always in English.';
+      ctx += `\n\n${zardariLangRule}`;
+      if (thinkMode) {
+        ctx += `\n\nTHINK MODE ACTIVE: Deep thinking mode. Reason step by step. Consider edge cases. Give a thorough, well-thought-out coding solution.`;
+      }
       return ctx;
     }
 
@@ -733,8 +811,16 @@ BACKGROUND: ${persona.background}
 STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines.
 
 BEHAVIOR:
-- For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance. Include a References section at the end with book name and page number.
-- For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly. Do NOT include any references or textbook citations.
+- For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance.
+- CRITICAL — REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
+
+---
+**References:**
+- [Book Name], p. [page number]
+---
+
+This is MANDATORY for every academic response that uses textbook content. List ALL books and pages you referenced. Place this section at the very end of your response, after everything else.
+- For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly. Do NOT include references for casual chat.
 - NEVER fabricate book references. Only cite books that are actually provided in the textbook content block.`;
 
     if (studentContext) {
@@ -752,6 +838,14 @@ When asked about their own subjects, class, board or goals, answer directly from
     if (aiPrefs.memoryEnabled && aiMemories.length) {
       ctx += `\n\nSTUDENT MEMORY (things remembered from past chats - use them naturally to personalize, NEVER recite as a list unless asked, NEVER claim you don't remember these):
 ${aiMemories.map(m => `- ${m}`).join('\n')}`;
+    }
+
+    if (thinkMode) {
+      ctx += `\n\nTHINK MODE ACTIVE: The student has activated deep thinking mode. Take your time. Think step by step like a thoughtful human would. Reason through the problem thoroughly before answering. Consider multiple angles, potential pitfalls, and edge cases. Use more of your reasoning capacity. Do NOT give a rushed or surface-level answer. If the question is complex, break it down and work through each part carefully. This is not a simple Q&A — the student wants a genuinely thoughtful, thorough response.`;
+    }
+
+    if (researchMode) {
+      ctx += `\n\nRESEARCH MODE ACTIVE: The student has activated research mode. Search your knowledge thoroughly for the most accurate, up-to-date, and well-sourced information. Draw from multiple perspectives and sources. If you're not certain about something, say so honestly rather than guessing. Cite where information comes from when possible. Prioritize accuracy and depth over speed.`;
     }
 
     return ctx;
@@ -1091,22 +1185,74 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return div;
   }
 
-  function createStreamingMessage() {
+  function createStreamingMessage(mode) {
     const div = document.createElement('div');
     div.className = 'message assistant';
     // Index of the assistant message about to be pushed (user msg already in).
     div.dataset.idx = messages.length;
+    const statusLabel = mode === 'research' ? 'Researching sources...'
+                      : mode === 'think' ? 'Reasoning through this...'
+                      : 'Understanding your prompt...';
+    const statusClass = mode === 'research' ? 'researching'
+                      : mode === 'think' ? 'thinking'
+                      : '';
     div.innerHTML = `
       <div class="msg-avatar assistant-avatar"><img src="../assets/wassal.png" alt="Wassal"></div>
-      <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div></div></div>
+      <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span class="thinking-status ${statusClass}" id="streaming-status">${statusLabel}</span></div></div></div>
     `;
     messagesList.appendChild(div);
     return div;
   }
 
+  function updateStreamingStatus(div, text, statusClass) {
+    const status = div.querySelector('.thinking-status');
+    if (status) {
+      status.textContent = text;
+      status.className = 'thinking-status ' + (statusClass || '');
+    }
+  }
+
+  // Cycle through real status messages while waiting for first chunk
+  function startStatusCycle(div, mode) {
+    const statuses = mode === 'research'
+      ? ['Searching textbooks...', 'Cross-referencing sources...', 'Gathering information...', 'Compiling findings...']
+      : mode === 'think'
+      ? ['Analyzing the problem...', 'Breaking it down...', 'Reasoning step by step...', 'Considering approaches...']
+      : ['Searching textbooks...', 'Analyzing your prompt...', 'Finding the best explanation...', 'Preparing response...'];
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % statuses.length;
+      updateStreamingStatus(div, statuses[idx], mode === 'research' ? 'researching' : mode === 'think' ? 'thinking' : 'analyzing');
+    }, 2500);
+    return interval;
+  }
+
+  function stopStatusCycle(interval) {
+    if (interval) clearInterval(interval);
+  }
+
+  function renderStreamingMarkdown(text) {
+    if (!text) return '';
+    let html = escapeHtml(text);
+    // Headings: #### h4, ### h3, ## h2, # h1
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // Bold and italic
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
   function updateStreamingMessage(div, text) {
     const content = div.querySelector('.msg-content');
-    content.innerHTML = renderMarkdown(text) + '<span class="streaming-caret"></span>';
+    content.innerHTML = '<div class="streaming-text">' + renderStreamingMarkdown(text) + '</div><span class="streaming-caret"></span>';
   }
 
   function finalizeStreamingMessage(div, text) {
@@ -1280,26 +1426,22 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     try {
       const { data: ent } = await db.rpc('get_entitlement_snapshot');
       if (ent) {
-        sessionUsage = { ai_limit: ent.ai_limit, ai_used: ent.ai_used, period_end: ent.period_end };
+        sessionUsage = { ai_limit: ent.ai_limit, ai_used: ent.ai_used, period_end: ent.period_end, session_minutes: ent.ai_session_minutes || 45 };
         if (ent.active_session) {
           const dbMsgs = ent.active_session.messages_count || 0;
           const dbTokens = ent.active_session.tokens_used || 0;
-          const localMsgs = activeSession?.messages_count || 0;
-          const localTokens = activeSession?.tokens_used || 0;
-          // Only overwrite if DB is strictly newer OR local has no session
+          // Always use DB as source of truth for tokens
           if (!activeSession || activeSession.id !== ent.active_session.id) {
-            // Different session or no local session — use DB
             activeSession = ent.active_session;
             estimatedTokensUsed = dbTokens;
-          } else if (dbMsgs > localMsgs || dbTokens > localTokens) {
-            // Same session — only overwrite if DB is ahead
+          } else {
+            // Same session — always trust DB for tokens
             activeSession.messages_count = dbMsgs;
             activeSession.tokens_used = dbTokens;
             estimatedTokensUsed = dbTokens;
           }
-          // else: local is newer, keep it
         } else {
-          // No active session in DB — clear local only if session expired
+          // No active session in DB — clear local if expired
           if (activeSession && new Date(activeSession.expires_at).getTime() <= Date.now()) {
             activeSession = null;
             estimatedTokensUsed = 0;
@@ -1313,7 +1455,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         if (activeSession && estimatedTokensUsed >= TOKEN_LIMIT) {
           chatInput.disabled = true;
           chatInput.placeholder = 'Tokens exhausted - start a new session';
-          showTokenExhaustedBanner();
+          showTokenExhaustedPopup();
         }
         saveSessionState();
       }
@@ -1337,6 +1479,11 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         return false;
       }
 
+      // Clean up old session in DB before starting new one
+      if (activeSession?.id && db) {
+        db.rpc('end_ai_session', { p_session_id: activeSession.id }).then(() => {}).catch(() => {});
+      }
+
       const { data, error } = await db.rpc('start_ai_session');
       if (error) throw error;
       if (!data?.ok) {
@@ -1355,20 +1502,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
       activeSession = data.session;
       sessionUsage = data.usage;
-      // Keep local counts if RPC returned zeros (DB might not be updated yet)
-      if (activeSession.messages_count === 0 && activeSession.tokens_used === 0) {
-        // Use locally cached values instead
-        const cached = loadSessionState();
-        if (cached?.activeSession?.id === activeSession.id) {
-          activeSession.messages_count = cached.activeSession.messages_count || 0;
-          activeSession.tokens_used = cached.activeSession.tokens_used || 0;
-          estimatedTokensUsed = cached.estimatedTokensUsed || 0;
-        } else {
-          estimatedTokensUsed = 0;
-        }
-      } else {
-        estimatedTokensUsed = activeSession.tokens_used || 0;
-      }
+      // Always trust DB for tokens on new session
+      estimatedTokensUsed = activeSession.tokens_used || 0;
       api.setAccessToken(token);
       updateSessionPanel();
       saveSessionState();
@@ -1474,7 +1609,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           <span class="session-header-dot inactive"></span>
           <span>No Active Session</span>
         </div>
-        <div class="session-idle-hint">Send a message to start a 45 min session</div>
+        <div class="session-idle-hint">Send a message to start a ${sessionUsage?.session_minutes || 45} min session</div>
         <div class="session-divider"></div>
         <div class="session-row">
           <span class="session-label">Streak</span>
@@ -1536,12 +1671,18 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
       if (text === 'Expired') {
         clearInterval(sessionTimerInterval);
+        const expiredSessionId = activeSession?.id;
         activeSession = null;
         estimatedTokensUsed = 0;
-        stopStudyTimer(); // ← stop counting study time
+        stopStudyTimer();
         clearSessionState();
-        removeTokenExhaustedBanner();
+        removeTokenExhaustedPopup();
         updateSessionPanel();
+        // Clean up session in DB
+        if (expiredSessionId && db) {
+          db.rpc('end_ai_session', { p_session_id: expiredSessionId }).then(() => {}).catch(() => {});
+        }
+        showSessionExpiredPopup();
       }
     }, 1000);
   }
@@ -1550,11 +1691,20 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     if (!activeSession) return;
     const inputTk = estimateInputTokens(inputText);
     const outputTk = estimateOutputTokens(outputText);
-    estimatedTokensUsed += inputTk + outputTk;
+    const newTokens = inputTk + outputTk;
+    estimatedTokensUsed += newTokens;
     activeSession.tokens_used = estimatedTokensUsed;
     activeSession.messages_count = (activeSession.messages_count || 0) + 1;
     updateSessionPanel();
     saveSessionState();
+    // Also sync to DB (edge function already does this, but we update messages_count here)
+    if (db) {
+      db.from('ai_sessions')
+        .update({ messages_count: activeSession.messages_count })
+        .eq('id', activeSession.id)
+        .then(() => {})
+        .catch(() => {});
+    }
   }
 
   async function refreshStreak() {
@@ -1569,31 +1719,32 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     } catch (_) {}
   }
 
-  // ── Token Exhausted Banner ──
-  function showTokenExhaustedBanner() {
-    removeTokenExhaustedBanner();
-    const banner = document.createElement('div');
-    banner.className = 'token-exhausted-banner';
-    banner.id = 'token-exhausted-banner';
-    banner.innerHTML = `
-      <div class="token-exhausted-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+  // ── Token Exhausted Popup (Modal) ──
+  function showTokenExhaustedPopup() {
+    removeTokenExhaustedPopup();
+    const overlay = document.createElement('div');
+    overlay.className = 'session-modal-overlay';
+    overlay.id = 'token-exhausted-popup';
+    overlay.innerHTML = `
+      <div class="session-modal">
+        <button class="session-modal-close" id="btn-close-token-exhausted" title="Close">&times;</button>
+        <div class="session-modal-icon" style="background:rgba(255,107,107,0.12);color:#FF6B75">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h3 class="session-modal-title">Tokens Exhausted</h3>
+        <p class="session-modal-desc">You've used all 100K tokens for this session. Start a new session to keep chatting.</p>
+        <button class="session-modal-btn" id="btn-start-new-session">Start New Session</button>
       </div>
-      <div class="token-exhausted-text">
-        <span class="token-exhausted-title">Tokens exhausted</span>
-        <span class="token-exhausted-sub">Session is still running. Start a new session to keep chatting.</span>
-      </div>
-      <button class="token-exhausted-btn" id="btn-start-new-session">New Session</button>
     `;
-    const chatMain = document.querySelector('.chat-main');
-    if (chatMain) {
-      const inputArea = chatMain.querySelector('.chat-input-area');
-      if (inputArea) {
-        chatMain.insertBefore(banner, inputArea);
-      }
-    }
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    document.getElementById('btn-close-token-exhausted')?.addEventListener('click', () => {
+      removeTokenExhaustedPopup();
+    });
+
     document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
-      removeTokenExhaustedBanner();
+      removeTokenExhaustedPopup();
       const started = await startSession();
       if (started) {
         chatInput.disabled = false;
@@ -1605,9 +1756,46 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     });
   }
 
-  function removeTokenExhaustedBanner() {
-    const existing = document.getElementById('token-exhausted-banner');
+  function removeTokenExhaustedPopup() {
+    const existing = document.getElementById('token-exhausted-popup');
     if (existing) existing.remove();
+  }
+
+  // ── Session Expired Popup ──
+  function showSessionExpiredPopup() {
+    removeTokenExhaustedPopup();
+    const overlay = document.createElement('div');
+    overlay.className = 'session-modal-overlay';
+    overlay.id = 'token-exhausted-popup';
+    overlay.innerHTML = `
+      <div class="session-modal">
+        <button class="session-modal-close" id="btn-close-session-expired" title="Close">&times;</button>
+        <div class="session-modal-icon" style="background:rgba(255,183,77,0.12);color:#FFB74D">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3 class="session-modal-title">Session Expired</h3>
+        <p class="session-modal-desc">Your session time is up. Start a new session to continue.</p>
+        <button class="session-modal-btn" id="btn-start-new-session">Start New Session</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    document.getElementById('btn-close-session-expired')?.addEventListener('click', () => {
+      removeTokenExhaustedPopup();
+    });
+
+    document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
+      removeTokenExhaustedPopup();
+      const started = await startSession();
+      if (started) {
+        chatInput.disabled = false;
+        chatInput.placeholder = 'Ask Wassal AI anything...';
+        chatInput.focus();
+        estimatedTokensUsed = 0;
+        updateSessionPanel();
+      }
+    });
   }
 
   // ── Send / Stop ──
@@ -1615,9 +1803,17 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
     if ((!text && !hasImages) || isStreaming) return;
+
+    // Lock immediately — prevent double-send during any async gap
+    isStreaming = true;
+    chatInput.disabled = true;
+    btnSend.disabled = true;
     const quote = pendingQuote;
     const imagesToSend = [...pendingImages]; // snapshot before clearing
     hideSelToolbar();
+
+    // Refresh AI preferences in case user changed them mid-session
+    await loadAiPrefs();
 
     // ── Session gate: must have an active session ──
     if (!activeSession || new Date(activeSession.expires_at).getTime() <= Date.now()) {
@@ -1633,7 +1829,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     // ── Token budget check ──
     const estInput = estimateInputTokens(text + (quote ? quote.text : '') + (studentContext ? JSON.stringify(studentContext) : ''));
     if (estimatedTokensUsed + estInput >= TOKEN_LIMIT) {
-      showTokenExhaustedBanner();
+      showTokenExhaustedPopup();
       chatInput.disabled = true;
       chatInput.placeholder = 'Tokens exhausted - start a new session';
       return;
@@ -1644,6 +1840,10 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     btnSend.disabled = true;
     chatInput.disabled = true;
     clearPendingImages();
+    // Reset think/research toggles after sending
+    thinkMode = false;
+    researchMode = false;
+    updateModesUI();
 
     if (welcome.style.display !== 'none') {
       welcome.style.display = 'none';
@@ -1656,11 +1856,16 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     renderQuoteChip();
     scrollToBottom();
 
-    isStreaming = true;
+    // Switch scroll-down button to generating state (only visible if scrolled up)
+    if (scrollDownBtn) {
+      scrollDownBtn.classList.add('generating');
+      if (!userNearBottom) scrollDownBtn.classList.add('show');
+    }
     btnSend.style.display = 'none';
     btnStop.style.display = 'flex';
 
-    const streamDiv = createStreamingMessage();
+    const streamDiv = createStreamingMessage(thinkMode ? 'think' : researchMode ? 'research' : null);
+    const statusCycle = startStatusCycle(streamDiv, thinkMode ? 'think' : researchMode ? 'research' : null);
     scrollToBottom();
 
     // Search textbooks before sending to AI
@@ -1694,6 +1899,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     ];
 
     let fullResponse = '';
+    let firstChunk = true;
     const selectedProviderIndex = getActivePersona().providerIndex;
 
     // Pass session ID and auth token to API
@@ -1716,15 +1922,24 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           } catch (_) {}
         }
         fullResponse += chunk;
+        if (firstChunk) {
+          firstChunk = false;
+          stopStatusCycle(statusCycle);
+          updateStreamingStatus(streamDiv, 'Generating response...', 'analyzing');
+        }
         updateStreamingMessage(streamDiv, fullResponse);
         if (userNearBottom) scrollToBottom();
       }
 
       finalizeStreamingMessage(streamDiv, fullResponse);
+      stopStatusCycle(statusCycle);
       messages.push({ role: 'assistant', content: fullResponse });
       updateTokensAfterResponse(text, fullResponse);
       userNearBottom = true;
-      if (scrollDownBtn) scrollDownBtn.classList.remove('show');
+      if (scrollDownBtn) {
+        scrollDownBtn.classList.remove('generating');
+        scrollDownBtn.classList.remove('show');
+      }
     } catch (error) {
       // ── Auto-retry on NO_SESSION: session exists locally but not in DB ──
       if (error.message && error.message.includes('NO_SESSION')) {
@@ -1755,10 +1970,50 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       // ── TOKEN_LIMIT: tokens exhausted but session still running ──
       if (error.message && error.message.includes('TOKEN_LIMIT')) {
         console.warn('[AI] Token limit reached. Session still active.');
+        // If we have a partial response, try to continue with other providers
+        if (fullResponse.length > 0) {
+          const providers = [0, 1, 2].filter(i => i !== selectedProviderIndex);
+          let continued = false;
+          for (const fallbackIndex of providers) {
+            try {
+              console.warn(`[AI] Token limit. Trying provider ${fallbackIndex} to continue...`);
+              const continuationMessages = [
+                ...apiMessages,
+                { role: 'assistant', content: fullResponse },
+                { role: 'user', content: 'Your previous response was cut off. Please continue from where you left off. Do not repeat what was already said - just continue the explanation.' },
+              ];
+              for await (const chunk of api.streamChat(continuationMessages, fallbackIndex)) {
+                if (chunk && chunk.includes('"type":"streak"')) {
+                  try { const p = JSON.parse(chunk); if (p.type === 'streak') { streakCount = p.current_streak || 0; longestStreak = p.longest_streak || 0; updateSessionPanel(); saveSessionState(); continue; } } catch (_) {}
+                }
+                fullResponse += chunk;
+                updateStreamingMessage(streamDiv, fullResponse);
+                if (userNearBottom) scrollToBottom();
+              }
+              continued = true;
+              break;
+            } catch (_) { continue; }
+          }
+          if (continued) {
+            finalizeStreamingMessage(streamDiv, fullResponse);
+            messages.push({ role: 'assistant', content: fullResponse });
+            updateTokensAfterResponse(text, fullResponse);
+            isStreaming = false;
+            if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
+            btnStop.style.display = 'none';
+            btnSend.style.display = 'flex';
+            btnSend.disabled = true;
+            if (estimatedTokensUsed < TOKEN_LIMIT) { chatInput.disabled = false; chatInput.focus(); } else { chatInput.disabled = true; chatInput.placeholder = 'Token limit reached for this session'; }
+            showTokenExhaustedPopup();
+            return;
+          }
+        }
+        // If no partial response or all providers failed
         finalizeStreamingMessage(streamDiv, 'Token limit reached for this session. Start a new session to continue.');
         messages.pop();
-        showTokenExhaustedBanner();
+        showTokenExhaustedPopup();
         isStreaming = false;
+        if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
         btnStop.style.display = 'none';
         btnSend.style.display = 'flex';
         chatInput.disabled = true;
@@ -1773,6 +2028,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           : `You're moving a little too fast. Try again in ${formatRetryAfter(secs)}.`;
         console.warn('[AI] Throttled:', error.message);
         finalizeStreamingMessage(streamDiv, friendly);
+        stopStatusCycle(statusCycle);
         messages.pop();
         isStreaming = false;
         btnStop.style.display = 'none';
@@ -1784,6 +2040,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       if (error.message && error.message.includes('IMAGE_LIMIT')) {
         console.warn('[AI] Image limit reached');
         finalizeStreamingMessage(streamDiv, 'Daily image limit reached. Upgrade to Premium for more images per day.');
+        stopStatusCycle(statusCycle);
         messages.pop();
         isStreaming = false;
         btnStop.style.display = 'none';
@@ -1837,6 +2094,12 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     isStreaming = false;
+    stopStatusCycle(statusCycle);
+    // Restore scroll-down button to normal state
+    if (scrollDownBtn) {
+      scrollDownBtn.classList.remove('generating');
+      scrollDownBtn.classList.remove('show');
+    }
     btnStop.style.display = 'none';
     btnSend.style.display = 'flex';
     btnSend.disabled = true;
