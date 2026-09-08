@@ -685,13 +685,73 @@ function renderNotifications() {
 }
 
 /* =========================
-   3. AI PREFERENCES
+   3. AI PERSONALIZATION
    ========================= */
 
 function renderAI() {
   const c = document.getElementById('settings-ai-content');
   c.innerHTML = '';
   const p = settingsPrefs || {};
+
+  // Personalization card — custom instructions textarea
+  const personalCard = document.createElement('div');
+  personalCard.className = 'settings-card';
+  personalCard.innerHTML = `
+    <div class="settings-card-title">PERSONALIZE YOUR AI</div>
+    <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+      <div class="setting-info">
+        <div class="setting-title">Tell the AI how you want it to behave</div>
+        <div class="setting-desc">E.g. "I'm a visual learner, use diagrams. Be friendly. Speak simply. I prefer Roman Urdu for chemistry terms."</div>
+      </div>
+      <textarea id="ai-personalization-input" rows="4" placeholder="Type how you want your AI to respond, teach, explain..." style="
+        width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border-glass);
+        background:var(--bg-card);color:var(--text);font-family:inherit;font-size:13px;
+        resize:vertical;min-height:80px;transition:border-color .2s;
+      "></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span id="ai-personalization-status" style="font-size:11px;color:var(--text-muted);"></span>
+        <button id="btn-save-personalization" style="
+          padding:7px 18px;border-radius:8px;border:none;
+          background:var(--accent);color:#fff;font-size:12px;font-weight:600;
+          cursor:pointer;transition:all .2s;
+        ">Save</button>
+      </div>
+    </div>`;
+  c.appendChild(personalCard);
+
+  const ta = personalCard.querySelector('#ai-personalization-input');
+  const statusEl = personalCard.querySelector('#ai-personalization-status');
+  const saveBtn = personalCard.querySelector('#btn-save-personalization');
+
+  // Load saved value
+  ta.value = p.ai_personalization || '';
+  if (p.ai_personalization) {
+    statusEl.textContent = 'Saved';
+    statusEl.style.color = 'var(--accent)';
+  }
+
+  // Debounced auto-save on typing
+  let personalTimer;
+  ta.addEventListener('input', () => {
+    statusEl.textContent = 'Unsaved';
+    statusEl.style.color = 'var(--text-muted)';
+    clearTimeout(personalTimer);
+    personalTimer = setTimeout(() => savePersonalization(ta.value), 800);
+  });
+
+  // Save button
+  saveBtn.addEventListener('click', () => savePersonalization(ta.value));
+
+  async function savePersonalization(value) {
+    try {
+      await saveUserPrefs({ ai_personalization: value });
+      statusEl.textContent = 'Saved';
+      statusEl.style.color = 'var(--accent)';
+      showToastSettings('Personalization saved');
+    } catch (e) {
+      showToastSettings('Failed to save', true);
+    }
+  }
 
   const responseRows = [
     buildRow('Response Style', 'How detailed the AI responds', buildSelect([

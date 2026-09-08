@@ -158,6 +158,7 @@
     language: 'mixed',
     studySuggestions: true,
     memoryEnabled: true,
+    personalization: '',
   };
 
   // ── AI Memory (durable facts remembered from past chats) ──
@@ -189,6 +190,7 @@
           if (['english', 'urdu', 'roman_urdu', 'mixed'].includes(data.ai_language)) aiPrefs.language = data.ai_language;
           if (typeof data.ai_study_recommendations === 'boolean') aiPrefs.studySuggestions = data.ai_study_recommendations;
           if (typeof data.ai_memory_enabled === 'boolean') aiPrefs.memoryEnabled = data.ai_memory_enabled;
+          if (typeof data.ai_personalization === 'string') aiPrefs.personalization = data.ai_personalization;
         }
       }
     } catch (_) {}
@@ -767,7 +769,11 @@ This References section is MANDATORY. Every response that uses textbook content 
       ? 'STUDY SUGGESTIONS: After finishing your main answer, add 1-2 short follow-up sentences like "Want me to quiz you on this?" or "Should I explain [related topic]?". Do NOT create a separate section header for this — just add them as natural closing sentences at the very end of your response.'
       : 'STUDY SUGGESTIONS: NEVER add follow-up suggestions, recommendations, or closing lines. Just answer the question and stop. No "want more?" or "what to study next" lines.';
 
-    return `${styleRule}\n\n${levelRule}\n\n${langRule}\n\n${suggestRule}`;
+    const personalRule = aiPrefs.personalization
+      ? `STUDENT'S PERSONAL INSTRUCTIONS — CRITICAL: The student has given you the following personalization instructions. You MUST follow these at all times:\n"${aiPrefs.personalization}"\nThese instructions override default behavior. Adapt your tone, style, language, explanation depth, and teaching approach according to what the student described above.`
+      : '';
+
+    return [styleRule, levelRule, langRule, suggestRule, personalRule].filter(Boolean).join('\n\n');
   }
 
   // ── System Prompt ──
