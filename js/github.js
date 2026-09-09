@@ -355,17 +355,17 @@
       lines.push('--- ATTACHED FILE ' + (i + 1) + ': ' + f.path + ' ---');
       lines.push(String(f.content).slice(0, 12000));
     });
-    lines.push('GITHUB UPDATE CONTRACT: when the user asks you to CREATE a new file or CHANGE a file in this repo, always output the FULL new file content in a fenced block exactly like this: ```github-update:path/to/file.js on its own line, then the complete new file, then a closing ``` line. One block per file. Never tell the user to create the file locally or run git commands; the app commits for them. A short explanation of what changed goes OUTSIDE the blocks. You cannot commit yourself; the app applies changes only after the user taps Apply.');
+    lines.push('GITHUB UPDATE CONTRACT: when the user asks you to CREATE a new file or CHANGE a file in this repo, always output the FULL new file content in a fenced block exactly like this: ```github-update:path/to/file.js on its own line, then the complete new file, then a closing ``` line. One block per file. Never tell the user to create the file locally or run git commands; the app commits for them. Only touch files the user explicitly asked to create or change. Never add extra files, bonus scripts, or examples they did not request. Every file you create or change MUST be inside its own ```github-update:path block. Never put repo file contents in regular code blocks. A short explanation of what changed goes OUTSIDE the blocks. You cannot commit yourself; the app applies changes only after the user taps Apply.');
     return '\n\n' + lines.join('\n');
   }
 
   function parseUpdates(text) {
     var out = [];
     if (!text) return out;
-    var re = /```github-update:([^\n`]+)\n([\s\S]*?)```/g;
+    var re = /```\s*github-update\s*:\s*([^\n`]+)\n([\s\S]*?)```/g;
     var m;
     while ((m = re.exec(text)) !== null) {
-      var path = m[1].trim();
+      var path = m[1].trim().replace(/^\.\//, '');
       var content = m[2].replace(/^\n/, '').replace(/\n$/, '');
       if (path && content) out.push({ path: path, content: content });
       if (out.length >= 5) break;
