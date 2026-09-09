@@ -28,8 +28,14 @@ def chat():
         response = requests.post(API_URL, headers=headers, json=payload)
         response.raise_for_status()
         bot_response = response.json().get("response", "Sorry, I didn't understand that.")
-    except requests.exceptions.RequestException as e:
-        bot_response = f"Error: {str(e)}"
+    except requests.exceptions.HTTPError as http_err:
+        bot_response = f"HTTP error occurred: {http_err}"
+    except requests.exceptions.ConnectionError as conn_err:
+        bot_response = f"Connection error occurred: {conn_err}"
+    except requests.exceptions.Timeout as timeout_err:
+        bot_response = f"Timeout error occurred: {timeout_err}"
+    except requests.exceptions.RequestException as req_err:
+        bot_response = f"An error occurred: {req_err}"
 
     return jsonify({"response": bot_response})
 
