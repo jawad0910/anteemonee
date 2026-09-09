@@ -1086,3 +1086,58 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
   border-radius: 10px; cursor: pointer;
 }
 .gh-discard-btn:hover { background: var(--surface-hover, rgba(0,0,0,0.04)); }
+
+/* ---------- Message feedback (like / dislike) ---------- */
+.msg-feedback {
+  display: flex; align-items: center; gap: 4px;
+  margin-top: 8px;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+.message:hover .msg-feedback { opacity: 1; }
+.fb-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  color: var(--text-secondary);
+  background: transparent; border: none; border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.fb-btn:hover { background: var(--neo-highlight, rgba(126,217,87,0.1)); color: var(--text-primary, var(--text)); transform: scale(1.08); }
+.fb-btn:active { transform: scale(0.94); }
+.fb-btn.fb-like.active { color: #34d399; }
+.fb-btn.fb-like.active svg { fill: rgba(52,211,153,0.2); }
+.fb-btn.fb-dislike.active { color: #f87171; }
+.fb-btn.fb-dislike.active svg { fill: rgba(248,113,113,0.2); }
+
+/* ---------- Report popup ---------- */
+.report-popup-overlay {
+  display: flex; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  z-index: 6000; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: dropdown-in 0.15s ease;
+}
+.report-popup-box {
+  width: 100%; max-width: 360px;
+  background: var(--surface-elevated, var(--surface));
+  border: 1px solid var(--border-default, var(--border));
+  border-radius: 18px; padding: 24px;
+  text-align: center;
+  box-shadow: 0 16px 64px rgba(0,0,0,0.35);
+}
+.report-popup-box h3 { font-size: 16px; font-weight: 700; color: var(--text-primary, var(--text)); margin: 0 0 8px; }
+.report-popup-box p { font-size: 13px; color: var(--text-secondary); margin: 0 0 18px; line-height: 1.5; }
+.report-popup-actions { display: flex; gap: 10px; }
+.rp-btn {
+  flex: 1; padding: 10px 16px;
+  font-size: 13px; font-weight: 600;
+  border-radius: 12px; cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.rp-btn:active { transform: scale(0.97); }
+.rp-btn-primary { color: #fff; background: var(--accent); border: none; }
+.rp-btn-primary:hover { background: var(--accent-hover); }
+.rp-btn-ghost { color: var(--text-secondary); background: transparent; border: 1px solid var(--border-default, var(--border)); }
+.rp-btn-ghost:hover { background: var(--surface-hover, rgba(0,0,0,0.04)); }
