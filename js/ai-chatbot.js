@@ -1967,6 +1967,11 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     researchMode = false;
     renderModeChips();
     updatePlusDropdownActive();
+    // Repo attachments belong to Zardari only: a message sent from a study
+    // model auto-disconnects the repo (GitHub itself stays connected)
+    try {
+      if (typeof GitHub !== 'undefined' && !getActivePersona().codingOnly) GitHub.disconnectRepo();
+    } catch (_) {}
 
     if (welcome.style.display !== 'none') {
       welcome.style.display = 'none';
