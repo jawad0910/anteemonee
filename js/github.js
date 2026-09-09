@@ -126,10 +126,16 @@
     return !!(_conn && _conn.github_username);
   }
 
-  async function markDisconnected() {
+  function clearAuthState() {
     _token = null;
     _conn = null;
     _reposCache = null;
+    syncPlusItem();
+    if (_panelOpen) renderPanel();
+  }
+
+  async function markDisconnected() {
+    clearAuthState();
     _sel = null;
     _tree = null;
     _attached = [];
@@ -148,11 +154,14 @@
       e0.status = 401;
       throw e0;
     }
-    var res = await fetch('https://api.github.com' + path, Object.assign({
-      headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' }
-    }, opts || {}));
+    var merged = Object.assign({}, opts || {});
+    merged.headers = Object.assign(
+      { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' },
+      (opts && opts.headers) || {}
+    );
+    var res = await fetch('https://api.github.com' + path, merged);
     if (res.status === 401) {
-      await markDisconnected();
+      clearAuthState();
       var e1 = new Error('GitHub token expired or revoked. Please reconnect GitHub.');
       e1.status = 401;
       throw e1;
@@ -391,6 +400,11 @@
       setTimeout(function () { card.remove(); }, 150);
     });
     applyBtn.addEventListener('click', async function () {
+      if (!_sel) {
+        statusEl.textContent = 'Repo no longer selected. Reopen the GitHub panel and pick a repo.';
+        statusEl.classList.add('err');
+        return;
+      }
       applyBtn.disabled = true;
       statusEl.textContent = 'Committing to GitHub...';
       try {
