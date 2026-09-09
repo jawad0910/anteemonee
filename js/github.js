@@ -229,6 +229,35 @@
     window.location.href = url;
   }
 
+  function friendlyFunctionError(body) {
+    var code = body && body.error;
+    var detail = body && body.detail;
+    if (code === 'server_misconfigured') return 'GitHub keys missing on the server. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the edge function secrets.';
+    if (code === 'oauth_exchange_failed') {
+      if (detail && detail.indexOf('redirect_uri') !== -1) return 'Callback URL mismatch. The OAuth app callback URL must exactly match this page URL.';
+      if (detail && detail.indexOf('bad_verification_code') !== -1) return 'This login link expired or was already used. Go back and tap Connect GitHub again.';
+      return 'GitHub refused the login' + (detail ? ': ' + detail : '.') + ' Try connecting again.';
+    }
+    if (code === 'github_user_failed') return 'Could not read your GitHub profile. Retry.';
+    if (code === 'store_failed') return 'Could not save the connection (database table missing?). Run migration 0062.';
+    if (code === 'unauthorized') return 'Session expired. Sign in again, then retry.';
+    if (code === 'bad_request') return 'Bad login request. Start over from the chat.';
+    return 'GitHub connect failed' + (detail ? ': ' + detail : (code ? ' (' + code + ').' : '.'));
+  }
+
+  async function githubInvokeError(err) {
+    var status = err && err.status;
+    var body = null;
+    try {
+      var ctx = err && err.context;
+      if (ctx && typeof ctx.json === 'function') body = await ctx.json();
+    } catch (_) {}
+    if (body && (body.error || body.detail)) return friendlyFunctionError(body);
+    if (status === 404) return 'Connect service not deployed yet. Deploy the github-oauth edge function first.';
+    if (status === 401 || status === 403) return 'Session expired. Sign in again, then retry.';
+    return 'GitHub connect failed (HTTP ' + (status || 'network') + '). Check your connection and retry.';
+  }
+
   async function handleCallback(explicitClient) {
     var params = new URLSearchParams(window.location.search);
     if (params.get('error')) {
@@ -245,8 +274,8 @@
     var res = await c.functions.invoke('github-oauth', {
       body: { code: code, redirect_uri: redirectUri() }
     });
-    if (res.error) throw new Error(res.error.message || 'Token exchange failed.');
-    if (res.data && res.data.error) throw new Error(res.data.detail || res.data.error);
+    if (res.error) throw new Error(await githubInvokeError(res.error));
+    if (res.data && res.data.error) throw new Error(friendlyFunctionError(res.data));
     try { sessionStorage.removeItem('gh_oauth_state'); } catch (_) {}
     _conn = undefined;
     _token = null;
