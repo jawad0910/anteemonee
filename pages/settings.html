@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -145,6 +145,10 @@
         <button class="settings-nav-item" data-cat="about">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           About
+        </button>
+        <button class="settings-nav-item" data-cat="reports">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          My Reports
         </button>
         <div class="settings-nav-divider"></div>
         <button class="settings-nav-item" onclick="settingsLogout()" style="color:#FF6675">
@@ -323,6 +327,19 @@
             <p>The Student OS for Pakistan.</p>
           </div>
           <div id="settings-about-content"></div>
+        </div>
+
+        <!-- ============ MY REPORTS ============ -->
+        <div class="settings-category" data-cat="reports">
+          <button class="settings-mobile-back" onclick="showSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Settings
+          </button>
+          <div class="settings-category-header">
+            <h2>My Reports</h2>
+            <p>Reports you submitted about AI responses.</p>
+          </div>
+          <div id="settings-reports-content"></div>
         </div>
 
       </main>

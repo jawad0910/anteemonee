@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report AI Response - Anteemonee</title>
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg, #080A09);
+      color: var(--text, #EDEFF0);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 48px;
+    }
+    .report-page { width: 100%; max-width: 640px; }
+    .report-back {
+      display: inline-block; font-size: 13px; font-weight: 600;
+      color: var(--text-secondary, #9BA39E); text-decoration: none;
+      margin-bottom: 20px;
+    }
+    .report-back:hover { color: var(--accent, #7ED957); }
+    .report-page h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .report-sub { font-size: 13px; color: var(--text-secondary, #9BA39E); margin-bottom: 24px; line-height: 1.5; }
+    .rp-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted, #6F7971); margin: 16px 0 8px; }
+    .rp-uid {
+      width: 100%; padding: 10px 14px;
+      font-size: 12px; font-family: monospace;
+      color: var(--text-secondary, #9BA39E);
+      background: var(--surface, #10130F);
+      border: 1px solid var(--border, #1E231D);
+      border-radius: 10px;
+    }
+    .rp-readonly {
+      padding: 12px 14px; font-size: 13px; line-height: 1.6;
+      color: var(--text, #EDEFF0);
+      background: var(--surface, #10130F);
+      border: 1px solid var(--border, #1E231D);
+      border-radius: 12px;
+      max-height: 220px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .rp-readonly.empty { color: var(--text-muted, #6F7971); font-style: italic; }
+    #rp-desc {
+      width: 100%; min-height: 120px; padding: 12px 14px;
+      font-size: 14px; font-family: inherit; resize: vertical;
+      color: var(--text, #EDEFF0);
+      background: var(--surface, #10130F);
+      border: 1.5px solid var(--border, #1E231D);
+      border-radius: 12px;
+      transition: border-color 0.2s ease;
+    }
+    #rp-desc:focus { outline: none; border-color: var(--accent, #7ED957); }
+    #rp-error { display: none; font-size: 13px; color: #f87171; margin-top: 12px; }
+    .rp-submit {
+      width: 100%; margin-top: 20px; padding: 13px;
+      font-size: 14px; font-weight: 700;
+      color: #fff; background: var(--accent, #7ED957);
+      border: none; border-radius: 12px; cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .rp-submit:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
+    .rp-submit:disabled { opacity: 0.6; cursor: default; }
+    .rp-center { text-align: center; padding: 40px 0; color: var(--text-secondary, #9BA39E); font-size: 14px; }
+    .rp-success-icon {
+      width: 56px; height: 56px; margin: 0 auto 16px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; background: rgba(52,211,153,0.12); border: 1.5px solid rgba(52,211,153,0.3);
+    }
+    .rp-status-pill {
+      display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      color: #60a5fa; background: rgba(96,165,250,0.12);
+      border: 1px solid rgba(96,165,250,0.3);
+      padding: 3px 12px; border-radius: 20px; margin: 10px 0 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="report-page">
+    <a class="report-back" href="ai-chatbot.html">&larr; Back to Chat</a>
+    <h1>Report AI response</h1>
+    <p class="report-sub">Our team reviews every report. You can track what happens to it in Settings &rarr; My Reports.</p>
+
+    <div class="rp-center" id="report-loading">Loading...</div>
+
+    <form id="report-form" style="display:none">
+      <label class="rp-label" for="rp-user">User ID</label>
+      <input class="rp-uid" id="rp-user" readonly>
+
+      <label class="rp-label">Your prompt</label>
+      <div class="rp-readonly" id="rp-prompt"></div>
+
+      <label class="rp-label">AI message you disliked</label>
+      <div class="rp-readonly" id="rp-message"></div>
+
+      <label class="rp-label" for="rp-desc">Describe the issue</label>
+      <textarea id="rp-desc" placeholder="What went wrong with this response?"></textarea>
+
+      <div id="rp-error"></div>
+      <button class="rp-submit" id="rp-submit-btn" type="submit">Submit report</button>
+    </form>
+
+    <div class="rp-center" id="report-success" style="display:none">
+      <div class="rp-success-icon">&#10003;</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text,#EDEFF0)">Report sent</div>
+      <div><span class="rp-status-pill">STATUS: SENT</span></div>
+      <a class="report-back" href="ai-chatbot.html" style="margin:0">&larr; Back to Chat</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script>
+    (function () {
+      var SUPABASE_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+      var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      var draft = {};
+      try { draft = JSON.parse(sessionStorage.getItem('anteemonee_report_draft') || '{}'); } catch (_) {}
+
+      function fail(msg) {
+        document.getElementById('report-loading').style.display = 'none';
+        var f = document.getElementById('report-form');
+        f.style.display = 'none';
+        var err = document.getElementById('rp-error');
+        err.textContent = msg;
+        err.style.display = 'block';
+        f.style.display = 'block';
+        document.getElementById('rp-submit-btn').disabled = true;
+      }
+
+      function setBox(id, text, emptyMsg) {
+        var el = document.getElementById(id);
+        if (text) { el.textContent = text; }
+        else { el.textContent = emptyMsg; el.classList.add('empty'); }
+      }
+
+      db.auth.getUser().then(function (res) {
+        var user = res.data && res.data.user;
+        if (!user) { fail('You must be signed in to submit a report.'); return; }
+        document.getElementById('report-loading').style.display = 'none';
+        document.getElementById('report-form').style.display = 'block';
+        document.getElementById('rp-user').value = user.id;
+        setBox('rp-prompt', draft.prompt, 'No prompt captured. Go back and dislike the message again.');
+        setBox('rp-message', draft.aiMessage, 'No message captured. Go back and dislike the message again.');
+
+        document.getElementById('report-form').addEventListener('submit', function (e) {
+          e.preventDefault();
+          var desc = document.getElementById('rp-desc').value.trim();
+          var err = document.getElementById('rp-error');
+          err.style.display = 'none';
+          if (!desc) { err.textContent = 'Please describe the issue first.'; err.style.display = 'block'; return; }
+          var btn = document.getElementById('rp-submit-btn');
+          btn.disabled = true;
+          btn.textContent = 'Sending...';
+          db.from('ai_reports').insert({
+            user_id: user.id,
+            user_prompt: draft.prompt || '',
+            ai_message: draft.aiMessage || '',
+            description: desc
+          }).then(function (r) {
+            if (r.error) {
+              err.textContent = 'Could not send report: ' + (r.error.message || 'unknown error');
+              err.style.display = 'block';
+              btn.disabled = false;
+              btn.textContent = 'Submit report';
+              return;
+            }
+            try { sessionStorage.removeItem('anteemonee_report_draft'); } catch (_) {}
+            document.getElementById('report-form').style.display = 'none';
+            document.getElementById('report-success').style.display = 'block';
+          });
+        });
+      }).catch(function () { fail('Could not verify your session. Please sign in again.'); });
+    })();
+  </script>
+</body>
+</html>
