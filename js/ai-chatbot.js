@@ -839,6 +839,7 @@ WHAT YOU DO:
 NON-CODING RULES:
 - For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Zardari, the coding expert. Switch to Shehbaz Sharif or Imran Khan for academic questions â€” they handle Physics, Chemistry, Biology, and Math theory better."
 - NEVER answer non-coding academic questions, even if you know the answer
+- When declining study questions, output the marker [SWITCH_TO_STUDY] alone on its own line at the very end so the app can show a switch button
 - You CAN help with: computational math, data science, scientific computing, numerical methods, simulations, and anything that involves writing code
 
 RESPONSE FORMAT:
@@ -913,6 +914,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     if (researchMode) {
       ctx += `\n\nRESEARCH MODE ACTIVE: The student has activated research mode. Search your knowledge thoroughly for the most accurate, up-to-date, and well-sourced information. Draw from multiple perspectives and sources. If you're not certain about something, say so honestly rather than guessing. Cite where information comes from when possible. Prioritize accuracy and depth over speed.`;
     }
+
+    ctx += `\n\nSCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writing code, debugging, building apps or websites, GitHub, or programming questions.
+- If the student asks for coding or programming work: decline in ONE short line, say coding work is done by Zardari (the coding agent) and you are only for studies. Then output the marker [SWITCH_TO_ZARDARI] alone on its own line at the very end so the app can show a switch button.`;
 
     return ctx;
   }
@@ -1331,12 +1335,47 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     content.innerHTML = '<div class="streaming-text">' + renderStreamingMarkdown(text) + '</div><span class="streaming-caret"></span>';
   }
 
+  function stripSwitchMarkers(text) {
+    if (!text) return text;
+    return text.replace(/\[SWITCH_TO_ZARDARI\]/g, '').replace(/\[SWITCH_TO_STUDY\]/g, '');
+  }
+
+  function switchPersona(idx) {
+    if (idx < 0 || idx >= PERSONAS.length) return;
+    activePersonaIndex = idx;
+    try { localStorage.setItem(personaStorageKey(), String(idx)); } catch (_) {}
+    updatePersonaUI();
+  }
+
+  function appendSwitchCard(div, target) {
+    var host = div.querySelector('.msg-body') || div;
+    if (host.querySelector('.gh-switch-card')) return;
+    var toZardari = target === 'zardari';
+    var card = document.createElement('div');
+    card.className = 'gh-apply-card gh-switch-card';
+    card.innerHTML = '<div class="gh-apply-status">' + (toZardari ? 'Coding work is done by Zardari, the coding agent.' : 'Study work is done by the study models.') + '</div>' +
+      '<div class="gh-apply-actions"><button class="gh-apply-btn" type="button">' + (toZardari ? 'Switch to Zardari' : 'Switch to Shehbaz Sharif') + '</button></div>';
+    var btn = card.querySelector('.gh-apply-btn');
+    btn.addEventListener('click', function () {
+      switchPersona(toZardari ? 2 : 0);
+      btn.textContent = 'Switched ✓';
+      btn.disabled = true;
+    });
+    host.appendChild(card);
+  }
+
   function finalizeStreamingMessage(div, text) {
     const content = div.querySelector('.msg-content');
-    content.innerHTML = renderMarkdown(text);
+    var switchTo = null;
+    if (text && text.indexOf('[SWITCH_TO_ZARDARI]') !== -1) switchTo = 'zardari';
+    else if (text && text.indexOf('[SWITCH_TO_STUDY]') !== -1) switchTo = 'study';
+    content.innerHTML = renderMarkdown(stripSwitchMarkers(text));
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
+    if (switchTo) {
+      try { appendSwitchCard(div, switchTo); } catch (_) {}
+    }
   }
 
   // â”€â”€ Text Selection: Reply + Flashcard â”€â”€
@@ -2017,7 +2056,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
       finalizeStreamingMessage(streamDiv, fullResponse);
       stopStatusCycle(statusCycle);
-      messages.push({ role: 'assistant', content: fullResponse });
+      messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
       updateTokensAfterResponse(text, fullResponse);
       userNearBottom = true;
       if (scrollDownBtn) {
@@ -2080,7 +2119,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           }
           if (continued) {
             finalizeStreamingMessage(streamDiv, fullResponse);
-            messages.push({ role: 'assistant', content: fullResponse });
+            messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
             updateTokensAfterResponse(text, fullResponse);
             isStreaming = false;
             if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
@@ -2167,7 +2206,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         }
 
         finalizeStreamingMessage(streamDiv, fullResponse);
-        messages.push({ role: 'assistant', content: fullResponse });
+        messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
         updateTokensAfterResponse(text, fullResponse);
       } else {
         const errText = `Sorry, something went wrong. ${error.message}`;
