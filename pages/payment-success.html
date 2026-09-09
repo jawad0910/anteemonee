@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Success - Wassal</title>
+  <title>Payment Success - Anteemonee</title>
   <meta name="theme-color" content="#07080C">
-  <link rel="icon" href="../assets/wassal.png">
+  <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=3">
+  <link rel="stylesheet" href="../css/style.css?v=9">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
     .payment-page {
@@ -110,9 +110,9 @@
   <header class="header">
     <div class="header-inner">
       <a href="../index.html" class="logo-link">
-        <img src="../assets/wassal.png" alt="Wassal" class="logo-img">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
         <span class="logo-text-wrap">
-          <span class="logo-text">Wassal</span>
+          <span class="logo-text">Anteemonee</span>
           <span class="logo-sub">Student OS for Pakistan</span>
         </span>
       </a>
@@ -161,8 +161,8 @@
 
       <!-- Success -->
       <div id="state-success" style="display:none">
-        <div class="result-icon success">✓</div>
-        <h1 class="result-title">Welcome to Wassal Premium!</h1>
+        <div class="result-icon success">âœ“</div>
+        <h1 class="result-title">Welcome to Anteemonee Premium!</h1>
         <p class="result-subtitle">Your subscription is now active. Enjoy all the features of your Student OS.</p>
         <a href="../index.html" class="result-btn">Go to Home</a>
         <a href="settings.html" class="result-btn secondary">Settings</a>
@@ -170,7 +170,7 @@
 
       <!-- Pending -->
       <div id="state-pending" style="display:none">
-        <div class="result-icon pending">⏳</div>
+        <div class="result-icon pending">â³</div>
         <h1 class="result-title">Payment is processing</h1>
         <p class="result-subtitle">Your payment is being confirmed. This may take a few minutes. We'll activate your premium as soon as it's confirmed.</p>
         <a href="../index.html" class="result-btn">Go to Home</a>
@@ -178,7 +178,7 @@
 
       <!-- Failed -->
       <div id="state-failed" style="display:none">
-        <div class="result-icon fail">✕</div>
+        <div class="result-icon fail">âœ•</div>
         <h1 class="result-title">Payment could not be confirmed</h1>
         <p class="result-subtitle">Something went wrong. Please try again or contact support.</p>
         <a href="payment.html" class="result-btn">Try Again</a>
@@ -189,8 +189,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/account-manager.js?v=3"></script>
-  <script src="../js/app.js?v=3"></script>
+  <script src="../js/account-manager.js?v=9"></script>
+  <script src="../js/app.js?v=9"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
