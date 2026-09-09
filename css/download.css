@@ -1,5 +1,5 @@
-/* =========================================================
-   WASSAL DOWNLOAD - Neomorphic Design System
+﻿/* =========================================================
+   Anteemonee DOWNLOAD - Neomorphic Design System
    ========================================================= */
 
 .download-page {
@@ -10,7 +10,7 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ─── Hero — neomorphic ─── */
+/* â”€â”€â”€ Hero â€” neomorphic â”€â”€â”€ */
 .download-hero {
   text-align: center;
   padding: 80px 24px 60px;
@@ -43,7 +43,7 @@
   pointer-events: none;
 }
 
-/* ─── Platforms Grid ─── */
+/* â”€â”€â”€ Platforms Grid â”€â”€â”€ */
 .platforms-section {
   padding: 0 24px 80px;
   max-width: 1100px;
@@ -55,7 +55,7 @@
   gap: 20px;
 }
 
-/* ─── Platform Card — neomorphic ─── */
+/* â”€â”€â”€ Platform Card â€” neomorphic â”€â”€â”€ */
 .platform-card {
   background: var(--bg-card);
   border-radius: var(--radius-xl);
@@ -71,7 +71,7 @@
   box-shadow: var(--neo-shadow-raised-lg);
 }
 
-/* ─── Platform Icon — neomorphic ─── */
+/* â”€â”€â”€ Platform Icon â€” neomorphic â”€â”€â”€ */
 .platform-icon {
   width: 64px;
   height: 64px;
@@ -88,11 +88,11 @@
 .platform-icon.windows { background: rgba(2, 132, 199, 0.1); color: var(--cyan); }
 .platform-icon.macos { background: var(--surface); color: var(--text); }
 
-/* ─── Card Content ─── */
+/* â”€â”€â”€ Card Content â”€â”€â”€ */
 .platform-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .platform-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
 
-/* ─── Status Badge — neomorphic ─── */
+/* â”€â”€â”€ Status Badge â€” neomorphic â”€â”€â”€ */
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -108,7 +108,7 @@
 .status-badge.available { background: rgba(53, 211, 153, 0.1); color: var(--success); }
 .status-badge.coming-soon { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
 
-/* ─── Download Button — neomorphic ─── */
+/* â”€â”€â”€ Download Button â€” neomorphic â”€â”€â”€ */
 .btn-download {
   width: 100%;
   padding: 12px 24px;
@@ -133,7 +133,7 @@
 .btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-download:disabled:hover { background: var(--surface); color: var(--text); box-shadow: var(--neo-shadow-raised-sm); transform: none; }
 
-/* ─── Beta Badge & Button — neomorphic ─── */
+/* â”€â”€â”€ Beta Badge & Button â€” neomorphic â”€â”€â”€ */
 .beta-badge { background: rgba(53, 211, 153, 0.1) !important; color: var(--success) !important; }
 .btn-beta {
   background: var(--accent) !important;
@@ -153,7 +153,7 @@
 }
 .btn-reapply:hover { background: rgba(255, 102, 117, 0.2) !important; box-shadow: var(--neo-shadow-raised) !important; }
 
-/* ─── Beta Modal — neomorphic ─── */
+/* â”€â”€â”€ Beta Modal â€” neomorphic â”€â”€â”€ */
 .beta-modal { text-align: center; max-width: 420px; }
 .beta-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .modal-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
@@ -213,7 +213,7 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Roadmap Section — neomorphic ─── */
+/* â”€â”€â”€ Roadmap Section â€” neomorphic â”€â”€â”€ */
 .roadmap-section {
   padding: 60px 24px 80px;
   max-width: 700px;
@@ -259,7 +259,7 @@
 .roadmap-content p { font-size: 13px; color: var(--text-secondary); }
 .roadmap-item.active .roadmap-content p { color: var(--accent); }
 
-/* ─── Modal — neomorphic ─── */
+/* â”€â”€â”€ Modal â€” neomorphic â”€â”€â”€ */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -347,7 +347,7 @@
 .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 24px rgba(31,160,85,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
 .btn-primary:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
 
-/* ─── Footer — neomorphic ─── */
+/* â”€â”€â”€ Footer â€” neomorphic â”€â”€â”€ */
 .download-footer {
   padding: 32px 24px;
   border-top: 1px solid var(--border);
@@ -362,7 +362,7 @@
 }
 .download-footer .footer-links a:hover { color: var(--text); background: var(--neo-highlight); }
 
-/* ─── Mobile Responsive ─── */
+/* â”€â”€â”€ Mobile Responsive â”€â”€â”€ */
 @media (max-width: 768px) {
   .download-hero { padding: 60px 20px 40px; }
   .download-hero h1 { font-size: 32px; }
@@ -376,7 +376,7 @@
   .download-footer .footer-links { flex-direction: column; gap: 12px; }
 }
 
-/* ─── Reduced Motion ─── */
+/* â”€â”€â”€ Reduced Motion â”€â”€â”€ */
 @media (prefers-reduced-motion: reduce) {
   .platform-card { transition: none; }
   .modal-card { animation: none; }

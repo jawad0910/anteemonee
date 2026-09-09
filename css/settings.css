@@ -1,5 +1,5 @@
-/* =========================================================
-   WASSAL SETTINGS - Neomorphic Design System
+﻿/* =========================================================
+   Anteemonee SETTINGS - Neomorphic Design System
    ========================================================= */
 
 /* --- Layout Shell --- */
@@ -30,7 +30,7 @@
   align-items: start;
 }
 
-/* --- Sidebar — neomorphic --- */
+/* --- Sidebar â€” neomorphic --- */
 .settings-sidebar {
   position: sticky;
   top: 88px;
@@ -106,7 +106,7 @@
   font-size: 14px;
 }
 
-/* --- Cards / Sections — neomorphic --- */
+/* --- Cards / Sections â€” neomorphic --- */
 .settings-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -162,7 +162,7 @@
   font-size: 16px;
 }
 
-/* --- Toggle Switch — neomorphic --- */
+/* --- Toggle Switch â€” neomorphic --- */
 .toggle {
   position: relative;
   width: 44px;
@@ -204,7 +204,7 @@
   transform: translateX(20px);
 }
 
-/* --- Select — neomorphic --- */
+/* --- Select â€” neomorphic --- */
 .setting-select {
   appearance: none;
   background: var(--surface-recessed);
@@ -227,7 +227,7 @@
   box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft);
 }
 
-/* --- Text Input — neomorphic --- */
+/* --- Text Input â€” neomorphic --- */
 .setting-input {
   background: var(--surface-recessed);
   border: none;
@@ -252,7 +252,7 @@ textarea.setting-input {
   min-height: 80px;
 }
 
-/* --- Buttons — neomorphic --- */
+/* --- Buttons â€” neomorphic --- */
 .btn-settings {
   display: inline-flex;
   align-items: center;
@@ -315,7 +315,7 @@ textarea.setting-input {
 .status-badge.warning { background: rgba(251,191,36,0.12); color: #FBBF24; }
 .status-badge.premium { background: var(--accent-soft); color: var(--accent); }
 
-/* --- Danger Zone — neomorphic --- */
+/* --- Danger Zone â€” neomorphic --- */
 .settings-danger-zone {
   border: 1px solid rgba(255,102,117,0.2);
   border-radius: var(--radius-lg);
@@ -324,7 +324,7 @@ textarea.setting-input {
 .settings-danger-zone .setting-row { border-bottom-color: rgba(255,102,117,0.08); }
 .settings-danger-zone .setting-title { color: #FF6675; }
 
-/* --- Toast — neomorphic --- */
+/* --- Toast â€” neomorphic --- */
 .settings-toast {
   position: fixed;
   bottom: 32px;
@@ -350,7 +350,7 @@ textarea.setting-input {
   color: #FF6675;
 }
 
-/* --- Profile Card — neomorphic --- */
+/* --- Profile Card â€” neomorphic --- */
 .settings-profile-card {
   display: flex;
   align-items: center;
@@ -382,7 +382,7 @@ textarea.setting-input {
 .settings-profile-info h3 { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
 .settings-profile-info p { font-size: 13px; color: var(--text-secondary); }
 
-/* --- Modal — neomorphic --- */
+/* --- Modal â€” neomorphic --- */
 .settings-modal-overlay {
   display: none;
   position: fixed;
@@ -464,7 +464,7 @@ textarea.setting-input {
 .skeleton-text.w-60 { width: 60%; }
 .skeleton-text.h-8 { height: 8px; }
 
-/* --- Connected Accounts — neomorphic --- */
+/* --- Connected Accounts â€” neomorphic --- */
 .provider-row {
   display: flex;
   align-items: center;
@@ -486,6 +486,7 @@ textarea.setting-input {
 .provider-icon.google { background: rgba(234,67,53,0.12); color: #EA4335; }
 .provider-icon.spotify { background: rgba(30,215,96,0.12); color: #1ED760; }
 .provider-icon.email { background: var(--accent-soft); color: var(--accent); }
+.provider-icon.github { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 
 /* --- Mobile Back Button --- */
 .settings-mobile-back {
@@ -503,7 +504,7 @@ textarea.setting-input {
 }
 .settings-mobile-back svg { width: 18px; height: 18px; }
 
-/* --- Plan Card — neomorphic --- */
+/* --- Plan Card â€” neomorphic --- */
 .plan-card {
   padding: 20px;
   display: flex;
@@ -536,7 +537,7 @@ textarea.setting-input {
   margin-bottom: 6px;
 }
 
-/* --- Coupon Input — neomorphic --- */
+/* --- Coupon Input â€” neomorphic --- */
 .coupon-input-group {
   display: flex;
   gap: 8px;
