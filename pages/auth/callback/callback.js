@@ -1,4 +1,4 @@
-const { createClient } = supabase;
+﻿const { createClient } = supabase;
 const SUPABASE_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -165,6 +165,9 @@ async function handleUser(user) {
 
     const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
 
+    // Check if we're in "add account" mode
+    const isAddingAccount = sessionStorage.getItem('Anteemonee_adding_account') === 'true';
+
     if (!profile) {
       setStatus('Creating your profile...');
       const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
@@ -199,6 +202,23 @@ async function handleUser(user) {
         }
       }
 
+      if (isAddingAccount) {
+        // Save session to AccountManager and return
+        const { data: { session } } = await db.auth.getSession();
+        if (session) {
+          // Load profile for AccountManager metadata
+          const { data: newProfiles } = await db.from('profiles').select('*').eq('id', user.id);
+          window._currentProfile = newProfiles?.length ? newProfiles[0] : null;
+          await AccountManager.saveCurrentSession(user, session);
+        }
+        const returnTo = sessionStorage.getItem('Anteemonee_add_account_return') || ACCOUNT_URL;
+        sessionStorage.removeItem('Anteemonee_add_account_return');
+        sessionStorage.removeItem('Anteemonee_adding_account');
+        showSuccess('Account added!');
+        setTimeout(() => { window.location.href = returnTo; }, 1000);
+        return;
+      }
+
       showSuccess('Account created! Taking you to setup...');
       setTimeout(() => { window.location.href = ONBOARDING_URL; }, 1500);
       return;
@@ -206,6 +226,20 @@ async function handleUser(user) {
 
     if (avatarUrl && profile.profile_image_url !== avatarUrl) {
       await db.from('profiles').update({ profile_image_url: avatarUrl }).eq('id', user.id);
+    }
+
+    if (isAddingAccount) {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) {
+        window._currentProfile = profile;
+        await AccountManager.saveCurrentSession(user, session);
+      }
+      const returnTo = sessionStorage.getItem('Anteemonee_add_account_return') || ACCOUNT_URL;
+      sessionStorage.removeItem('Anteemonee_add_account_return');
+      sessionStorage.removeItem('Anteemonee_adding_account');
+      showSuccess('Account added!');
+      setTimeout(() => { window.location.href = returnTo; }, 1000);
+      return;
     }
 
     const step = await getOnboardingStep(user.id);
@@ -216,11 +250,11 @@ async function handleUser(user) {
       return;
     }
 
-    showSuccess('Welcome back! Taking you to Wassal...');
+    showSuccess('Welcome back! Taking you to Anteemonee...');
     setTimeout(() => { window.location.href = ACCOUNT_URL; }, 1500);
   } catch (err) {
     console.error('User handling error:', err.message);
-    showSuccess('Signed in successfully! Taking you to Wassal...');
+    showSuccess('Signed in successfully! Taking you to Anteemonee...');
     setTimeout(() => { window.location.href = ACCOUNT_URL; }, 1500);
   }
 }
