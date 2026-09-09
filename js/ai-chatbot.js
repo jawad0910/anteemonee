@@ -1266,6 +1266,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         <div class="msg-body">${quoteHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
     }
+    if (role === 'assistant') attachFeedbackButtons(div);
     if (!animate) div.style.animation = 'none';
     messagesList.appendChild(div);
     return div;
@@ -1368,6 +1369,117 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       btn.disabled = true;
     });
     host.appendChild(card);
+  }
+
+  var FB_LIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
+  var FB_DISLIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>';
+
+  function bumpCounters(names) {
+    try {
+      if (typeof db === 'undefined' || !db) return;
+      names.forEach(function (n) {
+        db.rpc('adjust_counter', { p_name: n, p_delta: 1 }).then(function () {}, function () {});
+      });
+    } catch (_) {}
+  }
+
+  function adjustCounter(name, delta) {
+    try {
+      if (typeof db === 'undefined' || !db) return;
+      db.rpc('adjust_counter', { p_name: name, p_delta: delta }).then(function () {}, function () {});
+    } catch (_) {}
+  }
+
+  function getVotes() {
+    try {
+      return JSON.parse(localStorage.getItem('anteemonee_msg_votes') || '{}');
+    } catch (_) { return {}; }
+  }
+
+  function setVotes(v) {
+    try { localStorage.setItem('anteemonee_msg_votes', JSON.stringify(v)); } catch (_) {}
+  }
+
+  function paintVote(wrap, kind) {
+    var like = wrap.querySelector('.fb-like');
+    var dislike = wrap.querySelector('.fb-dislike');
+    if (like) like.classList.toggle('active', kind === 'like');
+    if (dislike) dislike.classList.toggle('active', kind === 'dislike');
+  }
+
+  function onVote(wrap, key, kind) {
+    var votes = getVotes();
+    var prev = votes[key] || null;
+    if (prev === kind) {
+      delete votes[key];
+      setVotes(votes);
+      paintVote(wrap, null);
+      adjustCounter(kind === 'like' ? 'liked_messages' : 'disliked_messages', -1);
+      return;
+    }
+    if (prev === 'like') adjustCounter('liked_messages', -1);
+    if (prev === 'dislike') adjustCounter('disliked_messages', -1);
+    votes[key] = kind;
+    setVotes(votes);
+    paintVote(wrap, kind);
+    adjustCounter(kind === 'like' ? 'liked_messages' : 'disliked_messages', 1);
+    if (kind === 'dislike') openReportPopup(wrap);
+  }
+
+  function attachFeedbackButtons(div) {
+    try {
+      if (!div || div.querySelector('.msg-feedback')) return;
+      var body = div.querySelector('.msg-body');
+      if (!body) return;
+      var idx = div.dataset ? div.dataset.idx : undefined;
+      if (idx === undefined || idx === null || idx === '') return;
+      var wrap = document.createElement('div');
+      wrap.className = 'msg-feedback';
+      wrap.innerHTML = '<button class="fb-btn fb-like" type="button" title="Good response" aria-label="Like">' + FB_LIKE_SVG + '</button>' +
+        '<button class="fb-btn fb-dislike" type="button" title="Bad response" aria-label="Dislike">' + FB_DISLIKE_SVG + '</button>';
+      body.appendChild(wrap);
+      var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
+      wrap.dataset.voteKey = key;
+      paintVote(wrap, getVotes()[key] || null);
+      wrap.querySelector('.fb-like').addEventListener('click', function () { onVote(wrap, key, 'like'); });
+      wrap.querySelector('.fb-dislike').addEventListener('click', function () { onVote(wrap, key, 'dislike'); });
+    } catch (_) {}
+  }
+
+  function openReportPopup(wrap) {
+    closeReportPopup();
+    var aiText = '';
+    var prompt = '';
+    try {
+      var msgEl = wrap.closest ? wrap.closest('.message') : null;
+      var idx = msgEl && msgEl.dataset.idx !== undefined && msgEl.dataset.idx !== '' ? parseInt(msgEl.dataset.idx, 10) : NaN;
+      if (!isNaN(idx) && typeof messages !== 'undefined') {
+        if (messages[idx]) aiText = messages[idx].content || '';
+        if (messages[idx - 1] && messages[idx - 1].role === 'user') prompt = messages[idx - 1].content || '';
+      }
+    } catch (_) {}
+    var ov = document.createElement('div');
+    ov.className = 'report-popup-overlay';
+    ov.id = 'report-popup';
+    ov.innerHTML = '<div class="report-popup-box">' +
+      '<h3>Do you want to submit a report?</h3>' +
+      '<p>Tell us what went wrong so we can fix it.</p>' +
+      '<div class="report-popup-actions">' +
+      '<button class="rp-btn rp-btn-ghost" id="report-popup-no" type="button">No</button>' +
+      '<button class="rp-btn rp-btn-primary" id="report-popup-yes" type="button">Yes, report</button>' +
+      '</div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeReportPopup(); });
+    document.getElementById('report-popup-no').addEventListener('click', closeReportPopup);
+    document.getElementById('report-popup-yes').addEventListener('click', function () {
+      try { sessionStorage.setItem('anteemonee_report_draft', JSON.stringify({ prompt: prompt, aiMessage: aiText })); } catch (_) {}
+      window.location.href = 'report.html';
+    });
+  }
+
+  function closeReportPopup() {
+    var ov = document.getElementById('report-popup');
+    if (ov) ov.remove();
   }
 
   function finalizeStreamingMessage(div, text) {
@@ -1986,6 +2098,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
     appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null });
     messages.push(quote ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null } : { role: 'user', content: text, images: hasImages ? imagesToSend : null });
+    bumpCounters(['total_messages', 'user_messages']);
     pendingQuote = null;
     renderQuoteChip();
     scrollToBottom();
@@ -2068,6 +2181,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       finalizeStreamingMessage(streamDiv, fullResponse);
       stopStatusCycle(statusCycle);
       messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
+      attachFeedbackButtons(streamDiv);
+      bumpCounters(['total_messages', 'ai_messages']);
       updateTokensAfterResponse(text, fullResponse);
       userNearBottom = true;
       if (scrollDownBtn) {
@@ -2131,6 +2246,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           if (continued) {
             finalizeStreamingMessage(streamDiv, fullResponse);
             messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
+            attachFeedbackButtons(streamDiv);
+            bumpCounters(['total_messages', 'ai_messages']);
             updateTokensAfterResponse(text, fullResponse);
             isStreaming = false;
             if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
@@ -2218,6 +2335,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
         finalizeStreamingMessage(streamDiv, fullResponse);
         messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
+        attachFeedbackButtons(streamDiv);
+        bumpCounters(['total_messages', 'ai_messages']);
         updateTokensAfterResponse(text, fullResponse);
       } else {
         const errText = `Sorry, something went wrong. ${error.message}`;

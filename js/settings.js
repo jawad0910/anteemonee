@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    Anteemonee SETTINGS - Complete Settings Logic
    ========================================================= */
 
@@ -35,6 +35,7 @@ async function initSettings() {
   renderAds();
   renderHelp();
   renderAbout();
+  renderReports();
   setupNavSidebar();
   setupDeleteConfirmInput();
   recordSessionActivity();
@@ -1336,6 +1337,50 @@ function renderConnected() {
     ];
     c.appendChild(buildCard('SECURITY POLICY', securityRows));
   }
+
+  renderMyReports(c);
+}
+
+async function renderMyReports(c) {
+  let reports = [];
+  try {
+    const res = await db.from('ai_reports')
+      .select('id, user_prompt, ai_message, description, status, admin_message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (!res.error && Array.isArray(res.data)) reports = res.data;
+  } catch (_) { return; }
+  if (!reports.length) return;
+
+  const statusMeta = {
+    sent: { label: 'SENT', color: '#60a5fa' },
+    fixed: { label: 'FIXED', color: '#35D399' },
+    replied: { label: 'ADMIN REPLIED', color: '#35D399' },
+  };
+  const card = document.createElement('div');
+  card.className = 'settings-card';
+  const h = document.createElement('div');
+  h.className = 'settings-card-header';
+  h.textContent = 'MY REPORTS';
+  card.appendChild(h);
+
+  reports.forEach(r => {
+    const meta = statusMeta[r.status] || statusMeta.sent;
+    const when = new Date(r.created_at).toLocaleString();
+    const row = document.createElement('div');
+    row.className = 'setting-row';
+    const desc = (r.description || '').length > 160 ? (r.description || '').slice(0, 160) + '...' : (r.description || 'No description');
+    row.innerHTML = `<div class="setting-info"><div class="setting-title">Report &middot; ${when} <span style="color:${meta.color};font-size:11px;font-weight:600;margin-left:8px">${meta.label}</span></div><div class="setting-desc">${desc.replace(/</g, '&lt;')}</div></div>`;
+    card.appendChild(row);
+    if (r.status === 'replied' && r.admin_message) {
+      const adminRow = document.createElement('div');
+      adminRow.className = 'setting-row';
+      adminRow.innerHTML = `<div class="setting-info"><div class="setting-title" style="font-size:13px">Admin message</div><div class="setting-desc">${String(r.admin_message).replace(/</g, '&lt;')}</div></div>`;
+      card.appendChild(adminRow);
+    }
+  });
+
+  c.appendChild(card);
 }
 
 async function linkProvider(provider) {
@@ -2032,3 +2077,138 @@ async function confirmDeleteAccount() {
     setLoading(btn, false);
   }
 }
+
+/* =========================
+   15. MY REPORTS
+   ========================= */
+
+async function renderReports() {
+  const c = document.getElementById('settings-reports-content');
+  if (!c) return;
+
+  const STATUS_META = {
+    sent:    { label: 'Sent',              color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.3)'  },
+    fixed:   { label: 'Fixed',             color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)'  },
+    replied: { label: 'Admin replied',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
+  };
+
+  // Loading state
+  c.innerHTML = '<div class="setting-row" style="justify-content:center;padding:24px 0"><span style="color:var(--text-secondary);font-size:13px">Loading your reports...</span></div>';
+
+  let reports = [];
+  try {
+    const { data, error } = await db
+      .from('ai_reports')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    reports = data || [];
+  } catch (err) {
+    console.error("Error loading reports:", err);
+    c.innerHTML = '<div class="setting-row"><span style="color:var(--error,#f87171);font-size:13px">Could not load reports. Try again later.</span></div>';
+    return;
+  }
+
+  if (reports.length === 0) {
+    c.innerHTML = `
+      <div class="settings-card">
+        <div style="text-align:center;padding:32px 16px;color:var(--text-secondary)">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;opacity:0.35"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">No reports yet</div>
+          <div style="font-size:13px;margin-top:4px">When you dislike an AI response and submit a report, it'll appear here.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'settings-card';
+
+  reports.forEach((r, i) => {
+    const meta   = STATUS_META[r.status] || STATUS_META.sent;
+    const date   = new Date(r.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const itemId = 'report-item-' + i;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'border-bottom:1px solid var(--border,#1e231d);padding:16px 0;';
+    if (i === reports.length - 1) wrap.style.borderBottom = 'none';
+
+    // Header row: status pill + date
+    const headerRow = document.createElement('div');
+    headerRow.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;';
+    headerRow.innerHTML = `
+      <span style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;
+        color:${meta.color};background:${meta.bg};border:1px solid ${meta.border};
+        padding:3px 12px;border-radius:20px;">${meta.label}</span>
+      <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">${date}</span>`;
+    wrap.appendChild(headerRow);
+
+    // Collapsible body
+    const bodyId = 'report-body-' + i;
+    const toggle = document.createElement('button');
+    toggle.style.cssText = 'width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:0;';
+    toggle.innerHTML = `<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtmlSettings(r.description || 'No description')}</div>`;
+
+    const expandedBody = document.createElement('div');
+    expandedBody.id = bodyId;
+    expandedBody.style.display = 'none';
+    expandedBody.style.marginTop = '12px';
+
+    // Prompt
+    if (r.user_prompt) {
+      const pBlock = document.createElement('div');
+      pBlock.style.cssText = 'margin-bottom:10px;';
+      pBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#6f7971);margin-bottom:4px;">Your prompt</div>
+        <div style="font-size:13px;color:var(--text-secondary);background:var(--surface,#10130f);border:1px solid var(--border,#1e231d);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto;">${escapeHtmlSettings(r.user_prompt)}</div>`;
+      expandedBody.appendChild(pBlock);
+    }
+
+    // AI message
+    if (r.ai_message) {
+      const aiBlock = document.createElement('div');
+      aiBlock.style.cssText = 'margin-bottom:10px;';
+      aiBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#6f7971);margin-bottom:4px;">AI message you disliked</div>
+        <div style="font-size:13px;color:var(--text-secondary);background:var(--surface,#10130f);border:1px solid var(--border,#1e231d);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto;">${escapeHtmlSettings(r.ai_message)}</div>`;
+      expandedBody.appendChild(aiBlock);
+    }
+
+    // Description
+    const descBlock = document.createElement('div');
+    descBlock.style.cssText = 'margin-bottom:10px;';
+    descBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#6f7971);margin-bottom:4px;">Your description</div>
+      <div style="font-size:13px;color:var(--text);background:var(--surface,#10130f);border:1px solid var(--border,#1e231d);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlSettings(r.description || '')}</div>`;
+    expandedBody.appendChild(descBlock);
+
+    // Admin message (only if status is 'replied' and admin_message exists)
+    if (r.status === 'replied' && r.admin_message) {
+      const adminBlock = document.createElement('div');
+      adminBlock.style.cssText = 'margin-bottom:4px;';
+      adminBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#a78bfa;margin-bottom:4px;">Message from admin</div>
+        <div style="font-size:13px;color:var(--text);background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlSettings(r.admin_message)}</div>`;
+      expandedBody.appendChild(adminBlock);
+    }
+
+    let open = false;
+    toggle.addEventListener('click', () => {
+      open = !open;
+      expandedBody.style.display = open ? 'block' : 'none';
+    });
+
+    wrap.appendChild(toggle);
+    wrap.appendChild(expandedBody);
+    card.appendChild(wrap);
+  });
+
+  c.innerHTML = '';
+  c.appendChild(card);
+}
+
+function escapeHtmlSettings(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
