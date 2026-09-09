@@ -159,6 +159,7 @@
     studySuggestions: true,
     memoryEnabled: true,
     personalization: '',
+    emojis: false,
   };
 
   // â”€â”€ AI Memory (durable facts remembered from past chats) â”€â”€
@@ -191,6 +192,7 @@
           if (typeof data.ai_study_recommendations === 'boolean') aiPrefs.studySuggestions = data.ai_study_recommendations;
           if (typeof data.ai_memory_enabled === 'boolean') aiPrefs.memoryEnabled = data.ai_memory_enabled;
           if (typeof data.ai_personalization === 'string') aiPrefs.personalization = data.ai_personalization;
+          if (typeof data.ai_emojis === 'boolean') aiPrefs.emojis = data.ai_emojis;
         }
       }
     } catch (_) {}
@@ -802,7 +804,11 @@ This References section is MANDATORY. Every response that uses textbook content 
       ? `STUDENT'S PERSONAL INSTRUCTIONS â€” CRITICAL: The student has given you the following personalization instructions. You MUST follow these at all times:\n"${aiPrefs.personalization}"\nThese instructions override default behavior. Adapt your tone, style, language, explanation depth, and teaching approach according to what the student described above.`
       : '';
 
-    return [styleRule, levelRule, langRule, suggestRule, personalRule].filter(Boolean).join('\n\n');
+    const emojiRule = aiPrefs.emojis
+      ? 'EMOJIS â€” CRITICAL: The student ENABLED emojis. You MUST use relevant emojis naturally throughout every response (headings, key points, encouragement). Be generous but tasteful.'
+      : 'EMOJIS â€” CRITICAL: The student DISABLED emojis. You MUST NEVER use any emojis or emoticons anywhere in your responses. Plain text only, no exceptions.';
+
+    return [styleRule, levelRule, langRule, suggestRule, emojiRule, personalRule].filter(Boolean).join('\n\n');
   }
 
   // â”€â”€ System Prompt â”€â”€
@@ -1714,7 +1720,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         ${streakCount > 0 ? `
         <div class="session-row">
           <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount} day${streakCount !== 1 ? 's' : ''} ðŸ”¥</span>
+          <span class="session-value streak-value">${streakCount} day${streakCount !== 1 ? 's' : ''} &#x1F525;</span>
         </div>` : `
         <div class="session-row">
           <span class="session-label">Streak</span>
@@ -1735,7 +1741,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         <div class="session-divider"></div>
         <div class="session-row">
           <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount > 0 ? streakCount + ' day' + (streakCount !== 1 ? 's' : '') + ' ðŸ”¥' : '0'}</span>
+          <span class="session-value streak-value">${streakCount > 0 ? streakCount + ' day' + (streakCount !== 1 ? 's' : '') + ' &#x1F525;' : '0'}</span>
         </div>
         <div class="session-row">
           <span class="session-label">Sessions left</span>

@@ -779,6 +779,7 @@ function renderAI() {
 
   const prefRows = [
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),
+    buildRow('Emojis', 'Use emojis in AI responses (except Zardari)', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
   ];
   c.appendChild(buildCard('SUGGESTIONS', prefRows));
 
