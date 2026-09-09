@@ -617,6 +617,9 @@
       });
       modesBar.appendChild(chip2);
     }
+    if (typeof GitHub !== 'undefined') {
+      try { GitHub.syncRepoChip(); } catch (_) {}
+    }
   }
 
   function updatePlusDropdownActive() {
