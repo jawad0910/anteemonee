@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+﻿const SUPABASE_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
 
 // Guarded client creation: if the Supabase CDN fails, the site must still
@@ -8,7 +8,7 @@ try {
   if (typeof supabase === 'undefined' || !supabase.createClient) throw new Error('Supabase CDN failed to load');
   db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } catch (e) {
-  console.error('[wassal] database unavailable:', (e && e.message) || e);
+  console.error('[Anteemonee] database unavailable:', (e && e.message) || e);
 }
 
 // Rejects a hung network request so the UI can never get stuck on skeletons.
@@ -96,7 +96,7 @@ async function loadHomepageData() {
     try {
       const { data, error } = await db.rpc('get_homepage_stats');
       if (error) {
-        console.warn('[homepage] stats RPC failed:', error.message || error, '— run migration 0038_homepage_stats.sql');
+        console.warn('[homepage] stats RPC failed:', error.message || error, 'â€” run migration 0038_homepage_stats.sql');
       }
       if (!error && data) {
         const count = Number(data.user_count || 0);
@@ -128,7 +128,7 @@ async function loadHomepageData() {
     const helloEl = document.getElementById('dash-hello');
     if (helloEl) {
       helloEl.classList.remove('is-loading');
-      helloEl.innerHTML = 'Welcome to Wassal &#x1F44B;';
+      helloEl.innerHTML = 'Welcome to Anteemonee &#x1F44B;';
     }
     return;
   }
@@ -190,7 +190,7 @@ async function loadHomepageData() {
       let totalSec = profileRes.study_time_seconds;
       // Add any pending seconds saved on chatbot page unload (scoped per user)
       try {
-        const pendingKey = currentUser ? `wassal_study_time_pending_${currentUser.id}` : 'wassal_study_time_pending';
+        const pendingKey = currentUser ? `Anteemonee_study_time_pending_${currentUser.id}` : 'Anteemonee_study_time_pending';
         const pending = parseInt(localStorage.getItem(pendingKey) || '0', 10);
         if (pending > 0) totalSec += pending;
       } catch (_) {}
@@ -214,7 +214,7 @@ async function loadHomepageData() {
       homepageSetText('dash-stat-sessions', String(sCount));
       homepageSetText('dash-stat-sessions-sub', 'Total chats');
     } else {
-      homepageSetText('dash-stat-sessions', '–');
+      homepageSetText('dash-stat-sessions', 'â€“');
       homepageSetText('dash-stat-sessions-sub', 'Unavailable');
     }
 
@@ -224,7 +224,7 @@ async function loadHomepageData() {
       homepageSetText('dash-stat-streak', s === 1 ? '1 Day' : `${s} Days`);
       homepageSetText('dash-stat-streak-sub', s > 0 ? 'Keep it up!' : 'Start today!');
     } else {
-      homepageSetText('dash-stat-streak', '–');
+      homepageSetText('dash-stat-streak', 'â€“');
       homepageSetText('dash-stat-streak-sub', 'Unavailable');
     }
 
@@ -276,9 +276,9 @@ function setupTheme() {
     // Try user-scoped theme first, then fall back to generic
     let saved = null;
     if (typeof currentUser !== 'undefined' && currentUser?.id) {
-      saved = localStorage.getItem(`wassal_theme_${currentUser.id}`);
+      saved = localStorage.getItem(`Anteemonee_theme_${currentUser.id}`);
     }
-    if (!saved) saved = localStorage.getItem('wassal_theme');
+    if (!saved) saved = localStorage.getItem('Anteemonee_theme');
     if (saved) {
       document.documentElement.setAttribute('data-theme', saved);
     } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
@@ -294,9 +294,9 @@ function setupTheme() {
     try {
       // Save per-user if logged in, otherwise generic
       if (typeof currentUser !== 'undefined' && currentUser?.id) {
-        localStorage.setItem(`wassal_theme_${currentUser.id}`, next);
+        localStorage.setItem(`Anteemonee_theme_${currentUser.id}`, next);
       }
-      localStorage.setItem('wassal_theme', next); // fallback for pre-auth
+      localStorage.setItem('Anteemonee_theme', next); // fallback for pre-auth
     } catch (err) {}
   });
 }
@@ -307,20 +307,20 @@ function setupTheme() {
 
 async function checkCookieConsent() {
   // Already decided in this browser?
-  if (localStorage.getItem('wassal_cookie_consent')) return;
+  if (localStorage.getItem('Anteemonee_cookie_consent')) return;
 
   // If logged in, check DB
   if (currentUser && db) {
     try {
       const { data } = await db.from('profiles').select('cookie_consent').eq('id', currentUser.id).maybeSingle();
       if (data && data.cookie_consent) {
-        localStorage.setItem('wassal_cookie_consent', data.cookie_consent);
+        localStorage.setItem('Anteemonee_cookie_consent', data.cookie_consent);
         return;
       }
     } catch (_) {}
   }
 
-  // Not yet decided — show the popup
+  // Not yet decided â€” show the popup
   if (typeof window.__showCookieConsent === 'function') window.__showCookieConsent();
 }
 
@@ -629,7 +629,7 @@ async function handleLogout() {
   try {
     // Delete this device row so it disappears from the sessions list.
     try {
-      const sid = sessionStorage.getItem('wassal_session_id');
+      const sid = sessionStorage.getItem('Anteemonee_session_id');
       if (sid && currentUser && db) {
         await withTimeout(
           db.from('session_activity').delete().eq('id', sid).eq('user_id', currentUser.id),
@@ -637,7 +637,7 @@ async function handleLogout() {
         );
       }
     } catch (_) {}
-    sessionStorage.removeItem('wassal_session_id');
+    sessionStorage.removeItem('Anteemonee_session_id');
     stopActivityTracking();
 
     // Remove this account from multi-account store
@@ -682,7 +682,7 @@ async function switchToAccount(userId, options = {}) {
       return;
     }
 
-    // Apply the session — Supabase will auto-refresh if needed
+    // Apply the session â€” Supabase will auto-refresh if needed
     const { error } = await db.auth.setSession({
       access_token: accountData.session.access_token,
       refresh_token: accountData.session.refresh_token,
@@ -713,7 +713,7 @@ async function switchToAccount(userId, options = {}) {
     // Update saved account metadata with fresh info
     await AccountManager.saveCurrentSession(currentUser, (await db.auth.getSession()).data.session);
 
-    sessionStorage.removeItem('wassal_session_id');
+    sessionStorage.removeItem('Anteemonee_session_id');
     updateAuthUI();
     hideAccountSwitchOverlay();
     _switchingAccount = false;
@@ -734,8 +734,8 @@ async function addAnotherAccount() {
 
   // Save current URL so we can return after adding
   const returnTo = window.location.href;
-  sessionStorage.setItem('wassal_add_account_return', returnTo);
-  sessionStorage.setItem('wassal_adding_account', 'true');
+  sessionStorage.setItem('Anteemonee_add_account_return', returnTo);
+  sessionStorage.setItem('Anteemonee_adding_account', 'true');
 
   // Redirect to login page in "add account" mode
   window.location.href = BASE + '/pages/login.html?mode=add_account';
@@ -744,7 +744,7 @@ async function addAnotherAccount() {
 async function logoutAllAccounts() {
   try {
     // Clean up session activity
-    const sid = sessionStorage.getItem('wassal_session_id');
+    const sid = sessionStorage.getItem('Anteemonee_session_id');
     if (sid && currentUser && db) {
       try {
         await withTimeout(
@@ -753,7 +753,7 @@ async function logoutAllAccounts() {
         );
       } catch (_) {}
     }
-    sessionStorage.removeItem('wassal_session_id');
+    sessionStorage.removeItem('Anteemonee_session_id');
     stopActivityTracking();
 
     await AccountManager.logoutAll();
@@ -871,8 +871,8 @@ async function reAuthAccount(userId) {
   // Remove the expired account, then redirect to login in add-account mode
   await AccountManager.removeAccount(userId);
   const returnTo = window.location.href;
-  sessionStorage.setItem('wassal_add_account_return', returnTo);
-  sessionStorage.setItem('wassal_adding_account', 'true');
+  sessionStorage.setItem('Anteemonee_add_account_return', returnTo);
+  sessionStorage.setItem('Anteemonee_adding_account', 'true');
   window.location.href = BASE + '/pages/login.html?mode=add_account';
 }
 
@@ -1058,7 +1058,7 @@ function setupAddAccountBanner() {
     const title = document.getElementById('login-title') || document.getElementById('signup-title');
     const subtitle = document.getElementById('login-subtitle') || document.getElementById('signup-subtitle');
     if (title) title.textContent = 'Add another account';
-    if (subtitle) subtitle.textContent = 'Sign in to another Wassal account';
+    if (subtitle) subtitle.textContent = 'Sign in to another Anteemonee account';
     return;
   }
 
@@ -1092,7 +1092,7 @@ function setupAddAccountBanner() {
 }
 
 async function quickLogin(userId) {
-  // Already logged in as this account — just go home
+  // Already logged in as this account â€” just go home
   if (currentUser && currentUser.id === userId) {
     window.location.href = BASE + '/index.html';
     return;
@@ -1149,9 +1149,9 @@ async function handleLogin(e) {
     // Check if we're in "add account" mode
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('mode') === 'add_account') {
-      const returnTo = sessionStorage.getItem('wassal_add_account_return');
-      sessionStorage.removeItem('wassal_add_account_return');
-      sessionStorage.removeItem('wassal_adding_account');
+      const returnTo = sessionStorage.getItem('Anteemonee_add_account_return');
+      sessionStorage.removeItem('Anteemonee_add_account_return');
+      sessionStorage.removeItem('Anteemonee_adding_account');
       window.location.href = returnTo || BASE + '/index.html';
       return;
     }
@@ -1231,9 +1231,9 @@ async function handleSignup(e) {
       // Check if we're in "add account" mode
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('mode') === 'add_account') {
-        const returnTo = sessionStorage.getItem('wassal_add_account_return');
-        sessionStorage.removeItem('wassal_add_account_return');
-        sessionStorage.removeItem('wassal_adding_account');
+        const returnTo = sessionStorage.getItem('Anteemonee_add_account_return');
+        sessionStorage.removeItem('Anteemonee_add_account_return');
+        sessionStorage.removeItem('Anteemonee_adding_account');
         window.location.href = returnTo || BASE + '/index.html';
         return;
       }
@@ -1533,28 +1533,28 @@ async function signInWithSpotify() {
    ========================= */
 
 async function getOnboardingStep() {
-  if (!currentUser) { console.log('[getOnboardingStep] no currentUser → -1'); return -1; }
+  if (!currentUser) { console.log('[getOnboardingStep] no currentUser â†’ -1'); return -1; }
   try {
     if (!currentProfile) await loadProfile();
     const profile = currentProfile;
-    if (!profile) { console.log('[getOnboardingStep] no profile → 0'); return 0; }
-    if (!profile.date_of_birth || !profile.province_id) { console.log('[getOnboardingStep] missing dob/province → 0', profile.date_of_birth, profile.province_id); return 0; }
-    if (!profile.city_id) { console.log('[getOnboardingStep] missing city → 1'); return 1; }
+    if (!profile) { console.log('[getOnboardingStep] no profile â†’ 0'); return 0; }
+    if (!profile.date_of_birth || !profile.province_id) { console.log('[getOnboardingStep] missing dob/province â†’ 0', profile.date_of_birth, profile.province_id); return 0; }
+    if (!profile.city_id) { console.log('[getOnboardingStep] missing city â†’ 1'); return 1; }
     const { data: acads, error: acadErr } = await db.from('student_academic_profiles')
       .select('id, education_system_id, board_id, class_level_id, group_id, college_id, academic_session_id, exam_year')
       .eq('user_id', currentUser.id);
     if (acadErr) { console.error('[getOnboardingStep] SAP query error:', acadErr); return -1; }
     const acad = acads?.length ? acads[0] : null;
     console.log('[getOnboardingStep] SAP row:', acad);
-    if (!acad || !acad.education_system_id) { console.log('[getOnboardingStep] no SAP or no edu_system → 2'); return 2; }
-    if (!acad.board_id) { console.log('[getOnboardingStep] no board → 3'); return 3; }
-    if (!acad.class_level_id) { console.log('[getOnboardingStep] no class_level → 4'); return 4; }
+    if (!acad || !acad.education_system_id) { console.log('[getOnboardingStep] no SAP or no edu_system â†’ 2'); return 2; }
+    if (!acad.board_id) { console.log('[getOnboardingStep] no board â†’ 3'); return 3; }
+    if (!acad.class_level_id) { console.log('[getOnboardingStep] no class_level â†’ 4'); return 4; }
 
     // For ICS: skip group check, go straight to subjects
     const isIcsSystem = await db.from('education_systems').select('code').eq('id', acad.education_system_id).maybeSingle();
     const icsMode = isIcsSystem?.data?.code === 'ics';
 
-    if (!icsMode && !acad.group_id) { console.log('[getOnboardingStep] no group → 5'); return 5; }
+    if (!icsMode && !acad.group_id) { console.log('[getOnboardingStep] no group â†’ 5'); return 5; }
 
     if (acad.id) {
       const { count, error: countErr } = await db.from('student_subjects')
@@ -1566,9 +1566,9 @@ async function getOnboardingStep() {
     } else {
       return 5;
     }
-    if (!acad.college_id) { console.log('[getOnboardingStep] no college → 6'); return 6; }
-    if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session → 7'); return 7; }
-    console.log('[getOnboardingStep] all complete → -1');
+    if (!acad.college_id) { console.log('[getOnboardingStep] no college â†’ 6'); return 6; }
+    if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session â†’ 7'); return 7; }
+    console.log('[getOnboardingStep] all complete â†’ -1');
     return -1;
   } catch (e) {
     console.error('[getOnboardingStep] error:', e);
@@ -1984,7 +1984,7 @@ async function validateOnboardingStep(step) {
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-        if (age < 15) { showMessage(errorEl, 'You must be at least 15 years old to use Wassal.'); return false; }
+        if (age < 15) { showMessage(errorEl, 'You must be at least 15 years old to use Anteemonee.'); return false; }
       }
       if (!d.province_id) { showMessage(errorEl, 'Please select your province.'); return false; }
       return true;
@@ -2237,7 +2237,7 @@ function renderOnboardingStep() {
           ${filteredSessions.map(s => `
             <button class="onboarding-option ${d.academic_session_id == s.id ? 'selected' : ''}" data-id="${s.id}" data-start="${s.start_year}" data-end="${s.end_year}">
               <span class="option-name">${s.label}</span>
-              <span class="option-desc">${s.start_year} — ${s.end_year}</span>
+              <span class="option-desc">${s.start_year} â€” ${s.end_year}</span>
             </button>
           `).join('')}
         </div>
@@ -2275,18 +2275,18 @@ function renderOnboardingStep() {
         <h2 class="onboarding-title">Review Your Profile</h2>
         <p class="onboarding-subtitle">Check that everything looks correct.</p>
         <div class="onboarding-review">
-          <div class="review-row"><span class="review-label">Date of Birth</span><span class="review-value">${d.dob || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Province</span><span class="review-value">${r.provinces.find(p => p.id == d.province_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">City</span><span class="review-value">${r.cities.find(c => c.id == d.city_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || '—'}</span></div>
-          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${getICSAllSubjects(d.selected_subjects).map(s => s.displayName).join(', ') || '—'}</span></div>` : `
-          <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || '—'}</span></div>`}
-          <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.label || '—'}</span></div>
-          <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || '—'}</span></div>
+          <div class="review-row"><span class="review-label">Date of Birth</span><span class="review-value">${d.dob || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Province</span><span class="review-value">${r.provinces.find(p => p.id == d.province_id)?.name || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">City</span><span class="review-value">${r.cities.find(c => c.id == d.city_id)?.name || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || 'â€”'}</span></div>
+          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${getICSAllSubjects(d.selected_subjects).map(s => s.displayName).join(', ') || 'â€”'}</span></div>` : `
+          <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || 'â€”'}</span></div>`}
+          <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.label || 'â€”'}</span></div>
+          <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || 'â€”'}</span></div>
         </div>
       `;
       break;
@@ -2528,7 +2528,7 @@ async function recordSessionActivity() {
     const now = new Date().toISOString();
 
     // Fast path: this tab already owns a live row, just touch it.
-    const knownId = sessionStorage.getItem('wassal_session_id');
+    const knownId = sessionStorage.getItem('Anteemonee_session_id');
     if (knownId) {
       const { data: own } = await db.from('session_activity')
         .select('id, logged_out_at, city, country')
@@ -2541,12 +2541,12 @@ async function recordSessionActivity() {
         syncRowLocation(knownId, own);
         return;
       }
-      sessionStorage.removeItem('wassal_session_id');
+      sessionStorage.removeItem('Anteemonee_session_id');
     }
 
     // Slow path (new tab / new device / after sign-out elsewhere).
     const rowId = await reconcileSessionRows();
-    if (rowId) sessionStorage.setItem('wassal_session_id', String(rowId));
+    if (rowId) sessionStorage.setItem('Anteemonee_session_id', String(rowId));
   } catch (e) {
     console.error('recordSessionActivity error:', e);
   }
@@ -2681,7 +2681,7 @@ async function signOutOtherSessions() {
   if (!currentUser || !db) return;
   try {
     // Delete other rows outright so signed-out devices vanish from the list.
-    const currentSessionId = sessionStorage.getItem('wassal_session_id');
+    const currentSessionId = sessionStorage.getItem('Anteemonee_session_id');
     let q = db.from('session_activity').delete().eq('user_id', currentUser.id);
     if (currentSessionId) q = q.neq('id', currentSessionId);
     await q;

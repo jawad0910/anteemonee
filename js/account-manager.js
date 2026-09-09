@@ -1,10 +1,10 @@
-/**
- * Wassal Multi-Account Manager
+﻿/**
+ * Anteemonee Multi-Account Manager
  * Manages up to 3 simultaneous Supabase auth sessions in IndexedDB.
  * Single source of truth for account switching, session isolation, and cache scoping.
  */
 const AccountManager = (() => {
-  const DB_NAME = 'wassal_accounts';
+  const DB_NAME = 'Anteemonee_accounts';
   const DB_VERSION = 1;
   const STORE_NAME = 'sessions';
   const MAX_ACCOUNTS = 3;
@@ -14,7 +14,7 @@ const AccountManager = (() => {
   let _accounts = []; // { userId, email, displayName, username, avatarUrl, lastUsedAt, sessionStatus }
   let _activeUserId = null;
 
-  // ── IndexedDB helpers ──
+  // â”€â”€ IndexedDB helpers â”€â”€
   function openDB() {
     if (_db) return Promise.resolve(_db);
     return new Promise((resolve, reject) => {
@@ -75,7 +75,7 @@ const AccountManager = (() => {
     }));
   }
 
-  // ── Public API ──
+  // â”€â”€ Public API â”€â”€
 
   /**
    * Initialize the account manager. Load saved accounts from IndexedDB.
@@ -260,7 +260,7 @@ const AccountManager = (() => {
 
   /**
    * Remove an account from this browser.
-   * Does NOT delete the Supabase account — only removes the saved session.
+   * Does NOT delete the Supabase account â€” only removes the saved session.
    */
   async function removeAccount(userId) {
     try {

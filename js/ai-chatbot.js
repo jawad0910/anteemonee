@@ -1,11 +1,11 @@
-/* ==========================================
-   Wassal AI Chatbot - Full Implementation
+﻿/* ==========================================
+   Anteemonee Chatbot - Full Implementation
    ========================================== */
 
 (function () {
   'use strict';
 
-  // ── State ──
+  // â”€â”€ State â”€â”€
   const api = new AiApiService();
   let conversations = [];
   let activeConversationId = null;
@@ -16,21 +16,21 @@
   let thinkMode = false;
   let researchMode = false;
 
-  // ── Per-user localStorage keys ──
+  // â”€â”€ Per-user localStorage keys â”€â”€
   function chatStorageKey() {
-    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'wassal_ai_conversations_' + currentUser.id;
-    return 'wassal_ai_conversations_anon';
+    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_conversations_' + currentUser.id;
+    return 'Anteemonee_ai_conversations_anon';
   }
   function personaStorageKey() {
-    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'wassal_ai_persona_' + currentUser.id;
-    return 'wassal_ai_persona_anon';
+    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_persona_' + currentUser.id;
+    return 'Anteemonee_ai_persona_anon';
   }
   function sessionStateKey() {
-    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'wassal_ai_session_' + currentUser.id;
-    return 'wassal_ai_session_anon';
+    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_session_' + currentUser.id;
+    return 'Anteemonee_ai_session_anon';
   }
 
-  // ── Persist session state to localStorage (no tokens — always from DB) ──
+  // â”€â”€ Persist session state to localStorage (no tokens â€” always from DB) â”€â”€
   function saveSessionState() {
     try {
       const state = {
@@ -61,18 +61,18 @@
     } catch (_) {}
   }
 
-  // ── AI Session State ──
+  // â”€â”€ AI Session State â”€â”€
   const TOKEN_LIMIT = 100000;
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
   let estimatedTokensUsed = 0; // client-side running estimate
 
-  // ── Streak State ──
+  // â”€â”€ Streak State â”€â”€
   let streakCount = 0;
   let longestStreak = 0;
 
-  // ── Study Timer State ──
+  // â”€â”€ Study Timer State â”€â”€
   let studyTimerInterval = null;   // setInterval ID
   let studyTimerAccumulated = 0;   // seconds accumulated, not yet saved
   const STUDY_SAVE_INTERVAL = 5;   // save to DB every 5s (was 30, too much lost on nav)
@@ -109,7 +109,7 @@
     } catch (e) { console.warn('[StudyTimer] save failed:', e); }
   }
 
-  // ── Model / Persona State ──
+  // â”€â”€ Model / Persona State â”€â”€
   const PERSONAS = [
     {
       name: 'Shehbaz Sharif', providerIndex: 0,
@@ -127,7 +127,7 @@
   ];
   let activePersonaIndex = 0;
 
-  // ── DOM ──
+  // â”€â”€ DOM â”€â”€
   const chatContent = document.getElementById('chat-content');
   const welcome = document.getElementById('chat-welcome');
   const messagesList = document.getElementById('messages-list');
@@ -142,16 +142,16 @@
   const modelTrigger = document.getElementById('model-selector-trigger');
   const scrollDownBtn = document.getElementById('scroll-down-btn');
   const imagePreviewBar = document.getElementById('image-preview-bar');
-  const btnAttach = document.getElementById('btn-attach');
-  const btnModes = document.getElementById('btn-modes');
-  const modesLabel = document.getElementById('modes-label');
-  const modesWrapper = document.getElementById('modes-select-wrapper');
-  const modesDropdown = document.getElementById('modes-dropdown');
+  const btnPlus = document.getElementById('btn-plus');
+  const plusWrapper = document.getElementById('plus-wrapper');
+  const plusDropdown = document.getElementById('plus-dropdown');
+  const modesBar = document.getElementById('modes-bar');
+  const imageFileInput = document.getElementById('image-file-input');
   // True when the user is reading near the newest message. Streaming only
   // auto-scrolls in that case, so it never yanks the user away mid-read.
   let userNearBottom = true;
 
-  // ── AI Preferences (from Settings → AI Preferences, stored in user_preferences) ──
+  // â”€â”€ AI Preferences (from Settings â†’ AI Preferences, stored in user_preferences) â”€â”€
   let aiPrefs = {
     responseStyle: 'balanced',
     explanationLevel: 'standard',
@@ -161,7 +161,7 @@
     personalization: '',
   };
 
-  // ── AI Memory (durable facts remembered from past chats) ──
+  // â”€â”€ AI Memory (durable facts remembered from past chats) â”€â”€
   let aiMemories = [];
 
   async function loadAiMemories() {
@@ -203,7 +203,7 @@
     }
   }
 
-  // ── Init ──
+  // â”€â”€ Init â”€â”€
   document.addEventListener('DOMContentLoaded', init);
 
   async function init() {
@@ -231,14 +231,14 @@
     } catch (_) { conversations = []; }
     // Legacy migration: move old sessionStorage data to new per-user localStorage
     try {
-      const legacy = sessionStorage.getItem('wassal_ai_conversations');
+      const legacy = sessionStorage.getItem('Anteemonee_ai_conversations');
       if (legacy) {
         const legacyArr = JSON.parse(legacy);
         if (Array.isArray(legacyArr) && legacyArr.length > 0 && conversations.length === 0) {
           conversations = legacyArr;
           localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
         }
-        sessionStorage.removeItem('wassal_ai_conversations');
+        sessionStorage.removeItem('Anteemonee_ai_conversations');
       }
     } catch (_) {}
     // Load persona from localStorage (per-user)
@@ -248,28 +248,28 @@
     } catch (_) { activePersonaIndex = 0; }
     // Legacy migration: move old sessionStorage persona
     try {
-      const legacyPersona = sessionStorage.getItem('wassal_ai_persona');
+      const legacyPersona = sessionStorage.getItem('Anteemonee_ai_persona');
       if (legacyPersona !== null) {
         const idx = parseInt(legacyPersona, 10);
         if (idx >= 0 && idx < PERSONAS.length) {
           activePersonaIndex = idx;
           localStorage.setItem(personaStorageKey(), String(idx));
         }
-        sessionStorage.removeItem('wassal_ai_persona');
+        sessionStorage.removeItem('Anteemonee_ai_persona');
       }
     } catch (_) {}
     await loadStudentContext();
     await loadAiPrefs();
     await loadAiMemories();
 
-    // ── 1. Load from localStorage FIRST (instant, no flicker) ──
+    // â”€â”€ 1. Load from localStorage FIRST (instant, no flicker) â”€â”€
     const cached = loadSessionState();
     if (cached) {
       activeSession = cached.activeSession;
       sessionUsage = cached.sessionUsage;
       streakCount = cached.streakCount || 0;
       longestStreak = cached.longestStreak || 0;
-      // Tokens always come from DB — not cached in localStorage
+      // Tokens always come from DB â€” not cached in localStorage
       // If cached session is expired, clear it
       if (activeSession && new Date(activeSession.expires_at).getTime() <= Date.now()) {
         activeSession = null;
@@ -281,7 +281,7 @@
       }
     }
 
-    // ── 2. Sync with DB in background (only if no cached data or cache is stale) ──
+    // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
     const token = getAccessToken();
     if (!token) {
       if (!cached) showSessionError('Log in to start using AI chat.');
@@ -298,7 +298,7 @@
     // Periodic streak check (every 5 min)
     setInterval(() => { refreshStreak(); saveSessionState(); }, 5 * 60 * 1000);
 
-    // ── Study timer: pause/resume on tab visibility ──
+    // â”€â”€ Study timer: pause/resume on tab visibility â”€â”€
     document.addEventListener('visibilitychange', () => {
       if (!activeSession) return;
       if (document.visibilityState === 'visible') {
@@ -313,7 +313,7 @@
         // Save to localStorage as fallback (sendBeacon can't carry auth headers)
         try {
           const userId = (typeof currentUser !== 'undefined' && currentUser?.id) ? currentUser.id : 'anon';
-          const key = `wassal_study_time_pending_${userId}`;
+          const key = `Anteemonee_study_time_pending_${userId}`;
           const prev = parseInt(localStorage.getItem(key) || '0', 10);
           localStorage.setItem(key, String(prev + studyTimerAccumulated));
           studyTimerAccumulated = 0;
@@ -327,7 +327,7 @@
   async function flushPendingStudyTime() {
     try {
       const userId = (typeof currentUser !== 'undefined' && currentUser?.id) ? currentUser.id : 'anon';
-      const key = `wassal_study_time_pending_${userId}`;
+      const key = `Anteemonee_study_time_pending_${userId}`;
       const pending = parseInt(localStorage.getItem(key) || '0', 10);
       if (pending > 0) {
         await db.rpc('add_study_time', { p_seconds: pending });
@@ -336,7 +336,7 @@
     } catch (_) {}
   }
 
-  // ── Image helpers (IIFE-level so handleSend can access them) ──
+  // â”€â”€ Image helpers (IIFE-level so handleSend can access them) â”€â”€
   function renderImagePreview() {
     imagePreviewBar.innerHTML = '';
     if (pendingImages.length === 0) {
@@ -362,7 +362,7 @@
   }
 
   function updateAttachButton() {
-    btnAttach.classList.toggle('has-images', pendingImages.length > 0);
+    if (typeof btnPlus !== 'undefined' && btnPlus) btnPlus.classList.toggle('has-images', pendingImages.length > 0);
   }
 
   function updateSendButton() {
@@ -418,12 +418,35 @@
       }
     });
 
-    // ── Image attachment ──
-    const imageFileInput = document.getElementById('image-file-input');
+    // â”€â”€ Image attachment â”€â”€
+    btnPlus.addEventListener('click', (e) => {
+      e.stopPropagation();
+      plusWrapper.classList.toggle('open');
+    });
 
-    btnAttach.addEventListener('click', () => {
-      if (pendingImages.length >= 3) return;
-      imageFileInput.click();
+    plusDropdown.querySelectorAll('.plus-dropdown-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = item.dataset.action;
+        if (action === 'photo') {
+          if (pendingImages.length < 3) imageFileInput.click();
+        } else if (action === 'think') {
+          thinkMode = !thinkMode;
+          renderModeChips();
+          updatePlusDropdownActive();
+        } else if (action === 'research') {
+          researchMode = !researchMode;
+          renderModeChips();
+          updatePlusDropdownActive();
+        } else if (action === 'github') {
+          if (typeof GitHub !== 'undefined') GitHub.openPanel();
+        }
+        plusWrapper.classList.remove('open');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!plusWrapper.contains(e.target)) plusWrapper.classList.remove('open');
     });
 
     imageFileInput.addEventListener('change', (e) => {
@@ -470,7 +493,7 @@
       });
     }
 
-    // ── Image lightbox ──
+    // â”€â”€ Image lightbox â”€â”€
     const lightbox = document.getElementById('image-lightbox');
     const lbImg = document.getElementById('lb-img');
     const lbClose = document.getElementById('lb-close');
@@ -557,58 +580,55 @@
       document.addEventListener('click', () => mobileDropdown.classList.remove('active'));
     }
 
-    // ── Modes dropdown (Think / Research) ──
-    btnModes.addEventListener('click', (e) => {
-      e.stopPropagation();
-      modesWrapper.classList.toggle('open');
-    });
-
-    modesDropdown.querySelectorAll('.modes-option').forEach(opt => {
-      opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const mode = opt.dataset.mode;
-        if (mode === 'think') {
-          thinkMode = !thinkMode;
-          if (thinkMode) researchMode = false;
-        } else if (mode === 'research') {
-          researchMode = !researchMode;
-          if (researchMode) thinkMode = false;
-        }
-        updateModesUI();
-        modesWrapper.classList.remove('open');
-      });
-    });
-
-    // Close dropdown on outside click
+    // â”€â”€ Modes dropdown (Think / Research) â”€â”€
+    // Close plus dropdown on outside click
     document.addEventListener('click', (e) => {
-      if (!modesWrapper.contains(e.target)) {
-        modesWrapper.classList.remove('open');
+      if (!plusWrapper.contains(e.target)) {
+        plusWrapper.classList.remove('open');
       }
     });
   }
 
-  // ── Modes UI (Think / Research dropdown) ──
-  function updateModesUI() {
-    const hasMode = thinkMode || researchMode;
-    btnModes.classList.toggle('active', hasMode);
-
+  // â”€â”€ Modes UI (Think / Research dropdown) â”€â”€
+  function renderModeChips() {
+    modesBar.innerHTML = '';
+    var removeSvg = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     if (thinkMode) {
-      modesLabel.textContent = 'Think';
-    } else if (researchMode) {
-      modesLabel.textContent = 'Research';
-    } else {
-      modesLabel.textContent = '';
+      var chip = document.createElement('span');
+      chip.className = 'mode-chip';
+      chip.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>Think<button class="mode-chip-remove" data-mode="think">' + removeSvg + '</button>';
+      chip.querySelector('.mode-chip-remove').addEventListener('click', function(e) {
+        e.stopPropagation();
+        thinkMode = false;
+        renderModeChips();
+        updatePlusDropdownActive();
+      });
+      modesBar.appendChild(chip);
     }
+    if (researchMode) {
+      var chip2 = document.createElement('span');
+      chip2.className = 'mode-chip';
+      chip2.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Research<button class="mode-chip-remove" data-mode="research">' + removeSvg + '</button>';
+      chip2.querySelector('.mode-chip-remove').addEventListener('click', function(e) {
+        e.stopPropagation();
+        researchMode = false;
+        renderModeChips();
+        updatePlusDropdownActive();
+      });
+      modesBar.appendChild(chip2);
+    }
+  }
 
-    // Update active state on options
-    modesDropdown.querySelectorAll('.modes-option').forEach(opt => {
-      const isActive = (opt.dataset.mode === 'think' && thinkMode)
-                    || (opt.dataset.mode === 'research' && researchMode);
-      opt.classList.toggle('active', isActive);
+  function updatePlusDropdownActive() {
+    plusDropdown.querySelectorAll('.plus-dropdown-item').forEach(function(item) {
+      var action = item.dataset.action;
+      var isActive = (action === 'think' && thinkMode) || (action === 'research' && researchMode)
+        || (action === 'github' && typeof GitHub !== 'undefined' && GitHub.isConnectedCached());
+      item.classList.toggle('active', isActive);
     });
   }
 
-  // ── Model / Persona ──
+  // â”€â”€ Model / Persona â”€â”€
   function updatePersonaUI() {
     const persona = PERSONAS[activePersonaIndex];
     const dotColors = ['#3B82F6', '#F59E0B', '#1FA055'];
@@ -643,13 +663,16 @@
         btn.style.display = isCoding ? 'none' : '';
       }
     });
+    // GitHub option is Zardari-only
+    var ghItem = document.getElementById('plus-github-item');
+    if (ghItem) ghItem.style.display = persona.codingOnly ? '' : 'none';
   }
 
   function getActivePersona() {
     return PERSONAS[activePersonaIndex];
   }
 
-  // ── Student Context ──
+  // â”€â”€ Student Context â”€â”€
   async function loadStudentContext() {
     if (typeof currentUser === 'undefined' || !currentUser) return;
     try {
@@ -675,7 +698,7 @@
     }
   }
 
-  // ── Textbook Search ──
+  // â”€â”€ Textbook Search â”€â”€
   async function searchTextbooks(query) {
     if (!query || query.trim().length < 3) return [];
 
@@ -747,7 +770,7 @@ ${sections.join('\n\n---\n\n')}
 This References section is MANDATORY. Every response that uses textbook content MUST end with it. List ALL books and pages you referenced. Do NOT skip this step.`;
   }
 
-  // ── AI preference rules injected into the system prompt ──
+  // â”€â”€ AI preference rules injected into the system prompt â”€â”€
   function aiPrefsPrompt() {
     const styleRule = {
       concise: 'RESPONSE STYLE is concise: keep every response short and to the point. No extra examples, analogies, or background unless the student explicitly asks for more.',
@@ -762,34 +785,34 @@ This References section is MANDATORY. Every response that uses textbook content 
     }[aiPrefs.explanationLevel] || 'EXPLANATION LEVEL is standard: explain at FSc board-exam level.';
 
     const langRule = {
-      english: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in English. Every single word, sentence, heading, bullet point, explanation — everything must be in English. Do NOT use any Urdu words, Urdu script, or Roman Urdu. Write as if you are an English-speaking tutor.',
-      urdu: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in Urdu script (اردو). Every single word, sentence, heading, bullet point, explanation — everything must be in Urdu script. Do NOT use any English words or Roman Urdu. Write as if you are an اردو-speaking tutor.',
-      roman_urdu: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in Roman Urdu (English letters used to write Urdu words). Every single word, sentence, heading, bullet point, explanation — everything must be in Roman Urdu. Do NOT use Urdu script. Do NOT use formal English. Write as if you are talking to a friend in Lahore.',
+      english: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in English. Every single word, sentence, heading, bullet point, explanation â€” everything must be in English. Do NOT use any Urdu words, Urdu script, or Roman Urdu. Write as if you are an English-speaking tutor.',
+      urdu: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in Urdu script (Ø§Ø±Ø¯Ùˆ). Every single word, sentence, heading, bullet point, explanation â€” everything must be in Urdu script. Do NOT use any English words or Roman Urdu. Write as if you are an Ø§Ø±Ø¯Ùˆ-speaking tutor.',
+      roman_urdu: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in Roman Urdu (English letters used to write Urdu words). Every single word, sentence, heading, bullet point, explanation â€” everything must be in Roman Urdu. Do NOT use Urdu script. Do NOT use formal English. Write as if you are talking to a friend in Lahore.',
       mixed: 'LANGUAGE RULE: Match the student exact script. If they write in English, reply in English. If they write in Roman Urdu, reply in Roman Urdu (never Urdu script). If they write in Urdu script, reply in Urdu script. Never switch mid-response.',
     }[aiPrefs.language] || 'LANGUAGE RULE: Match the student exact script.';
 
     const suggestRule = aiPrefs.studySuggestions
-      ? 'STUDY SUGGESTIONS: After finishing your main answer, add 1-2 short follow-up sentences like "Want me to quiz you on this?" or "Should I explain [related topic]?". Do NOT create a separate section header for this — just add them as natural closing sentences at the very end of your response.'
+      ? 'STUDY SUGGESTIONS: After finishing your main answer, add 1-2 short follow-up sentences like "Want me to quiz you on this?" or "Should I explain [related topic]?". Do NOT create a separate section header for this â€” just add them as natural closing sentences at the very end of your response.'
       : 'STUDY SUGGESTIONS: NEVER add follow-up suggestions, recommendations, or closing lines. Just answer the question and stop. No "want more?" or "what to study next" lines.';
 
     const personalRule = aiPrefs.personalization
-      ? `STUDENT'S PERSONAL INSTRUCTIONS — CRITICAL: The student has given you the following personalization instructions. You MUST follow these at all times:\n"${aiPrefs.personalization}"\nThese instructions override default behavior. Adapt your tone, style, language, explanation depth, and teaching approach according to what the student described above.`
+      ? `STUDENT'S PERSONAL INSTRUCTIONS â€” CRITICAL: The student has given you the following personalization instructions. You MUST follow these at all times:\n"${aiPrefs.personalization}"\nThese instructions override default behavior. Adapt your tone, style, language, explanation depth, and teaching approach according to what the student described above.`
       : '';
 
     return [styleRule, levelRule, langRule, suggestRule, personalRule].filter(Boolean).join('\n\n');
   }
 
-  // ── System Prompt ──
+  // â”€â”€ System Prompt â”€â”€
   function buildSystemPrompt() {
     const persona = getActivePersona();
 
-    // Zardari is coding-only — different system prompt
+    // Zardari is coding-only â€” different system prompt
     if (persona.codingOnly) {
-      let ctx = `You are Zardari, Wassal's dedicated Coding Agent. You are an expert software engineer, full-stack developer, and programming tutor. You write production-quality code and help students build real projects.
+      let ctx = `You are Zardari, Anteemonee's dedicated Coding Agent. You are an expert software engineer, full-stack developer, and programming tutor. You write production-quality code and help students build real projects.
 
-IDENTITY: Your name is "Zardari". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "Zardari is trained by Wassal Pakistan."
+IDENTITY: Your name is "Zardari". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "Zardari is trained by Anteemonee Pakistan."
 
-STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler — go straight to the content.
+STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler â€” go straight to the content.
 
 CORE EXPERTISE:
 - Languages: Python, JavaScript, TypeScript, C, C++, Java, Dart, Kotlin, Swift, HTML, CSS, SQL, Bash, Go, Rust, PHP, Ruby
@@ -799,10 +822,10 @@ CORE EXPERTISE:
 - Concepts: Data structures, algorithms, OOP, functional programming, system design, APIs, REST, GraphQL, web sockets, authentication, security
 
 WHAT YOU DO:
-- Generate complete, working, production-ready code — not snippets, real code
+- Generate complete, working, production-ready code â€” not snippets, real code
 - Build projects from scratch: websites, apps, games, tools, CLI programs, APIs
-- Debug code — find and fix errors, explain why they happened
-- Review code — suggest improvements, performance fixes, security issues
+- Debug code â€” find and fix errors, explain why they happened
+- Review code â€” suggest improvements, performance fixes, security issues
 - Explain programming concepts step-by-step with examples
 - Help students with assignments, projects, and homework involving code
 - Create file structures, database schemas, and architecture diagrams (text-based)
@@ -811,7 +834,7 @@ WHAT YOU DO:
 - Optimize code for speed and efficiency
 
 NON-CODING RULES:
-- For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Zardari, the coding expert. Switch to Shehbaz Sharif or Imran Khan for academic questions — they handle Physics, Chemistry, Biology, and Math theory better."
+- For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Zardari, the coding expert. Switch to Shehbaz Sharif or Imran Khan for academic questions â€” they handle Physics, Chemistry, Biology, and Math theory better."
 - NEVER answer non-coding academic questions, even if you know the answer
 - You CAN help with: computational math, data science, scientific computing, numerical methods, simulations, and anything that involves writing code
 
@@ -831,14 +854,20 @@ RESPONSE FORMAT:
       if (thinkMode) {
         ctx += `\n\nTHINK MODE ACTIVE: Deep thinking mode. Reason step by step. Consider edge cases. Give a thorough, well-thought-out coding solution.`;
       }
+      if (typeof GitHub !== 'undefined') {
+        try {
+          var ghCtx = GitHub.buildContext();
+          if (ghCtx) ctx += ghCtx;
+        } catch (_) {}
+      }
       return ctx;
     }
 
-    let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (x₀, v², √2), no LaTeX, no HTML.
+    let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (xâ‚€, vÂ², âˆš2), no LaTeX, no HTML.
 
 ${aiPrefsPrompt()}
 
-IDENTITY: Your name is "${persona.name}". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "${persona.name} is trained by Wassal Pakistan."
+IDENTITY: Your name is "${persona.name}". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "${persona.name} is trained by Anteemonee Pakistan."
 
 BACKGROUND: ${persona.background}
 
@@ -846,7 +875,7 @@ STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No
 
 BEHAVIOR:
 - For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance.
-- CRITICAL — REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
+- CRITICAL â€” REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
 
 ---
 **References:**
@@ -875,7 +904,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     if (thinkMode) {
-      ctx += `\n\nTHINK MODE ACTIVE: The student has activated deep thinking mode. Take your time. Think step by step like a thoughtful human would. Reason through the problem thoroughly before answering. Consider multiple angles, potential pitfalls, and edge cases. Use more of your reasoning capacity. Do NOT give a rushed or surface-level answer. If the question is complex, break it down and work through each part carefully. This is not a simple Q&A — the student wants a genuinely thoughtful, thorough response.`;
+      ctx += `\n\nTHINK MODE ACTIVE: The student has activated deep thinking mode. Take your time. Think step by step like a thoughtful human would. Reason through the problem thoroughly before answering. Consider multiple angles, potential pitfalls, and edge cases. Use more of your reasoning capacity. Do NOT give a rushed or surface-level answer. If the question is complex, break it down and work through each part carefully. This is not a simple Q&A â€” the student wants a genuinely thoughtful, thorough response.`;
     }
 
     if (researchMode) {
@@ -885,7 +914,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return ctx;
   }
 
-  // ── Markdown + LaTeX Renderer ──
+  // â”€â”€ Markdown + LaTeX Renderer â”€â”€
   function renderMarkdown(text) {
     if (!text) return '';
 
@@ -995,7 +1024,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return html;
   }
 
-  // ── Conversation Management ──
+  // â”€â”€ Conversation Management â”€â”€
   function newChat() {
     activeConversationId = null;
     messages = [];
@@ -1052,7 +1081,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         title += chunk;
         if (title.length > 80) break;
       }
-      title = title.replace(/^["'“”‘’\s]+|["'“”‘’\s]+$/g, '').replace(/[.!?:;…]+$/g, '').trim();
+      title = title.replace(/^["'â€œâ€â€˜â€™\s]+|["'â€œâ€â€˜â€™\s]+$/g, '').replace(/[.!?:;â€¦]+$/g, '').trim();
       title = title.replace(/\{.*$/g, '').trim();
       title = title.split(/\s+/).filter(Boolean).slice(0, 5).join(' ');
       if (title.length > 40) title = title.slice(0, 40).trim();
@@ -1162,7 +1191,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     input.addEventListener('click', (e) => e.stopPropagation());
   }
 
-  // ── Message Rendering ──
+  // â”€â”€ Message Rendering â”€â”€
   function getUserAvatarUrl() {
     if (typeof currentProfile !== 'undefined' && currentProfile?.profile_image_url) {
       return currentProfile.profile_image_url;
@@ -1210,7 +1239,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
     if (role === 'assistant') {
       div.innerHTML = `
-        <div class="msg-avatar assistant-avatar"><img src="../assets/wassal.png" alt="Wassal"></div>
+        <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
         <div class="msg-body">${quoteHtml}<div class="msg-content">${renderMarkdown(content)}</div></div>
       `;
     } else {
@@ -1241,7 +1270,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
                       : mode === 'think' ? 'thinking'
                       : '';
     div.innerHTML = `
-      <div class="msg-avatar assistant-avatar"><img src="../assets/wassal.png" alt="Wassal"></div>
+      <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
       <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span class="thinking-status ${statusClass}" id="streaming-status">${statusLabel}</span></div></div></div>
     `;
     messagesList.appendChild(div);
@@ -1302,9 +1331,12 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function finalizeStreamingMessage(div, text) {
     const content = div.querySelector('.msg-content');
     content.innerHTML = renderMarkdown(text);
+    try {
+      if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
+    } catch (_) {}
   }
 
-  // ── Text Selection: Reply + Flashcard ──
+  // â”€â”€ Text Selection: Reply + Flashcard â”€â”€
   let pendingQuote = null; // { role: 'assistant'|'user', text }
   let pendingSel = null;
   let selToolbar = null;
@@ -1381,7 +1413,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       chip.id = 'reply-chip';
       chip.innerHTML = `<div class="reply-chip-bar"></div>
         <div class="reply-chip-body"><div class="reply-chip-label"></div><div class="reply-chip-text"></div></div>
-        <button class="reply-chip-cancel" type="button" aria-label="Cancel reply">×</button>`;
+        <button class="reply-chip-cancel" type="button" aria-label="Cancel reply">Ã—</button>`;
       const area = document.querySelector('.chat-input-area');
       const wrapper = document.querySelector('.chat-input-wrapper');
       if (area && wrapper) area.insertBefore(chip, wrapper);
@@ -1414,7 +1446,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       ov = document.createElement('div');
       ov.id = 'quote-modal-overlay';
       ov.innerHTML = `<div class="quote-modal" role="dialog" aria-modal="true">
-        <div class="quote-modal-head"><span class="quote-modal-title"></span><button class="quote-modal-close" type="button" aria-label="Close">×</button></div>
+        <div class="quote-modal-head"><span class="quote-modal-title"></span><button class="quote-modal-close" type="button" aria-label="Close">Ã—</button></div>
         <div class="quote-modal-body"></div></div>`;
       document.body.appendChild(ov);
       ov.addEventListener('click', (e) => {
@@ -1454,7 +1486,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     });
   }
 
-  // ── Session Management ──
+  // â”€â”€ Session Management â”€â”€
   function getAccessToken() {
     try {
       // Use Supabase client to get the current session (always the active account)
@@ -1483,13 +1515,13 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
             activeSession = ent.active_session;
             estimatedTokensUsed = dbTokens;
           } else {
-            // Same session — always trust DB for tokens
+            // Same session â€” always trust DB for tokens
             activeSession.messages_count = dbMsgs;
             activeSession.tokens_used = dbTokens;
             estimatedTokensUsed = dbTokens;
           }
         } else {
-          // No active session in DB — clear local if expired
+          // No active session in DB â€” clear local if expired
           if (activeSession && new Date(activeSession.expires_at).getTime() <= Date.now()) {
             activeSession = null;
             estimatedTokensUsed = 0;
@@ -1587,8 +1619,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return `${months[d.getMonth()]} ${d.getDate()}`;
   }
 
-  // ── Cost calculation ──
-  // 100,000 tokens = $0.018 → $0.00000018 per token
+  // â”€â”€ Cost calculation â”€â”€
+  // 100,000 tokens = $0.018 â†’ $0.00000018 per token
   // PKR rate (update periodically)
   const USD_TO_PKR = 280;
   const COST_PER_TOKEN_USD = 0.018 / 100000;
@@ -1640,7 +1672,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         ${streakCount > 0 ? `
         <div class="session-row">
           <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount} day${streakCount !== 1 ? 's' : ''} 🔥</span>
+          <span class="session-value streak-value">${streakCount} day${streakCount !== 1 ? 's' : ''} ðŸ”¥</span>
         </div>` : `
         <div class="session-row">
           <span class="session-label">Streak</span>
@@ -1661,7 +1693,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         <div class="session-divider"></div>
         <div class="session-row">
           <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount > 0 ? streakCount + ' day' + (streakCount !== 1 ? 's' : '') + ' 🔥' : '0'}</span>
+          <span class="session-value streak-value">${streakCount > 0 ? streakCount + ' day' + (streakCount !== 1 ? 's' : '') + ' ðŸ”¥' : '0'}</span>
         </div>
         <div class="session-row">
           <span class="session-label">Sessions left</span>
@@ -1767,7 +1799,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     } catch (_) {}
   }
 
-  // ── Token Exhausted Popup (Modal) ──
+  // â”€â”€ Token Exhausted Popup (Modal) â”€â”€
   function showTokenExhaustedPopup() {
     removeTokenExhaustedPopup();
     const overlay = document.createElement('div');
@@ -1796,7 +1828,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       const started = await startSession();
       if (started) {
         chatInput.disabled = false;
-        chatInput.placeholder = 'Ask Wassal AI anything...';
+        chatInput.placeholder = 'Ask Anteemonee anything...';
         chatInput.focus();
         estimatedTokensUsed = 0;
         updateSessionPanel();
@@ -1809,7 +1841,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     if (existing) existing.remove();
   }
 
-  // ── Session Expired Popup ──
+  // â”€â”€ Session Expired Popup â”€â”€
   function showSessionExpiredPopup() {
     removeTokenExhaustedPopup();
     const overlay = document.createElement('div');
@@ -1838,7 +1870,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       const started = await startSession();
       if (started) {
         chatInput.disabled = false;
-        chatInput.placeholder = 'Ask Wassal AI anything...';
+        chatInput.placeholder = 'Ask Anteemonee anything...';
         chatInput.focus();
         estimatedTokensUsed = 0;
         updateSessionPanel();
@@ -1846,13 +1878,13 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     });
   }
 
-  // ── Send / Stop ──
+  // â”€â”€ Send / Stop â”€â”€
   async function handleSend() {
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
     if ((!text && !hasImages) || isStreaming) return;
 
-    // Lock immediately — prevent double-send during any async gap
+    // Lock immediately â€” prevent double-send during any async gap
     isStreaming = true;
     chatInput.disabled = true;
     btnSend.disabled = true;
@@ -1863,10 +1895,10 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     // Refresh AI preferences in case user changed them mid-session
     await loadAiPrefs();
 
-    // ── Session gate: must have an active session ──
+    // â”€â”€ Session gate: must have an active session â”€â”€
     if (!activeSession || new Date(activeSession.expires_at).getTime() <= Date.now()) {
       const started = await startSession();
-      if (!started) return; // blocked — no sessions left
+      if (!started) return; // blocked â€” no sessions left
     }
 
     // Start study timer if page is visible and session is active
@@ -1874,7 +1906,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       startStudyTimer();
     }
 
-    // ── Token budget check ──
+    // â”€â”€ Token budget check â”€â”€
     const estInput = estimateInputTokens(text + (quote ? quote.text : '') + (studentContext ? JSON.stringify(studentContext) : ''));
     if (estimatedTokensUsed + estInput >= TOKEN_LIMIT) {
       showTokenExhaustedPopup();
@@ -1891,7 +1923,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     // Reset think/research toggles after sending
     thinkMode = false;
     researchMode = false;
-    updateModesUI();
+    renderModeChips();
+    updatePlusDropdownActive();
 
     if (welcome.style.display !== 'none') {
       welcome.style.display = 'none';
@@ -1931,7 +1964,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       console.warn('[AI] Textbook search failed:', e);
     }
 
-    // Fresh memory reload — picks up extractions from OTHER chats too.
+    // Fresh memory reload â€” picks up extractions from OTHER chats too.
     await loadAiMemories();
 
     const systemPrompt = buildSystemPrompt() + textbookContext;
@@ -1989,7 +2022,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         scrollDownBtn.classList.remove('show');
       }
     } catch (error) {
-      // ── Auto-retry on NO_SESSION: session exists locally but not in DB ──
+      // â”€â”€ Auto-retry on NO_SESSION: session exists locally but not in DB â”€â”€
       if (error.message && error.message.includes('NO_SESSION')) {
         console.warn('[AI] Session not found in DB. Starting fresh session and retrying...');
         activeSession = null;
@@ -2015,7 +2048,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         handleSend();
         return;
       }
-      // ── TOKEN_LIMIT: tokens exhausted but session still running ──
+      // â”€â”€ TOKEN_LIMIT: tokens exhausted but session still running â”€â”€
       if (error.message && error.message.includes('TOKEN_LIMIT')) {
         console.warn('[AI] Token limit reached. Session still active.');
         // If we have a partial response, try to continue with other providers
@@ -2068,7 +2101,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         chatInput.placeholder = 'Tokens exhausted - start a new session';
         return;
       }
-      // ── RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only ──
+      // â”€â”€ RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only â”€â”€
       if (error.message && (error.message.includes('RATE_LIMITED') || error.message.includes('CONCURRENT_LIMIT'))) {
         const secs = (error.retryAfter && Number(error.retryAfter)) || 30;
         const friendly = error.message.includes('CONCURRENT_LIMIT')
@@ -2084,7 +2117,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         chatInput.disabled = false;
         return;
       }
-      // ── IMAGE_LIMIT: daily image cap reached ──
+      // â”€â”€ IMAGE_LIMIT: daily image cap reached â”€â”€
       if (error.message && error.message.includes('IMAGE_LIMIT')) {
         console.warn('[AI] Image limit reached');
         finalizeStreamingMessage(streamDiv, 'Daily image limit reached. Upgrade to Premium for more images per day.');
@@ -2096,7 +2129,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         chatInput.disabled = false;
         return;
       }
-      // If incomplete stream — auto-retry with fallback
+      // If incomplete stream â€” auto-retry with fallback
       if (error instanceof IncompleteStreamError && fullResponse.length > 0) {
         const fallbackIndex = selectedProviderIndex === 0 ? 1 : 0;
         console.warn(`[AI] Stream incomplete. Retrying with fallback provider ${fallbackIndex}...`);
@@ -2171,7 +2204,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     api.abort();
   }
 
-  // ── Helpers ──
+  // â”€â”€ Helpers â”€â”€
   function autoResize() {
     chatInput.style.height = 'auto';
     chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + 'px';
@@ -2183,7 +2216,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     });
   }
 
-  // ── Mobile keyboard: lift the fixed chat layout above the virtual keyboard ──
+  // â”€â”€ Mobile keyboard: lift the fixed chat layout above the virtual keyboard â”€â”€
   // Chrome Android handles interactive-widget=resizes-content in the viewport meta.
   // iOS Safari ignores that entirely, so we read the visual viewport shrink and
   // mirror it into --kb-offset (consumed by .chatbot-layout bottom).

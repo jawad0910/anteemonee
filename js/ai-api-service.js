@@ -1,5 +1,5 @@
-/* ==========================================
-   Wassal AI - Triple API Failover Service
+﻿/* ==========================================
+   Anteemonee - Triple API Failover Service
    Routes through Supabase Edge Function
    Detects incomplete streams and auto-falls back
    ========================================== */
@@ -187,7 +187,7 @@ class AiApiService {
         }
       }
 
-      // Stream ended without [DONE] — likely truncated by token limit or error
+      // Stream ended without [DONE] â€” likely truncated by token limit or error
       if (!receivedDone) {
         throw new IncompleteStreamError(
           'Response was cut off (likely hit token limit). Retrying with fallback model...'
@@ -207,7 +207,7 @@ class AiApiService {
   }
 }
 
-/** Thrown when stream ends without [DONE] — signals incomplete response. */
+/** Thrown when stream ends without [DONE] â€” signals incomplete response. */
 class IncompleteStreamError extends Error {
   constructor(message) {
     super(message);
