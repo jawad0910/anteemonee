@@ -160,9 +160,16 @@ class AiApiService {
               yield data;
               continue;
             }
+            // Detect error responses from edge function (all models failed, etc.)
+            if (json.error) {
+              throw new Error(json.error);
+            }
             const content = json.choices?.[0]?.delta?.content;
             if (content) yield content;
-          } catch (_) {}
+          } catch (e) {
+            if (e instanceof IncompleteStreamError) throw e;
+            if (e.message && !e.message.startsWith('Unexpected')) throw e;
+          }
         }
       }
 
@@ -178,11 +185,15 @@ class AiApiService {
               const json = JSON.parse(data);
               if (json.type === 'streak') {
                 yield data;
+              } else if (json.error) {
+                throw new Error(json.error);
               } else {
                 const content = json.choices?.[0]?.delta?.content;
                 if (content) yield content;
               }
-            } catch (_) {}
+            } catch (e) {
+              if (e.message && !e.message.startsWith('Unexpected')) throw e;
+            }
           }
         }
       }

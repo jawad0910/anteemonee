@@ -1277,9 +1277,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     div.className = 'message assistant';
     // Index of the assistant message about to be pushed (user msg already in).
     div.dataset.idx = messages.length;
-    const statusLabel = mode === 'research' ? 'Researching sources...'
-                      : mode === 'think' ? 'Reasoning through this...'
-                      : 'Understanding your prompt...';
+    const statusLabel = '';
     const statusClass = mode === 'research' ? 'researching'
                       : mode === 'think' ? 'thinking'
                       : '';
@@ -1301,16 +1299,12 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
   // Cycle through real status messages while waiting for first chunk
   function startStatusCycle(div, mode) {
-    const statuses = mode === 'research'
-      ? ['Searching textbooks...', 'Cross-referencing sources...', 'Gathering information...', 'Compiling findings...']
-      : mode === 'think'
-      ? ['Analyzing the problem...', 'Breaking it down...', 'Reasoning step by step...', 'Considering approaches...']
-      : ['Searching textbooks...', 'Analyzing your prompt...', 'Finding the best explanation...', 'Preparing response...'];
     let idx = 0;
     const interval = setInterval(() => {
-      idx = (idx + 1) % statuses.length;
-      updateStreamingStatus(div, statuses[idx], mode === 'research' ? 'researching' : mode === 'think' ? 'thinking' : 'analyzing');
-    }, 2500);
+      idx = (idx + 1) % 3;
+      const dots = '.'.repeat(idx + 1);
+      updateStreamingStatus(div, dots, mode === 'research' ? 'researching' : mode === 'think' ? 'thinking' : 'analyzing');
+    }, 1500);
     return interval;
   }
 
