@@ -6,6 +6,7 @@ app = Flask(__name__)
 
 API_KEY = "kira_c39529cf2c411605aa4b38bde3bb2fd4"
 API_URL = "https://api.kira.ai/v1/chat"
+MODEL = "glm-5.3-free"
 
 @app.route("/")
 def home():
@@ -21,13 +22,26 @@ def chat():
     }
 
     payload = {
-        "message": user_message
+        "model": MODEL,
+        "messages": [
+            {"role": "user", "content": user_message}
+        ]
     }
 
     try:
         response = requests.post(API_URL, headers=headers, json=payload)
         response.raise_for_status()
-        bot_response = response.json().get("response", "Sorry, I didn't understand that.")
+        data = response.json()
+
+        # OpenAI-compatible response format
+        if "choices" in data and len(data["choices"]) > 0:
+            bot_response = data["choices"][0]["message"]["content"]
+        # Fallback for simple response format
+        elif "response" in data:
+            bot_response = data["response"]
+        else:
+            bot_response = "Sorry, I didn't understand that."
+
     except requests.exceptions.HTTPError as http_err:
         bot_response = f"HTTP error occurred: {http_err}"
     except requests.exceptions.ConnectionError as conn_err:
