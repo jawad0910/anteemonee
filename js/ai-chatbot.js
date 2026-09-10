@@ -887,6 +887,12 @@ STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No
 
 BEHAVIOR:
 - For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance.
+- FLASHCARD CREATION: When the user asks to create a flashcard, make a flashcard, or says something like "create a flashcard for [topic]", respond with a well-structured Q&A pair in this exact format:
+
+**Front:** [Clear, concise question or concept to test]
+**Back:** [Complete, accurate answer or explanation]
+
+Keep the front short (one question or term). Keep the back complete but concise (2-5 sentences max). After the flashcard, confirm briefly: "Flashcard ready. You can save it using the save button above." Do NOT include references for flashcard responses.
 - CRITICAL â€” REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
 
 ---
