@@ -105,7 +105,7 @@
   color: var(--accent);
   margin-bottom: 20px;
 }
-.status-badge.available { background: rgba(53, 211, 153, 0.1); color: var(--success); }
+.status-badge.available { background: rgba(126,217,87,0.12); color: var(--success); }
 .status-badge.coming-soon { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
 
 /* â”€â”€â”€ Download Button â€” neomorphic â”€â”€â”€ */
@@ -125,24 +125,24 @@
 }
 .btn-download:hover {
   background: var(--accent);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised);
+  color: var(--on-accent);
+  box-shadow: 0 4px 16px rgba(126,217,87,0.3), var(--neo-shadow-raised);
   transform: translateY(-1px);
 }
-.btn-download:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-download:active { box-shadow: 0 2px 8px rgba(126,217,87,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
 .btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-download:disabled:hover { background: var(--surface); color: var(--text); box-shadow: var(--neo-shadow-raised-sm); transform: none; }
 
 /* â”€â”€â”€ Beta Badge & Button â€” neomorphic â”€â”€â”€ */
-.beta-badge { background: rgba(53, 211, 153, 0.1) !important; color: var(--success) !important; }
+.beta-badge { background: rgba(126,217,87,0.12) !important; color: var(--success) !important; }
 .btn-beta {
   background: var(--accent) !important;
-  color: #fff !important;
-  box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm) !important;
+  color: var(--on-accent) !important;
+  box-shadow: 0 4px 16px rgba(126,217,87,0.3), var(--neo-shadow-raised-sm) !important;
 }
 .btn-beta:hover {
   background: var(--accent-hover) !important;
-  box-shadow: 0 6px 24px rgba(31,160,85,0.4), var(--neo-shadow-raised) !important;
+  box-shadow: 0 6px 24px rgba(126,217,87,0.4), var(--neo-shadow-raised) !important;
   transform: translateY(-1px);
 }
 .rejected-badge { background: rgba(255, 102, 117, 0.1) !important; color: var(--error) !important; }
@@ -202,8 +202,8 @@
   position: absolute;
   width: 18px;
   height: 18px;
-  border: 2.5px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  border: 2.5px solid rgba(128,128,128,0.35);
+  border-top-color: var(--on-accent);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -334,18 +334,18 @@
 .btn-primary {
   padding: 12px 24px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
+  box-shadow: 0 4px 16px rgba(126,217,87,0.3), var(--neo-shadow-raised-sm);
   transition: all 0.2s;
 }
-.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 24px rgba(31,160,85,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
-.btn-primary:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 24px rgba(126,217,87,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-primary:active { box-shadow: 0 2px 8px rgba(126,217,87,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
 
 /* â”€â”€â”€ Footer â€” neomorphic â”€â”€â”€ */
 .download-footer {
@@ -380,4 +380,60 @@
 @media (prefers-reduced-motion: reduce) {
   .platform-card { transition: none; }
   .modal-card { animation: none; }
+}
+
+/* LIQUID GLASS overrides - tokens (--liquid-*) come from css/style.css */
+.platform-card {
+  position: relative; overflow: hidden;
+  background: var(--liquid-bg-soft);
+  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset), 0 10px 30px rgba(0,0,0,0.18);
+}
+.platform-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--liquid-shine); pointer-events: none;
+}
+.platform-card:hover { border-color: var(--liquid-border); box-shadow: var(--liquid-inset), 0 20px 46px rgba(0,0,0,0.28); }
+.platform-icon {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.15);
+}
+.modal-card, .beta-modal {
+  background: var(--liquid-bg-strong);
+  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-inset), var(--liquid-shadow);
+}
+.beta-input-group input {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.beta-input-group input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 3px var(--accent-soft);
+}
+.btn-download, .btn-beta-submit, .btn-download-apk {
+  background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(126,217,87,0.4);
+}
+.btn-download:hover, .btn-beta-submit:hover, .btn-download-apk:hover {
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 10px 28px rgba(126,217,87,0.5); transform: translateY(-1px);
+}
+.btn-beta, .btn-reapply, .download-page .btn-secondary {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.15);
+  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+}
+.download-page .btn-primary {
+  background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(126,217,87,0.4);
 }

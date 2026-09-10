@@ -198,7 +198,7 @@
 }
 .toggle input:checked + .toggle-slider {
   background: var(--accent);
-  box-shadow: 0 2px 8px rgba(31,160,85,0.3);
+  box-shadow: 0 2px 8px rgba(126,217,87,0.3);
 }
 .toggle input:checked + .toggle-slider::before {
   transform: translateX(20px);
@@ -269,11 +269,11 @@ textarea.setting-input {
 }
 .btn-settings-primary {
   background: var(--accent);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
+  color: var(--on-accent);
+  box-shadow: 0 4px 14px rgba(126,217,87,0.3), var(--neo-shadow-raised-sm);
 }
-.btn-settings-primary:hover { box-shadow: 0 6px 20px rgba(31,160,85,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
-.btn-settings-primary:active { box-shadow: 0 2px 8px rgba(31,160,85,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-settings-primary:hover { box-shadow: 0 6px 20px rgba(126,217,87,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-settings-primary:active { box-shadow: 0 2px 8px rgba(126,217,87,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
 
 .btn-settings-secondary {
   background: var(--surface);
@@ -310,7 +310,7 @@ textarea.setting-input {
   font-size: 12px;
   font-weight: 600;
 }
-.status-badge.active { background: rgba(53,211,153,0.12); color: #35D399; }
+.status-badge.active { background: rgba(126,217,87,0.12); color: var(--success); }
 .status-badge.inactive { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
 .status-badge.warning { background: rgba(251,191,36,0.12); color: #FBBF24; }
 .status-badge.premium { background: var(--accent-soft); color: var(--accent); }
@@ -332,7 +332,7 @@ textarea.setting-input {
   transform: translateX(-50%) translateY(20px);
   padding: 12px 24px;
   background: var(--bg-card);
-  color: #35D399;
+  color: var(--success);
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
@@ -591,3 +591,72 @@ textarea.setting-input {
 /* --- Reduce Animations --- */
 .reduce-anim .settings-category { animation: none; }
 .reduce-anim * { transition-duration: 0s !important; animation-duration: 0s !important; }
+
+/* ==========================================================
+   LIQUID GLASS — overrides the neomorphic system above.
+   Tokens (--liquid-*) come from css/style.css.
+   ========================================================== */
+.settings-sidebar {
+  background: var(--liquid-bg);
+  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset), 0 10px 30px rgba(0,0,0,0.18);
+}
+.settings-nav-item { border-radius: var(--radius-md); }
+.settings-nav-item:hover { background: var(--liquid-bg-soft); color: var(--text); }
+.settings-nav-item.active {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset);
+}
+.settings-card, .settings-profile-card {
+  background: var(--liquid-bg-soft);
+  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset), 0 10px 30px rgba(0,0,0,0.16);
+}
+.setting-row.clickable:hover { background: var(--liquid-bg-soft); }
+.setting-input, .setting-select {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.setting-input:focus, .setting-select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 3px var(--accent-soft);
+}
+.btn-settings-primary {
+  background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 14px rgba(126,217,87,0.35);
+}
+.btn-settings-primary:hover { box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(126,217,87,0.45); transform: translateY(-1px); }
+.btn-settings-secondary, .btn-settings-ghost {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.14);
+}
+.settings-modal {
+  background: var(--liquid-bg-strong);
+  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-inset), var(--liquid-shadow);
+}
+.settings-toast {
+  background: var(--liquid-bg-strong);
+  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  border: 1px solid var(--liquid-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--liquid-inset), var(--liquid-shadow);
+}
+@media (max-width: 768px) {
+  .settings-sidebar {
+    border-radius: 0;
+    border: none;
+    background: var(--liquid-bg-strong);
+    -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  }
+}
