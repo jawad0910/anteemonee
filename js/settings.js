@@ -228,7 +228,7 @@ function renderSecurity() {
         </div>
       </div>
       <div id="sec-pw-error" style="color:#FF6675;font-size:13px;margin-bottom:10px;display:none"></div>
-      <div id="sec-pw-success" style="color:#35D399;font-size:13px;margin-bottom:10px;display:none"></div>
+      <div id="sec-pw-success" style="color:var(--success);font-size:13px;margin-bottom:10px;display:none"></div>
       <button class="btn-settings btn-settings-primary" id="sec-pw-btn" onclick="changePassword()">Update Password</button>
     </div>`;
   c.appendChild(pwCard);
@@ -800,9 +800,9 @@ function renderAI() {
     <button id="btn-download-ai-profile" style="
       display:flex;align-items:center;gap:6px;
       padding:7px 16px;border-radius:8px;border:none;
-      background:var(--accent);color:#fff;font-size:12px;font-weight:600;
+      background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:600;
       cursor:pointer;transition:all .2s;white-space:nowrap;
-      box-shadow:0 2px 8px rgba(31,160,85,.3);
+      box-shadow:0 2px 8px rgba(126,217,87,.3);
     ">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -817,11 +817,11 @@ function renderAI() {
   });
   knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseenter', (e) => {
     e.currentTarget.style.transform = 'translateY(-1px)';
-    e.currentTarget.style.boxShadow = '0 4px 12px rgba(31,160,85,.4)';
+    e.currentTarget.style.boxShadow = '0 4px 12px rgba(126,217,87,.4)';
   });
   knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseleave', (e) => {
     e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.boxShadow = '0 2px 8px rgba(31,160,85,.3)';
+    e.currentTarget.style.boxShadow = '0 2px 8px rgba(126,217,87,.3)';
   });
   memRows.push(knowRow);
 
@@ -1112,11 +1112,11 @@ function renderSubscriptionContent(container, planCard) {
           <span style="font-size:14px;color:var(--text-secondary)">/month</span>
         </div>
         <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:14px">
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>250 AI Tutor sessions per month</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>200 AI Question Scans per month</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Unlimited AI session extensions via ads</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Priority access to new features</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Ad-free experience</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>250 AI Tutor sessions per month</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>200 AI Question Scans per month</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Unlimited AI session extensions via ads</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Priority access to new features</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Ad-free experience</span></li>
         </ul>
         <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Premium - Rs 400/mo</a>
       </div>`;
@@ -1171,7 +1171,7 @@ async function renderCoupons() {
         <div class="settings-card-header">COUPON STATUS</div>
         <div class="setting-row">
           <div class="setting-info">
-            <div class="setting-title" style="color:#35D399">Coupon Redeemed</div>
+            <div class="setting-title" style="color:var(--success)">Coupon Redeemed</div>
             <div class="setting-desc">Premium active from ${start} - expires ${expiry}</div>
           </div>
           <span class="status-badge premium">Premium</span>
@@ -1254,7 +1254,7 @@ async function redeemCoupon() {
 
     // Success
     msgEl.textContent = 'Coupon redeemed successfully! Your subscription has been updated.';
-    msgEl.style.color = '#35D399';
+    msgEl.style.color = 'var(--success)';
     msgEl.style.display = 'block';
     document.getElementById('coupon-code').value = '';
     showToastSettings('Coupon redeemed!');
@@ -1354,8 +1354,8 @@ async function renderMyReports(c) {
 
   const statusMeta = {
     sent: { label: 'SENT', color: '#60a5fa' },
-    fixed: { label: 'FIXED', color: '#35D399' },
-    replied: { label: 'ADMIN REPLIED', color: '#35D399' },
+    fixed: { label: 'FIXED', color: 'var(--success)' },
+    replied: { label: 'ADMIN REPLIED', color: 'var(--success)' },
   };
   const card = document.createElement('div');
   card.className = 'settings-card';
@@ -1432,7 +1432,7 @@ function buildProviderRow(provider, name, status, isConnected, canDisconnect, id
   const info = document.createElement('div');
   info.className = 'setting-info';
   const badge = isConnected
-    ? '<span style="color:#35D399;font-size:11px;font-weight:600;margin-left:8px">CONNECTED</span>'
+    ? '<span style="color:var(--success);font-size:11px;font-weight:600;margin-left:8px">CONNECTED</span>'
     : '';
   info.innerHTML = `<div class="setting-title">${name}${badge}</div><div class="setting-desc">${status}</div>`;
 
@@ -1545,13 +1545,13 @@ function renderAccounts() {
     accountsHtml += `
       <div class="setting-row" style="gap:12px;">
         <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
-          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">
+          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:14px;">
             ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
           </div>
           <div style="min-width:0;">
             <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
               ${acc.displayName || acc.email}
-              ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(31,160,85,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
+              ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(126,217,87,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
               ${acc.sessionStatus === 'expired' ? '<span style="font-size:11px;font-weight:600;color:#ff6675;background:rgba(255,102,117,0.1);padding:1px 6px;border-radius:6px;">Expired</span>' : ''}
             </div>
             <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
@@ -1787,7 +1787,7 @@ async function renderAds() {
 
       <div id="ads-counter" style="text-align:center;font-size:14px;color:var(--text-secondary);margin-bottom:16px">
         ${roundPos === 0 && roundsCompleted > 0
-          ? `<span style="color:#35D399;font-weight:600">${roundsCompleted} session${roundsCompleted > 1 ? 's' : ''} earned today! Start new round.</span>`
+          ? `<span style="color:var(--success);font-weight:600">${roundsCompleted} session${roundsCompleted > 1 ? 's' : ''} earned today! Start new round.</span>`
           : roundPos === 0
             ? 'Watch 3 ads to earn a free AI session'
             : `${roundPos}/3 ads in this round`
@@ -1808,7 +1808,7 @@ async function renderAds() {
 
       ${adsBonusSessions > 0 ? `
         <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-          <span style="font-size:13px;color:#35D399;font-weight:600">${adsBonusSessions} bonus session${adsBonusSessions > 1 ? 's' : ''} available</span>
+          <span style="font-size:13px;color:var(--success);font-weight:600">${adsBonusSessions} bonus session${adsBonusSessions > 1 ? 's' : ''} available</span>
         </div>
       ` : ''}
     </div>`;
@@ -1983,7 +1983,7 @@ async function submitSupport() {
     });
     if (error) throw error;
     msgEl.textContent = 'Message sent successfully! We will get back to you.';
-    msgEl.style.color = '#35D399';
+    msgEl.style.color = 'var(--success)';
     msgEl.style.display = 'block';
     document.getElementById('support-subject').value = '';
     document.getElementById('support-desc').value = '';
@@ -2088,7 +2088,7 @@ async function renderReports() {
 
   const STATUS_META = {
     sent:    { label: 'Sent',              color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.3)'  },
-    fixed:   { label: 'Fixed',             color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)'  },
+    fixed:   { label: 'Fixed',             color: 'var(--success)', bg: 'rgba(126,217,87,0.12)',  border: 'rgba(126,217,87,0.3)'  },
     replied: { label: 'Admin replied',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
   };
 

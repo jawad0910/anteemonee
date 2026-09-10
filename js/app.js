@@ -104,7 +104,7 @@ async function loadHomepageData() {
         const avatarsEl = document.getElementById('trust-avatars');
         const avatars = Array.isArray(data.avatars) ? data.avatars.filter(a => a && a.profile_image_url) : [];
         if (avatarsEl && avatars.length) {
-          const colors = ['#0B4D2C', '#178A46', '#6D28D9'];
+          const colors = ['#1E4D12', '#2A6E1E', '#6D28D9'];
           avatarsEl.innerHTML = avatars.slice(0, 3).map((a, i) => {
             const initial = ((a.username || 'W').charAt(0) || 'W').toUpperCase();
             return `<span style="background:${colors[i % colors.length]};overflow:hidden"><img src="${a.profile_image_url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${initial}'"></span>`;
@@ -849,7 +849,7 @@ function showSessionExpiredModal(account) {
       </div>
       <div class="account-modal-body">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-          <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;">
+          <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:15px;">
             ${account.avatarUrl ? `<img src="${account.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
           </div>
           <div>
@@ -1112,6 +1112,70 @@ function setupLoginForm() {
   form.addEventListener('submit', handleLogin);
 }
 
+/* Friendly login errors: translate technical failures into plain language. */
+async function readEdgeReason(err) {
+  try {
+    const ctx = err && err.context;
+    if (ctx && typeof ctx.text === 'function') {
+      const t = await ctx.text();
+      if (t) {
+        try {
+          const body = JSON.parse(t);
+          const msg = body && (body.error || body.message || body.msg);
+          if (msg) return String(msg);
+        } catch (_) {
+          if (t.length < 300) return t;
+        }
+      }
+    }
+  } catch (_) {}
+  try {
+    if (err && err.message && !/edge function returned a non-2xx/i.test(err.message)) return err.message;
+  } catch (_) {}
+  return '';
+}
+
+async function friendlyUsernameError(err) {
+  const reason = await readEdgeReason(err);
+  if (/password|incorrect|invalid|wrong|credential/i.test(reason)) {
+    return new Error('Incorrect password. Please try again.');
+  }
+  if (/no user|not found|unknown|no account/i.test(reason)) {
+    return new Error('No account found with this username. Check the spelling or create a new account.');
+  }
+  const msg = (err && err.message) || '';
+  if (/failed to fetch|network|timeout|timed out/i.test(msg)) {
+    return new Error('Network error. Check your connection and try again.');
+  }
+  if (reason) return new Error(reason.length > 160 ? reason.slice(0, 160) : reason);
+  return new Error("Couldn't sign you in. Please check your details and try again.");
+}
+
+async function friendlyEmailError(err, email) {
+  const msg = (err && err.message) || '';
+  if (/email not confirmed/i.test(msg)) {
+    return new Error('Please verify your email first. Check your inbox for the confirmation link.');
+  }
+  if (/too many requests|rate limit|over.*limit/i.test(msg)) {
+    return new Error('Too many attempts. Please wait a minute and try again.');
+  }
+  if (/invalid login credentials/i.test(msg)) {
+    // Disambiguate: does this email have an account?
+    try {
+      const res = await db.from('profiles').select('id').eq('email', String(email).toLowerCase()).maybeSingle();
+      if (!res.error) {
+        return new Error(res.data
+          ? 'Incorrect password. Please try again.'
+          : 'No account found with this email. Check the spelling or create a new account.');
+      }
+    } catch (_) {}
+  }
+  if (/failed to fetch|network|timeout|timed out/i.test(msg)) {
+    return new Error('Network error. Check your connection and try again.');
+  }
+  return err instanceof Error ? err : new Error(msg || 'Login failed. Please try again.');
+}
+
 async function handleLogin(e) {
   e.preventDefault();
   const form = e.currentTarget;
@@ -1127,19 +1191,36 @@ async function handleLogin(e) {
     const isEmail = identifier.includes('@');
 
     if (isEmail) {
-      const { error } = await db.auth.signInWithPassword({ email: identifier, password });
-      if (error) throw error;
+      try {
+        const { error } = await db.auth.signInWithPassword({ email: identifier, password });
+        if (error) throw error;
+      } catch (loginErr) {
+        throw await friendlyEmailError(loginErr, identifier);
+      }
     } else {
-      const { data, error } = await db.functions.invoke('sign-in-with-username', {
-        body: { username: identifier, password }
-      });
-      if (error) throw error;
-      if (data?.session) {
-        const { error: sessionError } = await db.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token
+      // Username login goes through the edge function.
+      // First: does this username exist at all?
+      try {
+        const { data: available } = await db.rpc('is_username_available', { p_username: identifier });
+        if (available === true) throw new Error('No account found with this username. Check the spelling or create a new account.');
+      } catch (preErr) {
+        if (preErr && /^No account found/.test(preErr.message || '')) throw preErr;
+        // RPC failed — continue to the login attempt anyway.
+      }
+      try {
+        const { data, error } = await db.functions.invoke('sign-in-with-username', {
+          body: { username: identifier, password }
         });
-        if (sessionError) throw sessionError;
+        if (error) throw error;
+        if (data?.session) {
+          const { error: sessionError } = await db.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+          if (sessionError) throw sessionError;
+        }
+      } catch (loginErr) {
+        throw await friendlyUsernameError(loginErr);
       }
     }
 

@@ -324,6 +324,8 @@
     });
     // Flush any pending study time from previous unload
     flushPendingStudyTime();
+    // Guests: hide sessions, lock the composer immediately.
+    try { refreshAuthGate(); } catch (_) {}
   }
 
   async function flushPendingStudyTime() {
@@ -636,7 +638,7 @@
   // â”€â”€ Model / Persona â”€â”€
   function updatePersonaUI() {
     const persona = PERSONAS[activePersonaIndex];
-    const dotColors = ['#3B82F6', '#F59E0B', '#1FA055'];
+    const dotColors = ['#3B82F6', '#F59E0B', '#7ED957'];
     modelSelectedName.textContent = persona.name + (persona.codingOnly ? ' (Coding Agent)' : '');
     modelDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
     document.querySelectorAll('#model-dropdown .model-option').forEach((el, i) => {
@@ -1038,7 +1040,16 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   }
 
   // â”€â”€ Conversation Management â”€â”€
+  // Bring the chat column back when the user picks a conversation or
+  // starts a new one from the sidebar (e.g. while Flashcards is open).
+  function revealChatView() {
+    try {
+      if (window.AnteemoneeViews && window.AnteemoneeViews.showView) window.AnteemoneeViews.showView('chat');
+    } catch (_) {}
+  }
+
   function newChat() {
+    revealChatView();
     activeConversationId = null;
     messages = [];
     messagesList.innerHTML = '';
@@ -1112,6 +1123,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function loadConversation(id) {
     const conv = conversations.find(c => c.id === id);
     if (!conv) return;
+    revealChatView();
     activeConversationId = id;
     messages = [...conv.messages];
     messagesList.innerHTML = '';
@@ -1331,7 +1343,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return html;
   }
 
-  function updateStreamingMessage(div, text) {
+  function updateStreamingMessageImmediate(div, text) {
     const content = div.querySelector('.msg-content');
     content.innerHTML = '<div class="streaming-text">' + renderStreamingMarkdown(text) + '</div><span class="streaming-caret"></span>';
   }
@@ -1394,30 +1406,38 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     try { localStorage.setItem('anteemonee_msg_votes', JSON.stringify(v)); } catch (_) {}
   }
 
-  function paintVote(wrap, kind) {
-    var like = wrap.querySelector('.fb-like');
-    var dislike = wrap.querySelector('.fb-dislike');
-    if (like) like.classList.toggle('active', kind === 'like');
-    if (dislike) dislike.classList.toggle('active', kind === 'dislike');
-  }
-
   function onVote(wrap, key, kind) {
     var votes = getVotes();
     var prev = votes[key] || null;
     if (prev === kind) {
       delete votes[key];
       setVotes(votes);
-      paintVote(wrap, null);
       adjustCounter(kind === 'like' ? 'liked_messages' : 'disliked_messages', -1);
+      wrap.style.display = 'none';
       return;
     }
     if (prev === 'like') adjustCounter('liked_messages', -1);
     if (prev === 'dislike') adjustCounter('disliked_messages', -1);
     votes[key] = kind;
     setVotes(votes);
-    paintVote(wrap, kind);
     adjustCounter(kind === 'like' ? 'liked_messages' : 'disliked_messages', 1);
+    if (kind === 'like') {
+      // Celebrate the tap, then fade the buttons away.
+      try {
+        var likeBtn = wrap.querySelector('.fb-like');
+        if (likeBtn) likeBtn.classList.add('liked');
+        wrap.classList.add('fading');
+      } catch (_) {}
+      setTimeout(function () { wrap.style.display = 'none'; }, 550);
+    } else {
+      wrap.style.display = 'none';
+    }
     if (kind === 'dislike') openReportPopup(wrap);
+  }
+
+  function hideAllFeedbackButtons() {
+    var btns = messagesList.querySelectorAll('.msg-feedback');
+    for (var i = 0; i < btns.length; i++) btns[i].style.display = 'none';
   }
 
   function attachFeedbackButtons(div) {
@@ -1434,7 +1454,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       body.appendChild(wrap);
       var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
       wrap.dataset.voteKey = key;
-      paintVote(wrap, getVotes()[key] || null);
+      if (getVotes()[key]) wrap.style.display = 'none';
       wrap.querySelector('.fb-like').addEventListener('click', function () { onVote(wrap, key, 'like'); });
       wrap.querySelector('.fb-dislike').addEventListener('click', function () { onVote(wrap, key, 'dislike'); });
     } catch (_) {}
@@ -1477,6 +1497,10 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   }
 
   function finalizeStreamingMessage(div, text) {
+    try {
+      if (typeof _streamRenderTimer !== 'undefined' && _streamRenderTimer) { clearTimeout(_streamRenderTimer); }
+    } catch (_) {}
+    try { _streamRenderTimer = null; _pendingStreamDiv = null; _pendingStreamText = ''; } catch (_) {}
     const content = div.querySelector('.msg-content');
     var switchTo = null;
     if (text && text.indexOf('[SWITCH_TO_ZARDARI]') !== -1) switchTo = 'zardari';
@@ -1504,13 +1528,77 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
         <span>Reply</span>
       </button>
-      <button class="sel-tool-btn sel-disabled" type="button" aria-disabled="true" title="Flashcards coming soon">
+      <button class="sel-tool-btn sel-flashcard" type="button" title="Save as flashcard">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
-        <span>Flashcard</span><em class="sel-soon">Soon</em>
+        <span>Flashcard</span>
       </button>`;
     document.body.appendChild(selToolbar);
     selToolbar.querySelector('.sel-reply').addEventListener('click', onReplyFromToolbar);
+    selToolbar.querySelector('.sel-flashcard').addEventListener('click', onFlashcardFromToolbar);
     return selToolbar;
+  }
+
+  function showChatToast(msg) {
+    try {
+      var t = document.getElementById('chat-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'chat-toast';
+        t.setAttribute('role', 'status');
+        t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 32px);text-align:center;padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--text);background:var(--liquid-bg-strong, rgba(20,28,23,0.85));border:1px solid var(--liquid-border, rgba(255,255,255,0.14));box-shadow:0 10px 34px rgba(0,0,0,0.35);opacity:0;pointer-events:none;transition:opacity 0.25s ease;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      if (showChatToast._timer) clearTimeout(showChatToast._timer);
+      showChatToast._timer = setTimeout(function () { t.style.opacity = '0'; }, 2600);
+    } catch (_) {}
+  }
+
+  // Save the selected chat text as a flashcard row in Supabase, then open
+  // the Flashcards page on that card so the user can add the question.
+  // The selection goes into the BACK (answer) field. Nothing is kept in
+  // localStorage - the row lives in the database.
+  async function onFlashcardFromToolbar() {
+    if (!pendingSel || !pendingSel.text) return;
+    var answer = String(pendingSel.text).trim().slice(0, 4000);
+    if (!answer) return;
+    hideSelToolbar();
+    try {
+      var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+      if ((!user || !user.id) && typeof db !== 'undefined' && db) {
+        try {
+          var res = await db.auth.getUser();
+          user = res.data && res.data.user;
+        } catch (_) {}
+      }
+      if (!user || !user.id) {
+        showChatToast('Sign in to save flashcards.');
+        return;
+      }
+      if (typeof db === 'undefined' || !db) {
+        showChatToast('Database unavailable. Check your connection.');
+        return;
+      }
+      showChatToast('Saving flashcard...');
+      var ins = await db.from('flashcards').insert({ user_id: user.id, front: '', back: answer }).select('id').single();
+      if (ins.error) throw ins.error;
+      try {
+        if (window.AnteemoneeViews && window.AnteemoneeViews.showFlashcards) {
+          window.AnteemoneeViews.showFlashcards(ins.data.id);
+          return;
+        }
+      } catch (_) {}
+      window.location.href = 'flashcards.html?edit=' + encodeURIComponent(ins.data.id);
+    } catch (err) {
+      console.warn('[AI] Flashcard save failed:', err);
+      var msg = (err && err.message) || 'unknown error';
+      if (err && (err.code === '42P01' || /schema cache|Could not find the table/i.test(msg))) {
+        showChatToast('Flashcards table not set up yet. Open the Flashcards page for setup steps.');
+      } else {
+        showChatToast('Could not save flashcard: ' + String(msg).slice(0, 120));
+      }
+    }
   }
 
   function hideSelToolbar() {
@@ -1786,7 +1874,55 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return 'Rs. ' + pkr.toFixed(pkr >= 100 ? 0 : 1);
   }
 
+  // Auth gate: guests see no sessions and cannot chat at all.
+  function isAuthed() {
+    try {
+      if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return true;
+    } catch (_) {}
+    try {
+      if (typeof getAccessToken === 'function' && getAccessToken()) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  function refreshAuthGate() {
+    var authed = isAuthed();
+    try {
+      document.body.classList.toggle('guest', !authed);
+      var labels = document.querySelectorAll('.sidebar-label');
+      for (var li = 0; li < labels.length; li++) labels[li].style.display = authed ? '' : 'none';
+    } catch (_) {}
+    try {
+      var ms = document.getElementById('model-selector');
+      if (ms) ms.style.display = authed ? '' : 'none';
+      var mm = document.getElementById('model-selector-mobile');
+      if (mm) mm.style.display = authed ? '' : 'none';
+    } catch (_) {}
+    if (authed) return true;
+    var html = '<div class="session-guest"><span class="session-guest-title">Sign in required</span>'
+      + '<span class="session-guest-sub">Log in to start AI sessions.</span>'
+      + '<a class="session-guest-btn" href="login.html">Log in</a></div>';
+    try {
+      var p1 = document.getElementById('session-panel');
+      if (p1) p1.innerHTML = html;
+      var p2 = document.getElementById('session-panel-mobile');
+      if (p2) p2.innerHTML = html;
+    } catch (_) {}
+    try {
+      chatInput.value = '';
+      chatInput.disabled = true;
+      chatInput.placeholder = 'Sign in to chat with Anteemonee...';
+      autoResize();
+      btnSend.disabled = true;
+      btnSend.style.display = 'flex';
+      btnStop.style.display = 'none';
+      isStreaming = false;
+    } catch (_) {}
+    return false;
+  }
+
   function updateSessionPanel() {
+    if (!isAuthed()) { refreshAuthGate(); return; }
     const tokensUsed = estimatedTokensUsed || activeSession?.tokens_used || 0;
     const tokenPct = Math.min(100, Math.round((tokensUsed / TOKEN_LIMIT) * 100));
     const msgCount = activeSession?.messages_count || 0;
@@ -2032,11 +2168,58 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     });
   }
 
-  // â”€â”€ Send / Stop â”€â”€
+  // â"€â"€ Send / Stop â"€â"€
+  // blocked/exhausted session leaves isStreaming=true forever and every
+  // later send is silently ignored (looks "stuck").
+  function unlockInputForRetry(placeholder) {
+    isStreaming = false;
+    btnStop.style.display = 'none';
+    btnSend.style.display = 'flex';
+    btnSend.disabled = true;
+    if (estimatedTokensUsed < TOKEN_LIMIT) {
+      chatInput.disabled = false;
+      if (placeholder) chatInput.placeholder = placeholder;
+      chatInput.focus();
+    }
+    if (scrollDownBtn) {
+      scrollDownBtn.classList.remove('generating');
+      scrollDownBtn.classList.remove('show');
+    }
+  }
+
+  // Throttled streaming renderer: rewriting innerHTML on EVERY token chunk
+  // is O(n^2) DOM work and janks badly on long code outputs. Cap at ~16fps.
+  var _lastStreamRender = 0;
+  var _pendingStreamText = '';
+  var _pendingStreamDiv = null;
+  var _streamRenderTimer = null;
+  function flushStreamingRender() {
+    _streamRenderTimer = null;
+    if (_pendingStreamDiv) {
+      _lastStreamRender = Date.now();
+      updateStreamingMessageImmediate(_pendingStreamDiv, _pendingStreamText);
+      if (userNearBottom) scrollToBottom();
+    }
+  }
+  function updateStreamingMessageThrottled(div, text) {
+    _pendingStreamDiv = div;
+    _pendingStreamText = text;
+    var now = Date.now();
+    if (now - _lastStreamRender >= 60) {
+      if (_streamRenderTimer) { clearTimeout(_streamRenderTimer); _streamRenderTimer = null; }
+      _lastStreamRender = now;
+      updateStreamingMessageImmediate(div, text);
+      if (userNearBottom) scrollToBottom();
+    } else if (!_streamRenderTimer) {
+      _streamRenderTimer = setTimeout(flushStreamingRender, 60);
+    }
+  }
+
   async function handleSend() {
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
     if ((!text && !hasImages) || isStreaming) return;
+    if (!isAuthed()) { refreshAuthGate(); return; }
 
     // Lock immediately â€” prevent double-send during any async gap
     isStreaming = true;
@@ -2052,7 +2235,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     // â”€â”€ Session gate: must have an active session â”€â”€
     if (!activeSession || new Date(activeSession.expires_at).getTime() <= Date.now()) {
       const started = await startSession();
-      if (!started) return; // blocked â€” no sessions left
+      if (!started) { unlockInputForRetry(); return; } // blocked -- no sessions left
     }
 
     // Start study timer if page is visible and session is active
@@ -2066,6 +2249,13 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       showTokenExhaustedPopup();
       chatInput.disabled = true;
       chatInput.placeholder = 'Tokens exhausted - start a new session';
+      isStreaming = false;
+      btnStop.style.display = 'none';
+      btnSend.style.display = 'flex';
+      if (scrollDownBtn) {
+        scrollDownBtn.classList.remove('generating');
+        scrollDownBtn.classList.remove('show');
+      }
       return;
     }
 
@@ -2093,6 +2283,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null });
     messages.push(quote ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null } : { role: 'user', content: text, images: hasImages ? imagesToSend : null });
     bumpCounters(['total_messages', 'user_messages']);
+    hideAllFeedbackButtons();
     pendingQuote = null;
     renderQuoteChip();
     scrollToBottom();
@@ -2109,15 +2300,26 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     const statusCycle = startStatusCycle(streamDiv, thinkMode ? 'think' : researchMode ? 'research' : null);
     scrollToBottom();
 
-    // Search textbooks before sending to AI
+    // Textbook RAG is study-only: Zardari (coding agent) skips it entirely.
+    // Saves a DB round trip and keeps the coding prompt lean (faster TTFT).
+    // Textbook search + memory reload run in parallel, not sequentially.
+    const isCodingAgent = getActivePersona().codingOnly;
+    const textbookPromise = isCodingAgent
+      ? Promise.resolve([])
+      : searchTextbooks(text).catch(function (err) {
+          console.warn('[AI] Textbook search failed:', err);
+          return [];
+        });
+    const memoriesPromise = loadAiMemories().catch(function () {});
+    const textbookPages = await textbookPromise;
+    await memoriesPromise;
     let textbookContext = '';
     try {
-      const pages = await searchTextbooks(text);
-      if (pages.length > 0) {
-        console.log(`[AI] Found ${pages.length} textbook pages for: "${text}"`);
-        console.log('[AI] Books:', pages.map(p => `${p.book_title} p.${p.printed_page_number || p.page_number}`).join(', '));
-        textbookContext = formatTextbookContext(pages);
-      } else {
+      if (textbookPages.length > 0) {
+        console.log(`[AI] Found ${textbookPages.length} textbook pages for: "${text}"`);
+        console.log('[AI] Books:', textbookPages.map(p => `${p.book_title} p.${p.printed_page_number || p.page_number}`).join(', '));
+        textbookContext = formatTextbookContext(textbookPages);
+      } else if (!isCodingAgent) {
         console.log(`[AI] No textbook pages found for: "${text}"`);
       }
     } catch (e) {
@@ -2125,8 +2327,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     // Fresh memory reload â€” picks up extractions from OTHER chats too.
-    await loadAiMemories();
-
     const systemPrompt = buildSystemPrompt() + textbookContext;
 
     const apiMessages = [
@@ -2168,7 +2368,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           stopStatusCycle(statusCycle);
           updateStreamingStatus(streamDiv, 'Generating response...', 'analyzing');
         }
-        updateStreamingMessage(streamDiv, fullResponse);
+        updateStreamingMessageThrottled(streamDiv, fullResponse);
         if (userNearBottom) scrollToBottom();
       }
 
@@ -2230,7 +2430,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
                   try { const p = JSON.parse(chunk); if (p.type === 'streak') { streakCount = p.current_streak || 0; longestStreak = p.longest_streak || 0; updateSessionPanel(); saveSessionState(); continue; } } catch (_) {}
                 }
                 fullResponse += chunk;
-                updateStreamingMessage(streamDiv, fullResponse);
+                updateStreamingMessageThrottled(streamDiv, fullResponse);
                 if (userNearBottom) scrollToBottom();
               }
               continued = true;
@@ -2320,7 +2520,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
               } catch (_) {}
             }
             fullResponse += chunk;
-            updateStreamingMessage(streamDiv, fullResponse);
+            updateStreamingMessageThrottled(streamDiv, fullResponse);
             if (userNearBottom) scrollToBottom();
           }
         } catch (fallbackError) {
@@ -2332,6 +2532,16 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         attachFeedbackButtons(streamDiv);
         bumpCounters(['total_messages', 'ai_messages']);
         updateTokensAfterResponse(text, fullResponse);
+      } else if (error && (error.name === 'AbortError' || /aborted|abort/i.test(error.message || ''))) {
+        // User tapped Stop: keep whatever streamed so far, no error text.
+        stopStatusCycle(statusCycle);
+        var stoppedText = (fullResponse && fullResponse.trim())
+          ? fullResponse + '\n\n*[Stopped]*'
+          : '*[Stopped]*';
+        finalizeStreamingMessage(streamDiv, stoppedText);
+        messages.push({ role: 'assistant', content: stripSwitchMarkers(stoppedText) });
+        attachFeedbackButtons(streamDiv);
+        updateTokensAfterResponse(text, stoppedText);
       } else {
         const errText = `Sorry, something went wrong. ${error.message}`;
         finalizeStreamingMessage(streamDiv, errText);

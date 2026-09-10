@@ -68,6 +68,7 @@ class AiApiService {
   async *_streamFromEdge(messages, providerIndex, images = null) {
     const controller = new AbortController();
     this._currentAbort = controller;
+    let timeoutId = null;
 
     // Use user's JWT if available, fall back to anon key
     const authHeader = this._accessToken
@@ -131,6 +132,13 @@ class AiApiService {
     }
 
     const reader = res.body.getReader();
+
+    // Per-attempt timeout: a hung provider aborts so streamChat can fail
+    // over to the next provider instead of hanging forever. 90s is generous
+    // for slow coding models but still bounds the worst case.
+    timeoutId = setTimeout(() => {
+      try { controller.abort(); } catch (_) {}
+    }, 90000);
     const decoder = new TextDecoder();
     let buffer = '';
     let receivedDone = false;
@@ -205,6 +213,7 @@ class AiApiService {
         );
       }
     } finally {
+      try { clearTimeout(timeoutId); } catch (_) {}
       reader.releaseLock();
       this._currentAbort = null;
     }
