@@ -136,23 +136,23 @@
       <div class="chat-content" id="chat-content">
         <div class="chat-welcome" id="chat-welcome">
           <h1 class="welcome-title skel-text">What can I help with?</h1>
-          <p class="welcome-subtitle skel-text">Ask me anything about your studies.</p>
-          <div class="quick-actions loading" id="quick-actions">
-            <button class="quick-btn" data-prompt="Explain Newton's three laws of motion with examples">
-              <span class="quick-btn-title">Explain a topic</span>
-              <span class="quick-btn-sub">Newton's laws, with examples</span>
+          <p class="welcome-subtitle">Ask me anything about your studies.</p>
+          <div class="welcome-actions">
+            <button class="welcome-action-btn" data-prompt="Create a flashcard for: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+              <span>Create Flashcard</span>
             </button>
-            <button class="quick-btn" data-prompt="Quiz me on Physics chapter 1 - Electrostatics">
-              <span class="quick-btn-title">Quiz me</span>
-              <span class="quick-btn-sub">Physics electrostatics</span>
+            <button class="welcome-action-btn" data-welcome-flashcards>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>Start Review</span>
             </button>
-            <button class="quick-btn" data-prompt="Help me plan a 2-week study schedule for my board exams">
-              <span class="quick-btn-title">Plan my study</span>
-              <span class="quick-btn-sub">2-week board exam plan</span>
+            <button class="welcome-action-btn" data-prompt="Explain a topic: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>Explain a Topic</span>
             </button>
-            <button class="quick-btn" data-prompt="Write a Python function to solve quadratic equations">
-              <span class="quick-btn-title">Coding help</span>
-              <span class="quick-btn-sub">Python, step by step</span>
+            <button class="welcome-action-btn" data-prompt="Quiz me on: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Quiz Me</span>
             </button>
           </div>
         </div>
@@ -499,17 +499,15 @@
   </script>
   <script>
     // Release skeletons only on real init signals (never timers that race
-    // init): the model name being painted and the suggestions being
-    // filtered for the restored persona. Callbacks run before next paint,
-    // so the wrong set can never flash. 10s net as a last resort.
+    // init): the model name being painted and the subtitle. Callbacks run
+    // before next paint, so the wrong set can never flash. 10s net as a
+    // last resort.
     (function () {
       var done = false;
       function ready() {
         if (done) return;
         done = true;
         try {
-          var qa = document.getElementById('quick-actions');
-          if (qa) qa.classList.remove('loading');
           ['model-selector', 'model-selector-mobile'].forEach(function (id) {
             var m = document.getElementById(id);
             if (m) m.classList.remove('loading');
@@ -528,7 +526,6 @@
       }
       watch(document.getElementById('model-selected-name'), { childList: true, characterData: true, subtree: true });
       watch(document.getElementById('model-selected-name-mobile'), { childList: true, characterData: true, subtree: true });
-      watch(document.getElementById('quick-actions'), { attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
       setTimeout(ready, 10000);
     })();
   </script>
@@ -621,6 +618,20 @@
         if (gtries > 24) clearInterval(gtimer);
       }, 500);
       setInterval(paintGreeting, 60000);
+
+      // Welcome quick action buttons
+      (function () {
+        document.querySelectorAll('.welcome-action-btn[data-prompt]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var input = document.getElementById('chat-input');
+            if (input) { input.value = btn.getAttribute('data-prompt'); input.focus(); }
+          });
+        });
+        var revBtn = document.querySelector('[data-welcome-flashcards]');
+        if (revBtn) revBtn.addEventListener('click', function () {
+          if (window.AnteemoneeViews) window.AnteemoneeViews.showFlashcards();
+        });
+      })();
     })();
   </script>
   <script>
