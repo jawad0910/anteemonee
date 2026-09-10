@@ -4,15 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Settings - Anteemonee</title>
+  <meta name="description" content="Customize your Anteemonee experience. Manage AI preferences, accounts, providers and more.">
   <meta name="theme-color" content="#07080C">
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=9">
-  <link rel="stylesheet" href="../css/settings.css?v=10">
+  <link rel="stylesheet" href="../css/style.css?v=16">
+  <link rel="stylesheet" href="../css/settings.css?v=12">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
+  <style>
+    /* Embed mode: chromeless when shown inside the chatbot settings popup. */
+    body.embed .header, body.embed .mobile-menu { display: none !important; }
+    body.embed .settings-page { padding: 20px 16px 60px; }
+    @media (max-width: 768px) {
+      body.embed .settings-page { padding: 14px 12px 48px; }
+    }
+  </style>
 </head>
 <body>
 
@@ -367,5 +377,30 @@
   <script src="../js/account-manager.js?v=9"></script>
   <script src="../js/app.js?v=9"></script>
   <script src="../js/settings.js?v=11"></script>
+  <script>
+    // Embed mode: hide site chrome, force ALL navigation to break out of iframe.
+    (function () {
+      try {
+        if (window.top === window.self) return; // not in an iframe
+        document.body.classList.add('embed');
+        // Delegated handler — catches every <a> click, even dynamically added ones.
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest ? e.target.closest('a[href]') : null;
+          if (!a) return;
+          e.preventDefault();
+          window.top.location.href = a.href;
+        });
+        // Override window.location setters so JS-driven navigations also break out.
+        var _loc = window.location;
+        var _top = window.top.location;
+        Object.defineProperty(window, 'location', {
+          configurable: true,
+          enumerable: true,
+          get: function () { return _loc; },
+          set: function (v) { _top.href = v; }
+        });
+      } catch (_) {}
+    })();
+  </script>
 </body>
 </html>

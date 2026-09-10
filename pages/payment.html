@@ -4,13 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Get Premium - Anteemonee</title>
+  <meta name="description" content="Upgrade to Anteemonee Premium. Get unlimited AI tutoring, advanced flashcards and premium study features.">
   <meta name="theme-color" content="#07080C">
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=9">
+  <link rel="stylesheet" href="../css/style.css?v=16">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
     .payment-page {
@@ -125,14 +127,14 @@
       border: none;
       border-radius: 14px;
       background: var(--accent);
-      color: #fff;
+      color: var(--on-accent);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: opacity .2s;
       margin-bottom: 16px;
-      box-shadow: 0 4px 16px rgba(31,160,85,0.3), var(--neo-shadow-raised-sm);
+      box-shadow: 0 4px 16px rgba(126,217,87,0.3), var(--neo-shadow-raised-sm);
     }
 
     .pay-btn:hover { opacity: .88; }
@@ -145,8 +147,8 @@
       display: inline-block;
       width: 18px;
       height: 18px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: #fff;
+      border: 2px solid rgba(128,128,128,0.35);
+      border-top-color: var(--on-accent);
       border-radius: 50%;
       animation: spin .6s linear infinite;
       vertical-align: middle;
