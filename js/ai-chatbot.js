@@ -1941,36 +1941,15 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         <div class="session-header">
           <span class="session-header-dot active"></span>
           <span>Session Active</span>
-        </div>
-        <div class="session-row">
-          <span class="session-label">Started</span>
-          <span class="session-value">${startTimeStr}</span>
-        </div>
-        <div class="session-row">
-          <span class="session-label">Ends in</span>
-          <span class="session-value countdown session-countdown">${formatCountdown(activeSession.expires_at)}</span>
+          <span class="session-header-meta">${startTimeStr} &middot; <span class="session-countdown">${formatCountdown(activeSession.expires_at)}</span></span>
         </div>
         <div class="session-progress">
           <div class="session-progress-bar ${barClass}" style="width:${tokenPct}%"></div>
         </div>
         <div class="session-meta">
-          <span>${formatTokens(tokensUsed)} / ${formatTokens(TOKEN_LIMIT)} tokens</span>
+          <span>${formatTokens(tokensUsed)} / ${formatTokens(TOKEN_LIMIT)}</span>
           <span>${msgCount} msg${msgCount !== 1 ? 's' : ''}</span>
-        </div>
-        <div class="session-cost">~${formatCostPKR(tokensUsed)}</div>
-        <div class="session-divider"></div>
-        ${streakCount > 0 ? `
-        <div class="session-row">
-          <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount} day${streakCount !== 1 ? 's' : ''} &#x1F525;</span>
-        </div>` : `
-        <div class="session-row">
-          <span class="session-label">Streak</span>
-          <span class="session-value streak-value">0</span>
-        </div>`}
-        <div class="session-row">
-          <span class="session-label">Sessions left</span>
-          <span class="session-value">${monthlyLeft} / ${monthlyLimit}</span>
+          <span>${monthlyLeft}/${monthlyLimit} sessions</span>
         </div>
       `;
     } else {
@@ -1979,15 +1958,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           <span class="session-header-dot inactive"></span>
           <span>No Active Session</span>
         </div>
-        <div class="session-idle-hint">Send a message to start a ${sessionUsage?.session_minutes || 45} min session</div>
-        <div class="session-divider"></div>
-        <div class="session-row">
-          <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount > 0 ? streakCount + ' day' + (streakCount !== 1 ? 's' : '') + ' &#x1F525;' : '0'}</span>
-        </div>
-        <div class="session-row">
-          <span class="session-label">Sessions left</span>
-          <span class="session-value">${monthlyLeft} / ${monthlyLimit}</span>
+        <div class="session-meta">
+          <span>${monthlyLeft}/${monthlyLimit} sessions left</span>
         </div>
       `;
     }
