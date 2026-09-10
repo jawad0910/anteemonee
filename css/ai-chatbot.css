@@ -124,9 +124,9 @@ body.guest .sidebar-history:empty::before { content: none; }
 
 /* Session Panel â€” neomorphic */
 .session-panel {
-  padding: 14px 16px;
+  padding: 10px 14px;
   border-top: 1px solid var(--border-glass);
-  display: flex; flex-direction: column; gap: 8px; min-height: 48px;
+  display: flex; flex-direction: column; gap: 6px; min-height: 36px;
 }
 .session-header {
   display: flex; align-items: center; gap: 6px;
@@ -134,6 +134,7 @@ body.guest .sidebar-history:empty::before { content: none; }
   text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
 }
 .session-header-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.session-header-meta { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-secondary); }
 .session-header-dot.active { background: var(--success, #7ED957); animation: pulse-dot 2s ease-in-out infinite; }
 .session-header-dot.inactive { background: var(--text-tertiary, #6B7280); }
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -144,7 +145,7 @@ body.guest .sidebar-history:empty::before { content: none; }
 .session-value { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
 .session-value.countdown { color: var(--green, #7ED957); font-weight: 700; }
 .session-progress {
-  width: 100%; height: 4px; border-radius: 2px; overflow: hidden;
+  width: 100%; height: 3px; border-radius: 2px; overflow: hidden;
   background: var(--surface-recessed); box-shadow: var(--neo-shadow-recessed-sm);
 }
 .session-progress-bar {
