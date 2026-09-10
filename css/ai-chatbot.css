@@ -294,17 +294,6 @@ body.guest .sidebar-history:empty::before { content: none; }
 .welcome-subtitle { font-size: 1.0625rem; color: var(--text-secondary); margin-bottom: 24px; }
 .welcome-desc { font-size: 0.9375rem; color: var(--text-tertiary); line-height: 1.5; margin-bottom: 32px; max-width: 400px; }
 
-.quick-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 480px; width: 100%; }
-.quick-btn {
-  display: inline-flex; align-items: center; padding: 9px 18px;
-  background: var(--surface); border: none;
-  border-radius: var(--radius-full); color: var(--text-secondary); font-size: 0.8125rem;
-  box-shadow: var(--neo-shadow-raised-sm);
-  transition: all var(--transition-base);
-}
-.quick-btn:hover { box-shadow: var(--neo-shadow-raised); color: var(--text-primary); transform: translateY(-1px); }
-.quick-btn:active { box-shadow: var(--neo-shadow-pressed); transform: translateY(0); }
-
 /* Messages */
 .messages-list { display: flex; flex-direction: column; padding: 24px; gap: 4px; }
 .messages-list:empty { display: none; }
@@ -1274,12 +1263,6 @@ body.guest .sidebar-history:empty::before { content: none; }
   border: 1px solid var(--liquid-border);
   box-shadow: var(--liquid-inset), var(--liquid-shadow);
 }
-.quick-btn {
-  background: var(--liquid-bg-soft);
-  border: 1px solid var(--liquid-border-soft);
-  box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.14);
-}
-.quick-btn:hover { border-color: var(--liquid-border); box-shadow: var(--liquid-inset), 0 8px 22px rgba(0,0,0,0.2); }
 .welcome-icon {
   background: var(--liquid-bg-soft);
   -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
@@ -1737,18 +1720,28 @@ body.sidebar-collapsed .sidebar {
 /* History button: icon-only */
 .chat-history-btn { padding: 0; width: 38px; height: 38px; border-radius: 50%; justify-content: center; }
 
-/* Welcome: centered prompt + suggestion cards */
+/* Welcome: centered prompt + quick actions */
 .chat-welcome { max-width: 768px; width: 100%; margin: 0 auto; }
 .welcome-title { font-size: clamp(1.7rem, 4vw, 2.1rem); font-weight: 600; letter-spacing: -0.02em; }
-.quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 640px; }
-.quick-btn {
-  flex-direction: column; align-items: flex-start; text-align: left; gap: 2px;
-  padding: 14px 16px; border-radius: 16px;
+.welcome-actions {
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
 }
-.quick-btn-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
-.quick-btn-sub { font-size: 12px; font-weight: 400; color: var(--text-tertiary); }
+.welcome-action-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 10px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-secondary); background: var(--liquid-bg-soft, var(--surface));
+  border: 1px solid var(--liquid-border-soft, var(--border));
+  cursor: pointer; transition: all 0.15s ease;
+}
+.welcome-action-btn:hover {
+  color: var(--text-primary); border-color: var(--liquid-border, var(--border));
+  box-shadow: var(--liquid-inset, var(--neo-shadow-raised-sm));
+}
+.welcome-action-btn svg { flex-shrink: 0; opacity: 0.6; }
+.welcome-action-btn:hover svg { opacity: 1; }
 
-/* Skeleton loading for welcome texts, suggestions, model pills */
+/* Skeleton loading for welcome texts, model pills */
 .skel-text {
   border-radius: 8px;
   color: transparent !important;
@@ -1758,15 +1751,6 @@ body.sidebar-collapsed .sidebar {
   user-select: none; pointer-events: none;
 }
 @keyframes skelShimmer { to { background-position: -200% 0; } }
-.quick-actions.loading .quick-btn {
-  color: transparent !important;
-  background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: skelShimmer 1.2s infinite;
-  border-color: transparent !important;
-  pointer-events: none; user-select: none;
-}
-.quick-actions.loading .quick-btn * { visibility: hidden; }
 .model-selector.loading .model-selector-trigger {
   color: transparent !important;
   background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card) 50%, var(--surface) 75%);
@@ -1792,6 +1776,5 @@ body.sidebar-collapsed .sidebar {
     border-bottom: 1px solid var(--border-glass);
   }
   .chat-topbar .mobile-menu-toggle { display: none !important; }
-  .quick-actions { grid-template-columns: 1fr; }
 }
 /* Tiny screens inherit the rules above. */
