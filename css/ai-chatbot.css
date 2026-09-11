@@ -1115,6 +1115,7 @@ body.guest .sidebar-history:empty::before { content: none; }
 .fb-btn.fb-like.active svg { fill: rgba(126,217,87,0.2); }
 .fb-btn.fb-dislike.active { color: #f87171; }
 .fb-btn.fb-dislike.active svg { fill: rgba(248,113,113,0.2); }
+.fb-btn.fb-copy.copied { color: var(--success); }
 
 /* Like celebration: springy pop + expanding ring, then fade away */
 .fb-btn { position: relative; }
