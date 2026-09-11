@@ -9,6 +9,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="../css/tokens.css">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
