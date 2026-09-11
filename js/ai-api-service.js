@@ -14,6 +14,7 @@ class AiApiService {
     this._accessToken = null;
     this._sessionId = null;
     this.totalProviders = 3;
+    this._lastFinishReason = null; // finish_reason of the latest completed attempt ('stop' | 'length' | ...)
   }
 
   get currentProvider() {
@@ -42,6 +43,7 @@ class AiApiService {
    */
   async *streamChat(messages, providerIndex = null, images = null) {
     const startIndex = providerIndex !== null ? providerIndex : this.activeProvider;
+    this._lastFinishReason = null;
     let lastError = null;
 
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -172,6 +174,8 @@ class AiApiService {
             if (json.error) {
               throw new Error(json.error);
             }
+            const fr = json.choices?.[0]?.finish_reason;
+            if (fr) this._lastFinishReason = fr;
             const content = json.choices?.[0]?.delta?.content;
             if (content) yield content;
           } catch (e) {

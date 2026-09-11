@@ -271,33 +271,57 @@ function startCreditsCountdown(periodEndIso) {
   creditsTimer = setInterval(tick, 60000);
 }
 
-function setupTheme() {
+/* Theme modes: 'light' | 'dark' | 'system' (device default). Stored per
+   device in localStorage; legacy per-user / generic keys migrate forward. */
+function getThemeMode() {
   try {
-    // Try user-scoped theme first, then fall back to generic
-    let saved = null;
+    const m = localStorage.getItem('Anteemonee_theme_mode');
+    if (m === 'light' || m === 'dark' || m === 'system') return m;
+    const legacy = localStorage.getItem('Anteemonee_theme');
+    if (legacy === 'light' || legacy === 'dark') return legacy;
+  } catch (e) {}
+  return 'system';
+}
+function resolveTheme(mode) {
+  if (mode === 'light' || mode === 'dark') return mode;
+  try {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+  } catch (e) {}
+  return 'dark';
+}
+function applyThemeMode(mode) {
+  document.documentElement.setAttribute('data-theme', resolveTheme(mode));
+}
+function setThemeMode(mode) {
+  if (mode !== 'light' && mode !== 'dark') mode = 'system';
+  try {
+    localStorage.setItem('Anteemonee_theme_mode', mode);
+    localStorage.removeItem('Anteemonee_theme');
     if (typeof currentUser !== 'undefined' && currentUser?.id) {
-      saved = localStorage.getItem(`Anteemonee_theme_${currentUser.id}`);
+      localStorage.removeItem(`Anteemonee_theme_${currentUser.id}`);
     }
-    if (!saved) saved = localStorage.getItem('Anteemonee_theme');
-    if (saved) {
-      document.documentElement.setAttribute('data-theme', saved);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
+  } catch (err) {}
+  applyThemeMode(mode);
+}
+try {
+  window.AnteemoneeTheme = { get: getThemeMode, set: setThemeMode, apply: applyThemeMode };
+} catch (e) {}
+
+function setupTheme() {
+  try { applyThemeMode(getThemeMode()); } catch (e) {}
+  // Follow device changes while in system mode.
+  try {
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const onChange = () => { try { if (getThemeMode() === 'system') applyThemeMode('system'); } catch (_) {} };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
   } catch (e) {}
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.theme-toggle');
     if (!btn) return;
+    // Header toggle is a quick light/dark switch (sets an explicit choice).
     const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    try {
-      // Save per-user if logged in, otherwise generic
-      if (typeof currentUser !== 'undefined' && currentUser?.id) {
-        localStorage.setItem(`Anteemonee_theme_${currentUser.id}`, next);
-      }
-      localStorage.setItem('Anteemonee_theme', next); // fallback for pre-auth
-    } catch (err) {}
+    setThemeMode(current === 'dark' ? 'light' : 'dark');
   });
 }
 

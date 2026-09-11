@@ -979,6 +979,19 @@ function renderAppearance() {
   const p = settingsPrefs || {};
 
   const rows = [
+    buildRow('Theme', 'Light, dark, or follow your device', buildSelect([
+      { value: 'system', label: 'Device default' },
+      { value: 'light', label: 'Light' },
+      { value: 'dark', label: 'Dark' },
+    ], (window.AnteemoneeTheme ? window.AnteemoneeTheme.get() : 'system'), v => {
+      if (window.AnteemoneeTheme) window.AnteemoneeTheme.set(v);
+      // Embedded popup (iframe): apply to the parent page too (same origin).
+      try {
+        if (window.top && window.top !== window.self && window.top.AnteemoneeTheme) {
+          window.top.AnteemoneeTheme.set(v);
+        }
+      } catch (_) {}
+    })),
     buildRow('Reduce Animations', 'Minimize motion for accessibility', buildToggle('t-reduce_anim', p.reduce_animations, v => {
       savePref('reduce_animations', v);
       if (v) document.documentElement.classList.add('reduce-anim');

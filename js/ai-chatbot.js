@@ -251,11 +251,12 @@
   }
 
   // â”€â”€ AI Session State â”€â”€
-  const TOKEN_LIMIT = 100000;
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
   let estimatedTokensUsed = 0; // client-side running estimate
+  let lastPromptTokens = 0; // full billed prompt of the latest request (system + RAG + history)
+  let lastApiMessages = null; // frozen base payload of the latest request (for continuations)
 
   // â”€â”€ Streak State â”€â”€
   let streakCount = 0;
@@ -1057,12 +1058,14 @@ STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No
 
 BEHAVIOR:
 - For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance.
-- FLASHCARD CREATION: When the user asks to create a flashcard, make a flashcard, or says something like "create a flashcard for [topic]", respond with a well-structured Q&A pair in this exact format:
-
-**Front:** [Clear, concise question or concept to test]
-**Back:** [Complete, accurate answer or explanation]
-
-Keep the front short (one question or term). Keep the back complete but concise (2-5 sentences max). After the flashcard, confirm briefly: "Flashcard ready. You can save it using the save button above." Do NOT include references for flashcard responses.
+- FLASHCARD CREATION: When the user asks to create or make a flashcard:
+  - If they gave a clear topic, term, or question: detect the school subject yourself (e.g. Biology, Chemistry, Physics, Math, English, Computer Science) and output the card in this exact format, then the confirmation line, and nothing else:
+    **Subject:** [Subject name, or General if unclear]
+    **Front:** [Clear, concise question or concept to test]
+    **Back:** [Complete, accurate answer, 2-5 sentences max]
+    Saved! Opening it in Flashcards now.
+    The app automatically saves this as a flashcard and opens it in Flashcards. NEVER mention any save button.
+  - If they gave NO topic (e.g. just "create a flashcard" with nothing else): do NOT invent one. Ask which topic or question they want the flashcard on, in one short line. Do NOT output a Front/Back pair in that case.
 - CRITICAL â€” REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
 
 ---
@@ -1099,7 +1102,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       ctx += `\n\nRESEARCH MODE ACTIVE: The student has activated research mode. Search your knowledge thoroughly for the most accurate, up-to-date, and well-sourced information. Draw from multiple perspectives and sources. If you're not certain about something, say so honestly rather than guessing. Cite where information comes from when possible. Prioritize accuracy and depth over speed.`;
     }
 
-    ctx += `\n\nSCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writing code, debugging, building apps or websites, GitHub, or programming questions.
+    ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches of any word count). Always write the maximum you can in this response with full quality. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
+
+SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writing code, debugging, building apps or websites, GitHub, or programming questions.
 - If the student asks for coding or programming work: decline in ONE short line, say coding work is done by Zardari (the coding agent) and you are only for studies. Then output the marker [SWITCH_TO_ZARDARI] alone on its own line at the very end so the app can show a switch button.`;
 
     return ctx;
@@ -1150,6 +1155,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
     html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
@@ -1547,6 +1553,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
   var FB_LIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
   var FB_DISLIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>';
+  var FB_COPY_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  var FB_CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
   function bumpCounters(names) {
     try {
@@ -1574,6 +1582,109 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     try { localStorage.setItem('anteemonee_msg_votes', JSON.stringify(v)); } catch (_) {}
   }
 
+  // Hide the vote buttons but keep Copy visible.
+  function hideVoteBtns(wrap) {
+    try {
+      var l = wrap.querySelector('.fb-like');
+      if (l) l.style.display = 'none';
+      var d = wrap.querySelector('.fb-dislike');
+      if (d) d.style.display = 'none';
+    } catch (_) {}
+  }
+
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    } catch (_) {}
+  }
+
+  // Copy helpers: rich HTML for Word/Docs/WhatsApp + clean plain text fallback.
+  function markdownToPlain(md) {
+    let t = String(md || '');
+    t = t.replace(/```\w*\n?([\s\S]*?)```/g, '$1');
+    t = t.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
+    t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    t = t.replace(/^#{1,6}\s+/gm, '');
+    t = t.replace(/(\*\*|__)(.*?)\1/g, '$2');
+    t = t.replace(/(^|[\s(>])\*([^*\n]+)\*/g, '$1$2');
+    t = t.replace(/(^|[\s(>])_([^_\n]+)_/g, '$1$2');
+    t = t.replace(/`([^`\n]+)`/g, '$1');
+    t = t.replace(/^\s*[-*+]\s+/gm, '• ');
+    t = t.replace(/\n{3,}/g, '\n\n');
+    return t.trim();
+  }
+
+  function markdownToHtml(md) {
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    const secret = [];
+    let t = String(md || '');
+    t = t.replace(/```\w*\n?([\s\S]*?)```/g, function (_, code) {
+      secret.push('<pre><code>' + esc(code.replace(/\n$/, '')) + '</code></pre>');
+      return ' COPYBLOCK' + (secret.length - 1) + ' ';
+    });
+    let html = esc(t);
+    html = html.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
+    html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    html = html.replace(/^#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
+    html = html.replace(/(\*\*|__)(.+?)\1/g, '<strong>$2</strong>');
+    html = html.replace(/(^|[\s(>])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    html = html.replace(/^\s*[-*+]\s+/gm, '• ');
+    html = html.split('\n').join('<br>');
+    html = html.replace(/COPYBLOCK(\d+)/g, function (_, n) { return secret[+n] || ''; });
+    return '<div>' + html + '</div>';
+  }
+
+  function writeRichClipboard(plain, html) {
+    try {
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        const items = { 'text/plain': new Blob([plain], { type: 'text/plain' }) };
+        try { items['text/html'] = new Blob([html], { type: 'text/html' }); } catch (_) {}
+        return navigator.clipboard.write([new ClipboardItem(items)]).then(() => true).catch(() => false);
+      }
+    } catch (_) {}
+    return Promise.resolve(false);
+  }
+
+  function onCopyMessage(wrap, idx) {
+    try {
+      var i = parseInt(idx, 10);
+      var raw = (messages[i] && messages[i].content) || '';
+      if (!raw) return;
+      var plain = markdownToPlain(raw);
+      var html = markdownToHtml(raw);
+      var done = function () {
+        try {
+          var btn = wrap.querySelector('.fb-copy');
+          if (btn) {
+            var old = btn.innerHTML;
+            btn.innerHTML = FB_CHECK_SVG;
+            btn.classList.add('copied');
+            setTimeout(function () {
+              try {
+                if (document.body.contains(btn)) { btn.innerHTML = old; btn.classList.remove('copied'); }
+              } catch (_) {}
+            }, 1500);
+          }
+        } catch (_) {}
+        showChatToast('Copied to clipboard');
+      };
+      writeRichClipboard(plain, html).then(function (ok) {
+        if (ok) { done(); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(plain).then(done).catch(function () { fallbackCopy(plain); done(); });
+        } else { fallbackCopy(plain); done(); }
+      });
+    } catch (_) {}
+  }
+
   function onVote(wrap, key, kind) {
     var votes = getVotes();
     var prev = votes[key] || null;
@@ -1581,7 +1692,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       delete votes[key];
       setVotes(votes);
       adjustCounter(kind === 'like' ? 'liked_messages' : 'disliked_messages', -1);
-      wrap.style.display = 'none';
+      hideVoteBtns(wrap);
       return;
     }
     if (prev === 'like') adjustCounter('liked_messages', -1);
@@ -1590,15 +1701,14 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     setVotes(votes);
     adjustCounter(kind === 'like' ? 'liked_messages' : 'disliked_messages', 1);
     if (kind === 'like') {
-      // Celebrate the tap, then fade the buttons away.
+      // Celebrate the tap, then tuck the vote buttons away (Copy stays).
       try {
         var likeBtn = wrap.querySelector('.fb-like');
         if (likeBtn) likeBtn.classList.add('liked');
-        wrap.classList.add('fading');
       } catch (_) {}
-      setTimeout(function () { wrap.style.display = 'none'; }, 550);
+      setTimeout(function () { hideVoteBtns(wrap); }, 550);
     } else {
-      wrap.style.display = 'none';
+      hideVoteBtns(wrap);
     }
     if (kind === 'dislike') openReportPopup(wrap);
   }
@@ -1618,13 +1728,15 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       var wrap = document.createElement('div');
       wrap.className = 'msg-feedback';
       wrap.innerHTML = '<button class="fb-btn fb-like" type="button" title="Good response" aria-label="Like">' + FB_LIKE_SVG + '</button>' +
-        '<button class="fb-btn fb-dislike" type="button" title="Bad response" aria-label="Dislike">' + FB_DISLIKE_SVG + '</button>';
+        '<button class="fb-btn fb-dislike" type="button" title="Bad response" aria-label="Dislike">' + FB_DISLIKE_SVG + '</button>' +
+        '<button class="fb-btn fb-copy" type="button" title="Copy response" aria-label="Copy">' + FB_COPY_SVG + '</button>';
       body.appendChild(wrap);
       var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
       wrap.dataset.voteKey = key;
-      if (getVotes()[key]) wrap.style.display = 'none';
+      if (getVotes()[key]) hideVoteBtns(wrap);
       wrap.querySelector('.fb-like').addEventListener('click', function () { onVote(wrap, key, 'like'); });
       wrap.querySelector('.fb-dislike').addEventListener('click', function () { onVote(wrap, key, 'dislike'); });
+      wrap.querySelector('.fb-copy').addEventListener('click', function () { onCopyMessage(wrap, idx); });
     } catch (_) {}
   }
 
@@ -1727,6 +1839,81 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   // the Flashcards page on that card so the user can add the question.
   // The selection goes into the BACK (answer) field. Nothing is kept in
   // localStorage - the row lives in the database.
+  // ── Auto flashcard: when the user asked for one and the reply holds a ──
+  // Front/Back pair, save it to the DB and open it in Flashcards (edit mode).
+  function parseFlashcardFromText(reply) {
+    try {
+      const t = String(reply || '');
+      const m = t.match(/\*\*Front:\*\*\s*([\s\S]+?)\s*\*\*Back:\*\*\s*([\s\S]+)/i);
+      if (!m) return null;
+      let front = m[1].trim();
+      front = front.replace(/\n?\*{0,2}Subject:\*{0,2}.*$/gim, '').trim();
+      front = front.replace(/\*\*/g, '').trim();
+      let back = m[2].trim();
+      back = back.replace(/Saved!\s*Opening it in Flashcards now\.?\s*/gi, '').trim();
+      back = back.split(/\n\*{0,2}References:\*{0,2}[\s\S]*$/i)[0].trim();
+      back = back.replace(/\n?\*{0,2}Subject:\*{0,2}.*$/gim, '').trim();
+      back = back.replace(/\*\*/g, '').trim();
+      back = back.replace(/Flashcard ready[\s\S]*$/i, '').trim();
+      let subject = 'General';
+      const sm = t.match(/\*\*Subject:\*\*\s*([^\n]+)/i);
+      if (sm) subject = sm[1].replace(/\*\*/g, '').trim().slice(0, 60) || 'General';
+      if (!front || !back) return null;
+      return { front: front.slice(0, 500), back: back.slice(0, 2000), subject };
+    } catch (_) { return null; }
+  }
+
+  let lastAutoFlashcard = { front: '', at: 0 };
+
+  // Intent may live in an earlier message ("create a flashcard" → AI asks
+  // for the topic → user replies with just the topic), so scan recent turns.
+  function recentFlashcardIntent() {
+    try {
+      let seen = 0;
+      for (let i = messages.length - 1; i >= 0 && seen < 4; i--) {
+        const m = messages[i];
+        if (!m || m.role !== 'user') continue;
+        seen++;
+        if (/flash\s*-?\s*cards?/i.test(String(m.content || ''))) return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  function autoCreateFlashcardFromReply(userText, replyText) {
+    try {
+      if (!/flash\s*-?\s*cards?/i.test(String(userText || '')) && !recentFlashcardIntent()) return;
+      const fc = parseFlashcardFromText(replyText);
+      if (!fc) return;
+      const key = fc.front.toLowerCase();
+      if (lastAutoFlashcard.front === key && Date.now() - lastAutoFlashcard.at < 5 * 60 * 1000) return;
+      (async () => {
+        try {
+          let user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          if ((!user || !user.id) && typeof db !== 'undefined' && db) {
+            try { const res = await db.auth.getUser(); user = res.data && res.data.user; } catch (_) {}
+          }
+          if (!user || !user.id) { showChatToast('Sign in to save flashcards.'); return; }
+          if (typeof db === 'undefined' || !db) { showChatToast('Database unavailable. Check your connection.'); return; }
+          showChatToast('Creating flashcard...');
+          const ins = await db.from('flashcards').insert({ user_id: user.id, front: fc.front, back: fc.back, subject: fc.subject || 'General' }).select('id').single();
+          if (ins.error || !ins.data) throw ins.error || new Error('insert failed');
+          lastAutoFlashcard = { front: fc.front.toLowerCase(), at: Date.now() };
+          try {
+            if (window.AnteemoneeViews && window.AnteemoneeViews.showFlashcards) {
+              window.AnteemoneeViews.showFlashcards(ins.data.id);
+              return;
+            }
+          } catch (_) {}
+          window.location.href = 'pages/flashcards.html?edit=' + encodeURIComponent(ins.data.id);
+        } catch (err) {
+          console.warn('[AI] Auto flashcard failed:', err);
+          showChatToast('Could not create flashcard.');
+        }
+      })();
+    } catch (_) {}
+  }
+
   async function onFlashcardFromToolbar() {
     if (!pendingSel || !pendingSel.text) return;
     var answer = String(pendingSel.text).trim().slice(0, 4000);
@@ -1942,11 +2129,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           chatInput.disabled = true;
           chatInput.placeholder = 'No sessions left this month';
         }
-        if (activeSession && estimatedTokensUsed >= TOKEN_LIMIT) {
-          chatInput.disabled = true;
-          chatInput.placeholder = 'Tokens exhausted - start a new session';
-          showTokenExhaustedPopup();
-        }
         saveSessionState();
       }
     } catch (e) { console.warn('[Session] DB sync failed:', e); }
@@ -2092,7 +2274,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function updateSessionPanel() {
     if (!isAuthed()) { refreshAuthGate(); return; }
     const tokensUsed = estimatedTokensUsed || activeSession?.tokens_used || 0;
-    const tokenPct = Math.min(100, Math.round((tokensUsed / TOKEN_LIMIT) * 100));
     const msgCount = activeSession?.messages_count || 0;
     const monthlyUsed = sessionUsage?.ai_used || 0;
     const monthlyLimit = sessionUsage?.ai_limit || 25;
@@ -2102,7 +2283,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     let html;
 
     if (isActive) {
-      const barClass = tokenPct >= 90 ? 'danger' : tokenPct >= 70 ? 'warn' : '';
       const startTimeStr = new Date(activeSession.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       html = `
@@ -2111,11 +2291,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           <span>Session Active</span>
           <span class="session-header-meta">${startTimeStr} &middot; <span class="session-countdown">${formatCountdown(activeSession.expires_at)}</span></span>
         </div>
-        <div class="session-progress">
-          <div class="session-progress-bar ${barClass}" style="width:${tokenPct}%"></div>
-        </div>
         <div class="session-meta">
-          <span>${formatTokens(tokensUsed)} / ${formatTokens(TOKEN_LIMIT)}</span>
+          <span>${formatTokens(tokensUsed)} tokens</span>
           <span>${msgCount} msg${msgCount !== 1 ? 's' : ''}</span>
           <span>${monthlyLeft}/${monthlyLimit} sessions</span>
         </div>
@@ -2164,8 +2341,31 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return r ? `${m} minute${m === 1 ? '' : 's'} ${r}s` : `${m} minute${m === 1 ? '' : 's'}`;
   }
 
+  // Estimate the BILLED prompt: everything actually sent to the model.
+  function estimatePromptTokens(msgs) {
+    let chars = 0;
+    try {
+      for (const m of (msgs || [])) {
+        const c = m && m.content;
+        chars += (typeof c === 'string' ? c.length : JSON.stringify(c || '').length);
+      }
+    } catch (_) {}
+    return Math.ceil(chars / 4);
+  }
+
   function estimateInputTokens(text) {
     return Math.ceil((text || '').length / 4);
+  }
+
+  // Greetings / small talk: answered with a minimal prompt (no textbook RAG,
+  // no history) so a "hi" costs tens of tokens instead of thousands.
+  var GREETING_RE = /^(hi+|hello+|hey+|yo|hii+|helloo+|aoa|salam|salaam|assalam\s*o?\s*alaikum|salam\s*o?\s*alaikum|adab|good\s*(morning|afternoon|evening|day|night)|how\s*are\s*you.*|what'?s?\s*up.*|how'?s?\s*it\s*going.*|howdy|sup|namaste)[\s!.,?~\-_]*$/i;
+
+  function isInstantGreeting(text) {
+    if (!text) return false;
+    var t = String(text).trim();
+    if (t.length > 60) return false;
+    return GREETING_RE.test(t);
   }
 
   function estimateOutputTokens(text) {
@@ -2186,7 +2386,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         estimatedTokensUsed = 0;
         stopStudyTimer();
         clearSessionState();
-        removeTokenExhaustedPopup();
         updateSessionPanel();
         // Clean up session in DB
         if (expiredSessionId && db) {
@@ -2197,11 +2396,130 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }, 1000);
   }
 
+  // ── Long-output continuation: when a response is cut off (model hit its ──
+  // output limit) or a requested word count is far from met, keep streaming
+  // more segments into the SAME message, rotating providers 0→1→2→0…
+  // Stops on: natural finish, refusal, user Stop, session budget, seg cap.
+  const MAX_CONTINUATIONS = 8;
+
+  function parseRequestedWords(t) {
+    try {
+      const m = String(t || '').match(/(\d[\d,]*)\s*-?\s*words?\b/i);
+      if (!m) return 0;
+      return parseInt(m[1].replace(/,/g, ''), 10) || 0;
+    } catch (_) { return 0; }
+  }
+
+  function countWords(t) {
+    try { return String(t || '').trim().split(/\s+/).filter(Boolean).length; }
+    catch (_) { return 0; }
+  }
+
+  function looksRefusal(t) {
+    return /i['’]m sorry,?\s+but i can['’]t\s+(provide|generate|write|create|do)|i can['’]t\s+(provide|generate)\s+a\s+[\d,]+-?word/i.test(String(t || ''));
+  }
+
+  async function maybeAutoContinue(streamDiv, userText) {
+    try {
+      if (!streamDiv || !document.body.contains(streamDiv)) return;
+      if (!activeSession) return;
+      if (!lastApiMessages || !lastApiMessages.length) return;
+      let asst = null;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i] && messages[i].role === 'assistant' && messages[i].content) { asst = messages[i]; break; }
+      }
+      if (!asst) return;
+      if (looksRefusal(asst.content)) return; // never loop on refusals
+      const requested = parseRequestedWords(userText);
+      const cutByModel = api && api._lastFinishReason === 'length';
+      if (!cutByModel && !(requested >= 800 && countWords(asst.content) < requested * 0.6)) return;
+      // Strip any switch markers once, so per-segment finalize can't duplicate cards.
+      try { asst.content = stripSwitchMarkers(asst.content); } catch (_) {}
+      // Take over the UI for the continuation run.
+      isStreaming = true;
+      chatInput.disabled = true;
+      btnSend.disabled = true;
+      btnSend.style.display = 'none';
+      btnStop.style.display = 'flex';
+      if (scrollDownBtn) scrollDownBtn.classList.add('generating');
+      const baseProvider = getActivePersona().providerIndex;
+      for (let seg = 0; seg < MAX_CONTINUATIONS; seg++) {
+        if (!streamDiv || !document.body.contains(streamDiv)) break;
+        if (!activeSession) break;
+        try { updateStreamingStatus(streamDiv, 'Continuing… (part ' + (seg + 2) + ')', 'analyzing'); } catch (_) {}
+        const contMsgs = [
+          ...lastApiMessages,
+          { role: 'assistant', content: asst.content },
+          { role: 'user', content: 'Continue exactly where you left off. Do not repeat anything already written, do not add any introduction, and do not add a conclusion unless the piece is actually finished.' },
+        ];
+        lastPromptTokens = estimatePromptTokens(contMsgs);
+        const provIdx = (baseProvider + seg + 1) % 3;
+        let segText = '';
+        try {
+          for await (const chunk of api.streamChat(contMsgs, provIdx)) {
+            if (chunk && chunk.includes('"type":"streak"')) {
+              try {
+                const parsed = JSON.parse(chunk);
+                if (parsed.type === 'streak') {
+                  streakCount = parsed.current_streak || 0;
+                  longestStreak = parsed.longest_streak || 0;
+                  updateSessionPanel();
+                  saveSessionState();
+                  continue;
+                }
+              } catch (_) {}
+            }
+            segText += chunk;
+            asst.content += chunk;
+            updateStreamingMessageThrottled(streamDiv, asst.content);
+            if (userNearBottom) scrollToBottom();
+          }
+        } catch (e) {
+          if (e && (e.name === 'AbortError' || /aborted|abort/i.test(e.message || ''))) {
+            asst.content += '\n\n*[Stopped]*';
+            try { finalizeStreamingMessage(streamDiv, asst.content); } catch (_) {}
+            break;
+          }
+          // Provider failed mid-segment: loop rotates to the next provider and
+          // resumes from the partial text already appended above.
+          console.warn('[AI] continuation segment failed, rotating provider:', (e && e.message) || e);
+        }
+        try {
+          estimatedTokensUsed += lastPromptTokens + estimateOutputTokens(segText);
+          if (activeSession) activeSession.tokens_used = estimatedTokensUsed;
+          updateSessionPanel();
+          saveSessionState();
+        } catch (_) {}
+        try { asst.content = stripSwitchMarkers(asst.content); } catch (_) {}
+        try { finalizeStreamingMessage(streamDiv, asst.content); } catch (_) {}
+        if (looksRefusal(segText)) break;
+        const fr = api ? api._lastFinishReason : null;
+        if (fr && fr !== 'length') break; // model finished naturally
+        const need = parseRequestedWords(userText);
+        if (!need || countWords(asst.content) >= need * 0.6) {
+          if (!fr || fr !== 'length') break;
+        }
+      }
+      try { persistConversation(); renderHistory(); } catch (_) {}
+      try { reconcileTokensWithServer(); } catch (_) {}
+    } catch (_) {}
+    try {
+      isStreaming = false;
+      btnStop.style.display = 'none';
+      btnSend.style.display = 'flex';
+      btnSend.disabled = true;
+      if (scrollDownBtn) scrollDownBtn.classList.remove('generating');
+      chatInput.disabled = false;
+      chatInput.focus();
+    } catch (_) {}
+  }
+
   function updateTokensAfterResponse(inputText, outputText) {
     if (!activeSession) return;
-    const inputTk = estimateInputTokens(inputText);
+    // Bill what the request actually sent (full prompt), not just the new message.
+    const promptTk = lastPromptTokens > 0 ? lastPromptTokens : estimateInputTokens(inputText);
     const outputTk = estimateOutputTokens(outputText);
-    const newTokens = inputTk + outputTk;
+    const newTokens = promptTk + outputTk;
     estimatedTokensUsed += newTokens;
     activeSession.tokens_used = estimatedTokensUsed;
     activeSession.messages_count = (activeSession.messages_count || 0) + 1;
@@ -2215,6 +2533,36 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         .then(() => {})
         .catch(() => {});
     }
+    // Reconcile with server truth: the server bills the FULL prompt each
+    // request (system + textbook + history) while the client only estimated
+    // the new pair. Poll until the committed server value catches up, so the
+    // panel never jumps on refresh. Never let the display regress.
+    try { reconcileTokensWithServer(); } catch (_) {}
+  }
+
+  function reconcileTokensWithServer() {
+    try {
+      if (reconcileTokensWithServer._t) clearTimeout(reconcileTokensWithServer._t);
+    } catch (_) {}
+    const sid = activeSession ? activeSession.id : null;
+    const prior = estimatedTokensUsed;
+    let attempts = 0;
+    const trySync = async () => {
+      try {
+        if (!activeSession || activeSession.id !== sid) return; // session changed/ended
+        attempts++;
+        try { await syncSessionFromDB(); } catch (_) {}
+        if (!activeSession || activeSession.id !== sid) return;
+        if (estimatedTokensUsed < prior && attempts < 4) {
+          // Server hasn't committed this response yet — keep the live number, retry.
+          estimatedTokensUsed = prior;
+          activeSession.tokens_used = prior;
+          try { updateSessionPanel(); } catch (_) {}
+          try { reconcileTokensWithServer._t = setTimeout(trySync, 6000); } catch (_) {}
+        }
+      } catch (_) {}
+    };
+    try { reconcileTokensWithServer._t = setTimeout(trySync, 3000); } catch (_) {}
   }
 
   async function refreshStreak() {
@@ -2230,50 +2578,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   }
 
   // â”€â”€ Token Exhausted Popup (Modal) â”€â”€
-  function showTokenExhaustedPopup() {
-    removeTokenExhaustedPopup();
-    const overlay = document.createElement('div');
-    overlay.className = 'session-modal-overlay';
-    overlay.id = 'token-exhausted-popup';
-    overlay.innerHTML = `
-      <div class="session-modal">
-        <button class="session-modal-close" id="btn-close-token-exhausted" title="Close">&times;</button>
-        <div class="session-modal-icon" style="background:rgba(255,107,107,0.12);color:#FF6B75">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        <h3 class="session-modal-title">Tokens Exhausted</h3>
-        <p class="session-modal-desc">You've used all 100K tokens for this session. Start a new session to keep chatting.</p>
-        <button class="session-modal-btn" id="btn-start-new-session">Start New Session</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
-
-    document.getElementById('btn-close-token-exhausted')?.addEventListener('click', () => {
-      removeTokenExhaustedPopup();
-    });
-
-    document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
-      removeTokenExhaustedPopup();
-      const started = await startSession();
-      if (started) {
-        chatInput.disabled = false;
-        chatInput.placeholder = 'Ask Anteemonee anything...';
-        chatInput.focus();
-        estimatedTokensUsed = 0;
-        updateSessionPanel();
-      }
-    });
-  }
-
-  function removeTokenExhaustedPopup() {
-    const existing = document.getElementById('token-exhausted-popup');
-    if (existing) existing.remove();
-  }
-
-  // â”€â”€ Session Expired Popup â”€â”€
   function showSessionExpiredPopup() {
-    removeTokenExhaustedPopup();
     const overlay = document.createElement('div');
     overlay.className = 'session-modal-overlay';
     overlay.id = 'token-exhausted-popup';
@@ -2292,11 +2597,11 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     requestAnimationFrame(() => overlay.classList.add('show'));
 
     document.getElementById('btn-close-session-expired')?.addEventListener('click', () => {
-      removeTokenExhaustedPopup();
+      overlay.remove();
     });
 
     document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
-      removeTokenExhaustedPopup();
+      overlay.remove();
       const started = await startSession();
       if (started) {
         chatInput.disabled = false;
@@ -2316,11 +2621,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     btnStop.style.display = 'none';
     btnSend.style.display = 'flex';
     btnSend.disabled = true;
-    if (estimatedTokensUsed < TOKEN_LIMIT) {
-      chatInput.disabled = false;
-      if (placeholder) chatInput.placeholder = placeholder;
-      chatInput.focus();
-    }
+    chatInput.disabled = false;
+    if (placeholder) chatInput.placeholder = placeholder;
+    chatInput.focus();
     if (scrollDownBtn) {
       scrollDownBtn.classList.remove('generating');
       scrollDownBtn.classList.remove('show');
@@ -2384,21 +2687,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     // â”€â”€ Token budget check â”€â”€
-    const estInput = estimateInputTokens(text + (quote ? quote.text : '') + (studentContext ? JSON.stringify(studentContext) : ''));
-    if (estimatedTokensUsed + estInput >= TOKEN_LIMIT) {
-      showTokenExhaustedPopup();
-      chatInput.disabled = true;
-      chatInput.placeholder = 'Tokens exhausted - start a new session';
-      isStreaming = false;
-      btnStop.style.display = 'none';
-      btnSend.style.display = 'flex';
-      if (scrollDownBtn) {
-        scrollDownBtn.classList.remove('generating');
-        scrollDownBtn.classList.remove('show');
-      }
-      return;
-    }
-
     chatInput.value = '';
     autoResize();
     btnSend.disabled = true;
@@ -2444,7 +2732,10 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     // Saves a DB round trip and keeps the coding prompt lean (faster TTFT).
     // Textbook search + memory reload run in parallel, not sequentially.
     const isCodingAgent = getActivePersona().codingOnly;
-    const textbookPromise = isCodingAgent
+    const isGreetingMsg = !hasImages && !pendingQuote && isInstantGreeting(text);
+    // Pure writing tasks are composed from knowledge — retrieval only burns tokens.
+    const isGenerationTask = /\b(write|writes|writing|compose|draft|generate|create|make|prepare)\b[^.?!]{0,50}\b(essay|story|stories|poem|poems|poetry|speech|speeches|letter|letters|paragraph|paragraphs|precis|dialogue|dialogues|novel|autobiography)\b/i.test(text);
+    const textbookPromise = (isCodingAgent || isGreetingMsg || isGenerationTask)
       ? Promise.resolve([])
       : searchTextbooks(text).catch(function (err) {
           console.warn('[AI] Textbook search failed:', err);
@@ -2467,17 +2758,25 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
     // Fresh memory reload â€” picks up extractions from OTHER chats too.
-    const systemPrompt = buildSystemPrompt() + textbookContext;
+    // Greetings get a tiny prompt: no system brick, no RAG, no history.
+    const systemPrompt = isGreetingMsg
+      ? ('You are ' + getActivePersona().name + ', a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
+      : buildSystemPrompt() + textbookContext;
 
-    const apiMessages = [
+    const apiMessages = isGreetingMsg
+      ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }]
+      : [
       { role: 'system', content: systemPrompt },
-      ...messages.slice(-10).map(m => ({
+      ...messages.slice(-6).map(m => ({
         role: m.role,
         content: m.quote
           ? `[Replying to ${m.quote.role === 'assistant' ? 'AI' : 'you'}: "${m.quote.text}"]\n${m.content}`
           : m.content,
       })),
     ];
+    // Snapshot what this request actually bills (system + textbook + history).
+    lastPromptTokens = estimatePromptTokens(apiMessages);
+    lastApiMessages = apiMessages;
 
     let fullResponse = '';
     let firstChunk = true;
@@ -2513,6 +2812,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       }
 
       finalizeStreamingMessage(streamDiv, fullResponse);
+      autoCreateFlashcardFromReply(text, fullResponse);
       stopStatusCycle(statusCycle);
       messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
       attachFeedbackButtons(streamDiv);
@@ -2565,6 +2865,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
                 { role: 'assistant', content: fullResponse },
                 { role: 'user', content: 'Your previous response was cut off. Please continue from where you left off. Do not repeat what was already said - just continue the explanation.' },
               ];
+              lastPromptTokens = estimatePromptTokens(continuationMessages);
               for await (const chunk of api.streamChat(continuationMessages, fallbackIndex)) {
                 if (chunk && chunk.includes('"type":"streak"')) {
                   try { const p = JSON.parse(chunk); if (p.type === 'streak') { streakCount = p.current_streak || 0; longestStreak = p.longest_streak || 0; updateSessionPanel(); saveSessionState(); continue; } } catch (_) {}
@@ -2579,6 +2880,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           }
           if (continued) {
             finalizeStreamingMessage(streamDiv, fullResponse);
+            autoCreateFlashcardFromReply(text, fullResponse);
             messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
             attachFeedbackButtons(streamDiv);
             bumpCounters(['total_messages', 'ai_messages']);
@@ -2588,21 +2890,20 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
             btnStop.style.display = 'none';
             btnSend.style.display = 'flex';
             btnSend.disabled = true;
-            if (estimatedTokensUsed < TOKEN_LIMIT) { chatInput.disabled = false; chatInput.focus(); } else { chatInput.disabled = true; chatInput.placeholder = 'Token limit reached for this session'; }
-            showTokenExhaustedPopup();
+            chatInput.disabled = false;
+            chatInput.focus();
+            await maybeAutoContinue(streamDiv, text);
             return;
           }
         }
         // If no partial response or all providers failed
-        finalizeStreamingMessage(streamDiv, 'Token limit reached for this session. Start a new session to continue.');
+        finalizeStreamingMessage(streamDiv, 'All models are busy right now. Please try again in a moment.');
         messages.pop();
-        showTokenExhaustedPopup();
         isStreaming = false;
         if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
         btnStop.style.display = 'none';
         btnSend.style.display = 'flex';
-        chatInput.disabled = true;
-        chatInput.placeholder = 'Tokens exhausted - start a new session';
+        chatInput.disabled = false;
         return;
       }
       // â”€â”€ RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only â”€â”€
@@ -2644,6 +2945,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           { role: 'assistant', content: fullResponse },
           { role: 'user', content: 'Your previous response was cut off. Please continue from where you left off. Do not repeat what was already said - just continue the explanation.' },
         ];
+        lastPromptTokens = estimatePromptTokens(continuationMessages);
 
         try {
           for await (const chunk of api.streamChat(continuationMessages, fallbackIndex)) {
@@ -2668,6 +2970,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         }
 
         finalizeStreamingMessage(streamDiv, fullResponse);
+        autoCreateFlashcardFromReply(text, fullResponse);
         messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
         attachFeedbackButtons(streamDiv);
         bumpCounters(['total_messages', 'ai_messages']);
@@ -2700,14 +3003,12 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     btnStop.style.display = 'none';
     btnSend.style.display = 'flex';
     btnSend.disabled = true;
-    // Re-enable input if token budget allows
-    if (estimatedTokensUsed < TOKEN_LIMIT) {
-      chatInput.disabled = false;
-      chatInput.focus();
-    } else {
-      chatInput.disabled = true;
-      chatInput.placeholder = 'Token limit reached for this session';
-    }
+    // Re-enable input
+    chatInput.disabled = false;
+    chatInput.focus();
+
+    // Long outputs: keep streaming follow-up segments into the same message.
+    await maybeAutoContinue(streamDiv, text);
 
     const isFirstExchange = !activeConversationId;
     const firstUserText = messages.length ? messages[0].content : '';
