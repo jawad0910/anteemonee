@@ -5,7 +5,7 @@
 /* --- Layout Shell --- */
 .settings-page {
   min-height: 100vh;
-  padding: 100px 24px 80px;
+  padding: 32px 24px 80px;
   max-width: 1080px;
   margin: 0 auto;
 }
@@ -547,7 +547,7 @@ textarea.setting-input {
 
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
-  .settings-page { padding: 80px 16px 60px; }
+  .settings-page { padding: 24px 16px 60px; }
   .settings-header h1 { font-size: 24px; }
 
   .settings-layout {
