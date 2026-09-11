@@ -30,6 +30,195 @@
     return 'Anteemonee_ai_session_anon';
   }
 
+  // ── Chat store: premium → Supabase DB (all devices), free/guest → localStorage only ──
+  let isPremiumTier = false;
+
+  async function refreshTier() {
+    isPremiumTier = false;
+    try {
+      if (typeof db === 'undefined' || !db) return false;
+      const { data: ent } = await db.rpc('get_entitlement_snapshot');
+      isPremiumTier = !!(ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active');
+    } catch (_) { isPremiumTier = false; }
+    return isPremiumTier;
+  }
+
+  function currentUserId() {
+    try {
+      if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return currentUser.id;
+    } catch (_) {}
+    return null;
+  }
+
+  function readLocalConversations() {
+    let arr = [];
+    try {
+      const raw = localStorage.getItem(chatStorageKey());
+      arr = JSON.parse(raw || '[]');
+      if (!Array.isArray(arr)) arr = [];
+    } catch (_) { arr = []; }
+    arr.forEach(c => {
+      if (c.title && /\{/.test(c.title)) {
+        c.title = c.title.replace(/\{.*$/g, '').trim() || 'New Chat';
+      }
+    });
+    return arr;
+  }
+
+  function writeLocalConversations() {
+    try {
+      localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
+    } catch (e) {
+      if (e && e.name === 'QuotaExceededError') {
+        // Strip images from old conversations to free space, then retry
+        for (let i = conversations.length - 1; i >= 0; i--) {
+          conversations[i].messages.forEach(m => { m.images = null; });
+        }
+        try { localStorage.setItem(chatStorageKey(), JSON.stringify(conversations)); } catch (_) {}
+      }
+    }
+  }
+
+  // Persist one conversation to the DB (premium only). Safe to fire-and-forget.
+  async function saveConversationToDb(conv) {
+    const uid = currentUserId();
+    if (!uid || !conv) return false;
+    try {
+      const row = {
+        id: conv.id,
+        user_id: uid,
+        title: conv.title || 'New Chat',
+        title_locked: !!conv.titleLocked,
+        messages: Array.isArray(conv.messages) ? conv.messages : [],
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await db.from('chat_conversations').upsert(row, { onConflict: 'id' });
+      if (error) return false;
+      trimDbConversations(uid);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  // Keep only the 50 most recent DB chats per user (best effort, background).
+  function trimDbConversations(uid) {
+    try {
+      db.from('chat_conversations').select('id').eq('user_id', uid).order('updated_at', { ascending: false }).range(50, 500)
+        .then(({ data }) => {
+          const ids = (data || []).map(r => r.id).filter(Boolean);
+          if (ids.length) db.from('chat_conversations').delete().in('id', ids).then(() => {}).catch(() => {});
+        }).catch(() => {});
+    } catch (_) {}
+  }
+
+  async function loadConversationsFromDb(uid) {
+    const { data, error } = await db.from('chat_conversations')
+      .select('id,title,title_locked,messages')
+      .eq('user_id', uid).order('updated_at', { ascending: false }).limit(50);
+    if (error) throw error;
+    return (data || []).map(r => ({
+      id: r.id,
+      title: r.title || 'New Chat',
+      titleLocked: !!r.title_locked,
+      messages: Array.isArray(r.messages) ? r.messages : [],
+    }));
+  }
+
+  async function deleteConversationFromDb(id) {
+    try { await db.from('chat_conversations').delete().eq('id', id); } catch (_) {}
+  }
+
+  // Route a persistence write to DB (premium) or localStorage (free/guest).
+  function persistConversation(convId) {
+    if (isPremiumTier && currentUserId()) {
+      const conv = conversations.find(c => c.id === (convId || activeConversationId));
+      if (conv) saveConversationToDb(conv).catch(() => {});
+    } else {
+      writeLocalConversations();
+    }
+  }
+
+  // ── 10-day chat TTL: chats older than 10 days are deleted automatically ──
+  var CHAT_TTL_MS = 10 * 24 * 60 * 60 * 1000;
+
+  function convTimestamp(c) {
+    if (c && c.updatedAt) return c.updatedAt;
+    if (c && c.createdAt) return c.createdAt;
+    var m = /^conv_(\d+)$/.exec((c && c.id) || '');
+    if (m) return parseInt(m[1], 10);
+    return Date.now();
+  }
+
+  // Drop expired chats from the in-memory list (free-tier path). Returns true if removed.
+  function removeExpiredFromMemory() {
+    var now = Date.now();
+    var removed = false;
+    conversations.forEach(function (c) {
+      if (!c.updatedAt) c.updatedAt = convTimestamp(c); // backfill legacy chats
+    });
+    var kept = [];
+    for (var i = 0; i < conversations.length; i++) {
+      if (now - convTimestamp(conversations[i]) > CHAT_TTL_MS) removed = true;
+      else kept.push(conversations[i]);
+    }
+    if (removed) conversations = kept;
+    return removed;
+  }
+
+  function pruneLocalConversations() {
+    if (!removeExpiredFromMemory()) return;
+    writeLocalConversations();
+    try { renderHistory(); } catch (_) {}
+  }
+
+  // Premium path: delete the user's chats older than 10 days from the DB.
+  async function pruneDbConversations(uid) {
+    try {
+      var cutoff = new Date(Date.now() - CHAT_TTL_MS).toISOString();
+      await db.from('chat_conversations').delete().eq('user_id', uid).lt('updated_at', cutoff);
+    } catch (_) {}
+  }
+
+  async function initConversationStore() {
+    const uid = currentUserId();
+    if (isPremiumTier && uid) {
+      try {
+        await pruneDbConversations(uid);
+        const rows = await loadConversationsFromDb(uid);
+        const local = readLocalConversations();
+        if (rows.length === 0 && local.length > 0) {
+          // One-time upgrade migration: push this browser's chats to the DB.
+          conversations = local.slice(0, 50);
+          for (const c of conversations) { await saveConversationToDb(c); }
+          try { localStorage.removeItem(chatStorageKey()); } catch (_) {}
+        } else {
+          conversations = rows;
+        }
+      } catch (_) {
+        conversations = readLocalConversations();
+      }
+    } else {
+      conversations = readLocalConversations();
+    }
+    // Legacy migration: move old sessionStorage data to the active store
+    try {
+      const legacy = sessionStorage.getItem('Anteemonee_ai_conversations');
+      if (legacy) {
+        const legacyArr = JSON.parse(legacy);
+        if (Array.isArray(legacyArr) && legacyArr.length > 0 && conversations.length === 0) {
+          conversations = legacyArr;
+          if (isPremiumTier && uid) {
+            for (const c of conversations.slice(0, 50)) { await saveConversationToDb(c); }
+          } else {
+            writeLocalConversations();
+          }
+        }
+        sessionStorage.removeItem('Anteemonee_ai_conversations');
+      }
+    } catch (_) {}
+    // Free-tier path: drop chats older than 10 days on every load.
+    if (!(isPremiumTier && uid)) pruneLocalConversations();
+  }
+
   // â”€â”€ Persist session state to localStorage (no tokens â€” always from DB) â”€â”€
   function saveSessionState() {
     try {
@@ -220,29 +409,10 @@
     if (typeof ensureProfile === 'function') {
       await ensureProfile();
     }
-    // Load conversations from localStorage (per-user)
-    try {
-      const raw = localStorage.getItem(chatStorageKey());
-      conversations = JSON.parse(raw || '[]');
-      if (!Array.isArray(conversations)) conversations = [];
-      conversations.forEach(c => {
-        if (c.title && /\{/.test(c.title)) {
-          c.title = c.title.replace(/\{.*$/g, '').trim() || 'New Chat';
-        }
-      });
-    } catch (_) { conversations = []; }
-    // Legacy migration: move old sessionStorage data to new per-user localStorage
-    try {
-      const legacy = sessionStorage.getItem('Anteemonee_ai_conversations');
-      if (legacy) {
-        const legacyArr = JSON.parse(legacy);
-        if (Array.isArray(legacyArr) && legacyArr.length > 0 && conversations.length === 0) {
-          conversations = legacyArr;
-          localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
-        }
-        sessionStorage.removeItem('Anteemonee_ai_conversations');
-      }
-    } catch (_) {}
+    // Tier-aware chat store: premium chats live in the database (all devices),
+    // free-tier chats stay in this browser's localStorage only.
+    await refreshTier();
+    await initConversationStore();
     // Load persona from localStorage (per-user)
     try {
       activePersonaIndex = parseInt(localStorage.getItem(personaStorageKey()) || '0', 10);
@@ -1071,26 +1241,17 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function saveConversation() {
     if (messages.length === 0) return;
     if (!activeConversationId) {
-      activeConversationId = 'conv_' + Date.now();
+      activeConversationId = 'conv_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
       const title = messages[0]?.content?.slice(0, 50) || 'New Chat';
-      conversations.unshift({ id: activeConversationId, title, titleLocked: false, messages: [...messages] });
+      conversations.unshift({ id: activeConversationId, title, titleLocked: false, messages: [...messages], updatedAt: Date.now() });
       if (conversations.length > 50) conversations.pop();
     } else {
       const conv = conversations.find(c => c.id === activeConversationId);
-      if (conv) { conv.messages = [...messages]; }
-      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, messages: [...messages] });
+      if (conv) { conv.messages = [...messages]; conv.updatedAt = Date.now(); }
+      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, messages: [...messages], updatedAt: Date.now() });
     }
-    try {
-      localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
-    } catch (e) {
-      if (e.name === 'QuotaExceededError') {
-        // Strip images from old conversations to free space, then retry
-        for (let i = conversations.length - 1; i >= 0; i--) {
-          conversations[i].messages.forEach(m => { m.images = null; });
-        }
-        try { localStorage.setItem(chatStorageKey(), JSON.stringify(conversations)); } catch (_) {}
-      }
-    }
+    if (!(isPremiumTier && currentUserId())) removeExpiredFromMemory();
+    persistConversation();
     renderHistory();
   }
 
@@ -1119,7 +1280,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       const conv = conversations.find(c => c.id === convId);
       if (!conv || conv.titleLocked) return;
       conv.title = title;
-      localStorage.setItem(chatStorageKey(), JSON.stringify(conversations));
+      persistConversation(convId);
       renderHistory();
     } catch (e) {
       console.warn('[AI] Title generation failed:', (e && e.message) || e);
@@ -1175,7 +1336,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     const idx = conversations.findIndex(c => c.id === id);
     if (idx === -1) return;
     conversations.splice(idx, 1);
-    try { localStorage.setItem(chatStorageKey(), JSON.stringify(conversations)); } catch (_) {}
+    if (isPremiumTier && currentUserId()) deleteConversationFromDb(id);
+    else writeLocalConversations();
     if (activeConversationId === id) {
       activeConversationId = null;
       messages = [];
@@ -1208,7 +1370,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         if (val) {
           conv.title = val;
           conv.titleLocked = true;
-          try { localStorage.setItem(chatStorageKey(), JSON.stringify(conversations)); } catch (_) {}
+          persistConversation(id);
         }
       }
       renderHistory();
@@ -1493,7 +1655,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     document.getElementById('report-popup-no').addEventListener('click', closeReportPopup);
     document.getElementById('report-popup-yes').addEventListener('click', function () {
       try { sessionStorage.setItem('anteemonee_report_draft', JSON.stringify({ prompt: prompt, aiMessage: aiText })); } catch (_) {}
-      window.location.href = 'report.html';
+      window.location.href = 'pages/report.html';
     });
   }
 
@@ -1595,7 +1757,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           return;
         }
       } catch (_) {}
-      window.location.href = 'flashcards.html?edit=' + encodeURIComponent(ins.data.id);
+      window.location.href = 'pages/flashcards.html?edit=' + encodeURIComponent(ins.data.id);
     } catch (err) {
       console.warn('[AI] Flashcard save failed:', err);
       var msg = (err && err.message) || 'unknown error';
@@ -1907,7 +2069,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     if (authed) return true;
     var html = '<div class="session-guest"><span class="session-guest-title">Sign in required</span>'
       + '<span class="session-guest-sub">Log in to start AI sessions.</span>'
-      + '<a class="session-guest-btn" href="login.html">Log in</a></div>';
+      + '<a class="session-guest-btn" href="pages/login.html">Log in</a></div>';
     try {
       var p1 = document.getElementById('session-panel');
       if (p1) p1.innerHTML = html;
