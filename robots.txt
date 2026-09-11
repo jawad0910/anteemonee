@@ -1,0 +1,18 @@
+# Anteemonee - Student OS for Pakistan
+User-agent: *
+Allow: /
+Disallow: /pages/login.html
+Disallow: /pages/signup.html
+Disallow: /pages/account.html
+Disallow: /pages/settings.html
+Disallow: /pages/payment.html
+Disallow: /pages/payment-success.html
+Disallow: /pages/payment-cancel.html
+Disallow: /pages/onboarding.html
+Disallow: /pages/forgot-password.html
+Disallow: /pages/reset-password.html
+Disallow: /pages/verify-email.html
+Disallow: /pages/report.html
+Disallow: /pages/auth/
+
+Sitemap: https://anteemonee.com/sitemap.xml

@@ -1,474 +1,983 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
-    // Anteemonee opens directly into the chatbot. Auth callbacks (which
-    // carry tokens in the URL) are left alone so sign-in still completes.
+    // Chat follows the device theme (no manual toggle on this page).
     (function () {
       try {
-        var s = (window.location.hash || '') + (window.location.search || '');
-        if (/access_token|refresh_token|code=|[?&]type=|error=/.test(s)) return;
-        window.location.replace('pages/ai-chatbot.html');
+        var mq = window.matchMedia('(prefers-color-scheme: light)');
+        document.documentElement.setAttribute('data-theme', mq.matches ? 'light' : 'dark');
       } catch (_) {}
     })();
   </script>
-  <title>Anteemonee - Your Student OS for Pakistan</title>
-  <meta name="description" content="Anteemonee is Pakistan's all-in-one Student OS with an AI tutor, flashcards, eBooks, past papers, mock tests and everything you need to learn, practice and progress.">
-  <meta name="keywords" content="Anteemonee, student OS, AI tutor Pakistan, flashcards, eBooks, past papers, mock tests, study app Pakistan, online learning, FSc, matric, intermediate">
-  <meta name="theme-color" content="#FAF8F3">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+  <title>Anteemonee - AI Study Tutor & Flashcards for Pakistan Students</title>
+  <meta name="description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects. Anteemonee is Pakistan's smartest Student OS.">
+  <meta name="keywords" content="AI tutor Pakistan, flashcards, study chat, FSc preparation, matric exam prep, student AI, Anteemonee, online tutor, study assistant">
+  <meta name="theme-color" content="#07080C">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Anteemonee - Your Student OS for Pakistan">
-  <meta property="og:description" content="Pakistan's all-in-one Student OS with an AI tutor, flashcards, eBooks, past papers, mock tests and everything you need to learn, practice and progress.">
+  <meta property="og:title" content="Anteemonee - AI Study Tutor & Flashcards for Pakistan Students">
+  <meta property="og:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
   <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
   <meta property="og:url" content="https://anteemonee.com/">
   <meta property="og:site_name" content="Anteemonee">
   <meta property="og:locale" content="en_PK">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Anteemonee - Your Student OS for Pakistan">
-  <meta name="twitter:description" content="Pakistan's all-in-one Student OS with an AI tutor, flashcards, eBooks, past papers, mock tests and everything you need to learn, practice and progress.">
+  <meta name="twitter:title" content="Anteemonee - AI Study Tutor & Flashcards for Pakistan Students">
+  <meta name="twitter:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
   <meta name="twitter:image" content="https://anteemonee.com/assets/anteemonee.png">
-  <link rel="icon" href="assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/anteemonee.png">
   <link rel="stylesheet" href="css/style.css?v=16">
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
+  <link rel="stylesheet" href="css/ai-chatbot.css?v=21">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="header-inner">
-      <a href="index.html" class="logo-link">
-        <img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="logo-text-wrap">
-          <span class="logo-text">Anteemonee</span>
-          <span class="logo-sub">Student OS for Pakistan</span>
-        </span>
-      </a>
+  <div class="chatbot-layout">
+    <!-- ============ LEFT SIDEBAR: features + history + account ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <a href="index.html" class="brand-link">
+          <img src="assets/anteemonee.png" alt="Anteemonee" class="brand-logo">
+          <span class="brand-name">Anteemonee</span>
+        </a>
+        <button class="sidebar-collapse" id="sidebar-collapse" aria-label="Close sidebar" title="Close sidebar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
 
-      <nav class="desktop-nav">
-        <a href="#hero" class="active">Home</a>
-        <a href="#features">Features</a>
-        <a href="pages/ai-chatbot.html">AI Chat</a>
-        <a href="pages/download.html">Download</a>
+      <div class="sidebar-top">
+        <button class="btn-new-chat" id="btn-new-chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          New chat
+        </button>
+      </div>
+
+      <nav class="feat-nav" aria-label="Features">
+        <button class="feat-item" type="button" data-view="flashcards">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
+          <span>Flashcards</span>
+        </button>
+        <button class="feat-item" type="button" data-soon="eBooks are coming soon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
+          <span>eBooks</span><em class="feat-soon">Soon</em>
+        </button>
       </nav>
 
-      <div class="header-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
+      <div class="sidebar-label">Chats</div>
+      <div class="sidebar-history" id="sidebar-history"></div>
 
-        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
-        <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login">Log in</a>
-          <a href="pages/signup.html" class="btn-cta-header">
-            Sign up
-          </a>
-        </div>
-        <div class="auth-actions" id="auth-logged-in" style="display:none">
-          <div class="profile-avatar-container" id="profile-avatar-container"></div>
+      <div class="session-panel" id="session-panel">
+        <div class="session-loading">
+          <div class="session-shimmer"></div>
+          <div class="session-shimmer short"></div>
         </div>
       </div>
 
-      <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
-    </div>
-  </header>
+      <div class="model-selector sidebar-model loading" id="model-selector">
+        <div class="model-selector-trigger" id="model-selector-trigger">
+          <span class="model-dot" id="model-dot"></span>
+          <span class="model-selected-name" id="model-selected-name">Shehbaz Sharif</span>
+          <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="model-dropdown" id="model-dropdown">
+          <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
+            <span class="model-option-dot dot-blue"></span>
+            <span class="model-option-name">Shehbaz Sharif</span>
+          </button>
+          <button class="model-option" data-model="1" data-name="Imran Khan">
+            <span class="model-option-dot dot-orange"></span>
+            <span class="model-option-name">Imran Khan</span>
+          </button>
+          <button class="model-option" data-model="2" data-name="Zardari">
+            <span class="model-option-dot dot-green"></span>
+            <span class="model-option-name">Zardari (Coding Agent)</span>
+          </button>
+        </div>
+      </div>
 
-  <!-- MOBILE MENU -->
+      <div class="sidebar-account">
+        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
+        <div class="auth-actions" id="auth-logged-in" style="display:none">
+          <div class="profile-avatar-container" id="profile-avatar-container"></div>
+          <div class="acct-meta acct-open-settings" id="acct-row" title="Open settings">
+            <span class="acct-name" id="acct-name">…</span>
+            <span class="acct-plan" id="acct-plan">Free plan</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <button id="sidebar-reopen" aria-label="Open sidebar" title="Open sidebar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+    </button>
+
+    <!-- ============ MAIN CHAT COLUMN ============ -->
+    <main class="chat-main">
+      <div class="chat-topbar">
+        <button class="chat-history-btn" id="chat-history-btn" aria-label="Open chat history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="topbar-actions">
+          <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
+        </div>
+      </div>
+
+      <div class="app-view" id="view-chat">
+      <div class="chat-content" id="chat-content">
+        <div class="chat-welcome" id="chat-welcome">
+          <h1 class="welcome-title skel-text">What can I help with?</h1>
+          <p class="welcome-subtitle">Ask me anything about your studies.</p>
+          <div class="welcome-actions">
+            <button class="welcome-action-btn" data-prompt="Create a flashcard for: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+              <span>Create Flashcard</span>
+            </button>
+            <button class="welcome-action-btn" data-welcome-flashcards>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>Start Review</span>
+            </button>
+            <button class="welcome-action-btn" data-prompt="Explain a topic: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>Explain a Topic</span>
+            </button>
+            <button class="welcome-action-btn" data-prompt="Quiz me on: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Quiz Me</span>
+            </button>
+          </div>
+        </div>
+        <div class="messages-list" id="messages-list"></div>
+      </div>
+      </div>
+
+      <div class="app-view" id="view-flashcards">
+        <iframe id="flashcards-frame" title="Flashcards" loading="lazy"></iframe>
+      </div>
+
+      <button class="scroll-down-btn" id="scroll-down-btn" aria-label="Scroll to bottom" title="Scroll to bottom">
+        <svg class="scroll-down-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="generating-dots"><span></span><span></span><span></span></div>
+      </button>
+
+      <div class="chat-input-area">
+        <div class="image-preview-bar" id="image-preview-bar" style="display:none"></div>
+        <div class="chat-input-wrapper">
+          <input type="file" id="image-file-input" accept="image/*" multiple style="display:none">
+          <div class="chat-input-row-top">
+            <textarea class="chat-input" id="chat-input" placeholder="Ask Anteemonee anything..." rows="1"></textarea>
+          </div>
+          <div class="chat-input-row-bottom">
+            <div class="chat-input-row-left">
+              <div class="plus-wrapper" id="plus-wrapper">
+                <button class="input-btn btn-plus" id="btn-plus" title="Add">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <div class="plus-dropdown" id="plus-dropdown">
+                  <button class="plus-dropdown-item" data-action="photo">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>Photo</span>
+                  </button>
+                  <button class="plus-dropdown-item" data-action="think">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+                    <span class="plus-dropdown-label">Think</span>
+                    <span class="plus-check"></span>
+                  </button>
+                  <button class="plus-dropdown-item" data-action="research">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span class="plus-dropdown-label">Research</span>
+                    <span class="plus-check"></span>
+                  </button>
+                  <button class="plus-dropdown-item" id="plus-github-item" data-action="github" style="display:none">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    <span class="plus-dropdown-label">GitHub</span>
+                    <span class="plus-check"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="modes-bar" id="modes-bar"></div>
+            </div>
+            <div class="chat-input-row-right">
+              <button class="input-btn btn-stop" id="btn-stop" title="Stop generating" style="display:none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              </button>
+              <button class="input-btn btn-send" id="btn-send" title="Send" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="chat-disclaimer">Anteemonee can make mistakes. Verify important information.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- SITE NAV (kept for account/theme wiring in app.js) -->
   <div class="mobile-menu">
     <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
     <div id="mobile-auth-logged-out" style="display:none">
-      <a href="#hero" class="mobile-nav-link">Home</a>
-      <a href="#features" class="mobile-nav-link">Features</a>
-      <a href="pages/ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="index.html" class="mobile-nav-link">Home</a>
+      <a href="index.html" class="mobile-nav-link">AI Chat</a>
+      <a href="pages/flashcards.html" class="mobile-nav-link">Flashcards</a>
       <a href="pages/download.html" class="mobile-nav-link">Download App</a>
       <div class="mobile-cta">
         <a href="pages/login.html" class="btn-login">Log in</a>
-        <a href="pages/signup.html" class="btn-signup">Sign up</a>
+        <a href="pages/signup.html" class="btn-signup">Sign Up</a>
       </div>
     </div>
     <div id="mobile-auth-logged-in" style="display:none">
       <div id="mobile-profile-section"></div>
-      <a href="#hero" class="mobile-nav-link">Home</a>
-      <a href="pages/ai-chatbot.html" class="mobile-nav-link">AI Chat</a>
+      <a href="index.html" class="mobile-nav-link">Home</a>
+      <a href="index.html" class="mobile-nav-link">AI Chat</a>
+      <a href="pages/flashcards.html" class="mobile-nav-link">Flashcards</a>
       <a href="pages/account.html" class="mobile-nav-link">Account</a>
-      <a href="pages/settings.html" class="mobile-nav-link">Settings</a>
       <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
     </div>
   </div>
 
-  <!-- HERO -->
-  <section class="hero" id="hero">
-    <div class="hero-inner">
-      <div class="hero-text">
-        <div class="hero-badge"><svg class="flag-icon" width="20" height="14" viewBox="0 0 60 42" aria-hidden="true"><defs><clipPath id="pk-clip"><rect width="60" height="42" rx="4"/></clipPath></defs><g clip-path="url(#pk-clip)"><rect width="60" height="42" fill="#01411C"/><rect width="15" height="42" fill="#ffffff"/><circle cx="37" cy="21" r="8.5" fill="#ffffff"/><circle cx="39.5" cy="21" r="7" fill="#01411C"/><path d="M45.5 15.5l1.7 3.5 3.8.5-2.7 2.7.6 3.8-3.4-1.8-3.4 1.8.6-3.8-2.7-2.7 3.8-.5z" fill="#ffffff"/></g></svg> Built for Students in Pakistan</div>
-        <h1>Study Smart.<br>Achieve More.</h1>
-        <p class="hero-desc">Anteemonee is your all-in-one Student OS with an AI tutor, eBooks, past papers, mock tests and everything you need to learn, practice and progress.</p>
-        <div class="hero-actions">
-          <a href="pages/ai-chatbot.html" class="btn-primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            Use Anteemonee AI
-          </a>
-          <a href="#features" class="btn-secondary">Explore Features
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-        <div class="hero-chips">
-          <span class="hero-chip">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            AI Chat
-          </span>
-          <span class="hero-chip">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            eBooks
-          </span>
-          <span class="hero-chip">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Past Papers
-          </span>
-          <span class="hero-chip">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
-            Flashcards
-          </span>
-          <span class="hero-chip">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Notes
-          </span>
-        </div>
-
+  <!-- HISTORY DRAWER (mobile) -->
+  <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
+  <div class="mobile-sidebar" id="mobile-sidebar">
+    <div class="mobile-sidebar-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="assets/anteemonee.png" alt="Anteemonee" class="mobile-brand-logo">
+        <span class="mobile-brand-text">Anteemonee</span>
       </div>
-
-      <div class="hero-visual">
-        <div class="dash-mock" id="dash-mock" aria-hidden="true">
-          <aside class="dash-side">
-            <div class="dash-side-logo">Sb</div>
-            <a class="active">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              Dashboard
-            </a>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-              AI Chat
-            </a>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              eBooks
-            </a>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              Past Papers
-            </a>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
-              Flashcards
-            </a>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Notes
-            </a>
-            <div class="dash-side-sep"></div>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              Profile
-            </a>
-            <a>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8L7 17M17 7l2.8-2.8"/></svg>
-              Settings
-            </a>
-            <div class="dash-credits">
-              AI Credits
-              <strong id="dash-credits-val" class="dash-credits-val is-loading">25 / 25</strong>
-              <div class="dash-credits-bar"><i id="dash-credits-bar" style="width:0"></i></div>
-              <span id="dash-credits-sub">Resets in 12h</span>
-            </div>
-          </aside>
-          <div class="dash-main">
-            <div class="dash-top">
-              <div>
-                <div class="dash-hello is-loading" id="dash-hello">&nbsp;</div>
-                <div class="dash-sub">Let's continue your learning journey today.</div>
-              </div>
-              <span class="dash-class" id="dash-class-pill">11th Class &#x25BE;</span>
-            </div>
-            <div class="dash-stats">
-              <div class="dash-stat">
-                <div class="dash-stat-head">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  Study Time
-                </div>
-                <div class="dash-stat-val is-loading" id="dash-stat-time">2h 34m</div>
-                <div class="dash-stat-sub" id="dash-stat-time-sub">Today</div>
-              </div>
-              <div class="dash-stat">
-                <div class="dash-stat-head">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                  AI Sessions
-                </div>
-                <div class="dash-stat-val is-loading" id="dash-stat-sessions">12</div>
-                <div class="dash-stat-sub" id="dash-stat-sessions-sub">Today</div>
-              </div>
-              <div class="dash-stat">
-                <div class="dash-stat-head">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#D97706"><path d="M12 22c4.4 0 8-3.6 8-8 0-5-4-9-8-12-4 3-8 7-8 12 0 4.4 3.6 8 8 8z"/></svg>
-                  Streak
-                </div>
-                <div class="dash-stat-val is-loading" id="dash-stat-streak">7 Days</div>
-                <div class="dash-stat-sub" id="dash-stat-streak-sub">Keep it up!</div>
-              </div>
-            </div>
-            <div class="dash-explore-title">Explore &amp; Learn</div>
-            <div class="dash-explore-sub">Quick actions to continue your learning</div>
-            <div class="dash-explore">
-              <div class="dash-action t-green">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1" fill="#7ED957"/><circle cx="15" cy="12" r="1" fill="#7ED957"/><path d="M9 16h6M12 7V4M8 4h8"/></svg>
-                <b>Chat with AI Tutor</b>
-                <span>Ask anything</span>
-              </div>
-              <div class="dash-action t-blue">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
-                <b>Read eBooks</b>
-                <span>Learn on the go</span>
-              </div>
-              <div class="dash-action t-purple">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <b>Generate Mock Test</b>
-                <span>Practice smart</span>
-              </div>
-              <div class="dash-action t-orange">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
-                <b>Review Flashcards</b>
-                <span>Memorize better</span>
-              </div>
-            </div>
-            <div class="dash-safe">
-              <div class="dash-safe-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-              </div>
-              <div>
-                <b>Your Data is Safe</b>
-                <span>We protect your data and privacy with top-notch security.</span>
-              </div>
-              <span class="dash-safe-arrow">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </span>
-            </div>
-          </div>
-        </div>
+      <button class="btn-close-sidebar" id="btn-close-sidebar" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="sidebar-top">
+      <button class="btn-new-chat" id="btn-new-chat-mobile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        New Chat
+      </button>
+    </div>
+    <nav class="feat-nav" aria-label="Features">
+      <button class="feat-item" type="button" data-view="flashcards">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
+        <span>Flashcards</span>
+      </button>
+      <button class="feat-item" type="button" data-soon="eBooks are coming soon">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
+        <span>eBooks</span><em class="feat-soon">Soon</em>
+      </button>
+      <a class="feat-item" href="pages/settings.html">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-label">Chats</div>
+    <div class="sidebar-history" id="sidebar-history-mobile"></div>
+    <div class="session-panel" id="session-panel-mobile">
+      <div class="session-loading">
+        <div class="session-shimmer"></div>
+        <div class="session-shimmer short"></div>
       </div>
     </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="features" id="features">
-    <div class="features-inner">
-      <div class="features-head">
-        <p class="section-label">Everything You Need</p>
-        <h2 class="section-title">All-in-one tools for every student</h2>
-        <p class="section-desc">From learning to practice, Anteemonee has got you covered.</p>
+    <div class="model-selector sidebar-model loading" id="model-selector-mobile">
+      <div class="model-selector-trigger" id="model-selector-trigger-mobile">
+        <span class="model-dot" id="model-dot-mobile"></span>
+        <span class="model-selected-name" id="model-selected-name-mobile">Shehbaz Sharif</span>
+        <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><path d="M9 16h6M12 7V4M8 4h8"/></svg>
-          </div>
-          <h3>AI Chat</h3>
-          <p>Your smart study buddy. Ask anything, get clear explanations instantly.</p>
-          <a href="pages/ai-chatbot.html" class="feature-link">Start Chatting
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
-          </div>
-          <h3>eBooks</h3>
-          <p>Curriculum-aware eBooks with notes and highlights. Learn anytime, anywhere.</p>
-          <a href="#" class="feature-link" data-coming-soon="eBooks are coming soon on website">Explore eBooks
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <h3>Past Papers</h3>
-          <p>Access past papers of all boards and years. Practice smart.</p>
-          <a href="#" class="feature-link" data-coming-soon="Past Papers are coming soon on website">View Past Papers
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <h3>Mock Test Generator</h3>
-          <p>Create unlimited mock tests with AI. Custom topics, real exam feel.</p>
-          <a href="#" class="feature-link" data-coming-soon="Mock Test Generator is coming soon on website">Generate Test
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="18" height="14" rx="2"/><line x1="6" y1="10" x2="18" y2="10"/><line x1="6" y1="14" x2="14" y2="14"/></svg>
-          </div>
-          <h3>Flashcards</h3>
-          <p>Smart flashcards to revise faster and remember longer.</p>
-          <a href="pages/flashcards.html" class="feature-link">Study Cards
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </div>
-          <h3>Notes</h3>
-          <p>Organized notes to keep your study on track.</p>
-          <a href="#" class="feature-link" data-coming-soon="Notes are coming soon on website">View Notes
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
+      <div class="model-dropdown" id="model-dropdown-mobile">
+        <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
+          <span class="model-option-dot dot-blue"></span>
+          <span class="model-option-name">Shehbaz Sharif</span>
+        </button>
+        <button class="model-option" data-model="1" data-name="Imran Khan">
+          <span class="model-option-dot dot-orange"></span>
+          <span class="model-option-name">Imran Khan</span>
+        </button>
+          <button class="model-option" data-model="2" data-name="Zardari">
+            <span class="model-option-dot dot-green"></span>
+            <span class="model-option-name">Zardari (Coding Agent)</span>
+          </button>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="index.html" class="logo-link">
-            <img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-            <span class="logo-text-wrap">
-              <span class="logo-text">Anteemonee</span>
-              <span class="logo-sub">Student OS for Pakistan</span>
-            </span>
-          </a>
-          <p>The Student OS for Pakistan. Learn, practice, plan, and progress - all in one place.</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>Product</h4>
-            <a href="#features">Features</a>
-            <a href="pages/ai-chatbot.html">AI Chat</a>
-            <a href="pages/download.html">Download App</a>
-          </div>
-          <div class="footer-col">
-            <h4>Account</h4>
-            <a href="pages/login.html">Login</a>
-            <a href="pages/download.html" id="footer-signup-link">Sign Up</a>
-            <a href="pages/account.html">Account</a>
-          </div>
-          <div class="footer-col">
-            <h4>Company</h4>
-            <a href="pages/privacy.html">Privacy Policy</a>
-            <a href="pages/terms.html">Terms of Service</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 Anteemonee. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Cookie Consent -->
-  <div class="cookie-consent" id="cookie-consent">
-    <div class="cookie-consent-inner">
-      <div class="cookie-consent-text">
-        <strong>We use cookies</strong> to improve your experience, remember your preferences, and analyze site traffic. By clicking "Accept", you consent to our use of cookies.
-      </div>
-      <div class="cookie-consent-actions">
-        <button class="cookie-btn cookie-btn-accept" id="cookie-accept">Accept</button>
-        <button class="cookie-btn cookie-btn-decline" id="cookie-decline">Decline</button>
+    <div class="drawer-account" id="drawer-account" style="display:none" title="Open settings">
+      <div class="drawer-avatar" id="m-acct-avatar"><span>?</span></div>
+      <div class="acct-meta">
+        <span class="acct-name" id="m-acct-name">…</span>
+        <span class="acct-plan" id="m-acct-plan">Free plan</span>
       </div>
     </div>
   </div>
 
+  <!-- Image lightbox -->
+  <div class="image-lightbox" id="image-lightbox">
+    <button class="lb-close" id="lb-close">&times;</button>
+    <img id="lb-img" src="" alt="Full image">
+  </div>
+
+  <div class="github-panel-overlay" id="github-panel">
+    <div class="github-panel">
+      <div class="github-panel-header">
+        <h3>GitHub for Zardari</h3>
+        <button class="github-panel-close" id="github-panel-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="github-panel-status" id="github-panel-status"></div>
+      <div class="github-panel-body" id="github-panel-body"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS POPUP (ChatGPT-style) -->
+  <div class="settings-overlay" id="settings-overlay">
+    <div class="settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
+      <button class="settings-close" id="settings-close" aria-label="Close settings">&times;</button>
+      <div class="settings-frame-wrap">
+        <iframe id="settings-frame" title="Settings"></iframe>
+      </div>
+    </div>
+  </div>
+  <div class="set-saved" id="set-saved">Saved</div>
+
+  <!-- PROFILE POPUP (ChatGPT-style) -->
+  <div class="profile-overlay" id="profile-overlay">
+    <div class="profile-modal" role="dialog" aria-modal="true" aria-label="Profile">
+      <button class="profile-close" id="profile-close" aria-label="Close profile">&times;</button>
+      <div class="profile-frame-wrap">
+        <iframe id="profile-frame" title="Profile"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGOUT CONFIRM -->
+  <div class="logout-overlay" id="logout-overlay">
+    <div class="logout-modal" role="dialog" aria-modal="true" aria-label="Confirm log out">
+      <h3>Are you sure you<br>want to log out?</h3>
+      <div class="logout-account">
+        <span class="logout-avatar" id="logout-avatar"><span>?</span></span>
+        <span class="logout-meta">
+          <span class="logout-name" id="logout-name">…</span>
+          <span class="logout-email" id="logout-email">…</span>
+        </span>
+      </div>
+      <button class="logout-confirm" id="logout-confirm" type="button">Log out</button>
+      <button class="logout-cancel" id="logout-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="js/account-manager.js?v=9"></script>
   <script src="js/app.js?v=9"></script>
-  <div class="coming-toast" id="coming-toast" role="status"></div>
+  <script src="js/ai-api-service.js?v=11"></script>
+  <script src="js/github.js?v=6"></script>
+  <script src="js/ai-chatbot.js?v=20"></script>
   <script>
-    // Scroll-spy: keep the active bubble on the right pill link.
+    // "Coming soon" toast for sidebar features not built yet.
     (function () {
-      var links = Array.prototype.slice.call(document.querySelectorAll('.desktop-nav a[href^="#"]'));
-      if (!links.length) return;
-      var sections = links.map(function (a) {
-        return { link: a, el: document.querySelector(a.getAttribute('href')) };
-      }).filter(function (s) { return s.el; });
-      if (!sections.length) return;
-      function onScroll() {
-        var pos = window.scrollY + window.innerHeight * 0.35;
-        var current = sections[0];
-        sections.forEach(function (s) {
-          if (s.el.offsetTop <= pos) current = s;
-        });
-        links.forEach(function (a) { a.classList.toggle('active', a === current.link); });
-      }
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-    })();
-  </script>
-  <script>
-    (function () {
-      var toast = document.getElementById('coming-toast');
       var timer = null;
-      function show(msg) {
-        if (!toast) return;
-        toast.textContent = msg;
-        toast.classList.add('show');
+      function toast(msg) {
+        var t = document.getElementById('feat-toast');
+        if (!t) {
+          t = document.createElement('div');
+          t.id = 'feat-toast';
+          t.setAttribute('role', 'status');
+          t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 32px);text-align:center;padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--text);background:var(--liquid-bg-strong,rgba(20,28,23,0.85));border:1px solid var(--liquid-border,rgba(255,255,255,0.14));box-shadow:0 10px 34px rgba(0,0,0,0.35);opacity:0;pointer-events:none;transition:opacity 0.25s ease;';
+          document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = '1';
         if (timer) clearTimeout(timer);
-        timer = setTimeout(function () { toast.classList.remove('show'); }, 2600);
+        timer = setTimeout(function () { t.style.opacity = '0'; }, 2400);
       }
-      document.querySelectorAll('[data-coming-soon]').forEach(function (el) {
-        el.addEventListener('click', function (e) {
-          e.preventDefault();
-          show(el.getAttribute('data-coming-soon') || 'Coming soon on website');
+      document.querySelectorAll('[data-soon]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          toast(el.getAttribute('data-soon') || 'Coming soon');
         });
       });
     })();
   </script>
   <script>
+    // Sidebar identity: username + email + live Free/Premium plan.
     (function () {
-      var el = document.getElementById('cookie-consent');
-      if (!el) return;
-      // Hide by default â€” app.js will show it after checking DB
-      el.style.display = 'none';
-
-      window.__showCookieConsent = function () {
-        el.style.display = '';
-        setTimeout(function () { el.classList.add('show'); }, 200);
-      };
-
-      window.__hideCookieConsent = function () {
-        el.classList.remove('show');
-        setTimeout(function () { el.remove(); }, 400);
-      };
-
-      document.getElementById('cookie-accept').addEventListener('click', function () {
-        localStorage.setItem('Anteemonee_cookie_consent', 'accepted');
-        window.__hideCookieConsent();
-        if (typeof db !== 'undefined' && db && typeof currentUser !== 'undefined' && currentUser) {
-          db.from('profiles').update({ cookie_consent: 'accepted' }).eq('id', currentUser.id).then(function () {});
+      function userNow() {
+        try {
+          if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return currentUser;
+        } catch (_) {}
+        return null;
+      }
+      function profileNow() {
+        try {
+          if (typeof currentProfile !== 'undefined' && currentProfile) return currentProfile;
+        } catch (_) {}
+        return null;
+      }
+      var planDone = false;
+      async function fill() {
+        var user = userNow();
+        if (!user) return false;
+        var prof = profileNow() || {};
+        var name = prof.full_name || prof.username || user.user_metadata?.full_name || user.user_metadata?.name || (user.email || '').split('@')[0] || 'User';
+        var email = user.email || '';
+        var nameEl = document.getElementById('acct-name');
+        if (nameEl) nameEl.textContent = name;
+        var userMeta = (user && user.user_metadata) || {};
+        var imgUrl = prof.profile_image_url || userMeta.avatar_url || userMeta.picture || '';
+        var initial = String(name || '?').charAt(0).toUpperCase().replace(/[<>&"']/g, '');
+        var mName = document.getElementById('m-acct-name');
+        if (mName) mName.textContent = name;
+        var mAv = document.getElementById('m-acct-avatar');
+        if (mAv) {
+          var safeImg = String(imgUrl).replace(/"/g, '');
+          mAv.innerHTML = '<span>' + initial + '</span>' + (safeImg ? '<img src="' + safeImg + '" alt="" onerror="this.remove()">' : '');
+        }
+        var mRow = document.getElementById('drawer-account');
+        if (mRow) mRow.style.display = 'flex';
+        if (!planDone && typeof db !== 'undefined' && db) {
+          planDone = true;
+          try {
+            var res = await db.rpc('get_entitlement_snapshot');
+            var ent = res && res.data;
+            var isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
+            var planEl = document.getElementById('acct-plan');
+            if (planEl) {
+              planEl.textContent = isPro ? 'Premium' : 'Free plan';
+              planEl.classList.toggle('is-pro', !!isPro);
+            }
+            var mPlan = document.getElementById('m-acct-plan');
+            if (mPlan) {
+              mPlan.textContent = isPro ? 'Premium' : 'Free plan';
+              mPlan.classList.toggle('is-pro', !!isPro);
+            }
+          } catch (_) {}
+        }
+        return true;
+      }
+      ['acct-row', 'drawer-account'].forEach(function (id) {
+        var row = document.getElementById(id);
+        if (row && !row.dataset.menuBound) {
+          row.dataset.menuBound = '1';
+          row.style.cursor = 'pointer';
+          row.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('.profile-avatar-container')) return;
+            try {
+              if (window.AcctMenu && window.AcctMenu.toggle) window.AcctMenu.toggle(id);
+            } catch (_) {}
+          });
         }
       });
-
-      document.getElementById('cookie-decline').addEventListener('click', function () {
-        localStorage.setItem('Anteemonee_cookie_consent', 'declined');
-        window.__hideCookieConsent();
-        if (typeof db !== 'undefined' && db && typeof currentUser !== 'undefined' && currentUser) {
-          db.from('profiles').update({ cookie_consent: 'declined' }).eq('id', currentUser.id).then(function () {});
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        fill();
+        if (tries > 20) clearInterval(timer);
+      }, 500);
+      fill();
+    })();
+  </script>
+  <script>
+    // Device theme wins over any saved preference on this page.
+    (function () {
+      function applyDeviceTheme() {
+        try {
+          var mq = window.matchMedia('(prefers-color-scheme: light)');
+          document.documentElement.setAttribute('data-theme', mq.matches ? 'light' : 'dark');
+        } catch (_) {}
+      }
+      document.addEventListener('DOMContentLoaded', applyDeviceTheme);
+      try {
+        var mq2 = window.matchMedia('(prefers-color-scheme: light)');
+        if (mq2.addEventListener) mq2.addEventListener('change', applyDeviceTheme);
+        else if (mq2.addListener) mq2.addListener(applyDeviceTheme);
+      } catch (_) {}
+      applyDeviceTheme();
+    })();
+  </script>
+  <script>
+    // Release skeletons only on real init signals (never timers that race
+    // init): the model name being painted and the subtitle. Callbacks run
+    // before next paint, so the wrong set can never flash. 10s net as a
+    // last resort.
+    (function () {
+      var done = false;
+      function ready() {
+        if (done) return;
+        done = true;
+        try {
+          ['model-selector', 'model-selector-mobile'].forEach(function (id) {
+            var m = document.getElementById(id);
+            if (m) m.classList.remove('loading');
+          });
+          var sub = document.querySelector('.welcome-subtitle');
+          if (sub) sub.classList.remove('skel-text');
+        } catch (_) {}
+      }
+      function watch(el, opts) {
+        try {
+          if (!el || !window.MutationObserver) return;
+          var mo = new MutationObserver(function () { ready(); });
+          mo.observe(el, opts);
+          setTimeout(function () { try { mo.disconnect(); } catch (_) {} }, 15000);
+        } catch (_) {}
+      }
+      watch(document.getElementById('model-selected-name'), { childList: true, characterData: true, subtree: true });
+      watch(document.getElementById('model-selected-name-mobile'), { childList: true, characterData: true, subtree: true });
+      setTimeout(ready, 10000);
+    })();
+  </script>
+  <script>
+    // Embedded views (Chat / Flashcards), greeting, sidebar collapse.
+    (function () {
+      function showView(name) {
+        var fc = name === 'flashcards';
+        document.body.classList.toggle('show-flashcards', fc);
+        var btns = document.querySelectorAll('[data-view]');
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === name);
         }
+        if (fc) {
+          var fr = document.getElementById('flashcards-frame');
+          if (fr && !fr.getAttribute('src')) fr.setAttribute('src', 'pages/flashcards.html?embed=1');
+          try {
+            var closer = document.getElementById('btn-close-sidebar');
+            var drawer = document.getElementById('mobile-sidebar');
+            if (closer && drawer && drawer.classList.contains('active')) closer.click();
+          } catch (_) {}
+        } else {
+          try {
+            var cc = document.getElementById('chat-content');
+            if (cc) cc.scrollTop = cc.scrollHeight;
+          } catch (_) {}
+        }
+      }
+      var viewBtns = document.querySelectorAll('[data-view]');
+      for (var v = 0; v < viewBtns.length; v++) {
+        (function (b) {
+          b.addEventListener('click', function () { showView(b.getAttribute('data-view')); });
+        })(viewBtns[v]);
+      }
+      window.AnteemoneeViews = {
+        showView: showView,
+        showFlashcards: function (editId) {
+          var fr = document.getElementById('flashcards-frame');
+          var url = 'pages/flashcards.html?embed=1' + (editId ? '&edit=' + encodeURIComponent(editId) : '');
+          if (fr) fr.setAttribute('src', url);
+          showView('flashcards');
+        }
+      };
+
+      // Sidebar collapse (desktop). Preference remembered on this device.
+      var collapsed = false;
+      try { collapsed = localStorage.getItem('Anteemonee_sidebar') === 'closed'; } catch (_) {}
+      function applyCollapse() { document.body.classList.toggle('sidebar-collapsed', collapsed); }
+      var cBtn = document.getElementById('sidebar-collapse');
+      if (cBtn) cBtn.addEventListener('click', function () {
+        collapsed = true;
+        try { localStorage.setItem('Anteemonee_sidebar', 'closed'); } catch (_) {}
+        applyCollapse();
       });
+      var rBtn = document.getElementById('sidebar-reopen');
+      if (rBtn) rBtn.addEventListener('click', function () {
+        collapsed = false;
+        try { localStorage.setItem('Anteemonee_sidebar', 'open'); } catch (_) {}
+        applyCollapse();
+      });
+      applyCollapse();
+
+      // Time-based greeting with first name.
+      function daypart() {
+        var h = new Date().getHours();
+        if (h < 12) return 'Good morning';
+        if (h < 17) return 'Good afternoon';
+        return 'Good evening';
+      }
+      function paintGreeting() {
+        var t = document.querySelector('.welcome-title');
+        if (!t) return;
+        t.classList.remove('skel-text');
+        var full = '';
+        try {
+          var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
+          var meta = (user && user.user_metadata) || {};
+          full = prof.full_name || prof.username || meta.full_name || meta.name || '';
+          if (!full && user.email) full = String(user.email).split('@')[0];
+        } catch (_) {}
+        var first = String(full || '').trim().split(/\s+/)[0] || '';
+        t.textContent = daypart() + (first ? ', ' + first : '');
+      }
+      paintGreeting();
+      var gtries = 0;
+      var gtimer = setInterval(function () {
+        gtries++;
+        paintGreeting();
+        if (gtries > 24) clearInterval(gtimer);
+      }, 500);
+      setInterval(paintGreeting, 60000);
+
+      // Welcome quick action buttons
+      (function () {
+        document.querySelectorAll('.welcome-action-btn[data-prompt]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var input = document.getElementById('chat-input');
+            if (input) { input.value = btn.getAttribute('data-prompt'); input.focus(); }
+          });
+        });
+        var revBtn = document.querySelector('[data-welcome-flashcards]');
+        if (revBtn) revBtn.addEventListener('click', function () {
+          if (window.AnteemoneeViews) window.AnteemoneeViews.showFlashcards();
+        });
+      })();
+    })();
+  </script>
+  <script>
+    // Settings popup: the full Settings page embedded, so every option,
+    // input and button works exactly like the standalone page.
+    (function () {
+      var overlay = document.getElementById('settings-overlay');
+      if (!overlay) return;
+      function openSettings(hash) {
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        var fr = document.getElementById('settings-frame');
+        var want = 'pages/settings.html?embed=1' + (hash ? '#' + hash : '');
+        if (fr && fr.getAttribute('src') !== want) fr.setAttribute('src', want);
+      }
+      function closeSettings() {
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+      window.AnteemoneeSettings = { open: openSettings, close: closeSettings };
+      document.getElementById('settings-close').addEventListener('click', closeSettings);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeSettings(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('show')) closeSettings();
+      });
+      // Every settings.html link on this page opens the popup instead.
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href$="settings.html"]') : null;
+        if (!a) return;
+        e.preventDefault();
+        openSettings();
+      });
+    })();
+  </script>
+  <script>
+    // Profile popup: same pattern as Settings — full account.html embedded.
+    (function () {
+      var overlay = document.getElementById('profile-overlay');
+      if (!overlay) return;
+      function openProfile() {
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        var fr = document.getElementById('profile-frame');
+        if (fr && !fr.getAttribute('src')) fr.setAttribute('src', 'pages/account.html?embed=1');
+      }
+      function closeProfile() {
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+      window.AnteemoneeProfile = { open: openProfile, close: closeProfile };
+      document.getElementById('profile-close').addEventListener('click', closeProfile);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeProfile(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('show')) closeProfile();
+      });
+    })();
+  </script>
+  <script>
+    // Logout confirmation: wrap handleLogout so every logout click asks first.
+    (function () {
+      var overlay = document.getElementById('logout-overlay');
+      if (!overlay) return;
+      var realLogout = null;
+      try {
+        if (typeof handleLogout === 'function') realLogout = handleLogout;
+      } catch (_) {}
+      function fillIdentity() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
+          var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};
+          var meta = user.user_metadata || {};
+          var name = prof.full_name || prof.username || meta.full_name || meta.name || (user.email || '').split('@')[0] || 'User';
+          var email = user.email || '';
+          var img = prof.profile_image_url || meta.avatar_url || meta.picture || '';
+          var initial = String(name || '?').charAt(0).toUpperCase().replace(/[<>&"']/g, '');
+          document.getElementById('logout-name').textContent = name;
+          document.getElementById('logout-email').textContent = email;
+          document.getElementById('logout-avatar').innerHTML = '<span>' + initial + '</span>'
+            + (img ? '<img src="' + String(img).replace(/"/g, '') + '" alt="" onerror="this.remove()">' : '');
+        } catch (_) {}
+      }
+      function openLogout() {
+        fillIdentity();
+        overlay.classList.add('show');
+      }
+      function closeLogout() { overlay.classList.remove('show'); }
+      document.getElementById('logout-cancel').addEventListener('click', closeLogout);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeLogout(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('show')) closeLogout();
+      });
+      document.getElementById('logout-confirm').addEventListener('click', function () {
+        closeLogout();
+        try { if (realLogout) realLogout(); } catch (_) {}
+      });
+      try { window.handleLogout = function () { openLogout(); }; } catch (_) {}
+    })();
+  </script>
+  <script>
+    // ChatGPT-style account dropdown: avatar + name + plan, actions, switcher.
+    (function () {
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+      function svg(inner) {
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+      }
+      var I = {
+        spark: svg('<path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>'),
+        tune: svg('<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'),
+        user: svg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+        gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
+        help: svg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>'),
+        out: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>')
+      };
+
+      function identity() {
+        var user = null, prof = {};
+        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) user = currentUser; } catch (_) {}
+        try { if (typeof currentProfile !== 'undefined' && currentProfile) prof = currentProfile; } catch (_) {}
+        var meta = (user && user.user_metadata) || {};
+        var name = prof.full_name || prof.username || meta.full_name || meta.name || ((user && user.email) || '').split('@')[0] || 'User';
+        var img = prof.profile_image_url || meta.avatar_url || meta.picture || '';
+        var pro = false;
+        try {
+          var planEl = document.getElementById('acct-plan');
+          pro = !!(planEl && planEl.classList.contains('is-pro'));
+        } catch (_) {}
+        return { name: name, img: img, initial: String(name || '?').charAt(0).toUpperCase(), plan: pro ? 'Premium' : 'Free', isPro: pro };
+      }
+
+      function closeMenus() {
+        var open = document.querySelectorAll('.acct-menu');
+        for (var i = 0; i < open.length; i++) open[i].remove();
+      }
+
+      function openPopup(hash) {
+        try {
+          if (window.AnteemoneeSettings && window.AnteemoneeSettings.open) window.AnteemoneeSettings.open(hash);
+        } catch (_) {}
+      }
+
+      function buildMenu(rowId) {
+        var row = document.getElementById(rowId);
+        if (!row) return null;
+        var fixed = rowId !== 'acct-row';
+        var d = identity();
+        var menu = document.createElement('div');
+        menu.className = 'acct-menu' + (fixed ? ' fixed' : '');
+        menu.id = fixed ? 'acct-menu-m' : 'acct-menu';
+        var head = '<div class="acct-menu-head" data-go="profiles" title="Switch account"><span class="acct-avatar-mini">'
+          + (d.img ? '<img src="' + String(d.img).replace(/"/g, '') + '" alt="" onerror="this.remove()">' : '')
+          + '<span>' + esc(d.initial) + '</span></span>'
+          + '<span class="acct-head-meta"><span class="acct-head-name">' + esc(d.name) + '</span>'
+          + '<span class="acct-head-plan">' + esc(d.plan) + '</span></span>'
+          + '<span class="acct-chev">›</span></div>';
+        /* account switch list lives in the profiles menu now */
+        menu.innerHTML = ''
+          + '<button class="acct-item" data-act="profile">' + I.user + '<span>Profile</span></button>'
+          + '<button class="acct-item" data-act="settings">' + I.gear + '<span>Settings</span></button>'
+          + '<div class="acct-menu-sep"></div>'
+          + '<button class="acct-item danger" data-act="logout">' + I.out + '<span>Log out</span></button>';
+        menu.dataset.row = rowId;
+        menu.addEventListener('click', function (e) {
+          var go = e.target.closest ? e.target.closest('[data-go]') : null;
+          if (go) {
+            var scope0 = menu.parentNode || document;
+            var exf0 = scope0.querySelector ? scope0.querySelector('.acct-fly') : null;
+            if (exf0) { exf0.remove(); return; }
+            var r = menu.dataset.row;
+            if (go.getAttribute('data-go') === 'profiles') buildProfilesMenu(r, true);
+            else { closeMenus(); buildMenu(r); }
+            return;
+          }
+          var b = e.target.closest ? e.target.closest('[data-act]') : null;
+          if (!b) return;
+          var act = b.getAttribute('data-act');
+          closeMenus();
+          if (act === 'profile') { if (window.AnteemoneeProfile) window.AnteemoneeProfile.open(); }
+          else if (act === 'logout') { try { if (typeof handleLogout === 'function') handleLogout(); } catch (_) {} }
+          else openPopup();
+        });
+        (function () {
+          try {
+            if (!(window.matchMedia && window.matchMedia('(hover: hover)').matches)) return;
+            var headEl = menu.querySelector('[data-go]');
+            if (!headEl) return;
+            var ht = null;
+            headEl.addEventListener('mouseenter', function () {
+              if (Date.now() - (window.__acctHoverAt || 0) < 900) return;
+              if (ht) clearTimeout(ht);
+              ht = setTimeout(function () {
+                ht = null;
+                if (!document.body.contains(headEl)) return;
+                var scope = menu.parentNode || document;
+                if (scope.querySelector && scope.querySelector('.acct-fly')) return;
+                window.__acctHoverAt = Date.now();
+                buildProfilesMenu(menu.dataset.row, true);
+              }, 220);
+            });
+            headEl.addEventListener('mouseleave', function () { if (ht) { clearTimeout(ht); ht = null; } });
+          } catch (_) {}
+        })();
+        if (fixed) document.body.appendChild(menu);
+        else row.parentNode.insertBefore(menu, row);
+        return menu;
+      }
+
+      function toggle(rowId) {
+        var id = rowId === 'acct-row' ? 'acct-menu' : 'acct-menu-m';
+        // Remove-then-maybe-rebuild so data is always fresh.
+        var ex = document.getElementById(id);
+        var wasOpen = !!ex;
+        closeMenus();
+        if (!wasOpen) buildMenu(rowId);
+      }
+
+      document.addEventListener('click', function (e) {
+        if (e.target.closest && (e.target.closest('.acct-menu') || e.target.closest('#acct-row') || e.target.closest('#drawer-account'))) return;
+        closeMenus();
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
+
+      /* Profiles dropdown: all signed-in accounts + add (max 3). Opens
+         from the avatar on click, and on hover (devices with a mouse). */
+      var PLUS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+      function buildProfilesMenu(rowId, fly) {
+        var fixed = rowId !== 'acct-row';
+        var id = fixed ? 'acct-profiles-m' : 'acct-profiles';
+        var oldFly = document.getElementById(id);
+        if (oldFly) oldFly.remove();
+        var menu = document.createElement('div');
+        menu.className = 'acct-menu' + (fixed ? ' fixed' : '') + (fly && !fixed ? ' acct-fly' : '');
+        menu.id = id;
+        if (fly && !fixed) menu.dataset.fly = '1';
+        var html = '';
+        var accs = [];
+        var active = null;
+        try {
+          if (typeof AccountManager !== 'undefined' && AccountManager.getSavedAccounts) accs = AccountManager.getSavedAccounts() || [];
+          if (typeof AccountManager !== 'undefined' && AccountManager.getActiveUserId) active = AccountManager.getActiveUserId();
+        } catch (_) {}
+        if (!accs.length) html += '<div class="acct-empty-note">No saved accounts.</div>';
+        accs.forEach(function (a) {
+          var nm = a.displayName || a.email || 'Account';
+          html += '<button class="acct-item" data-sw="' + esc(a.userId) + '">'
+            + '<span class="acct-avatar-mini sm">' + esc(String(nm).charAt(0).toUpperCase()) + '</span>'
+            + '<span class="acct-switch-meta"><span>' + esc(nm) + '</span>'
+            + '<span class="acct-switch-mail">' + esc(a.email || '') + '</span></span>'
+            + (a.userId === active ? '<span class="acct-check">✓</span>' : '') + '</button>';
+        });
+        var canAdd = false;
+        try { canAdd = typeof AccountManager !== 'undefined' && AccountManager.hasAvailableSlot ? AccountManager.hasAvailableSlot() : false; } catch (_) {}
+        if (canAdd) {
+          html += '<div class="acct-menu-sep"></div>'
+            + '<button class="acct-item" data-add="1">' + PLUS_SVG + '<span>Add another account</span></button>';
+        }
+        menu.innerHTML = html;
+        menu.dataset.row = rowId;
+        menu.addEventListener('click', function (e) {
+          var go2 = e.target.closest ? e.target.closest('[data-go]') : null;
+          if (go2) {
+            if (menu.dataset.fly) { menu.remove(); return; }
+            var r2 = menu.dataset.row;
+            closeMenus();
+            buildMenu(r2);
+            return;
+          }
+          var swBtn = e.target.closest ? e.target.closest('[data-sw]') : null;
+          if (swBtn) {
+            closeMenus();
+            try { if (typeof switchToAccount === 'function') switchToAccount(swBtn.getAttribute('data-sw')); } catch (_) {}
+            return;
+          }
+          if (e.target.closest && e.target.closest('[data-add]')) {
+            closeMenus();
+            try { if (typeof addAnotherAccount === 'function') addAnotherAccount(); } catch (_) {}
+          }
+        });
+        (function () {
+          try {
+            if (!(window.matchMedia && window.matchMedia('(hover: hover)').matches)) return;
+            var headEl2 = menu.querySelector('[data-go]');
+            if (!headEl2) return;
+            var ht2 = null;
+            headEl2.addEventListener('mouseenter', function () {
+              if (Date.now() - (window.__acctHoverAt || 0) < 900) return;
+              if (ht2) clearTimeout(ht2);
+              ht2 = setTimeout(function () {
+                ht2 = null;
+                if (!document.body.contains(headEl2)) return;
+                window.__acctHoverAt = Date.now();
+                var r2 = menu.dataset.row;
+                closeMenus();
+                buildMenu(r2);
+              }, 220);
+            });
+            headEl2.addEventListener('mouseleave', function () { if (ht2) { clearTimeout(ht2); ht2 = null; } });
+          } catch (_) {}
+        })();
+        if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+          menu.addEventListener('mouseleave', function () {
+            if (menu.dataset.fly) menu.remove();
+            else closeMenus();
+          });
+        }
+        if (fixed) document.body.appendChild(menu);
+        else {
+          var row = document.getElementById('acct-row');
+          if (row && row.parentNode) row.parentNode.insertBefore(menu, row);
+        }
+        if (fly && !fixed) {
+          // Dock beside the open menu: align bottom edges, clamp on-screen.
+          try {
+            var mainMenu = document.getElementById('acct-menu');
+            if (mainMenu) {
+              var mr = mainMenu.getBoundingClientRect();
+              var mh = menu.offsetHeight || 320;
+              var mtop = mr.bottom - mh;
+              mtop = Math.max(12, Math.min(mtop, window.innerHeight - mh - 12));
+              menu.style.top = mtop + 'px';
+            }
+          } catch (_) {}
+        }
+      }
+
+      function toggleProfiles(rowId) {
+        var id = rowId === 'acct-row' ? 'acct-profiles' : 'acct-profiles-m';
+        var wasOpen = !!document.getElementById(id);
+        closeMenus();
+        if (!wasOpen) buildProfilesMenu(rowId);
+      }
+
+      var hoverOK = false;
+      try { hoverOK = window.matchMedia && window.matchMedia('(hover: hover)').matches; } catch (_) {}
+      [{ sel: '#auth-logged-in .profile-avatar-container', row: 'acct-row' }, { sel: '#m-acct-avatar', row: 'drawer-account' }].forEach(function (o) {
+        var av = document.querySelector(o.sel);
+        if (!av) return;
+        av.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggle(o.row);
+        });
+      });
+      window.AcctMenu = { toggle: toggle, toggleProfiles: toggleProfiles, close: closeMenus };
     })();
   </script>
 </body>
