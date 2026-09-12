@@ -1,4 +1,4 @@
-/* Anteemonee GitHub integration (Zardari coding agent).
+/* Anteemonee GitHub integration (Coder coding agent).
  *
  * OAuth connect (token exchange happens server-side in the `github-oauth`
  * edge function), repo picker, file reader, committer, and the repo panel.
@@ -343,7 +343,7 @@
     }
   }
 
-  /* ---------- Zardari context + update blocks ---------- */
+  /* ---------- Coder context + update blocks ---------- */
 
   function buildContext() {
     var lines = [];
@@ -394,7 +394,7 @@
     card.innerHTML =
       '<div class="gh-apply-head"><span class="gh-apply-path">' + esc(u.path) + '</span>' +
       '<span class="gh-apply-meta">' + esc(_sel.owner + '/' + _sel.repo + ' @ ' + _sel.branch) + '</span></div>' +
-      '<div class="gh-apply-status">Zardari proposed an update. Review it in the message above, then apply.</div>' +
+      '<div class="gh-apply-status">Coder proposed an update. Review it in the message above, then apply.</div>' +
       '<div class="gh-apply-actions"><button class="gh-apply-btn" type="button">Apply to GitHub</button>' +
       '<button class="gh-discard-btn" type="button">Discard</button></div>';
     var statusEl = card.querySelector('.gh-apply-status');
@@ -412,7 +412,7 @@
       applyBtn.disabled = true;
       statusEl.textContent = 'Committing to GitHub...';
       try {
-        await commitFile(_sel.owner, _sel.repo, u.path, u.content, 'Update ' + u.path + ' via Anteemonee Zardari', _sel.branch);
+        await commitFile(_sel.owner, _sel.repo, u.path, u.content, 'Update ' + u.path + ' via Anteemonee Coder', _sel.branch);
         statusEl.textContent = 'Committed to ' + _sel.owner + '/' + _sel.repo + ' on branch ' + _sel.branch + '.';
         statusEl.classList.add('ok');
         applyBtn.textContent = 'Applied';
@@ -511,7 +511,7 @@
       if (!conn) {
         body.innerHTML =
           '<div class="gh-connect-box">' +
-          '<p class="gh-connect-text">Connect your GitHub account so Zardari can browse your repositories, read files, and propose updates you approve.</p>' +
+          '<p class="gh-connect-text">Connect your GitHub account so Coder can browse your repositories, read files, and propose updates you approve.</p>' +
           '<button class="gh-connect-btn" id="gh-connect-btn" type="button">Connect GitHub</button>' +
           '<p class="gh-connect-note">You will approve access on github.com. Anteemonee never sees your password.</p></div>';
         $('gh-connect-btn').addEventListener('click', startConnect);

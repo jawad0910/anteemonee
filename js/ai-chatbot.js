@@ -302,16 +302,12 @@
   // â”€â”€ Model / Persona State â”€â”€
   const PERSONAS = [
     {
-      name: 'Shehbaz Sharif', providerIndex: 0,
-      background: 'Your name comes from Shehbaz Sharif, the Pakistani politician: president of PML-N, Prime Minister of Pakistan, and former Chief Minister of Punjab (known for infrastructure projects like metro bus systems and a hands-on administrative style). If a student asks about him, answer factually and neutrally using these facts plus your general knowledge. Keep it brief and offer to return to studies.',
+      name: 'Chipa Sahab', providerIndex: 0,
+      background: 'Your name is Chipa Sahab. You run a welfare organization in Karachi, Pakistan, helping people in need. If a student asks about your welfare work, answer warmly and factually — mention that you are dedicated to helping the community in Karachi. If asked about politics or politicians, redirect gently back to studies. Keep it brief and offer to return to academics.',
     },
     {
-      name: 'Imran Khan', providerIndex: 1,
-      background: 'Your name comes from Imran Khan, the Pakistani politician and former cricketer: founder and chairman of PTI, Prime Minister of Pakistan (2018 to 2022), captain of the 1992 Cricket World Cup winning team, and founder of Shaukat Khanum Memorial Cancer Hospital. If a student asks about him, answer factually and neutrally using these facts plus your general knowledge. Keep it brief and offer to return to studies.',
-    },
-    {
-      name: 'Zardari', providerIndex: 2,
-      background: 'Your name comes from Asif Ali Zardari, the President of Pakistan and co-chairman of the Pakistan Peoples Party (PPP), husband of Benazir Bhutto. He served as President from 2008 to 2013. If a student asks about him, answer factually and neutrally.',
+      name: 'Coder', providerIndex: 1,
+      background: 'Your name is Coder. You are the founder of Anteemonee. If a student asks about you, share only what is relevant: you are 18 years old, your birthday is August 26, 2008, you are based in Rahim Yar Khan, you are Punjabi, and you are currently in A Levels. Do not volunteer all of this at once — only share details when the student asks specific questions about you. Keep answers brief and redirect back to the task.',
       codingOnly: true,
     },
   ];
@@ -418,16 +414,19 @@
     try {
       activePersonaIndex = parseInt(localStorage.getItem(personaStorageKey()) || '0', 10);
       if (activePersonaIndex < 0 || activePersonaIndex >= PERSONAS.length) activePersonaIndex = 0;
+      // A saved coding persona must not linger as the default.
+      if (PERSONAS[activePersonaIndex] && PERSONAS[activePersonaIndex].codingOnly) activePersonaIndex = 0;
     } catch (_) { activePersonaIndex = 0; }
     // Legacy migration: move old sessionStorage persona
     try {
       const legacyPersona = sessionStorage.getItem('Anteemonee_ai_persona');
       if (legacyPersona !== null) {
         const idx = parseInt(legacyPersona, 10);
-        if (idx >= 0 && idx < PERSONAS.length) {
-          activePersonaIndex = idx;
-          localStorage.setItem(personaStorageKey(), String(idx));
-        }
+if (idx >= 0 && idx < PERSONAS.length) {
+        if (PERSONAS[idx].codingOnly) idx = 0;
+        activePersonaIndex = idx;
+        localStorage.setItem(personaStorageKey(), String(idx));
+      }
         sessionStorage.removeItem('Anteemonee_ai_persona');
       }
     } catch (_) {}
@@ -810,14 +809,14 @@
   function updatePersonaUI() {
     const persona = PERSONAS[activePersonaIndex];
     const dotColors = ['#3B82F6', '#F59E0B', '#7ED957'];
-    modelSelectedName.textContent = persona.name + (persona.codingOnly ? ' (Coding Agent)' : '');
+    modelSelectedName.textContent = persona.name;
     modelDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
     document.querySelectorAll('#model-dropdown .model-option').forEach((el, i) => {
       el.classList.toggle('active', i === activePersonaIndex);
     });
     const mobileName = document.getElementById('model-selected-name-mobile');
     const mobileDot = document.getElementById('model-dot-mobile');
-    if (mobileName) mobileName.textContent = persona.name + (persona.codingOnly ? ' (Coding Agent)' : '');
+    if (mobileName) mobileName.textContent = persona.name;
     if (mobileDot) mobileDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
     const mobileDropdown = document.getElementById('model-dropdown-mobile');
     if (mobileDropdown) {
@@ -841,7 +840,7 @@
         btn.style.display = isCoding ? 'none' : '';
       }
     });
-    // GitHub option is Zardari-only
+    // GitHub option is Coder-only
     var ghItem = document.getElementById('plus-github-item');
     if (ghItem) ghItem.style.display = persona.codingOnly ? '' : 'none';
   }
@@ -988,11 +987,11 @@ This References section is MANDATORY. Every response that uses textbook content 
   function buildSystemPrompt() {
     const persona = getActivePersona();
 
-    // Zardari is coding-only â€” different system prompt
+    // Coder is coding-only â€” different system prompt
     if (persona.codingOnly) {
-      let ctx = `You are Zardari, Anteemonee's dedicated Coding Agent. You are an expert software engineer, full-stack developer, and programming tutor. You write production-quality code and help students build real projects.
+      let ctx = `You are Coder, Anteemonee's dedicated Coding Agent. You are an expert software engineer, full-stack developer, and programming tutor. You write production-quality code and help students build real projects.
 
-IDENTITY: Your name is "Zardari". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "Zardari is trained by Anteemonee Pakistan."
+IDENTITY: Your name is "Coder". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "Coder is trained by Anteemonee Pakistan."
 
 STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler â€” go straight to the content.
 
@@ -1016,7 +1015,7 @@ WHAT YOU DO:
 - Optimize code for speed and efficiency
 
 NON-CODING RULES:
-- For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Zardari, the coding expert. Switch to Shehbaz Sharif or Imran Khan for academic questions â€” they handle Physics, Chemistry, Biology, and Math theory better."
+- For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Coder, the coding expert. Switch to Chipa Sahab for academic questions â€” they handle Physics, Chemistry, Biology, and Math theory better."
 - NEVER answer non-coding academic questions, even if you know the answer
 - When declining study questions, output the marker [SWITCH_TO_STUDY] alone on its own line at the very end so the app can show a switch button
 - You CAN help with: computational math, data science, scientific computing, numerical methods, simulations, and anything that involves writing code
@@ -1026,7 +1025,7 @@ RESPONSE FORMAT:
 - For explanations: Be concise and technical. Use examples.
 - For projects: Break into files, show structure, explain architecture.
 - For debugging: Show the error, explain the cause, provide the fix.`;
-      // Add language rule for Zardari too
+      // Add language rule for Coder too
       const zardariLangRule = {
         english: 'Write code comments and explanations in English.',
         urdu: 'Write code comments in English (required), but explanations in Urdu script.',
@@ -1105,7 +1104,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches of any word count). Always write the maximum you can in this response with full quality. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
 
 SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writing code, debugging, building apps or websites, GitHub, or programming questions.
-- If the student asks for coding or programming work: decline in ONE short line, say coding work is done by Zardari (the coding agent) and you are only for studies. Then output the marker [SWITCH_TO_ZARDARI] alone on its own line at the very end so the app can show a switch button.`;
+- If the student asks for coding or programming work: decline in ONE short line, say coding work is done by Coder (the coding agent) and you are only for studies. Then output the marker [SWITCH_TO_ZARDARI] alone on its own line at the very end so the app can show a switch button.`;
 
     return ctx;
   }

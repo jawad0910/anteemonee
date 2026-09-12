@@ -780,7 +780,7 @@ function renderAI() {
 
   const prefRows = [
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),
-    buildRow('Emojis', 'Use emojis in AI responses (except Zardari)', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
+    buildRow('Emojis', 'Use emojis in AI responses (except Coder)', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
   ];
   c.appendChild(buildCard('SUGGESTIONS', prefRows));
 
@@ -1471,7 +1471,7 @@ async function renderGithubCard(c) {
     gh = res.data || null;
   } catch (_) { return; }
   if (!gh) return;
-  const row = buildProviderRow('github', 'GitHub', '@' + gh.github_username + ' · used by Zardari', true, false, null);
+  const row = buildProviderRow('github', 'GitHub', '@' + gh.github_username + ' · used by Coder', true, false, null);
   const btn = document.createElement('button');
   btn.className = 'btn-settings btn-settings-danger';
   btn.style.cssText = 'padding:6px 12px;font-size:12px;flex-shrink:0';
@@ -1489,7 +1489,7 @@ async function renderGithubCard(c) {
 }
 
 async function disconnectGithub() {
-  if (!confirm('Disconnect GitHub from Anteemonee? Zardari will lose access to your repositories.')) return;
+  if (!confirm('Disconnect GitHub from Anteemonee? Coder will lose access to your repositories.')) return;
   try {
     const { error } = await db.from('github_connections').delete().eq('user_id', currentUser.id);
     if (error) throw error;
