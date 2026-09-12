@@ -38,7 +38,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/anteemonee.png">
   <link rel="stylesheet" href="css/style.css?v=16">
-  <link rel="stylesheet" href="css/ai-chatbot.css?v=22">
+  <link rel="stylesheet" href="css/ai-chatbot.css?v=23">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 <body>
@@ -87,21 +87,17 @@
       <div class="model-selector sidebar-model loading" id="model-selector">
         <div class="model-selector-trigger" id="model-selector-trigger">
           <span class="model-dot" id="model-dot"></span>
-          <span class="model-selected-name" id="model-selected-name">Shehbaz Sharif</span>
+          <span class="model-selected-name" id="model-selected-name">Chipa Sahab</span>
           <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
         <div class="model-dropdown" id="model-dropdown">
-          <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
+          <button class="model-option active" data-model="0" data-name="Chipa Sahab">
             <span class="model-option-dot dot-blue"></span>
-            <span class="model-option-name">Shehbaz Sharif</span>
+            <span class="model-option-name">Chipa Sahab</span>
           </button>
-          <button class="model-option" data-model="1" data-name="Imran Khan">
-            <span class="model-option-dot dot-orange"></span>
-            <span class="model-option-name">Imran Khan</span>
-          </button>
-          <button class="model-option" data-model="2" data-name="Zardari">
+          <button class="model-option" data-model="1" data-name="Coder">
             <span class="model-option-dot dot-green"></span>
-            <span class="model-option-name">Zardari (Coding Agent)</span>
+            <span class="model-option-name">Coder</span>
           </button>
         </div>
       </div>
@@ -289,23 +285,18 @@
     <div class="model-selector sidebar-model loading" id="model-selector-mobile">
       <div class="model-selector-trigger" id="model-selector-trigger-mobile">
         <span class="model-dot" id="model-dot-mobile"></span>
-        <span class="model-selected-name" id="model-selected-name-mobile">Shehbaz Sharif</span>
+        <span class="model-selected-name" id="model-selected-name-mobile">Chipa Sahab</span>
         <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
       <div class="model-dropdown" id="model-dropdown-mobile">
-        <button class="model-option active" data-model="0" data-name="Shehbaz Sharif">
+        <button class="model-option active" data-model="0" data-name="Chipa Sahab">
           <span class="model-option-dot dot-blue"></span>
-          <span class="model-option-name">Shehbaz Sharif</span>
+          <span class="model-option-name">Chipa Sahab</span>
         </button>
-        <button class="model-option" data-model="1" data-name="Imran Khan">
-          <span class="model-option-dot dot-orange"></span>
-          <span class="model-option-name">Imran Khan</span>
+        <button class="model-option" data-model="1" data-name="Coder">
+          <span class="model-option-dot dot-green"></span>
+          <span class="model-option-name">Coder</span>
         </button>
-          <button class="model-option" data-model="2" data-name="Zardari">
-            <span class="model-option-dot dot-green"></span>
-            <span class="model-option-name">Zardari (Coding Agent)</span>
-          </button>
-        </div>
       </div>
     <div class="drawer-account" id="drawer-account" style="display:none" title="Open settings">
       <div class="drawer-avatar" id="m-acct-avatar"><span>?</span></div>
@@ -325,7 +316,7 @@
   <div class="github-panel-overlay" id="github-panel">
     <div class="github-panel">
       <div class="github-panel-header">
-        <h3>GitHub for Zardari</h3>
+        <h3>GitHub for Coder</h3>
         <button class="github-panel-close" id="github-panel-close" aria-label="Close">&times;</button>
       </div>
       <div class="github-panel-status" id="github-panel-status"></div>
@@ -375,8 +366,8 @@
   <script src="js/account-manager.js?v=9"></script>
   <script src="js/app.js?v=10"></script>
   <script src="js/ai-api-service.js?v=12"></script>
-  <script src="js/github.js?v=6"></script>
-  <script src="js/ai-chatbot.js?v=25"></script>
+  <script src="js/github.js?v=7"></script>
+  <script src="js/ai-chatbot.js?v=26"></script>
   <script>
     // "Coming soon" toast for sidebar features not built yet.
     (function () {
