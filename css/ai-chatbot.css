@@ -195,35 +195,6 @@ body.guest .sidebar-history:empty::before { content: none; }
 .model-chevron { color: var(--text-tertiary); transition: transform var(--transition-fast); flex-shrink: 0; }
 .model-selector:hover .model-chevron { color: var(--text-secondary); }
 
-.model-dropdown {
-  position: absolute; bottom: calc(100% + 6px); left: 0; right: 0;
-  background: var(--bg-secondary); border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md); padding: 6px; display: none;
-  box-shadow: var(--neo-shadow-float); z-index: 10;
-  animation: dropIn 0.15s ease;
-}
-.model-dropdown.active { display: block; }
-@keyframes dropIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-.model-option {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 10px 12px; border-radius: var(--radius-sm);
-  font-size: 0.8125rem; color: var(--text-secondary);
-  transition: all var(--transition-fast); text-align: left;
-}
-.model-option:hover { background: var(--neo-highlight); color: var(--text-primary); }
-.model-option.active { background: var(--accent-soft); color: var(--text-primary); }
-.model-option-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.model-option-dot.dot-blue { background: #3B82F6; }
-.model-option-dot.dot-orange { background: #F59E0B; }
-.model-option-dot.dot-green { background: #7ED957; }
-.model-option-name { flex: 1; font-weight: 500; }
-.model-option-tag {
-  font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px;
-  background: var(--tag-bg); color: var(--text-tertiary);
-  font-weight: 500;
-}
-
 /* Chat Main */
 .chat-main { flex: 1; display: flex; flex-direction: column; height: 100%; min-width: 0; overflow: hidden; position: relative; }
 .chat-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
@@ -934,7 +905,7 @@ body.guest .sidebar-history:empty::before { content: none; }
   white-space: pre-wrap; word-break: break-word;
 }
 
-/* ---------- GitHub panel (Zardari) ---------- */
+/* ---------- GitHub panel (Coder) ---------- */
 .github-panel-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -1218,15 +1189,29 @@ body.guest .sidebar-history:empty::before { content: none; }
 }
 .model-selector-trigger:hover { border-color: var(--liquid-border); box-shadow: var(--liquid-inset); }
 .model-dropdown, .plus-dropdown {
+  position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
   background: var(--liquid-bg-strong);
   -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
   border: 1px solid var(--liquid-border);
-  border-radius: 16px;
+  border-radius: 16px; padding: 6px; display: none;
   box-shadow: var(--liquid-inset), var(--liquid-shadow);
+  overflow: hidden; z-index: 10;
 }
-.model-option { border-radius: 10px; }
-.model-option:hover { background: var(--liquid-bg-soft); }
-.model-option.active { background: var(--accent-soft); }
+.model-dropdown::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--liquid-shine); pointer-events: none;
+}
+.model-dropdown.active { display: block; }
+@keyframes dropIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.model-option { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; position: relative; border-radius: 10px; z-index: 1; font-size: 0.8125rem; color: var(--text-secondary); transition: all var(--transition-fast); text-align: left; }
+.model-option:hover { background: var(--liquid-bg-soft); color: var(--text-primary); }
+.model-option.active { background: var(--accent-soft); color: var(--text-primary); }
+.model-option-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.model-option-dot.dot-blue { background: #3B82F6; }
+.model-option-dot.dot-orange { background: #F59E0B; }
+.model-option-dot.dot-green { background: #7ED957; }
+.model-option-name { flex: 1; font-weight: 500; }
+.model-option-tag { font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px; background: var(--tag-bg); color: var(--text-tertiary); font-weight: 500; }
 
 /* Composer — floating glass bar */
 .chat-input-area {
