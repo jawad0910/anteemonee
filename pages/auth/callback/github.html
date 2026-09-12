@@ -12,6 +12,17 @@
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
   <style>
     .callback-page {
       min-height: 100vh;
@@ -162,7 +173,7 @@
       </div>
 
       <h1 class="callback-title">Connecting GitHub</h1>
-      <p class="callback-subtitle">Linking your repositories to Zardari...</p>
+      <p class="callback-subtitle">Linking your repositories to Coder...</p>
 
       <div class="callback-loading" id="callback-loading">
         <div class="callback-spinner"></div>
@@ -185,7 +196,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../../../js/github.js?v=6"></script>
+  <script src="../../../js/github.js?v=7"></script>
   <script>
     (function () {
       var SUPABASE_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
