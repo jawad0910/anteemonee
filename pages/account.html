@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=16">
+  <link rel="stylesheet" href="../css/style.css?v=18">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
     /* Embed mode: chromeless when shown inside the chatbot profile popup. */
@@ -206,11 +206,11 @@
       transition: all 0.2s;
       min-height: 48px;
       font-family: 'Inter', sans-serif;
-      box-shadow: 0 4px 16px rgba(126,217,87,0.3), var(--neo-shadow-raised-sm);
+      box-shadow: 0 4px 16px rgba(99,102,241,0.3), var(--neo-shadow-raised-sm);
     }
     .btn-save:hover {
       background: var(--accent-hover);
-      box-shadow: 0 6px 24px rgba(126,217,87,0.4), var(--neo-shadow-raised);
+      box-shadow: 0 6px 24px rgba(99,102,241,0.4), var(--neo-shadow-raised);
     }
     .btn-save:disabled {
       opacity: 0.5;
@@ -755,8 +755,8 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/account-manager.js?v=9"></script>
-  <script src="../js/app.js?v=10"></script>
+  <script src="../js/account-manager.js?v=10"></script>
+  <script src="../js/app.js?v=11"></script>
   <script>
     let acctData = {
       profile: null,
@@ -1097,7 +1097,7 @@
             <div style="flex:1;min-width:0;">
               <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
                 ${acc.displayName || acc.email}
-                ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(126,217,87,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
+                ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(99,102,241,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
               </div>
               <div style="font-size:12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
             </div>

@@ -126,6 +126,42 @@
     },
   ];
   let activePersonaIndex = 0;
+  // Auto model routing: coding -> coding persona, else study
+  function isCodingTask(text) {
+    if (!text) return false;
+    var t = String(text).toLowerCase();
+    if (/```/.test(t)) return true;
+    try {
+      if (typeof GitHub !== "undefined" && GitHub.hasAttachedFiles && GitHub.hasAttachedFiles()) return true;
+    } catch (_) {}
+    var codingKeywords = [
+      "code","coding","programming","program","algorithm","function","class ","variable","loop","array","object","api ","rest api","graphql",
+      "python","javascript","typescript","java ","c++","c#"," html","css","php","sql","mysql","postgres","mongodb","node.js","nodejs","react","next.js","vue","angular","svelte","flutter","dart","kotlin","swift","go language","golang","rust ",
+      "debug","bug ","error in code","stack trace","exception","compile","build app","build website","create app","create website","make app","make website","create a website","create an app","build a website","build an app",
+      "github","git ","commit","pull request","repo","repository","docker","deploy","frontend","backend","full stack","fullstack"
+    ];
+    for (var i = 0; i < codingKeywords.length; i++) {
+      if (t.indexOf(codingKeywords[i]) !== -1) return true;
+    }
+    if (/\b(def |import |from .* import|console\.log|print\(|printf|scanf|#include|public static void|system\.out\.println|select .* from|insert into|update .* set|function\s*\(|=>|<\s*html|<\s*div|<\s*body|<\s*head)\b/.test(t)) return true;
+    if (/\b(write|create|build|make|generate|fix|debug)\b[^.?!]{0,45}\b(code|program|script|function|app|website|web app|api)\b/.test(t)) return true;
+    return false;
+  }
+  function getCodingPersonaIndex() {
+    for (var i = 0; i < PERSONAS.length; i++) if (PERSONAS[i].codingOnly) return i;
+    return PERSONAS.length - 1;
+  }
+  function getPersonaForText(text) {
+    return isCodingTask(text) ? PERSONAS[getCodingPersonaIndex()] : PERSONAS[0];
+  }
+  function getProviderIndexForText(text) {
+    return getPersonaForText(text).providerIndex;
+  }
+  function applyPersonaForText(text) {
+    activePersonaIndex = isCodingTask(text) ? getCodingPersonaIndex() : 0;
+    return PERSONAS[activePersonaIndex];
+  }
+
 
   // â”€â”€ DOM â”€â”€
   const chatContent = document.getElementById('chat-content');
@@ -540,45 +576,7 @@
 
     setupKeyboardAwareLayout();
 
-    // Desktop model selector
-    modelTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      modelDropdown.classList.toggle('active');
-    });
-
-    document.querySelectorAll('#model-dropdown .model-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.model, 10);
-        activePersonaIndex = idx;
-        localStorage.setItem(personaStorageKey(), String(idx));
-        updatePersonaUI();
-        modelDropdown.classList.remove('active');
-      });
-    });
-
-    document.addEventListener('click', () => modelDropdown.classList.remove('active'));
-
-    // Mobile model selector
-    const mobileTrigger = document.getElementById('model-selector-trigger-mobile');
-    const mobileDropdown = document.getElementById('model-dropdown-mobile');
-    if (mobileTrigger && mobileDropdown) {
-      mobileTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        mobileDropdown.classList.toggle('active');
-      });
-
-      mobileDropdown.querySelectorAll('.model-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.dataset.model, 10);
-          activePersonaIndex = idx;
-          localStorage.setItem(personaStorageKey(), String(idx));
-          updatePersonaUI();
-          mobileDropdown.classList.remove('active');
-        });
-      });
-
-      document.addEventListener('click', () => mobileDropdown.classList.remove('active'));
-    }
+    // Model selector removed — auto routing handles persona per message.
 
     // â”€â”€ Modes dropdown (Think / Research) â”€â”€
     // Close plus dropdown on outside click
@@ -1083,7 +1081,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         { role: 'system', content: `Generate a short, unique chat title (max 4 words) that describes the USER's topic or intent. Rules: plain text only, no quotes, no emoji, no punctuation at end, lowercase. Be specific - not generic words like "greeting" or "chat". If the message is a simple greeting, pick the most relevant topic the user might discuss. Existing titles to avoid duplicating: [${existingTitles}]` },
         { role: 'user', content: clean },
       ];
-      for await (const chunk of api.streamChat(titleMessages, getActivePersona().providerIndex)) {
+      for await (const chunk of api.streamChat(titleMessages, getProviderIndexForText(firstText))) {
         if (chunk && chunk.includes('"type":"streak"')) continue;
         title += chunk;
         if (title.length > 80) break;
@@ -1343,7 +1341,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   function switchPersona(idx) {
     if (idx < 0 || idx >= PERSONAS.length) return;
     activePersonaIndex = idx;
-    try { localStorage.setItem(personaStorageKey(), String(idx)); } catch (_) {}
     updatePersonaUI();
   }
 
@@ -1990,6 +1987,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     const streamDiv = createStreamingMessage(thinkMode ? 'think' : researchMode ? 'research' : null);
     const statusCycle = startStatusCycle(streamDiv, thinkMode ? 'think' : researchMode ? 'research' : null);
     scrollToBottom();
+
+    try { applyPersonaForText(text); } catch (_) {}
+    try { updatePersonaUI(); } catch (_) {}
 
     // Search textbooks before sending to AI
     let textbookContext = '';
