@@ -61,7 +61,7 @@
   background: var(--neo-highlight);
 }
 .settings-nav-item.active {
-  color: var(--green);
+  color: var(--accent);
   background: var(--accent-soft);
   font-weight: 600;
   box-shadow: var(--neo-shadow-recessed-sm);
@@ -198,7 +198,7 @@
 }
 .toggle input:checked + .toggle-slider {
   background: var(--accent);
-  box-shadow: 0 2px 8px rgba(126,217,87,0.3);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.3);
 }
 .toggle input:checked + .toggle-slider::before {
   transform: translateX(20px);
@@ -270,10 +270,10 @@ textarea.setting-input {
 .btn-settings-primary {
   background: var(--accent);
   color: var(--on-accent);
-  box-shadow: 0 4px 14px rgba(126,217,87,0.3), var(--neo-shadow-raised-sm);
+  box-shadow: 0 4px 14px rgba(99,102,241,0.3), var(--neo-shadow-raised-sm);
 }
-.btn-settings-primary:hover { box-shadow: 0 6px 20px rgba(126,217,87,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
-.btn-settings-primary:active { box-shadow: 0 2px 8px rgba(126,217,87,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-settings-primary:hover { box-shadow: 0 6px 20px rgba(99,102,241,0.4), var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-settings-primary:active { box-shadow: 0 2px 8px rgba(99,102,241,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
 
 .btn-settings-secondary {
   background: var(--surface);
@@ -310,7 +310,7 @@ textarea.setting-input {
   font-size: 12px;
   font-weight: 600;
 }
-.status-badge.active { background: rgba(126,217,87,0.12); color: var(--success); }
+.status-badge.active { background: rgba(99,102,241,0.12); color: var(--success); }
 .status-badge.inactive { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
 .status-badge.warning { background: rgba(251,191,36,0.12); color: #FBBF24; }
 .status-badge.premium { background: var(--accent-soft); color: var(--accent); }
@@ -363,7 +363,7 @@ textarea.setting-input {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--accent-soft);
+  background: var(--surface, #1a1a2e);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -630,9 +630,9 @@ textarea.setting-input {
   background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
   border: 1px solid rgba(255,255,255,0.22);
   border-radius: var(--radius-pill);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 14px rgba(126,217,87,0.35);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 14px rgba(99,102,241,0.35);
 }
-.btn-settings-primary:hover { box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(126,217,87,0.45); transform: translateY(-1px); }
+.btn-settings-primary:hover { box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(99,102,241,0.45); transform: translateY(-1px); }
 .btn-settings-secondary, .btn-settings-ghost {
   background: var(--liquid-bg-soft);
   border: 1px solid var(--liquid-border-soft);
