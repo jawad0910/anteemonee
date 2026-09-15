@@ -37,8 +37,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/anteemonee.png">
-  <link rel="stylesheet" href="css/style.css?v=16">
-  <link rel="stylesheet" href="css/ai-chatbot.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/ai-chatbot.css?v=34">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 <body>
@@ -195,7 +195,7 @@
                     <span class="plus-dropdown-label">Research</span>
                     <span class="plus-check"></span>
                   </button>
-                  <button class="plus-dropdown-item" id="plus-github-item" data-action="github" style="display:none">
+                  <button class="plus-dropdown-item" id="plus-github-item" data-action="github">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                     <span class="plus-dropdown-label">GitHub</span>
                     <span class="plus-check"></span>
@@ -298,6 +298,7 @@
           <span class="model-option-name">Coder</span>
         </button>
       </div>
+      </div>
     <div class="drawer-account" id="drawer-account" style="display:none" title="Open settings">
       <div class="drawer-avatar" id="m-acct-avatar"><span>?</span></div>
       <div class="acct-meta">
@@ -363,11 +364,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="js/account-manager.js?v=9"></script>
-  <script src="js/app.js?v=10"></script>
-  <script src="js/ai-api-service.js?v=12"></script>
-  <script src="js/github.js?v=7"></script>
-  <script src="js/ai-chatbot.js?v=26"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+  <script src="js/account-manager.js?v=11"></script>
+  <script src="js/app.js?v=13"></script>
+  <script src="js/ai-api-service.js?v=14"></script>
+  <script src="js/github.js?v=10"></script>
+  <script src="js/ai-chatbot.js?v=35"></script>
   <script>
     // "Coming soon" toast for sidebar features not built yet.
     (function () {
@@ -497,35 +500,19 @@
     })();
   </script>
   <script>
-    // Release skeletons only on real init signals (never timers that race
-    // init): the model name being painted and the subtitle. Callbacks run
-    // before next paint, so the wrong set can never flash. 10s net as a
-    // last resort.
+    // Model selector removed — auto-switching handles persona. Just clear
+    // any skeleton states immediately so the welcome UI shows instantly.
     (function () {
-      var done = false;
-      function ready() {
-        if (done) return;
-        done = true;
-        try {
-          ['model-selector', 'model-selector-mobile'].forEach(function (id) {
-            var m = document.getElementById(id);
-            if (m) m.classList.remove('loading');
-          });
-          var sub = document.querySelector('.welcome-subtitle');
-          if (sub) sub.classList.remove('skel-text');
-        } catch (_) {}
-      }
-      function watch(el, opts) {
-        try {
-          if (!el || !window.MutationObserver) return;
-          var mo = new MutationObserver(function () { ready(); });
-          mo.observe(el, opts);
-          setTimeout(function () { try { mo.disconnect(); } catch (_) {} }, 15000);
-        } catch (_) {}
-      }
-      watch(document.getElementById('model-selected-name'), { childList: true, characterData: true, subtree: true });
-      watch(document.getElementById('model-selected-name-mobile'), { childList: true, characterData: true, subtree: true });
-      setTimeout(ready, 10000);
+      try {
+        ['model-selector', 'model-selector-mobile'].forEach(function (id) {
+          var m = document.getElementById(id);
+          if (m) m.classList.remove('loading');
+        });
+        var sub = document.querySelector('.welcome-subtitle');
+        if (sub) sub.classList.remove('skel-text');
+        var title = document.querySelector('.welcome-title');
+        if (title) title.classList.remove('skel-text');
+      } catch (_) {}
     })();
   </script>
   <script>
