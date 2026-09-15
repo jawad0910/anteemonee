@@ -104,7 +104,7 @@ async function loadHomepageData() {
         const avatarsEl = document.getElementById('trust-avatars');
         const avatars = Array.isArray(data.avatars) ? data.avatars.filter(a => a && a.profile_image_url) : [];
         if (avatarsEl && avatars.length) {
-          const colors = ['#1E4D12', '#2A6E1E', '#6D28D9'];
+          const colors = ['#312E81', '#1E3A5F', '#6D28D9'];
           avatarsEl.innerHTML = avatars.slice(0, 3).map((a, i) => {
             const initial = ((a.username || 'W').charAt(0) || 'W').toUpperCase();
             return `<span style="background:${colors[i % colors.length]};overflow:hidden"><img src="${a.profile_image_url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${initial}'"></span>`;

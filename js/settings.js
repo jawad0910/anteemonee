@@ -780,7 +780,7 @@ function renderAI() {
 
   const prefRows = [
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),
-    buildRow('Emojis', 'Use emojis in AI responses (except Coder)', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
+    buildRow('Emojis', 'Use emojis in AI responses', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
   ];
   c.appendChild(buildCard('SUGGESTIONS', prefRows));
 
@@ -802,7 +802,7 @@ function renderAI() {
       padding:7px 16px;border-radius:8px;border:none;
       background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:600;
       cursor:pointer;transition:all .2s;white-space:nowrap;
-      box-shadow:0 2px 8px rgba(126,217,87,.3);
+      box-shadow:0 2px 8px rgba(99,102,241,.3);
     ">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -817,11 +817,11 @@ function renderAI() {
   });
   knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseenter', (e) => {
     e.currentTarget.style.transform = 'translateY(-1px)';
-    e.currentTarget.style.boxShadow = '0 4px 12px rgba(126,217,87,.4)';
+    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,.4)';
   });
   knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseleave', (e) => {
     e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.boxShadow = '0 2px 8px rgba(126,217,87,.3)';
+    e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,.3)';
   });
   memRows.push(knowRow);
 
@@ -1342,15 +1342,6 @@ function renderConnected() {
     c.appendChild(buildCard('SECURITY NOTE', warnRows));
   }
 
-  if (hasGoogle || hasSpotify) {
-    const securityRows = [
-      buildRow('One account per provider', 'Each Google or Spotify account can only be linked to one Anteemonee account.'),
-      buildRow('Email & username are unique', 'No two accounts can share the same email or username.'),
-      buildRow('Always need one login', 'You must have at least one login method active at all times.'),
-    ];
-    c.appendChild(buildCard('SECURITY POLICY', securityRows));
-  }
-
   renderMyReports(c);
 }
 
@@ -1471,7 +1462,7 @@ async function renderGithubCard(c) {
     gh = res.data || null;
   } catch (_) { return; }
   if (!gh) return;
-  const row = buildProviderRow('github', 'GitHub', '@' + gh.github_username + ' · used by Coder', true, false, null);
+  const row = buildProviderRow('github', 'GitHub', '@' + gh.github_username, true, false, null);
   const btn = document.createElement('button');
   btn.className = 'btn-settings btn-settings-danger';
   btn.style.cssText = 'padding:6px 12px;font-size:12px;flex-shrink:0';
@@ -1482,14 +1473,14 @@ async function renderGithubCard(c) {
   card.className = 'settings-card';
   const h = document.createElement('div');
   h.className = 'settings-card-header';
-  h.textContent = 'GITHUB (ZARDARI)';
+  h.textContent = 'GITHUB';
   card.appendChild(h);
   card.appendChild(row);
   c.appendChild(card);
 }
 
 async function disconnectGithub() {
-  if (!confirm('Disconnect GitHub from Anteemonee? Coder will lose access to your repositories.')) return;
+  if (!confirm('Disconnect GitHub from Anteemonee?')) return;
   try {
     const { error } = await db.from('github_connections').delete().eq('user_id', currentUser.id);
     if (error) throw error;
@@ -1564,7 +1555,7 @@ function renderAccounts() {
           <div style="min-width:0;">
             <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
               ${acc.displayName || acc.email}
-              ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(126,217,87,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
+              ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(99,102,241,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
               ${acc.sessionStatus === 'expired' ? '<span style="font-size:11px;font-weight:600;color:#ff6675;background:rgba(255,102,117,0.1);padding:1px 6px;border-radius:6px;">Expired</span>' : ''}
             </div>
             <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
@@ -2029,7 +2020,7 @@ function renderAbout() {
   c.appendChild(aboutCard);
 
   const infoRows = [
-    buildRow('Version', '1.0.0'),
+    buildRow('Version', '1.0.5'),
     buildRow('Website', 'Anteemoneepk.vercel.app'),
     buildRow('Platform', 'Web Application'),
   ];
@@ -2101,7 +2092,7 @@ async function renderReports() {
 
   const STATUS_META = {
     sent:    { label: 'Sent',              color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.3)'  },
-    fixed:   { label: 'Fixed',             color: 'var(--success)', bg: 'rgba(126,217,87,0.12)',  border: 'rgba(126,217,87,0.3)'  },
+    fixed:   { label: 'Fixed',             color: 'var(--success)', bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)'  },
     replied: { label: 'Admin replied',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
   };
 

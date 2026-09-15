@@ -79,6 +79,68 @@
     }
   }
 
+  // ── Pinned chats helpers (per-user, localStorage + optional DB column) ──
+  function pinnedStorageKey() {
+    var uid = currentUserId();
+    return uid ? 'Anteemonee_pinned_' + uid : 'Anteemonee_pinned_anon';
+  }
+  function loadPinnedMap() {
+    try {
+      var raw = localStorage.getItem(pinnedStorageKey());
+      var obj = JSON.parse(raw || '{}');
+      return (obj && typeof obj === 'object') ? obj : {};
+    } catch (_) { return {}; }
+  }
+  function savePinnedMap(map) {
+    try { localStorage.setItem(pinnedStorageKey(), JSON.stringify(map || {})); } catch (_) {}
+  }
+  function applyPinnedState() {
+    try {
+      var map = loadPinnedMap();
+      var changed = false;
+      conversations.forEach(function(c){
+        var shouldPinned = !!map[c.id];
+        // if conversation already has pinned from DB, respect it but sync map
+        if (typeof c.pinned === 'boolean') {
+          shouldPinned = c.pinned || shouldPinned;
+        }
+        if (c.pinned !== shouldPinned) changed = true;
+        c.pinned = shouldPinned;
+        if (shouldPinned) map[c.id] = true; else delete map[c.id];
+      });
+      if (changed) savePinnedMap(map);
+      // also clean map from deleted conversations
+      var ids = {};
+      conversations.forEach(function(c){ ids[c.id]=1; });
+      var map2 = loadPinnedMap();
+      var needSave=false;
+      Object.keys(map2).forEach(function(k){ if(!ids[k]){ delete map2[k]; needSave=true; } });
+      if(needSave) savePinnedMap(map2);
+    } catch (_) {}
+  }
+  async function togglePin(id) {
+    var conv = conversations.find(function(c){ return c.id === id; });
+    if (!conv) return;
+    var map = loadPinnedMap();
+    var next = !conv.pinned;
+    conv.pinned = next;
+    if (next) map[id] = true; else delete map[id];
+    savePinnedMap(map);
+    renderHistory();
+    try { showChatToast(next ? 'Pinned' : 'Unpinned'); } catch (_) {}
+    if (isPremiumTier && currentUserId()) {
+      try {
+        var res = await db.from('chat_conversations').update({ pinned: !!next }).eq('id', conv.id);
+        if (res && res.error && /pinned|column/i.test(res.error.message||'')) {
+          // column missing -> local map is fallback
+        }
+      } catch (_) {}
+      persistConversation(id);
+    } else {
+      writeLocalConversations();
+    }
+  }
+
   // Persist one conversation to the DB (premium only). Safe to fire-and-forget.
   async function saveConversationToDb(conv) {
     const uid = currentUserId();
@@ -92,8 +154,19 @@
         messages: Array.isArray(conv.messages) ? conv.messages : [],
         updated_at: new Date().toISOString(),
       };
+      // pinned column is optional — try to include it if present in conv
+      if (typeof conv.pinned === 'boolean') row.pinned = !!conv.pinned;
       const { error } = await db.from('chat_conversations').upsert(row, { onConflict: 'id' });
-      if (error) return false;
+      if (error) {
+        // fallback if pinned column missing
+        if (typeof row.pinned !== 'undefined' && /pinned|column/i.test(error.message||'')) {
+          delete row.pinned;
+          const retry = await db.from('chat_conversations').upsert(row, { onConflict: 'id' });
+          if (retry.error) return false;
+        } else {
+          return false;
+        }
+      }
       trimDbConversations(uid);
       return true;
     } catch (_) { return false; }
@@ -111,6 +184,20 @@
   }
 
   async function loadConversationsFromDb(uid) {
+    try {
+      const { data, error } = await db.from('chat_conversations')
+        .select('id,title,title_locked,messages,pinned')
+        .eq('user_id', uid).order('updated_at', { ascending: false }).limit(50);
+      if (!error && data) {
+        return data.map(r => ({
+          id: r.id,
+          title: r.title || 'New Chat',
+          titleLocked: !!r.title_locked,
+          messages: Array.isArray(r.messages) ? r.messages : [],
+          pinned: !!r.pinned,
+        }));
+      }
+    } catch (_) {}
     const { data, error } = await db.from('chat_conversations')
       .select('id,title,title_locked,messages')
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(50);
@@ -120,6 +207,7 @@
       title: r.title || 'New Chat',
       titleLocked: !!r.title_locked,
       messages: Array.isArray(r.messages) ? r.messages : [],
+      pinned: false,
     }));
   }
 
@@ -148,7 +236,7 @@
     return Date.now();
   }
 
-  // Drop expired chats from the in-memory list (free-tier path). Returns true if removed.
+  // Drop expired chats from the in-memory list (free-tier path). Returns true if removed. Pinned chats are exempt.
   function removeExpiredFromMemory() {
     var now = Date.now();
     var removed = false;
@@ -157,8 +245,10 @@
     });
     var kept = [];
     for (var i = 0; i < conversations.length; i++) {
-      if (now - convTimestamp(conversations[i]) > CHAT_TTL_MS) removed = true;
-      else kept.push(conversations[i]);
+      var conv = conversations[i];
+      if (conv.pinned) { kept.push(conv); continue; }
+      if (now - convTimestamp(conv) > CHAT_TTL_MS) removed = true;
+      else kept.push(conv);
     }
     if (removed) conversations = kept;
     return removed;
@@ -170,11 +260,19 @@
     try { renderHistory(); } catch (_) {}
   }
 
-  // Premium path: delete the user's chats older than 10 days from the DB.
+  // Premium path: delete the user's chats older than 10 days from the DB. Pinned chats are exempt if column exists.
   async function pruneDbConversations(uid) {
     try {
       var cutoff = new Date(Date.now() - CHAT_TTL_MS).toISOString();
-      await db.from('chat_conversations').delete().eq('user_id', uid).lt('updated_at', cutoff);
+      try {
+        // try to keep pinned chats
+        var res = await db.from('chat_conversations').delete().eq('user_id', uid).lt('updated_at', cutoff).or('pinned.is.null,pinned.eq.false');
+        if (res && res.error && /pinned|column/i.test(res.error.message||'')) throw res.error;
+      } catch (e) {
+        if (/pinned|column/i.test((e && e.message)||'')) {
+          await db.from('chat_conversations').delete().eq('user_id', uid).lt('updated_at', cutoff);
+        }
+      }
     } catch (_) {}
   }
 
@@ -199,6 +297,7 @@
     } else {
       conversations = readLocalConversations();
     }
+    try { applyPinnedState(); } catch (_) {}
     // Legacy migration: move old sessionStorage data to the active store
     try {
       const legacy = sessionStorage.getItem('Anteemonee_ai_conversations');
@@ -215,6 +314,7 @@
         sessionStorage.removeItem('Anteemonee_ai_conversations');
       }
     } catch (_) {}
+    try { applyPinnedState(); } catch (_) {}
     // Free-tier path: drop chats older than 10 days on every load.
     if (!(isPremiumTier && uid)) pruneLocalConversations();
   }
@@ -312,6 +412,38 @@
     },
   ];
   let activePersonaIndex = 0;
+  // Auto model routing: coding -> Coder, everything else -> Chipa Sahab
+  function isCodingTask(text) {
+    if (!text) return false;
+    var t = String(text).toLowerCase();
+    if (/```/.test(t)) return true;
+    try {
+      if (typeof GitHub !== "undefined" && GitHub.hasAttachedFiles && GitHub.hasAttachedFiles()) return true;
+    } catch (_) {}
+    var codingKeywords = [
+      "code","coding","programming","program","algorithm","function","class ","variable","loop","array","object","api ","rest api","graphql",
+      "python","javascript","typescript","java ","c++","c#"," html","css","php","sql","mysql","postgres","mongodb","node.js","nodejs","react","next.js","vue","angular","svelte","flutter","dart","kotlin","swift","go language","golang","rust ",
+      "debug","bug ","error in code","stack trace","exception","compile","build app","build website","create app","create website","make app","make website","create a website","create an app","build a website","build an app",
+      "github","git ","commit","pull request","repo","repository","docker","deploy","frontend","backend","full stack","fullstack"
+    ];
+    for (var i = 0; i < codingKeywords.length; i++) {
+      if (t.indexOf(codingKeywords[i]) !== -1) return true;
+    }
+    if (/\b(def |import |from .* import|console\.log|print\(|printf|scanf|#include|public static void|system\.out\.println|select .* from|insert into|update .* set|function\s*\(|=>|<\s*html|<\s*div|<\s*body|<\s*head)\b/.test(t)) return true;
+    if (/\b(write|create|build|make|generate|fix|debug)\b[^.?!]{0,45}\b(code|program|script|function|app|website|web app|api)\b/.test(t)) return true;
+    return false;
+  }
+  function getPersonaForText(text) {
+    return isCodingTask(text) ? PERSONAS[1] : PERSONAS[0];
+  }
+  function getProviderIndexForText(text) {
+    return getPersonaForText(text).providerIndex;
+  }
+  function applyPersonaForText(text) {
+    activePersonaIndex = isCodingTask(text) ? 1 : 0;
+    return PERSONAS[activePersonaIndex];
+  }
+
 
   // â”€â”€ DOM â”€â”€
   const chatContent = document.getElementById('chat-content');
@@ -714,45 +846,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     setupKeyboardAwareLayout();
 
-    // Desktop model selector
-    modelTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      modelDropdown.classList.toggle('active');
-    });
-
-    document.querySelectorAll('#model-dropdown .model-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.model, 10);
-        activePersonaIndex = idx;
-        localStorage.setItem(personaStorageKey(), String(idx));
-        updatePersonaUI();
-        modelDropdown.classList.remove('active');
-      });
-    });
-
-    document.addEventListener('click', () => modelDropdown.classList.remove('active'));
-
-    // Mobile model selector
-    const mobileTrigger = document.getElementById('model-selector-trigger-mobile');
-    const mobileDropdown = document.getElementById('model-dropdown-mobile');
-    if (mobileTrigger && mobileDropdown) {
-      mobileTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        mobileDropdown.classList.toggle('active');
-      });
-
-      mobileDropdown.querySelectorAll('.model-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.dataset.model, 10);
-          activePersonaIndex = idx;
-          localStorage.setItem(personaStorageKey(), String(idx));
-          updatePersonaUI();
-          mobileDropdown.classList.remove('active');
-        });
-      });
-
-      document.addEventListener('click', () => mobileDropdown.classList.remove('active'));
-    }
+    // Model selector removed — auto routing handles persona per message.
 
     // â”€â”€ Modes dropdown (Think / Research) â”€â”€
     // Close plus dropdown on outside click
@@ -807,42 +901,23 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
   // â”€â”€ Model / Persona â”€â”€
   function updatePersonaUI() {
-    const persona = PERSONAS[activePersonaIndex];
-    const dotColors = ['#3B82F6', '#F59E0B', '#7ED957'];
-    modelSelectedName.textContent = persona.name;
-    modelDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
-    document.querySelectorAll('#model-dropdown .model-option').forEach((el, i) => {
-      el.classList.toggle('active', i === activePersonaIndex);
-    });
-    const mobileName = document.getElementById('model-selected-name-mobile');
-    const mobileDot = document.getElementById('model-dot-mobile');
-    if (mobileName) mobileName.textContent = persona.name;
-    if (mobileDot) mobileDot.style.background = dotColors[persona.providerIndex] || '#3B82F6';
-    const mobileDropdown = document.getElementById('model-dropdown-mobile');
-    if (mobileDropdown) {
-      mobileDropdown.querySelectorAll('.model-option').forEach((el, i) => {
-        el.classList.toggle('active', i === activePersonaIndex);
-      });
-    }
-    // Update welcome subtitle based on active persona
-    const subtitle = document.querySelector('.welcome-subtitle');
-    if (subtitle) {
-      subtitle.textContent = persona.codingOnly
-        ? 'Ask me anything about coding, programming, or building projects.'
-        : 'Ask me anything about your studies.';
-    }
-    // Update quick actions visibility
-    document.querySelectorAll('.quick-btn').forEach(btn => {
-      const isCoding = btn.dataset.prompt.toLowerCase().includes('python') || btn.dataset.prompt.toLowerCase().includes('code');
-      if (persona.codingOnly) {
-        btn.style.display = isCoding ? '' : 'none';
-      } else {
-        btn.style.display = isCoding ? 'none' : '';
-      }
-    });
-    // GitHub option is Coder-only
-    var ghItem = document.getElementById('plus-github-item');
-    if (ghItem) ghItem.style.display = persona.codingOnly ? '' : 'none';
+    // Auto mode: selector hidden, keep UI generic. No per-persona subtitle or filtering.
+    try {
+      var subtitle = document.querySelector('.welcome-subtitle');
+      if (subtitle) subtitle.textContent = 'Ask me anything about your studies.';
+    } catch (_) {}
+    try {
+      document.querySelectorAll('.quick-btn').forEach(function (btn) { btn.style.display = ''; });
+    } catch (_) {}
+    try {
+      var ghItem = document.getElementById('plus-github-item');
+      if (ghItem) ghItem.style.display = '';
+    } catch (_) {}
+    // Keep hidden model elements in sync (no visible effect)
+    try {
+      if (typeof modelSelectedName !== 'undefined' && modelSelectedName) modelSelectedName.textContent = PERSONAS[activePersonaIndex].name;
+      if (typeof modelDot !== 'undefined' && modelDot) modelDot.style.background = ['#3B82F6', '#6366F1'][PERSONAS[activePersonaIndex].providerIndex] || '#3B82F6';
+    } catch (_) {}
   }
 
   function getActivePersona() {
@@ -1024,7 +1099,17 @@ RESPONSE FORMAT:
 - For code: Use markdown code blocks with language tag. Include file name as comment at top if relevant.
 - For explanations: Be concise and technical. Use examples.
 - For projects: Break into files, show structure, explain architecture.
-- For debugging: Show the error, explain the cause, provide the fix.`;
+- For debugging: Show the error, explain the cause, provide the fix.
+
+FILE GENERATION: When the user asks to generate/create/make/download a file (any type: txt, pdf, docx, code files like .py/.js/.html, etc):
+- For documents (pdf/docx/txt on a topic): Generate a comprehensive, beautifully structured document (headings, bullets, tables, examples) and output in this EXACT block:
+  \`\`\`file-create:Filename.ext
+  [Content in clean markdown]
+  \`\`\`
+  Filename e.g., Report.pdf, Code_Documentation.docx
+- For code files: Output the complete code in the file-create block with correct extension, e.g., \`\`\`file-create:app.py
+- After the block, add: "Your beautifully designed file is ready! Click Download below."
+- The app will convert it to a downloadable file with beautiful styling. NEVER mention manual steps.`;
       // Add language rule for Coder too
       const zardariLangRule = {
         english: 'Write code comments and explanations in English.',
@@ -1065,6 +1150,16 @@ BEHAVIOR:
     Saved! Opening it in Flashcards now.
     The app automatically saves this as a flashcard and opens it in Flashcards. NEVER mention any save button.
   - If they gave NO topic (e.g. just "create a flashcard" with nothing else): do NOT invent one. Ask which topic or question they want the flashcard on, in one short line. Do NOT output a Front/Back pair in that case.
+- FILE GENERATION: When the user asks to generate/create/make/download a file (txt, pdf, word/docx, md, html, csv, json, etc) on a specific topic:
+  - Generate a comprehensive, beautifully structured document on that topic (use headings, bullet points, numbered lists, tables where relevant, key concepts, examples, summary). Make it visually rich and well-organized.
+  - Output the file in this EXACT fenced block format (use the correct extension the user asked for, default to pdf if unsure):
+    \`\`\`file-create:Filename.ext
+    [File content in clean markdown - will be converted to a beautifully designed file with Anteemonee branding]
+    \`\`\`
+  - Filename should be descriptive with underscores, e.g., Photosynthesis_Guide.pdf, Essay_Climate_Change.docx, Notes_Math_Formulas.txt, Report_Artificial_Intelligence.pdf
+  - The extension determines the file type: .txt for plain text, .md for markdown, .pdf for PDF, .docx for Word, .html for HTML, .csv for CSV, .json for JSON
+  - After the block, add a short line: "Your beautifully designed file is ready! Click Download below."
+  - The app will automatically convert the markdown inside the block to a beautifully designed downloadable file with colors, headers, footers, and styling. NEVER mention manual steps.
 - CRITICAL â€” REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
 
 ---
@@ -1248,12 +1343,18 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     if (!activeConversationId) {
       activeConversationId = 'conv_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
       const title = messages[0]?.content?.slice(0, 50) || 'New Chat';
-      conversations.unshift({ id: activeConversationId, title, titleLocked: false, messages: [...messages], updatedAt: Date.now() });
-      if (conversations.length > 50) conversations.pop();
+      conversations.unshift({ id: activeConversationId, title, titleLocked: false, pinned: false, messages: [...messages], updatedAt: Date.now() });
+      // keep pinned chats: evict oldest unpinned first
+      if (conversations.length > 50) {
+        var evictIdx = -1;
+        for (var ei = conversations.length - 1; ei >= 0; ei--) { if (!conversations[ei].pinned) { evictIdx = ei; break; } }
+        if (evictIdx !== -1) conversations.splice(evictIdx, 1);
+        else conversations.pop();
+      }
     } else {
       const conv = conversations.find(c => c.id === activeConversationId);
       if (conv) { conv.messages = [...messages]; conv.updatedAt = Date.now(); }
-      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, messages: [...messages], updatedAt: Date.now() });
+      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, pinned: false, messages: [...messages], updatedAt: Date.now() });
     }
     if (!(isPremiumTier && currentUserId())) removeExpiredFromMemory();
     persistConversation();
@@ -1272,7 +1373,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
         { role: 'system', content: `Generate a short, unique chat title (max 4 words) that describes the USER's topic or intent. Rules: plain text only, no quotes, no emoji, no punctuation at end, lowercase. Be specific - not generic words like "greeting" or "chat". If the message is a simple greeting, pick the most relevant topic the user might discuss. Existing titles to avoid duplicating: [${existingTitles}]` },
         { role: 'user', content: clean },
       ];
-      for await (const chunk of api.streamChat(titleMessages, getActivePersona().providerIndex)) {
+      for await (const chunk of api.streamChat(titleMessages, getProviderIndexForText(firstText))) {
         if (chunk && chunk.includes('"type":"streak"')) continue;
         title += chunk;
         if (title.length > 80) break;
@@ -1308,8 +1409,16 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
   }
 
   function renderHistory() {
-    const html = conversations.slice(0, 30).map(c =>
-      `<div class="history-item ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}"><span class="history-title">${escapeHtml(c.title)}</span><button class="history-edit-btn" data-id="${c.id}" aria-label="Rename chat" title="Rename"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button><button class="history-delete-btn" data-id="${c.id}" aria-label="Delete chat" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`
+    // pinned first, then by recency
+    var sorted = conversations.slice().sort(function(a,b){
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0);
+    }).slice(0,30);
+    var pinSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
+    var pinSvgFilled = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
+    const html = sorted.map(c =>
+      `<div class="history-item ${c.pinned ? 'pinned' : ''} ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}">${c.pinned ? '<span class="history-pin-mark">'+pinSvgFilled+'</span>' : ''}<span class="history-title">${escapeHtml(c.title)}</span><button class="history-pin-btn ${c.pinned ? 'pinned' : ''}" data-id="${c.id}" aria-label="${c.pinned ? 'Unpin' : 'Pin'}" title="${c.pinned ? 'Unpin' : 'Pin'}">${c.pinned ? pinSvgFilled : pinSvg}</button><button class="history-edit-btn" data-id="${c.id}" aria-label="Rename chat" title="Rename"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button><button class="history-delete-btn" data-id="${c.id}" aria-label="Delete chat" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`
     ).join('');
     sidebarHistory.innerHTML = html;
     if (sidebarHistoryMobile) sidebarHistoryMobile.innerHTML = html;
@@ -1318,8 +1427,14 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       if (!container) return;
       container.querySelectorAll('.history-item').forEach(el => {
         el.addEventListener('click', (e) => {
-          if (e.target.closest('.history-edit-btn') || e.target.closest('.history-delete-btn') || e.target.closest('.history-title-input')) return;
+          if (e.target.closest('.history-pin-btn') || e.target.closest('.history-edit-btn') || e.target.closest('.history-delete-btn') || e.target.closest('.history-title-input')) return;
           loadConversation(el.dataset.id);
+        });
+      });
+      container.querySelectorAll('.history-pin-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePin(btn.dataset.id);
         });
       });
       container.querySelectorAll('.history-edit-btn').forEach(btn => {
@@ -1341,6 +1456,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     const idx = conversations.findIndex(c => c.id === id);
     if (idx === -1) return;
     conversations.splice(idx, 1);
+    try { var m=loadPinnedMap(); if(m[id]){ delete m[id]; savePinnedMap(m);} } catch(_){}
     if (isPremiumTier && currentUserId()) deleteConversationFromDb(id);
     else writeLocalConversations();
     if (activeConversationId === id) {
@@ -1436,9 +1552,11 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     }
 
     if (role === 'assistant') {
+      var displayContent = content;
+      try { displayContent = stripFileBlocks(content); } catch (_) {}
       div.innerHTML = `
         <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
-        <div class="msg-body">${quoteHtml}<div class="msg-content">${renderMarkdown(content)}</div></div>
+        <div class="msg-body">${quoteHtml}<div class="msg-content">${renderMarkdown(displayContent)}</div></div>
       `;
     } else {
       const imgUrl = getUserAvatarUrl();
@@ -1451,7 +1569,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
         <div class="msg-body">${quoteHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
     }
-    if (role === 'assistant') attachFeedbackButtons(div);
+    if (role === 'assistant') {
+      attachFeedbackButtons(div);
+      try { handleFileBlocks(div, content); } catch (_) {}
+    }
     if (!animate) div.style.animation = 'none';
     messagesList.appendChild(div);
     return div;
@@ -1529,7 +1650,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
   function switchPersona(idx) {
     if (idx < 0 || idx >= PERSONAS.length) return;
     activePersonaIndex = idx;
-    try { localStorage.setItem(personaStorageKey(), String(idx)); } catch (_) {}
+    // auto mode: do not persist manual selection
     updatePersonaUI();
   }
 
@@ -1543,7 +1664,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       '<div class="gh-apply-actions"><button class="gh-apply-btn" type="button">' + (toZardari ? 'Switch to Zardari' : 'Switch to Shehbaz Sharif') + '</button></div>';
     var btn = card.querySelector('.gh-apply-btn');
     btn.addEventListener('click', function () {
-      switchPersona(toZardari ? 2 : 0);
+      switchPersona(toZardari ? 1 : 0);
       btn.textContent = 'Switched ✓';
       btn.disabled = true;
     });
@@ -1775,6 +1896,462 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     if (ov) ov.remove();
   }
 
+// ── File Generation (Beautiful Design) ──
+function parseFileBlocks(text) {
+  var out = [];
+  if (!text) return out;
+  var re = /```\s*file-create\s*:\s*([^\n`]+)\n([\s\S]*?)```/g;
+  var m;
+  while ((m = re.exec(text)) !== null) {
+    var filename = m[1].trim().replace(/^[.\/]+/, "").replace(/[^a-zA-Z0-9._\- ]/g, "_").slice(0,120) || "document.txt";
+    if (filename.indexOf(".") === -1) filename += ".txt";
+    var content = m[2] ? m[2].trim() : "";
+    if (!content) continue;
+    out.push({ filename: filename, content: content, ext: (filename.split(".").pop()||"").toLowerCase() });
+    if (out.length >= 3) break;
+  }
+  return out;
+}
+function stripFileBlocks(text) {
+  if (!text) return text;
+  return text.replace(/```\s*file-create\s*:[^\n]*\n[\s\S]*?```/g, "").trim();
+}
+function getFileIcon(ext) {
+  ext = (ext||"").toLowerCase();
+  if (ext==="pdf") return "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg>";
+  if (ext==="docx"||ext==="doc"||ext==="word") return "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>";
+  return "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/></svg>";
+}
+function formatBytes(n) {
+  if (!n && n!==0) return "";
+  if (n<1024) return n+" B";
+  if (n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/(1024*1024)).toFixed(1)+" MB";
+}
+function downloadBlob(blob, filename) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.style.display="none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ try{ URL.revokeObjectURL(url); a.remove(); }catch(_){} }, 2000);
+}
+function generateBeautifulPdf(filename, markdown) {
+  try {
+    var jspdfLib = window.jspdf || window.jsPDF;
+    var jsPDF = (jspdfLib && jspdfLib.jsPDF) ? jspdfLib.jsPDF : window.jspdf?.jsPDF || window.jsPDF;
+    if (!jsPDF) throw new Error("jsPDF not loaded");
+    var doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+    var pageW = doc.internal.pageSize.getWidth();
+    var pageH = doc.internal.pageSize.getHeight();
+    var margin = 48;
+    var contentW = pageW - margin*2;
+    var y = 0;
+    var titleFromMd = (markdown.match(/^#\s+(.+)$/m)||[])[1] || filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ");
+    function addHeader() {
+      doc.setFillColor(99,102,241);
+      doc.rect(0,0,pageW,72,"F");
+      doc.setFillColor(129,140,248);
+      doc.rect(0,68,pageW,4,"F");
+      doc.setTextColor(255,255,255);
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(13);
+      doc.text("Anteemonee", margin, 30);
+      doc.setFontSize(7);
+      doc.setFont("helvetica","normal");
+      doc.setTextColor(224,231,255);
+      doc.text("AI Study Tutor  •  Beautiful Document", margin, 44);
+      doc.setFontSize(7);
+      doc.setTextColor(255,255,255);
+      doc.text(new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}), pageW - margin - 85, 30);
+      doc.setFontSize(6);
+      doc.setTextColor(224,231,255);
+      doc.text("anteemonee.com", pageW - margin - 85, 44);
+    }
+    function addFooter(pageNum) {
+      doc.setFontSize(7);
+      doc.setTextColor(100,116,139);
+      doc.setFont("helvetica","normal");
+      doc.text("Generated by Anteemonee • AI Study Tutor", margin, pageH - 28);
+      doc.text("Page "+pageNum, pageW - margin - 40, pageH - 28);
+      doc.setDrawColor(226,232,240);
+      doc.setLineWidth(0.6);
+      doc.line(margin, pageH - 38, pageW - margin, pageH - 38);
+    }
+    function ensureSpace(need) {
+      if (y + need > pageH - 55) {
+        addFooter(doc.internal.getNumberOfPages());
+        doc.addPage();
+        y = 88;
+        doc.setFillColor(99,102,241);
+        doc.setDrawColor(99,102,241);
+        doc.setLineWidth(2);
+        doc.line(margin, 72, pageW - margin, 72);
+      }
+    }
+    addHeader();
+    y = 108;
+    doc.setFillColor(248,250,252);
+    doc.setDrawColor(226,232,240);
+    doc.setLineWidth(0.8);
+    var titleH = 56;
+    doc.roundedRect(margin, y, contentW, titleH, 10, 10, "FD");
+    doc.setTextColor(15,23,42);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(18);
+    var titleLines = doc.splitTextToSize(titleFromMd, contentW - 28);
+    if (titleLines.length>2) titleLines = titleLines.slice(0,2);
+    var ty = y + 22;
+    titleLines.forEach(function(l){ doc.text(l, margin+14, ty); ty+=16; });
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100,116,139);
+    doc.text(filename+"  •  "+new Date().toLocaleDateString(), margin+14, y+44);
+    y += titleH + 22;
+    var lines = markdown.split("\n");
+    var inTable = false;
+    var tableRows = [];
+    function flushTable() {
+      if (!tableRows.length) return;
+      var cols = tableRows[0].length;
+      var colW = contentW / cols;
+      var rowH = 22;
+      tableRows.forEach(function(row, ri){
+        ensureSpace(rowH);
+        var isHead = ri===0;
+        if (isHead) {
+          doc.setFillColor(99,102,241);
+          doc.setTextColor(255,255,255);
+          doc.setFont("helvetica","bold");
+          doc.setFontSize(8);
+        } else {
+          doc.setFillColor(ri%2===0?248:255, ri%2===0?250:255, ri%2===0?252:255);
+          doc.setTextColor(15,23,42);
+          doc.setFont("helvetica","normal");
+          doc.setFontSize(8);
+        }
+        row.forEach(function(cell, ci){
+          var x = margin + ci*colW;
+          doc.setDrawColor(226,232,240);
+          doc.setLineWidth(0.5);
+          doc.rect(x, y, colW, rowH, isHead?"FD":"S");
+          var txt = doc.splitTextToSize(String(cell).trim().slice(0,80), colW-10);
+          var tx = txt[0]||"";
+          doc.text(tx, x+6, y+14);
+        });
+        y += rowH;
+      });
+      y += 8;
+      tableRows = [];
+      inTable = false;
+    }
+    for (var i=0;i<lines.length;i++) {
+      var raw = lines[i];
+      var t = raw.trim();
+      if (!t) { y += 6; continue; }
+      if (t.startsWith("|") && t.endsWith("|")) {
+        var next = (lines[i+1]||"").trim();
+        if (!inTable && /^\|[\s:|-]+\|$/.test(next)) {
+          tableRows.push(t.split("|").filter(function(c){return c.trim();}).map(function(c){return c.trim();}));
+          inTable = true;
+          i++; continue;
+        } else if (inTable) {
+          tableRows.push(t.split("|").filter(function(c){return c.trim();}).map(function(c){return c.trim();}));
+          continue;
+        }
+      } else if (inTable) {
+        flushTable();
+      }
+      if (t.startsWith("# ")) {
+        ensureSpace(30);
+        doc.setTextColor(79,70,229);
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(16);
+        var txt = t.replace(/^#\s+/,"").trim();
+        var wlines = doc.splitTextToSize(txt, contentW);
+        wlines.forEach(function(l){ doc.text(l, margin, y); y+=18; });
+        doc.setDrawColor(99,102,241);
+        doc.setLineWidth(1.2);
+        doc.line(margin, y-6, margin+36, y-6);
+        y+=8;
+      } else if (t.startsWith("## ")) {
+        ensureSpace(26);
+        doc.setTextColor(79,70,229);
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(13);
+        var txt2 = t.replace(/^##\s+/,"").trim();
+        var w2 = doc.splitTextToSize(txt2, contentW);
+        w2.forEach(function(l){ doc.text(l, margin, y); y+=15; });
+        y+=4;
+      } else if (t.startsWith("### ")) {
+        ensureSpace(22);
+        doc.setTextColor(13,148,136);
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(11);
+        var txt3 = t.replace(/^###\s+/,"").trim();
+        var w3 = doc.splitTextToSize(txt3, contentW);
+        w3.forEach(function(l){ doc.text(l, margin, y); y+=13; });
+        y+=2;
+      } else if (t.startsWith("- ") || t.startsWith("* ") || t.startsWith("• ")) {
+        ensureSpace(16);
+        var bullet = t.replace(/^[-*•]\s+/,"").trim().replace(/\*\*(.+?)\*\*/g,"$1");
+        doc.setFillColor(13,148,136);
+        doc.circle(margin+6, y-3, 2.2, "F");
+        doc.setTextColor(30,41,59);
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(9.5);
+        var bLines = doc.splitTextToSize(bullet, contentW-18);
+        var bx = margin+14;
+        bLines.forEach(function(l, idx){
+          doc.text(l, bx, y);
+          if (idx < bLines.length-1) { y+=12; ensureSpace(12); }
+        });
+        y+=7;
+      } else if (/^\d+\.\s/.test(t)) {
+        ensureSpace(16);
+        var num = t.match(/^(\d+)\./)[1];
+        var ntxt = t.replace(/^\d+\.\s+/,"").trim().replace(/\*\*(.+?)\*\*/g,"$1");
+        doc.setFillColor(99,102,241);
+        doc.setTextColor(255,255,255);
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(7);
+        doc.circle(margin+8, y-3, 7, "F");
+        doc.text(String(num), margin+8, y+1, {align:"center"});
+        doc.setTextColor(30,41,59);
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(9.5);
+        var nLines = doc.splitTextToSize(ntxt, contentW-22);
+        var nx = margin+20;
+        nLines.forEach(function(l, idx){
+          doc.text(l, nx, y);
+          if (idx < nLines.length-1) { y+=12; ensureSpace(12); }
+        });
+        y+=7;
+      } else if (t.startsWith("> ")) {
+        ensureSpace(18);
+        var q = t.replace(/^>\s+/,"").trim();
+        doc.setFillColor(240,249,255);
+        doc.setDrawColor(99,102,241);
+        doc.setLineWidth(2);
+        doc.rect(margin, y-9, contentW, 18, "FD");
+        doc.line(margin, y-9, margin, y+9);
+        doc.setTextColor(30,58,138);
+        doc.setFont("helvetica","italic");
+        doc.setFontSize(9);
+        var qLines = doc.splitTextToSize(q, contentW-16);
+        qLines.forEach(function(l){ doc.text(l, margin+10, y); y+=11; });
+        y+=4;
+      } else if (t.startsWith("```")) {
+        var codeLines = [];
+        i++;
+        while (i<lines.length && !lines[i].trim().startsWith("```")) { codeLines.push(lines[i]); i++; }
+        var codeStr = codeLines.join("\n").trim();
+        if (codeStr) {
+          ensureSpace(36);
+          var codeH = Math.min(120, codeLines.length*11 + 18);
+          ensureSpace(codeH);
+          doc.setFillColor(15,23,42);
+          doc.roundedRect(margin, y-10, contentW, codeH, 6,6,"F");
+          doc.setTextColor(226,232,240);
+          doc.setFont("courier","normal");
+          doc.setFontSize(7.5);
+          var cLines = doc.splitTextToSize(codeStr, contentW-16);
+          var cy = y;
+          cLines.slice(0,10).forEach(function(l){ doc.text(l, margin+8, cy); cy+=10; });
+          y += codeH + 6;
+        }
+      } else {
+        ensureSpace(16);
+        var para = t.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+        doc.setTextColor(15,23,42);
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(9.5);
+        var pLines = doc.splitTextToSize(para, contentW);
+        pLines.forEach(function(l){
+          doc.text(l, margin, y);
+          y+=12;
+          if (y > pageH - 60) ensureSpace(12);
+        });
+        y+=3;
+      }
+    }
+    if (inTable) flushTable();
+    var total = doc.internal.getNumberOfPages();
+    for (var p=1; p<=total; p++) {
+      doc.setPage(p);
+      addFooter(p);
+    }
+    var blob = doc.output("blob");
+    return blob;
+  } catch (e) {
+    console.warn("[File] PDF gen failed:", e);
+    return new Blob([markdown], {type:"text/plain"});
+  }
+}
+function generateBeautifulDocx(filename, markdown) {
+  return new Promise(function(resolve){
+    try {
+      if (!window.docx) throw new Error("docx not loaded");
+      var docx = window.docx;
+      var titleFromMd = (markdown.match(/^#\s+(.+)$/m)||[])[1] || filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ");
+      var children = [];
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: titleFromMd, bold: true, size: 32, color: "6366F1" })],
+        heading: docx.HeadingLevel.TITLE,
+        spacing: { after: 200 },
+        alignment: docx.AlignmentType.CENTER,
+      }));
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: "Anteemonee  •  "+new Date().toLocaleDateString()+"  •  "+filename, size: 16, color: "64748B", italics: true })],
+        alignment: docx.AlignmentType.CENTER,
+        spacing: { after: 400 },
+      }));
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: "", break: 1 })],
+        border: { bottom: { color: "6366F1", space: 1, style: docx.BorderStyle.SINGLE, size: 6 } },
+        spacing: { after: 300 },
+      }));
+      var lines = markdown.split("\n");
+      var inCode = false;
+      var codeBuf = [];
+      for (var i=0;i<lines.length;i++) {
+        var raw = lines[i];
+        var t = raw.trim();
+        if (!t) { children.push(new docx.Paragraph({ spacing: { after: 120 } })); continue; }
+        if (t.startsWith("```")) {
+          if (!inCode) { inCode = true; codeBuf = []; }
+          else {
+            inCode = false;
+            var codeStr = codeBuf.join("\n");
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: codeStr, font: "Consolas", size: 16, color: "E2E8F0" })],
+              shading: { type: docx.ShadingType.SOLID, color: "0F172A", fill: "0F172A" },
+              spacing: { after: 200 },
+            }));
+            codeBuf = [];
+          }
+          continue;
+        }
+        if (inCode) { codeBuf.push(raw); continue; }
+        if (t.startsWith("# ")) {
+          var txt = t.replace(/^#\s+/,"").trim();
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt, bold: true, size: 28, color: "4F46E5" })], heading: docx.HeadingLevel.HEADING_1, spacing: { before: 240, after: 120 } }));
+        } else if (t.startsWith("## ")) {
+          var txt2 = t.replace(/^##\s+/,"").trim();
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt2, bold: true, size: 24, color: "4F46E5" })], heading: docx.HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }));
+        } else if (t.startsWith("### ")) {
+          var txt3 = t.replace(/^###\s+/,"").trim();
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt3, bold: true, size: 22, color: "0D9488" })], heading: docx.HeadingLevel.HEADING_3, spacing: { before: 180, after: 80 } }));
+        } else if (t.startsWith("- ") || t.startsWith("* ")) {
+          var btxt = t.replace(/^[-*]\s+/,"").trim();
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "•  "+btxt, size: 20, color: "0F172A" })], bullet: { level: 0 }, spacing: { after: 80 } }));
+        } else if (/^\d+\.\s/.test(t)) {
+          var ntxt = t.replace(/^\d+\.\s+/,"").trim();
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: ntxt, size: 20, color: "0F172A" })], numbering: { reference: "default-numbering", level: 0 }, spacing: { after: 80 } }));
+        } else if (t.startsWith("> ")) {
+          var qtxt = t.replace(/^>\s+/,"").trim();
+          children.push(new docx.Paragraph({
+            children: [new docx.TextRun({ text: qtxt, italics: true, size: 20, color: "1E40AF" })],
+            shading: { type: docx.ShadingType.SOLID, color: "EFF6FF", fill: "EFF6FF" },
+            indent: { left: 400 },
+            spacing: { after: 120 },
+          }));
+        } else if (t.startsWith("|")) {
+          var cells = t.split("|").filter(function(c){return c.trim();});
+          if (/^[\s:|-]+$/.test(cells.join(""))) continue;
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: cells.join("  |  "), size: 18, color: "334155" })], spacing: { after: 40 } }));
+        } else {
+          var para = t.replace(/\*\*(.+?)\*\*/g, "$1");
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: para, size: 20, color: "0F172A" })], spacing: { after: 160 } }));
+        }
+      }
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: "Generated by Anteemonee • AI Study Tutor • anteemonee.com", size: 14, color: "64748B", italics: true })],
+        alignment: docx.AlignmentType.CENTER,
+        spacing: { before: 400 },
+      }));
+      var doc = new docx.Document({
+        numbering: { config: [{ reference: "default-numbering", levels: [{ level: 0, format: docx.LevelFormat.DECIMAL, text: "%1.", alignment: docx.AlignmentType.LEFT }] }] },
+        sections: [{ properties: { page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } } }, children: children }],
+      });
+      docx.Packer.toBlob(doc).then(function(blob){ resolve(blob); }).catch(function(e){
+        console.warn("[File] docx pack failed", e);
+        resolve(new Blob([markdown], {type:"text/plain"}));
+      });
+    } catch (e) {
+      console.warn("[File] docx gen failed", e);
+      resolve(new Blob([markdown], {type:"text/plain"}));
+    }
+  });
+}
+function handleFileBlocks(div, text) {
+  var blocks = parseFileBlocks(text);
+  if (!blocks.length) return;
+  var host = div.querySelector(".msg-body") || div;
+  var existing = host.querySelectorAll(".file-card");
+  existing.forEach(function(e){ e.remove(); });
+  blocks.forEach(function(f){
+    var card = document.createElement("div");
+    card.className = "file-card";
+    var ext = f.ext.toLowerCase();
+    var icon = getFileIcon(ext);
+    var preview = f.content.slice(0, 220).replace(/\n/g, " ").slice(0, 140);
+    if (preview.length >= 140) preview += "…";
+    card.innerHTML = "<div class=\"file-card-head\">" +
+      "<span class=\"file-icon\">" + icon + "</span>" +
+      "<span class=\"file-meta\"><span class=\"file-name\">" + escapeHtml(f.filename) + "</span><span class=\"file-sub\">" + ext.toUpperCase() + " • " + formatBytes(new Blob([f.content]).size) + " • Anteemonee Beautiful Design</span></span>" +
+      "<span class=\"file-badge\">" + ext.toUpperCase() + "</span></div>" +
+      "<div class=\"file-preview\">" + escapeHtml(preview) + "</div>" +
+      "<div class=\"file-actions\"><button class=\"file-download-btn\" type=\"button\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg> Download</button><button class=\"file-preview-btn\" type=\"button\">Preview</button></div>";
+    var dlBtn = card.querySelector(".file-download-btn");
+    var prevBtn = card.querySelector(".file-preview-btn");
+    dlBtn.addEventListener("click", function(){
+      var filename = f.filename;
+      var content = f.content;
+      var extLower = ext;
+      if (extLower === "pdf") {
+        var blob = generateBeautifulPdf(filename, content);
+        downloadBlob(blob, filename);
+        showChatToast("PDF downloaded: " + filename);
+      } else if (extLower === "docx" || extLower === "doc") {
+        showChatToast("Generating Word file…");
+        generateBeautifulDocx(filename, content).then(function(blob){
+          downloadBlob(blob, filename);
+          showChatToast("Word downloaded: " + filename);
+        });
+      } else if (extLower === "html") {
+        var htmlDoc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(filename)+"</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:800px;margin:40px auto;padding:32px;line-height:1.7;color:#0F172A;background:#F8FAFC}h1{color:#4F46E5;border-bottom:3px solid #6366F1;padding-bottom:12px}h2{color:#4F46E5;margin-top:28px}h3{color:#0D9488}blockquote{border-left:4px solid #6366F1;background:#EEF2FF;padding:12px 16px;border-radius:8px}code{background:#0F172A;color:#E2E8F0;padding:2px 6px;border-radius:4px}pre{background:#0F172A;color:#E2E8F0;padding:16px;border-radius:12px;overflow:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#6366F1;color:#fff;padding:10px;text-align:left}td{padding:10px;border:1px solid #E2E8F0}tr:nth-child(even) td{background:#F8FAFC}header{border-bottom:2px solid #6366F1;padding-bottom:16px;margin-bottom:24px}footer{text-align:center;color:#64748B;font-size:12px;margin-top:40px;border-top:1px solid #E2E8F0;padding-top:16px}</style></head><body><header><h1>"+escapeHtml(filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "))+"</h1><p style=\"color:#64748B\">Generated by Anteemonee • "+new Date().toLocaleDateString()+"</p></header><article>"+renderMarkdown(content).replace(/<p><\/p>/g,"")+"</article><footer>Generated by Anteemonee • AI Study Tutor</footer></body></html>";
+        var blob2 = new Blob([htmlDoc], {type:"text/html"});
+        downloadBlob(blob2, filename);
+        showChatToast("HTML downloaded");
+      } else {
+        var blob3 = new Blob([content], {type: extLower==="json"?"application/json": extLower==="csv"?"text/csv":"text/plain"});
+        downloadBlob(blob3, filename);
+        showChatToast("Downloaded: " + filename);
+      }
+    });
+    prevBtn.addEventListener("click", function(){
+      var extLower = f.ext.toLowerCase();
+      if (extLower === "html") {
+        var htmlDoc2 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Preview</title><style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:24px;color:#0F172A}h1{color:#6366F1}h2{color:#4F46E5}h3{color:#0D9488}</style></head><body>"+renderMarkdown(f.content)+"</body></html>";
+        var w = window.open("", "_blank");
+        if (w) { w.document.write(htmlDoc2); w.document.close(); }
+      } else {
+        var overlay = document.createElement("div");
+        overlay.className = "file-preview-overlay";
+        overlay.innerHTML = "<div class=\"file-preview-modal\"><div class=\"file-preview-head\"><span>" + escapeHtml(f.filename) + "</span><button class=\"file-preview-close\" type=\"button\">&times;</button></div><div class=\"file-preview-body\">" + renderMarkdown(f.content.slice(0,8000)) + "</div></div>";
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", function(e){ if(e.target===overlay || e.target.closest(".file-preview-close")) overlay.remove(); });
+      }
+    });
+    host.appendChild(card);
+  });
+}
+
+
+
   function finalizeStreamingMessage(div, text) {
     try {
       if (typeof _streamRenderTimer !== 'undefined' && _streamRenderTimer) { clearTimeout(_streamRenderTimer); }
@@ -1784,10 +2361,12 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     var switchTo = null;
     if (text && text.indexOf('[SWITCH_TO_ZARDARI]') !== -1) switchTo = 'zardari';
     else if (text && text.indexOf('[SWITCH_TO_STUDY]') !== -1) switchTo = 'study';
-    content.innerHTML = renderMarkdown(stripSwitchMarkers(text));
+    var displayText = stripFileBlocks(stripSwitchMarkers(text));
+    content.innerHTML = renderMarkdown(displayText);
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
+    try { handleFileBlocks(div, text); } catch (_) {}
     if (switchTo) {
       try { appendSwitchCard(div, switchTo); } catch (_) {}
     }
@@ -2241,12 +2820,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       var labels = document.querySelectorAll('.sidebar-label');
       for (var li = 0; li < labels.length; li++) labels[li].style.display = authed ? '' : 'none';
     } catch (_) {}
-    try {
-      var ms = document.getElementById('model-selector');
-      if (ms) ms.style.display = authed ? '' : 'none';
-      var mm = document.getElementById('model-selector-mobile');
-      if (mm) mm.style.display = authed ? '' : 'none';
-    } catch (_) {}
+    // model selector hidden permanently — auto routing handles models
     if (authed) return true;
     var html = '<div class="session-guest"><span class="session-guest-title">Sign in required</span>'
       + '<span class="session-guest-sub">Log in to start AI sessions.</span>'
@@ -2696,10 +3270,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     researchMode = false;
     renderModeChips();
     updatePlusDropdownActive();
-    // Repo attachments belong to Zardari only: a message sent from a study
-    // model auto-disconnects the repo (GitHub itself stays connected)
+    // Repo attachments belong to Coder only: study messages auto-disconnect the repo
     try {
-      if (typeof GitHub !== 'undefined' && !getActivePersona().codingOnly) GitHub.disconnectRepo();
+      if (typeof GitHub !== 'undefined' && !isCodingTask(text)) GitHub.disconnectRepo();
     } catch (_) {}
 
     if (welcome.style.display !== 'none') {
@@ -2727,7 +3300,11 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     const statusCycle = startStatusCycle(streamDiv, thinkMode ? 'think' : researchMode ? 'research' : null);
     scrollToBottom();
 
-    // Textbook RAG is study-only: Zardari (coding agent) skips it entirely.
+    // Auto model routing: pick persona per message (no manual selector)
+    try { applyPersonaForText(text); } catch (_) {}
+    try { updatePersonaUI(); } catch (_) {}
+
+    // Textbook RAG is study-only: Coder (coding agent) skips it entirely.
     // Saves a DB round trip and keeps the coding prompt lean (faster TTFT).
     // Textbook search + memory reload run in parallel, not sequentially.
     const isCodingAgent = getActivePersona().codingOnly;
