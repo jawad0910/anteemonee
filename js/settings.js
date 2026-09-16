@@ -1016,15 +1016,12 @@ function renderSubscriptionContent(container, planCard) {
     container.appendChild(upgradeCard);
   }
 
-  const scansUsed = ent?.scan_used ?? '\u2014';
-  const scansLimit = ent?.scan_limit ?? '\u2014';
   const planLabel = paid ? 'Lifetime' : trial.reason === 'trial' ? 'Free Trial' : trial.reason === 'blocked' ? 'Trial Unavailable' : 'Expired';
   const statusLabel = paid ? 'active' : trial.reason === 'trial' ? 'trial' : 'expired';
 
   const usageRows = [
     buildRow('Plan Type', planLabel, paid ? badge('premium', 'Lifetime') : trial.reason === 'trial' ? badge('active', 'Trial') : badge('inactive', 'Expired')),
     buildRow('Status', statusLabel, badge(paid ? 'active' : trial.reason === 'trial' ? 'active' : 'inactive', statusLabel)),
-    buildRow('Scans', `${scansUsed} / ${scansLimit}`, null),
   ];
   container.appendChild(buildCard('USAGE', usageRows));
 }
