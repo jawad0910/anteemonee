@@ -137,60 +137,6 @@ body.guest .sidebar-history:empty::before { content: none; }
   box-shadow: var(--neo-shadow-recessed-sm);
 }
 
-/* Session Panel â€” neomorphic */
-.session-panel {
-  padding: 10px 14px;
-  border-top: 1px solid var(--border-glass);
-  display: flex; flex-direction: column; gap: 6px; min-height: 36px;
-}
-.session-header {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 0.6875rem; color: var(--text-tertiary);
-  text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
-}
-.session-header-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.session-header-meta { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-secondary); }
-.session-header-dot.active { background: var(--success, #6366F1); animation: pulse-dot 2s ease-in-out infinite; }
-.session-header-dot.inactive { background: var(--text-tertiary, #6B7280); }
-@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.session-idle-hint { font-size: 0.75rem; color: var(--text-tertiary); line-height: 1.4; }
-.session-divider { height: 1px; background: var(--border-glass); margin: 2px 0; }
-.session-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8125rem; }
-.session-label { color: var(--text-tertiary); }
-.session-value { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
-.session-value.countdown { color: var(--green, #6366F1); font-weight: 700; }
-.session-progress {
-  width: 100%; height: 3px; border-radius: 2px; overflow: hidden;
-  background: var(--surface-recessed); box-shadow: var(--neo-shadow-recessed-sm);
-}
-.session-progress-bar {
-  height: 100%; border-radius: 2px;
-  background: var(--green, #6366F1);
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); min-width: 0;
-}
-.session-progress-bar.warn { background: #F59E0B; }
-.session-progress-bar.danger { background: #EF4444; }
-.session-meta { display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--text-tertiary); }
-.session-cost { font-size: 0.6875rem; color: var(--green, #6366F1); font-weight: 600; text-align: right; }
-.session-value.streak-value { color: #F59E0B; }
-.session-error { font-size: 0.75rem; color: #EF4444; text-align: center; padding: 8px 0; line-height: 1.4; }
-.session-guest { display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: center; padding: 6px 2px; }
-.session-guest-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
-.session-guest-sub { font-size: 0.75rem; color: var(--text-tertiary); line-height: 1.4; }
-.session-guest-btn {
-  display: block; text-align: center; margin-top: 4px; padding: 9px 12px; border-radius: 10px;
-  background: var(--accent); color: var(--on-accent); font-size: 0.8125rem; font-weight: 700; text-decoration: none;
-}
-.session-guest-btn:hover { filter: brightness(1.08); }
-.session-loading { display: flex; flex-direction: column; gap: 8px; }
-.session-shimmer {
-  height: 10px; border-radius: 4px;
-  background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: session-shimmer 1.5s ease-in-out infinite;
-}
-.session-shimmer.short { width: 60%; }
-@keyframes session-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 .sidebar-bottom { padding: 16px 20px; border-top: 1px solid var(--border-glass); }
 
@@ -666,49 +612,6 @@ body.guest .sidebar-history:empty::before { content: none; }
 }
 .token-exhausted-btn:hover { filter: brightness(1.1); box-shadow: 0 4px 14px rgba(99,102,241,0.4); }
 
-/* Session Modal Popup â€” neomorphic */
-.session-modal-overlay {
-  position: fixed; inset: 0; z-index: 10000;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 0, 0, 0.6); padding: 20px;
-  opacity: 0; transition: opacity 0.25s ease;
-}
-.session-modal-overlay.show { opacity: 1; }
-.session-modal {
-  position: relative;
-  width: 100%; max-width: 380px;
-  background: var(--bg-secondary); border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg); box-shadow: var(--neo-shadow-float);
-  padding: 32px 28px; text-align: center;
-  animation: selPop 0.2s ease;
-}
-.session-modal-icon {
-  width: 56px; height: 56px; margin: 0 auto 16px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-}
-.session-modal-title {
-  font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;
-}
-.session-modal-desc {
-  font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;
-}
-.session-modal-btn {
-  width: 100%; padding: 12px 20px; border: none; border-radius: var(--radius-md);
-  background: var(--accent-gradient); color: var(--on-accent); font-size: 0.9rem; font-weight: 700;
-  cursor: pointer; box-shadow: 0 4px 14px rgba(99,102,241,0.3);
-  transition: all var(--transition-fast);
-}
-.session-modal-btn:hover { box-shadow: 0 6px 20px rgba(99,102,241,0.4); transform: translateY(-1px); }
-.session-modal-btn:active { transform: translateY(0); }
-.session-modal-close {
-  position: absolute; top: 12px; right: 14px;
-  width: 28px; height: 28px; border-radius: 50%; border: none;
-  background: var(--neo-highlight); color: var(--text-tertiary);
-  font-size: 1.2rem; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all var(--transition-fast);
-}
-.session-modal-close:hover { background: rgba(255,107,107,0.15); color: var(--error); }
 
 /* Mobile Sidebar â€” neomorphic */
 .mobile-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 200; opacity: 0; transition: opacity var(--transition-base); }
@@ -1397,13 +1300,13 @@ body.guest .sidebar-history:empty::before { content: none; }
 }
 
 /* Panels + modals — floating glass */
-.github-panel, .session-modal, .quote-modal, .report-popup-box, .gh-apply-card {
+.github-panel, .quote-modal, .report-popup-box, .gh-apply-card {
   background: var(--liquid-bg-strong);
   -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
   border: 1px solid var(--liquid-border);
   box-shadow: var(--liquid-inset), var(--liquid-shadow);
 }
-.session-modal-btn, .rp-btn-primary {
+.rp-btn-primary {
   background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
   border: 1px solid rgba(255,255,255,0.22);
   box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 14px rgba(99,102,241,0.35);
@@ -1883,4 +1786,172 @@ body.sidebar-collapsed .sidebar {
 .model-selector,
 .sidebar-model { display: none !important; }
 
+/* ── Voice button (input bar) ── */
+.btn-voice {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s ease;
+}
+.btn-voice:hover { background: var(--liquid-bg); color: var(--text-primary); border-color: var(--liquid-border); }
+.btn-voice.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+/* ── Voice overlay — ChatGPT-style full-screen ── */
+.voice-overlay {
+  position: fixed; inset: 0; z-index: 4000;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.voice-overlay.show { display: flex; }
+.voice-overlay-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 35%, rgba(99,102,241,0.18) 0%, rgba(99,102,241,0.08) 30%, rgba(0,0,0,0.92) 70%);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+:root[data-theme="light"] .voice-overlay-bg {
+  background: radial-gradient(ellipse at 50% 35%, rgba(99,102,241,0.14) 0%, rgba(255,255,255,0.85) 45%, rgba(245,245,255,0.98) 100%);
+}
+.voice-overlay-inner {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 560px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  text-align: center;
+}
+.voice-close {
+  position: fixed; top: 18px; right: 18px; z-index: 2;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--liquid-bg-strong); border: 1px solid var(--liquid-border);
+  color: var(--text-primary); font-size: 22px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: all 0.15s ease;
+}
+.voice-close:hover { background: var(--liquid-bg); transform: scale(1.05); }
+.voice-orb-wrap { position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; }
+.voice-orb {
+  position: relative; width: 140px; height: 140px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a78bfa 0%, #6366f1 40%, #1e1b4b 100%);
+  box-shadow: 0 0 40px rgba(99,102,241,0.5), inset 0 1px 1px rgba(255,255,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.voice-orb-core {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.35));
+  filter: blur(0.5px);
+}
+.voice-orb-ring {
+  position: absolute; inset: -12px; border-radius: 50%;
+  border: 1.5px solid rgba(99,102,241,0.25);
+  animation: orbRing 2.2s ease-out infinite;
+}
+.voice-orb-ring.delay { animation-delay: 0.6s; }
+@keyframes orbRing { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(1.25); opacity: 0; } }
+.voice-overlay.listening .voice-orb { transform: scale(1.08); box-shadow: 0 0 60px rgba(99,102,241,0.7), inset 0 1px 1px rgba(255,255,255,0.4); animation: orbPulse 1.2s ease-in-out infinite; }
+.voice-overlay.speaking .voice-orb { animation: orbPulse 0.6s ease-in-out infinite; background: radial-gradient(circle at 35% 30%, #f59e0b 0%, #6366f1 45%, #1e1b4b 100%); }
+@keyframes orbPulse { 0%,100% { transform: scale(1.06); } 50% { transform: scale(1.14); } }
+.voice-wave {
+  position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; height: 28px;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+.voice-overlay.listening .voice-wave, .voice-overlay.speaking .voice-wave { opacity: 1; }
+.voice-wave span {
+  width: 4px; border-radius: 999px; background: var(--accent);
+  height: 12px; animation: waveBar 0.7s ease-in-out infinite;
+}
+.voice-wave span:nth-child(1){ animation-delay:0s; height:10px; }
+.voice-wave span:nth-child(2){ animation-delay:0.12s; height:18px; }
+.voice-wave span:nth-child(3){ animation-delay:0.24s; height:26px; }
+.voice-wave span:nth-child(4){ animation-delay:0.08s; height:16px; }
+.voice-wave span:nth-child(5){ animation-delay:0.18s; height:10px; }
+@keyframes waveBar { 0%,100% { transform: scaleY(0.5); opacity:0.7; } 50% { transform: scaleY(1); opacity:1; } }
+.voice-status { font-size: 15px; font-weight: 600; color: var(--text-primary); min-height: 20px; }
+.voice-transcript {
+  min-height: 28px; max-width: 100%; padding: 10px 16px;
+  font-size: 15px; line-height: 1.5; color: var(--text-secondary);
+  background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft);
+  border-radius: 14px; backdrop-filter: blur(10px);
+  word-break: break-word; display: none; width: 100%;
+}
+.voice-transcript.has-text { display: block; }
+.voice-transcript.interim { color: var(--text-tertiary); font-style: italic; }
+.voice-controls { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 4px; }
+.voice-mic-btn {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--liquid-bg-strong); border: 1.5px solid var(--liquid-border);
+  color: var(--text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  box-shadow: var(--liquid-inset), 0 8px 24px rgba(0,0,0,0.2);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: all 0.18s ease;
+}
+.voice-mic-btn:hover { transform: scale(1.04); border-color: var(--accent); }
+.voice-mic-btn:active { transform: scale(0.97); }
+.voice-mic-btn.disabled { opacity: 0.5; pointer-events: none; transform: none; }
+.voice-overlay.listening .voice-mic-btn { background: #ef4444; border-color: #ef4444; color: #fff; box-shadow: 0 0 24px rgba(239,68,68,0.5); }
+.voice-overlay.listening .voice-mic-btn .voice-mic-icon { animation: micShake 0.5s ease infinite; }
+.voice-overlay.speaking .voice-mic-btn { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 0 24px rgba(99,102,241,0.4); animation: ttsPulse 1.2s ease-in-out infinite; }
+@keyframes micShake { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.voice-mic-label { font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; margin-top: 1px; }
+.voice-exit-btn {
+  padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft);
+  color: var(--text-secondary); backdrop-filter: blur(10px);
+  transition: all 0.15s ease;
+}
+.voice-exit-btn:hover { background: var(--liquid-bg); color: var(--text-primary); border-color: var(--liquid-border); }
+.voice-ptt-row,
+.voice-ptt-capture,
+#voice-ptt-row,
+#voice-ptt-capture {
+  display: none !important;
+}
+.voice-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; opacity: 0.9; text-align: center; max-width: 420px; line-height: 1.4; }
+.voice-overlay.paused .voice-orb { opacity: 0.55; filter: grayscale(0.2); animation: none !important; }
+.voice-overlay.paused .voice-mic-btn { background: var(--surface); border-color: var(--liquid-border); color: var(--text-secondary); }
+.voice-ptt-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.voice-ptt-toggle { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; user-select: none; }
+.voice-ptt-toggle input { accent-color: var(--accent); width: 14px; height: 14px; }
+.voice-ptt-sep { color: var(--text-tertiary); }
+.voice-ptt-key {
+  padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, monospace;
+  background: var(--surface); border: 1px solid var(--liquid-border); color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 44px; text-transform: capitalize;
+}
+.voice-ptt-key.capturing { background: var(--accent); color: var(--on-accent); border-color: var(--accent); animation: pulseDot 0.8s ease infinite; }
+.voice-ptt-hint-inline { font-size: 11px; color: var(--text-tertiary); }
+.voice-ptt-status { font-size: 11px; color: var(--accent); font-weight: 600; min-width: 0; }
+.voice-ptt-capture { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 6px 12px; border-radius: 999px; }
+.voice-unsupported { font-size: 12px; color: #ef4444; background: rgba(239,68,68,0.08); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(239,68,68,0.2); }
+
 /* Tiny screens inherit the rules above. */
+
+/* ── TTS Speaker button (assistant message feedback) ── */
+.fb-tts { transition: color 0.15s, background 0.15s; }
+.fb-tts:hover { color: var(--accent); background: var(--accent-soft); }
+.fb-tts.tts-playing { color: var(--accent); background: var(--accent-soft); animation: ttsPulse 1.2s ease-in-out infinite; }
+@keyframes ttsPulse { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.12); } }
+
+/* ── Guest mode: hide mic + attachment buttons when not signed in ── */
+body.guest #btn-voice,
+body.guest #plus-wrapper { display: none !important; }
+
+/* ── Guest mode: suggestions unclickable when not signed in ── */
+body.guest .welcome-action-btn {
+  pointer-events: none !important;
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: saturate(0.5);
+}
+
+/* ── Locked mode: trial expired — same restrictions as guest ── */
+body.locked #btn-voice,
+body.locked #plus-wrapper { display: none !important; }
+body.locked .welcome-action-btn {
+  pointer-events: none !important;
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: saturate(0.5);
+}
