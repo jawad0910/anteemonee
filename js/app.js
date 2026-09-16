@@ -165,7 +165,7 @@ async function loadHomepageData() {
   }
 
   // Skeleton loaders on while the real numbers load.
-  const loaderIds = ['dash-stat-time', 'dash-stat-sessions', 'dash-stat-streak', 'dash-credits-val'];
+  const loaderIds = ['dash-stat-time', 'dash-stat-streak', 'dash-credits-val'];
   loaderIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('is-loading');
@@ -174,15 +174,14 @@ async function loadHomepageData() {
   try {
     // Bounded wait: if the network stalls, fall back to nulls so the
     // finally block below clears the skeletons instead of hanging forever.
-    const [profileRes, sessCount, acad, entRes, streakRes] = await Promise.race([
+    const [profileRes, acad, entRes, streakRes] = await Promise.race([
       Promise.all([
         safe('profile', db.from('profiles').select('study_time_seconds').eq('id', uid).maybeSingle()),
-        safe('ai_sessions', db.from('ai_sessions').select('id', { count: 'exact', head: true }).eq('user_id', uid)),
         safe('academic_profile', db.from('student_academic_profiles').select('class_level:class_levels(label)').eq('user_id', uid).maybeSingle()),
         safe('entitlement', db.rpc('get_entitlement_snapshot')),
         safe('streak', db.rpc('get_user_streak')),
       ]),
-      new Promise((resolve) => setTimeout(() => resolve([null, null, null, null, null]), 15000)),
+      new Promise((resolve) => setTimeout(() => resolve([null, null, null, null]), 15000)),
     ]);
 
     // Study time from profiles.study_time_seconds + pending localStorage
@@ -208,16 +207,6 @@ async function loadHomepageData() {
       homepageSetText('dash-stat-time-sub', 'Total');
     }
 
-    // AI Sessions = rows in ai_sessions table (actual API sessions started).
-    const sCount = sessCount && typeof sessCount.count === 'number' ? sessCount.count : null;
-    if (sCount !== null) {
-      homepageSetText('dash-stat-sessions', String(sCount));
-      homepageSetText('dash-stat-sessions-sub', 'Total chats');
-    } else {
-      homepageSetText('dash-stat-sessions', 'â€“');
-      homepageSetText('dash-stat-sessions-sub', 'Unavailable');
-    }
-
     // Streak: from user_streaks table via RPC (auto-detects 24h break).
     if (streakRes && typeof streakRes === 'object') {
       const s = streakRes.current_streak || 0;
@@ -228,15 +217,18 @@ async function loadHomepageData() {
       homepageSetText('dash-stat-streak-sub', 'Unavailable');
     }
 
-    // AI credits (same source as the app: entitlement snapshot).
-    if (entRes && typeof entRes === 'object') {
-      const used = Number(entRes.ai_used || 0);
-      const limit = Number(entRes.ai_limit || 25);
-      homepageSetText('dash-credits-val', `${used} / ${limit}`);
-      const bar = document.getElementById('dash-credits-bar');
-      if (bar && limit > 0) bar.style.width = `${Math.min(100, Math.round((used / limit) * 100))}%`;
-      startCreditsCountdown(entRes.period_end || null);
-    }
+    // Plan status: lifetime / trial countdown / expired.
+    try {
+      await Access.init();
+      const st = Access.state;
+      if (st.paid) {
+        homepageSetText('dash-credits-val', 'Lifetime');
+      } else if (st.reason === 'trial') {
+        homepageSetText('dash-credits-val', st.daysLeft <= 1 ? 'Trial ends today' : `${st.daysLeft} trial days left`);
+      } else if (st.reason === 'expired' || st.reason === 'blocked') {
+        homepageSetText('dash-credits-val', 'Trial expired');
+      }
+    } catch (_) {}
     // Class pill from the academic profile.
     const classLabel = acad && acad.class_level && acad.class_level.label;
     const pill = document.getElementById('dash-class-pill');
@@ -250,25 +242,6 @@ async function loadHomepageData() {
       if (el) el.classList.remove('is-loading');
     });
   }
-}
-
-let creditsTimer = null;
-function startCreditsCountdown(periodEndIso) {
-  if (creditsTimer) { clearInterval(creditsTimer); creditsTimer = null; }
-  const el = document.getElementById('dash-credits-sub');
-  if (!el) return;
-  if (!periodEndIso) { el.textContent = 'Monthly'; return; }
-  function tick() {
-    const ms = new Date(periodEndIso).getTime() - Date.now();
-    if (isNaN(ms)) { el.textContent = 'Monthly'; return; }
-    if (ms <= 0) { el.textContent = 'Resets soon'; return; }
-    const d = Math.floor(ms / 86400000);
-    const h = Math.floor((ms % 86400000) / 3600000);
-    const m = Math.floor((ms % 3600000) / 60000);
-    el.textContent = d > 0 ? `Resets in ${d}d ${h}h` : h > 0 ? `Resets in ${h}h ${m}m` : `Resets in ${m}m`;
-  }
-  tick();
-  creditsTimer = setInterval(tick, 60000);
 }
 
 /* Theme modes: 'light' | 'dark' | 'system' (device default). Stored per
@@ -509,7 +482,7 @@ function renderProfileAvatar() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Account
       </a>
-      <a href="${BASE}/pages/settings.html" class="dropdown-item">
+      <a href="${BASE}/" onclick="if(window.AnteemoneeSettings&&window.AnteemoneeSettings.open){event.preventDefault();toggleProfileDropdown();window.AnteemoneeSettings.open();}" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Settings
       </a>
@@ -651,19 +624,7 @@ document.addEventListener('click', (e) => {
 
 async function handleLogout() {
   try {
-    // Delete this device row so it disappears from the sessions list.
-    try {
-      const sid = sessionStorage.getItem('Anteemonee_session_id');
-      if (sid && currentUser && db) {
-        await withTimeout(
-          db.from('session_activity').delete().eq('id', sid).eq('user_id', currentUser.id),
-          5000, 'logout-cleanup'
-        );
-      }
-    } catch (_) {}
-    sessionStorage.removeItem('Anteemonee_session_id');
-    stopActivityTracking();
-
+    try { await Access.releaseSlot(); } catch (_) {}
     // Remove this account from multi-account store
     const removed = await AccountManager.removeAccount(currentUser?.id);
 
@@ -767,19 +728,7 @@ async function addAnotherAccount() {
 
 async function logoutAllAccounts() {
   try {
-    // Clean up session activity
-    const sid = sessionStorage.getItem('Anteemonee_session_id');
-    if (sid && currentUser && db) {
-      try {
-        await withTimeout(
-          db.from('session_activity').delete().eq('id', sid).eq('user_id', currentUser.id),
-          5000, 'logout-cleanup'
-        );
-      } catch (_) {}
-    }
-    sessionStorage.removeItem('Anteemonee_session_id');
-    stopActivityTracking();
-
+    try { await Access.releaseSlot(); } catch (_) {}
     await AccountManager.logoutAll();
     await db.auth.signOut();
     currentUser = null;
@@ -829,7 +778,7 @@ function showAccountLimitModal() {
         </div>
         <div class="account-modal-footer">
           <button class="btn-settings btn-settings-secondary" onclick="closeAccountLimitModal()">Close</button>
-          <button class="btn-settings btn-settings-primary" onclick="closeAccountLimitModal(); window.location.href='${BASE}/pages/settings.html#accounts'">Manage accounts</button>
+          <button class="btn-settings btn-settings-primary" onclick="closeAccountLimitModal(); if (window.AnteemoneeSettings && window.AnteemoneeSettings.open) window.AnteemoneeSettings.open(); else window.location.href='${BASE}/index.html'">Manage accounts</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -2568,232 +2517,6 @@ function applyPrefsToUI() {
   else document.documentElement.classList.remove('reduce-anim');
 }
 
-/* =========================
-   SESSION ACTIVITY TRACKING
-   ========================= */
-
-function parseUserAgent() {
-  const ua = navigator.userAgent || '';
-  let browser = 'Unknown';
-  if (/Firefox\/|FxiOS\//.test(ua)) browser = 'Firefox';
-  else if (/EdgiOS\//.test(ua)) browser = 'Edge';
-  else if (/Edg\//.test(ua)) browser = 'Edge';
-  else if (/OPR\/|Opera|OPiOS\//.test(ua)) browser = 'Opera';
-  else if (/CriOS\//.test(ua)) browser = 'Chrome';
-  else if (/Chrome\//.test(ua)) browser = 'Chrome';
-  else if (/Safari\//.test(ua)) browser = 'Safari';
-
-  // Mobile OSes MUST be checked before desktop: an iPhone UA contains
-  // "like Mac OS X", which naive substring checks mistake for macOS.
-  let os = 'Unknown';
-  if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
-  else if (/Android/.test(ua)) os = 'Android';
-  else if (/Windows/.test(ua)) os = 'Windows';
-  else if (/Mac OS|Macintosh/.test(ua)) os = 'macOS';
-  else if (/Linux/.test(ua)) os = 'Linux';
-
-  let deviceType = 'desktop';
-  if (/Tablet|iPad/.test(ua) && !/Mobile/.test(ua)) deviceType = 'tablet';
-  else if (/Mobile|Android|iPhone|iPod/.test(ua)) deviceType = 'mobile';
-
-  return { browser, os, device_type: deviceType };
-}
-
-function getDeviceLabel(session) {
-  return `${session.browser} on ${session.os}`;
-}
-
-function getDeviceIcon(session) {
-  if (session.device_type === 'mobile') return '&#128241;';
-  if (session.device_type === 'tablet') return '&#128241;';
-  return '&#128187;';
-}
-
-function timeAgo(dateStr) {
-  if (!dateStr) return 'Unknown';
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return mins + 'm ago';
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return hours + 'h ago';
-  const days = Math.floor(hours / 24);
-  if (days < 7) return days + 'd ago';
-  return new Date(dateStr).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' });
-}
-
-let _activityTimer = null;
-
-async function recordSessionActivity() {
-  if (!currentUser || !db) return;
-  try {
-    const info = parseUserAgent();
-    const now = new Date().toISOString();
-
-    // Fast path: this tab already owns a live row, just touch it.
-    const knownId = sessionStorage.getItem('Anteemonee_session_id');
-    if (knownId) {
-      const { data: own } = await db.from('session_activity')
-        .select('id, logged_out_at, city, country')
-        .eq('id', knownId)
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-      if (own && !own.logged_out_at) {
-        await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', knownId);
-        // Keep location fresh on every visit (fire-and-forget).
-        syncRowLocation(knownId, own);
-        return;
-      }
-      sessionStorage.removeItem('Anteemonee_session_id');
-    }
-
-    // Slow path (new tab / new device / after sign-out elsewhere).
-    const rowId = await reconcileSessionRows();
-    if (rowId) sessionStorage.setItem('Anteemonee_session_id', String(rowId));
-  } catch (e) {
-    console.error('recordSessionActivity error:', e);
-  }
-}
-
-// Adopts (or creates) this device's row, heals duplicates, prunes old
-// logged-out rows. Returns this device's row id. Fully idempotent, so the
-// settings page calls it on every visit to guarantee a clean list.
-async function reconcileSessionRows() {
-  if (!currentUser || !db) return null;
-  try {
-    const info = parseUserAgent();
-    const now = new Date().toISOString();
-    // Adopt the newest live row with the same device fingerprint instead of
-    // inserting a duplicate. sessionStorage is per-tab, so id-matching
-    // alone multiplies rows for the same browser.
-    const { data: existing } = await db.from('session_activity')
-      .select('id, city, country')
-      .eq('user_id', currentUser.id)
-      .eq('browser', info.browser)
-      .eq('os', info.os)
-      .eq('device_type', info.device_type)
-      .is('logged_out_at', null)
-      .order('last_active_at', { ascending: false })
-      .limit(1);
-    let rowId = existing?.length ? existing[0].id : null;
-
-    if (rowId) {
-      await db.from('session_activity').update({ last_active_at: now, is_current: true }).eq('id', rowId);
-      await syncRowLocation(rowId, existing[0]);
-    } else {
-      // Brand-new device row: resolve approximate location once (best-effort).
-      const loc = await resolveApproxLocation();
-      const { data: inserted } = await db.from('session_activity').insert({
-        user_id: currentUser.id,
-        browser: info.browser,
-        os: info.os,
-        device_type: info.device_type,
-        is_current: true,
-        last_active_at: now,
-        city: loc.city,
-        country: loc.country,
-      }).select('id').single();
-      rowId = inserted?.id || null;
-    }
-
-    if (rowId) {
-      // This is the current device: clear stale flags, delete ALL
-      // logged-out rows (any age) and merge same-device duplicates.
-      await db.from('session_activity').update({ is_current: false })
-        .eq('user_id', currentUser.id).neq('id', rowId);
-      await db.from('session_activity').delete()
-        .eq('user_id', currentUser.id)
-        .eq('browser', info.browser).eq('os', info.os).eq('device_type', info.device_type)
-        .neq('id', rowId);
-      await db.from('session_activity').delete()
-        .eq('user_id', currentUser.id)
-        .not('logged_out_at', 'is', null);
-    }
-    return rowId;
-  } catch (e) {
-    console.error('reconcileSessionRows error:', e);
-    return null;
-  }
-}
-
-// Approximate location, resolved once per page load and raced across
-// several free providers (single providers like ipapi.co are aggressively
-// rate-limited in Pakistan, so one source alone keeps failing).
-let _geoPromise = null;
-function resolveApproxLocation() {
-  if (!_geoPromise) {
-    _geoPromise = (async () => {
-      const sources = [
-        'https://ipwho.is/',
-        'https://ipapi.co/json/',
-        'https://freeipapi.com/api/json',
-        'https://ipinfo.io/json',
-      ];
-      try {
-        const results = await Promise.all(sources.map(url =>
-          Promise.race([
-            fetch(url).then(r => (r.ok ? r.json() : null)).catch(() => null),
-            new Promise(res => setTimeout(() => res(null), 2500)),
-          ])
-        ));
-        for (const data of results) {
-          if (!data) continue;
-          const city = data.city || data.cityName || null;
-          const country = data.country_name || data.countryName || data.country || null;
-          if (city || country) return { city, country };
-        }
-      } catch (_) {}
-      return { city: null, country: null };
-    })();
-  }
-  return _geoPromise;
-}
-
-// Refreshes a row's location whenever it is missing or has changed.
-async function syncRowLocation(rowId, stored) {
-  try {
-    const loc = await resolveApproxLocation();
-    if ((!loc.city && !loc.country) || !db) return;
-    if (stored && stored.city === loc.city && stored.country === loc.country) return;
-    await db.from('session_activity').update({ city: loc.city, country: loc.country }).eq('id', rowId);
-  } catch (_) {}
-}
-
-function startActivityTracking() {
-  recordSessionActivity();
-  _activityTimer = setInterval(recordSessionActivity, 5 * 60 * 1000);
-}
-
-function stopActivityTracking() {
-  if (_activityTimer) { clearInterval(_activityTimer); _activityTimer = null; }
-}
-
-async function fetchSessions() {
-  if (!currentUser) return [];
-  try {
-    const { data } = await db.from('session_activity')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('last_active_at', { ascending: false })
-      .limit(25);
-    return data || [];
-  } catch (e) { return []; }
-}
-
-async function signOutOtherSessions() {
-  if (!currentUser || !db) return;
-  try {
-    // Delete other rows outright so signed-out devices vanish from the list.
-    const currentSessionId = sessionStorage.getItem('Anteemonee_session_id');
-    let q = db.from('session_activity').delete().eq('user_id', currentUser.id);
-    if (currentSessionId) q = q.neq('id', currentSessionId);
-    await q;
-    await db.auth.signOut({ scope: 'others' });
-    await db.from('security_events').insert({ user_id: currentUser.id, kind: 'signed_out_others' });
-  } catch (e) { console.error('signOutOtherSessions error:', e); }
-}
 
 async function fetchSecurityEvents(limit = 10) {
   if (!currentUser) return [];
@@ -2813,3 +2536,288 @@ async function recordSecurityEvent(kind, detail) {
     await db.from('security_events').insert({ user_id: currentUser.id, kind, detail: detail || null });
   } catch (e) { /* best-effort */ }
 }
+
+/* =========================================================
+   LIFETIME ACCESS — 3-day trial, device lock, single session
+   Model: Rs 2,499 one-time lifetime. 3-day free trial (one per
+   device). One active session per account (second login kicks
+   the first with notice). Hard paywall after trial expiry.
+
+   Requires Supabase tables (run ACCESS_TABLES.sql once):
+     trials(user_id PK, started_at, ends_at)
+     trial_devices(device_hash PK, user_id, claimed_at)
+     active_devices(user_id PK, device_id, last_seen)
+   ========================================================= */
+
+const TRIAL_DAYS = 3;
+const LIFETIME_PRICE = 'Rs 2,499';
+
+const Access = {
+  state: { ready: false, paid: false, trial: 'unknown', trialEndsAt: null, daysLeft: 0, access: false, reason: 'guest' },
+  _deviceId: null,
+  _heartbeat: null,
+  _inited: false,
+
+  // Paid = lifetime plan (new model) or legacy active premium/pro.
+  isPaidEntitlement(ent) {
+    if (!ent) return false;
+    if (ent.plan_type === 'lifetime' && ent.subscription_status !== 'refunded') return true;
+    if ((ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active') return true;
+    return false;
+  },
+
+  // Stable per-browser id for the single-session slot.
+  getDeviceId() {
+    try {
+      let id = localStorage.getItem('Anteemonee_device_id');
+      if (!id) {
+        id = 'd_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+        localStorage.setItem('Anteemonee_device_id', id);
+      }
+      return id;
+    } catch (_) {
+      return 'd_fallback_' + Math.random().toString(36).slice(2, 10);
+    }
+  },
+
+  // Best-effort device fingerprint for the one-trial-per-device lock.
+  async getDeviceHash() {
+    try {
+      const parts = [navigator.userAgent || '', navigator.platform || '', screen.width + 'x' + screen.height + 'x' + (screen.colorDepth || ''),
+        Intl.DateTimeFormat().resolvedOptions().timeZone || '', (navigator.language || '')];
+      try {
+        const c = document.createElement('canvas');
+        const ctx = c.getContext('2d');
+        ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+        ctx.fillText('anteemonee-device-fp', 2, 2);
+        parts.push(c.toDataURL().slice(-120));
+      } catch (_) {}
+      const raw = parts.join('|');
+      if (window.crypto && crypto.subtle) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      let h = 5381;
+      for (let i = 0; i < raw.length; i++) h = ((h << 5) + h + raw.charCodeAt(i)) >>> 0;
+      return 'fb_' + h.toString(16);
+    } catch (_) {
+      return 'fb_unknown';
+    }
+  },
+
+  _missingTable(err) {
+    if (!err) return false;
+    if (err.code === '42P01') return true;
+    const msg = String((err.message || '') + ' ' + (err.details || '') + ' ' + (err.hint || ''));
+    return /relation .* does not exist|table .* does not exist|schema cache/i.test(msg);
+  },
+
+  // Main entry: call after checkAuth(). Computes + caches Access.state.
+  async init() {
+    if (this._inited) return this.state;
+    this._inited = true;
+    const st = this.state;
+    try {
+      if (!currentUser || !db) { st.ready = true; st.reason = 'guest'; return st; }
+      let ent = null;
+      try {
+        const res = await db.rpc('get_entitlement_snapshot');
+        ent = res.data || null;
+      } catch (_) { ent = null; }
+      if (this.isPaidEntitlement(ent)) {
+        st.paid = true; st.access = true; st.reason = 'lifetime'; st.ready = true;
+        this.claimDeviceSlot();
+        return st;
+      }
+      const trial = await this.ensureTrial();
+      st.trial = trial.status;
+      st.trialEndsAt = trial.endsAt || null;
+      st.daysLeft = trial.daysLeft || 0;
+      if (trial.status === 'active') {
+        st.access = true; st.reason = 'trial';
+        this.claimDeviceSlot();
+      } else if (trial.status === 'unavailable') {
+        // Access tables not created yet (run ACCESS_TABLES.sql) — fail open so the app keeps working.
+        st.access = true; st.reason = 'trial';
+      } else {
+        st.access = false;
+        st.reason = trial.status === 'blocked' ? 'blocked' : 'expired';
+      }
+      st.ready = true;
+      return st;
+    } catch (e) {
+      console.warn('[Access] init failed:', e);
+      st.ready = true; st.reason = 'error'; st.access = false;
+      return st;
+    }
+  },
+
+  // 3-day trial with one-per-device lock. Auto-claims on first use.
+  async ensureTrial() {
+    const out = { status: 'none', endsAt: null, daysLeft: 0 };
+    try {
+      if (!currentUser || !db) return out;
+      const now = Date.now();
+      let row = null;
+      try {
+        const res = await db.from('trials').select('started_at, ends_at').eq('user_id', currentUser.id).maybeSingle();
+        if (res.error) throw res.error;
+        row = res.data || null;
+      } catch (e) {
+        if (this._missingTable(e)) { console.warn('[Access] trials table missing — run ACCESS_TABLES.sql'); return { status: 'unavailable', endsAt: null, daysLeft: 0 }; }
+        throw e;
+      }
+      if (row && row.ends_at) {
+        const ends = new Date(row.ends_at).getTime();
+        if (now < ends) {
+          out.status = 'active'; out.endsAt = row.ends_at;
+          out.daysLeft = Math.max(1, Math.ceil((ends - now) / 86400000));
+        } else {
+          out.status = 'expired'; out.endsAt = row.ends_at; out.daysLeft = 0;
+        }
+        return out;
+      }
+      // No trial yet — claim one, locked to this device.
+      const hash = await this.getDeviceHash();
+      try {
+        const ins = await db.from('trial_devices').insert({ device_hash: hash, user_id: currentUser.id });
+        if (ins.error) throw ins.error;
+      } catch (e) {
+        if (e && (e.code === '23505' || /duplicate|already exists/i.test(e.message || ''))) {
+          out.status = 'blocked'; // this device already claimed a trial
+          return out;
+        }
+        if (this._missingTable(e)) { console.warn('[Access] trial_devices table missing — run ACCESS_TABLES.sql'); return { status: 'unavailable', endsAt: null, daysLeft: 0 }; }
+        throw e;
+      }
+      const started = new Date().toISOString();
+      const ends = new Date(now + TRIAL_DAYS * 86400000).toISOString();
+      try {
+        const t = await db.from('trials').insert({ user_id: currentUser.id, started_at: started, ends_at: ends });
+        if (t.error) throw t.error;
+      } catch (e) {
+        if (!(e && (e.code === '23505' || /duplicate|already exists/i.test(e.message || '')))) throw e;
+        // Race: trial row appeared concurrently — re-read it.
+        return this.ensureTrial();
+      }
+      out.status = 'active'; out.endsAt = ends; out.daysLeft = TRIAL_DAYS;
+      return out;
+    } catch (e) {
+      console.warn('[Access] trial check failed:', e);
+      return out;
+    }
+  },
+
+  // Single-session slot: this device takes over; others get kicked.
+  async claimDeviceSlot() {
+    try {
+      if (!currentUser || !db) return;
+      this._deviceId = this.getDeviceId();
+      await db.from('active_devices').upsert(
+        { user_id: currentUser.id, device_id: this._deviceId, last_seen: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      );
+      this.startHeartbeat();
+    } catch (e) {
+      if (this._missingTable(e)) console.warn('[Access] active_devices table missing — run ACCESS_TABLES.sql');
+    }
+  },
+
+  startHeartbeat() {
+    try {
+      if (this._heartbeat) clearInterval(this._heartbeat);
+      this._heartbeat = setInterval(() => this.verifySlot(), 60000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.verifySlot();
+      });
+    } catch (_) {}
+  },
+
+  async verifySlot() {
+    try {
+      if (!currentUser || !db || !this._deviceId) return;
+      await db.from('active_devices').update({ last_seen: new Date().toISOString() }).eq('user_id', currentUser.id).eq('device_id', this._deviceId);
+      const { data } = await db.from('active_devices').select('device_id').eq('user_id', currentUser.id).maybeSingle();
+      if (data && data.device_id && data.device_id !== this._deviceId) this.kickedOut();
+    } catch (_) { /* transient — next beat retries */ }
+  },
+
+  // Best-effort cleanup so a clean logout frees the slot instantly.
+  async releaseSlot() {
+    try {
+      if (this._heartbeat) { clearInterval(this._heartbeat); this._heartbeat = null; }
+      if (currentUser && db) await db.from('active_devices').delete().eq('user_id', currentUser.id);
+    } catch (_) {}
+  },
+
+  kickedOut() {
+    try { if (this._heartbeat) { clearInterval(this._heartbeat); this._heartbeat = null; } } catch (_) {}
+    this.state.access = false; this.state.reason = 'kicked';
+    try { if (db) db.auth.signOut().catch(() => {}); } catch (_) {}
+    try { if (typeof AccountManager !== 'undefined') AccountManager.removeAccount(currentUser?.id).catch(() => {}); } catch (_) {}
+    currentUser = null; currentProfile = null;
+    let modal = document.getElementById('access-kicked-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'access-kicked-modal';
+      modal.innerHTML = `
+        <div style="position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:20px">
+          <div style="width:100%;max-width:380px;background:var(--bg-secondary,#14181d);border:1px solid var(--border-glass,rgba(255,255,255,0.12));border-radius:16px;padding:32px 28px;text-align:center">
+            <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 8px">Signed in on another device</h3>
+            <p style="font-size:0.85rem;opacity:0.75;line-height:1.5;margin:0 0 24px">Your account was signed in elsewhere. Lifetime accounts allow one active session at a time — this device has been signed out.</p>
+            <button id="access-kicked-ok" style="width:100%;padding:12px 20px;border:none;border-radius:12px;background:var(--accent,#6366F1);color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer">Sign In Again</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      document.getElementById('access-kicked-ok')?.addEventListener('click', () => {
+        window.location.href = (typeof BASE !== 'undefined' ? BASE : '') + '/pages/login.html';
+      });
+    }
+    modal.style.display = 'block';
+  },
+
+  trialDaysText() {
+    const st = this.state;
+    if (st.reason === 'trial') return st.daysLeft <= 1 ? 'Trial ends today' : `${st.daysLeft} trial days left`;
+    return '';
+  },
+
+  // Shows/removes the hard-paywall banner above the chat input.
+  // Returns true when the user is locked (signed in, no access).
+  applyChatPaywall() {
+    const st = this.state;
+    const locked = !!(st.ready && !st.access && st.reason !== 'guest' && st.reason !== 'error');
+    try { document.body.classList.toggle('locked', locked); } catch (_) {}
+    try {
+      const area = document.querySelector('.chat-input-area');
+      let bar = document.getElementById('access-paywall');
+      if (locked && area) {
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'access-paywall';
+          area.prepend(bar);
+        }
+        const payHref = (typeof BASE !== 'undefined' ? BASE : '') + '/pages/payment.html';
+        const title = st.reason === 'blocked' ? 'Free trial already used on this device' : 'Your 3-day free trial has ended';
+        bar.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;border-radius:14px;background:var(--accent-soft,rgba(99,102,241,0.12));border:1px solid var(--accent,rgba(99,102,241,0.4))">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:700">${title}</div>
+              <div style="font-size:12px;opacity:0.75">Get lifetime access for ${typeof LIFETIME_PRICE !== 'undefined' ? LIFETIME_PRICE : 'Rs 2,499'} — pay once, yours forever.</div>
+            </div>
+            <a href="${payHref}" style="flex-shrink:0;padding:10px 18px;border-radius:10px;background:var(--accent,#6366F1);color:#fff;font-size:13px;font-weight:700;text-decoration:none">Get Access</a>
+          </div>`;
+        bar.style.display = '';
+      } else if (bar) {
+        bar.style.display = 'none';
+      }
+    } catch (_) {}
+    try {
+      if (locked) {
+        const wa = document.querySelectorAll('.welcome-action-btn');
+        for (let i = 0; i < wa.length; i++) wa[i].disabled = true;
+      }
+    } catch (_) {}
+    return locked;
+  },
+};

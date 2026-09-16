@@ -49,13 +49,35 @@ async function initPayment() {
 
   try {
     const { data: ent } = await pDb.rpc('get_entitlement_snapshot');
-    if (ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active') {
+    const paid = (typeof Access !== 'undefined' && Access.isPaidEntitlement(ent))
+      || (ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active');
+    if (paid) {
       checkoutSection.style.display = 'none';
       alreadyPremium.style.display = 'block';
+      return;
     }
   } catch (e) {
     console.error('[payment] entitlement check error:', e);
   }
+
+  // Show trial countdown to nudge conversion.
+  try {
+    if (typeof Access !== 'undefined') {
+      await Access.init();
+      const note = document.getElementById('trial-note');
+      if (note) {
+        if (Access.state.reason === 'trial') {
+          note.textContent = Access.state.daysLeft <= 1
+            ? 'Your free trial ends today — get lifetime access before it expires.'
+            : `You have ${Access.state.daysLeft} days of free trial left — lock in lifetime access now.`;
+          note.style.display = 'block';
+        } else if (Access.state.reason === 'expired' || Access.state.reason === 'blocked') {
+          note.textContent = 'Your free trial has ended — get lifetime access to continue using Anteemonee.';
+          note.style.display = 'block';
+        }
+      }
+    }
+  } catch (_) {}
 }
 
 async function handlePay() {
@@ -98,6 +120,6 @@ async function handlePay() {
     errorMsg.textContent = e.message || 'Failed to start checkout. Please try again.';
     errorMsg.style.display = 'block';
     payBtn.disabled = false;
-    payBtn.innerHTML = 'Pay Now - Rs 400/mo';
+    payBtn.innerHTML = 'Pay Rs 2,499 Once';
   }
 }

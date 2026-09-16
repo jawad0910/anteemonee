@@ -12,18 +12,77 @@ let savePrefTimer = null;
 
 document.addEventListener('DOMContentLoaded', initSettings);
 
-async function initSettings() {
-  await checkAuth();
-  if (!currentUser) {
-    document.getElementById('settings-not-auth').style.display = 'block';
+let settingsInlineReady = false;
+let settingsInlineIniting = false;
+
+/* Inline mode (main-page popup): idempotent init + refresh on open. */
+async function ensureInlineSettings() {
+  if (settingsInlineReady) {
+    try { await refreshInlineSettings(); } catch (_) {}
     return;
   }
-  document.getElementById('settings-page').style.display = 'block';
+  if (settingsInlineIniting) return;
+  settingsInlineIniting = true;
+  try {
+    // Wait briefly for app.js auth (main page boots async).
+    for (let i = 0; i < 20; i++) {
+      try {
+        if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) break;
+      } catch (_) {}
+      await new Promise(r => setTimeout(r, 250));
+      try {
+        if (typeof db !== 'undefined' && db) {
+          const { data } = await db.auth.getSession();
+          if (data && data.session && data.session.user) break;
+        }
+      } catch (_) {}
+      if (i === 4) { try { await initSettings(); } catch (_) {} }
+    }
+    await initSettings();
+  } finally {
+    settingsInlineIniting = false;
+  }
+}
+
+async function refreshInlineSettings() {
+  try {
+    if (typeof currentUser === 'undefined' || !currentUser) return;
+    settingsPrefs = await loadUserPrefs();
+    applyReduceAnimations();
+    renderSecurity();
+    renderAI();
+    renderAppearance();
+    renderLanguage();
+    renderPrivacy();
+    await renderSubscription();
+    await renderCoupons();
+    renderConnected();
+    renderHelp();
+    renderDangerZone();
+  } catch (e) {
+    console.warn('[settings] refresh failed:', e);
+  }
+}
+
+async function initSettings() {
+  const notAuthEl = document.getElementById('settings-not-auth');
+  const pageEl = document.getElementById('settings-page');
+  if (!notAuthEl && !pageEl) return; // not on this page
+  if (settingsInlineReady) return;
+  try {
+    await checkAuth();
+  } catch (_) {}
+  if (typeof currentUser === 'undefined' || !currentUser) {
+    if (notAuthEl) notAuthEl.style.display = 'block';
+    if (pageEl) pageEl.style.display = 'none';
+    return;
+  }
+  if (notAuthEl) notAuthEl.style.display = 'none';
+  if (pageEl) pageEl.style.display = 'block';
   await ensureProfile();
   settingsPrefs = await loadUserPrefs();
   applyReduceAnimations();
   renderSecurity();
-  renderNotifications();
   renderAI();
   renderAppearance();
   renderLanguage();
@@ -31,15 +90,11 @@ async function initSettings() {
   await renderSubscription();
   await renderCoupons();
   renderConnected();
-  renderAccounts();
-  renderAds();
   renderHelp();
-  renderAbout();
-  renderReports();
+  renderDangerZone();
   setupNavSidebar();
   setupDeleteConfirmInput();
-  recordSessionActivity();
-  startActivityTracking();
+  settingsInlineReady = true;
 }
 
 /* =========================
@@ -157,12 +212,14 @@ function applyReduceAnimations() {
 }
 
 /* =========================
-   SIDEBAR NAV
+   SIDEBAR NAV (paged: one section visible at a time)
    ========================= */
 
 function setupNavSidebar() {
   const btns = document.querySelectorAll('.settings-nav-item[data-cat]');
   btns.forEach(btn => {
+    if (btn.dataset.navBound) return;
+    btn.dataset.navBound = '1';
     btn.addEventListener('click', () => switchCategory(btn.dataset.cat));
   });
   const hash = window.location.hash.replace('#', '');
@@ -172,19 +229,26 @@ function setupNavSidebar() {
 }
 
 function switchCategory(cat) {
-  document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
-  const navBtn = document.querySelector(`.settings-nav-item[data-cat="${cat}"]`);
+  document.querySelectorAll('#settings-overlay .settings-nav-item').forEach(n => n.classList.remove('active'));
+  const navBtn = document.querySelector(`#settings-overlay .settings-nav-item[data-cat="${cat}"]`);
   if (navBtn) navBtn.classList.add('active');
-  document.querySelectorAll('.settings-category').forEach(c => c.classList.remove('active'));
-  const target = document.querySelector(`.settings-category[data-cat="${cat}"]`);
-  if (target) target.classList.add('active');
-  window.history.replaceState(null, '', '#' + cat);
+  document.querySelectorAll('#settings-overlay .settings-category').forEach(c => c.classList.remove('active'));
+  const target = document.querySelector(`#settings-overlay .settings-category[data-cat="${cat}"]`);
+  if (target) {
+    target.classList.add('active');
+    try {
+      const scroller = document.getElementById('settings-page');
+      if (scroller) scroller.scrollTop = 0;
+    } catch (_) {}
+  }
+  try { window.history.replaceState(null, '', '#' + cat); } catch (_) {}
   const sidebar = document.getElementById('settings-sidebar');
-  if (sidebar.classList.contains('open')) sidebar.classList.remove('open');
+  if (sidebar && sidebar.classList.contains('open')) sidebar.classList.remove('open');
 }
 
 function showSidebar() {
-  document.getElementById('settings-sidebar').classList.add('open');
+  const sidebar = document.getElementById('settings-sidebar');
+  if (sidebar) sidebar.classList.add('open');
 }
 
 /* =========================
@@ -241,37 +305,6 @@ function renderSecurity() {
     <div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>`;
   c.appendChild(tfaCard);
   load2FAStatus();
-
-  const sessionsCard = document.createElement('div');
-  sessionsCard.className = 'settings-card';
-  sessionsCard.id = 'settings-sessions-card';
-  sessionsCard.innerHTML = `
-    <div class="settings-card-header">ACTIVE SESSIONS</div>
-    <div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>`;
-  c.appendChild(sessionsCard);
-  loadSessions();
-
-  const eventsCard = document.createElement('div');
-  eventsCard.className = 'settings-card';
-  eventsCard.id = 'settings-events-card';
-  eventsCard.innerHTML = `
-    <div class="settings-card-header">SECURITY EVENTS</div>
-    <div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>`;
-  c.appendChild(eventsCard);
-  loadSecurityEvents();
-
-  const dangerCard = document.createElement('div');
-  dangerCard.className = 'settings-danger-zone';
-  dangerCard.innerHTML = `
-    <div class="settings-card-header">DELETE ACCOUNT</div>
-    <div class="setting-row">
-      <div class="setting-info">
-        <div class="setting-title">Delete Account</div>
-        <div class="setting-desc">Permanently delete your account and all data</div>
-      </div>
-      <button class="btn-settings btn-settings-danger" onclick="openDeleteModal()">Delete</button>
-    </div>`;
-  c.appendChild(dangerCard);
 }
 
 async function changePassword() {
@@ -536,155 +569,6 @@ async function disable2FA() {
   }
 }
 
-/* ---- Active Sessions ---- */
-
-async function loadSessions() {
-  const card = document.getElementById('settings-sessions-card');
-  // Reconcile first: merges duplicates, backfills missing locations, fixes
-  // flags â€” so the list below always reflects the healed state.
-  try { if (typeof reconcileSessionRows === 'function') await reconcileSessionRows(); } catch (_) {}
-  const sessions = (await fetchSessions()).filter(s => !s.logged_out_at);
-  card.innerHTML = '';
-  const header = document.createElement('div');
-  header.className = 'settings-card-header';
-  header.textContent = 'ACTIVE SESSIONS';
-  card.appendChild(header);
-
-  if (!sessions.length) {
-    const row = buildRow('No sessions found', '');
-    card.appendChild(row);
-    return;
-  }
-
-  // "This device": match by row id (string-safe) first, then by live device
-  // fingerprint as fallback (covers new tabs before reconcile runs).
-  const currentId = sessionStorage.getItem('Anteemonee_session_id');
-  let info = { browser: '', os: '', device_type: '' };
-  try { if (typeof parseUserAgent === 'function') info = parseUserAgent(); } catch (_) {}
-  const isMine = (s) => !s.logged_out_at && (
-    String(s.id) === String(currentId) ||
-    (s.browser === info.browser && s.os === info.os && s.device_type === info.device_type)
-  );
-  const byRecent = (a, b) => new Date(b.last_active_at) - new Date(a.last_active_at);
-  const current = sessions.filter(isMine).sort(byRecent)[0] || null;
-  const activeOthers = sessions.filter(s => s !== current).sort(byRecent);
-
-  const locOf = (s) => [s.city, s.country].filter(Boolean).join(', ');
-  const descFor = (s, forceActive) => {
-    const fresh = (Date.now() - new Date(s.last_active_at).getTime()) < 5 * 60 * 1000;
-    const when = s.logged_out_at
-      ? `Logged out ${timeAgo(s.logged_out_at)}`
-      : (forceActive || fresh ? 'Active now' : timeAgo(s.last_active_at));
-    const loc = locOf(s);
-    return loc ? `${when} â€¢ ${loc}` : when;
-  };
-  const rowFor = (s, badgeHtml, dim, forceActive) => {
-    const row = document.createElement('div');
-    row.className = 'provider-row';
-    if (dim) row.style.opacity = '0.55';
-    const icon = document.createElement('div');
-    icon.className = 'provider-icon email';
-    icon.innerHTML = getDeviceIcon(s);
-    const infoEl = document.createElement('div');
-    infoEl.className = 'setting-info';
-    const title = document.createElement('div');
-    title.className = 'setting-title';
-    title.textContent = getDeviceLabel(s);
-    if (badgeHtml) title.insertAdjacentHTML('beforeend', ' ' + badgeHtml);
-    const desc = document.createElement('div');
-    desc.className = 'setting-desc';
-    desc.textContent = descFor(s, forceActive);
-    infoEl.appendChild(title);
-    infoEl.appendChild(desc);
-    row.appendChild(icon);
-    row.appendChild(infoEl);
-    card.appendChild(row);
-  };
-
-  if (current) rowFor(current, badge('active', 'This device'), false, true);
-  activeOthers.forEach(s => rowFor(s, '', false, false));
-
-  if (activeOthers.length) {
-    const divider = document.createElement('div');
-    divider.style.padding = '8px 20px 16px';
-    const signOutBtn = document.createElement('button');
-    signOutBtn.className = 'btn-settings btn-settings-danger';
-    signOutBtn.textContent = `Sign out ${activeOthers.length} other session${activeOthers.length > 1 ? 's' : ''}`;
-    signOutBtn.addEventListener('click', async () => {
-      if (!confirm('Sign out all other devices?')) return;
-      setLoading(signOutBtn, true);
-      await signOutOtherSessions();
-      showToastSettings('Other sessions signed out');
-      await loadSessions();
-      setLoading(signOutBtn, false);
-    });
-    divider.appendChild(signOutBtn);
-    card.appendChild(divider);
-  }
-}
-
-/* ---- Security Events ---- */
-
-const SECURITY_EVENT_LABELS = {
-  password_changed: 'Password changed',
-  new_signin: 'New sign-in',
-  '2fa_enabled': '2FA enabled',
-  '2fa_disabled': '2FA disabled',
-  signed_out_others: 'Signed out other devices',
-  email_changed: 'Email changed'
-};
-
-async function loadSecurityEvents() {
-  const card = document.getElementById('settings-events-card');
-  const events = await fetchSecurityEvents(10);
-  card.innerHTML = '';
-  const header = document.createElement('div');
-  header.className = 'settings-card-header';
-  header.textContent = 'SECURITY EVENTS';
-  card.appendChild(header);
-
-  if (!events.length) {
-    card.appendChild(buildRow('No recent events', ''));
-    return;
-  }
-
-  events.forEach(ev => {
-    const label = SECURITY_EVENT_LABELS[ev.kind] || ev.kind;
-    const row = buildRow(label, timeAgo(ev.created_at));
-    card.appendChild(row);
-  });
-}
-
-/* =========================
-   2. NOTIFICATIONS
-   ========================= */
-
-function renderNotifications() {
-  const c = document.getElementById('settings-notifications-content');
-  c.innerHTML = '';
-  const p = settingsPrefs || {};
-
-  const studyRows = [
-    buildRow('Study Reminders', 'Reminders to study', buildToggle('t-notify_study', p.notify_study_reminders, v => savePref('notify_study_reminders', v))),
-    buildRow('Planner Reminders', 'Upcoming task reminders', buildToggle('t-notify_planner', p.notify_planner_reminders, v => savePref('notify_planner_reminders', v))),
-    buildRow('Exam Reminders', 'Exam date reminders', buildToggle('t-notify_exam', p.notify_exam_reminders, v => savePref('notify_exam_reminders', v))),
-    buildRow('Revision Reminders', 'Spaced repetition reminders', buildToggle('t-notify_revision', p.notify_revision_reminders, v => savePref('notify_revision_reminders', v))),
-  ];
-  c.appendChild(buildCard('STUDY', studyRows));
-
-  const aiRows = [
-    buildRow('Daily Learning', 'Daily learning activity reminders', buildToggle('t-notify_daily', p.notify_daily_learning, v => savePref('notify_daily_learning', v))),
-    buildRow('AI Recommendations', 'AI-powered study suggestions', buildToggle('t-notify_ai', p.notify_ai_recommendations, v => savePref('notify_ai_recommendations', v))),
-  ];
-  c.appendChild(buildCard('AI & LEARNING', aiRows));
-
-  const otherRows = [
-    buildRow('New Content', 'When new content is available', buildToggle('t-notify_new', p.notify_new_content, v => savePref('notify_new_content', v))),
-    buildRow('Past Paper Updates', 'Past paper additions', buildToggle('t-notify_pp', p.notify_past_paper_updates, v => savePref('notify_past_paper_updates', v))),
-    buildRow('System Notifications', 'Important system updates', buildToggle('t-notify_sys', p.notify_system, v => savePref('notify_system', v))),
-  ];
-  c.appendChild(buildCard('OTHER', otherRows));
-}
 
 /* =========================
    3. AI PERSONALIZATION
@@ -764,16 +648,6 @@ function renderAI() {
     ], p.ai_explanation_level || 'standard', v => savePref('ai_explanation_level', v))),
   ];
   c.appendChild(buildCard('EXPLANATION', explRows));
-
-  const langRows = [
-    buildRow('AI Language', 'Language for AI responses', buildSelect([
-      { value: 'english', label: 'English' },
-      { value: 'urdu', label: 'Urdu' },
-      { value: 'roman_urdu', label: 'Roman Urdu' },
-      { value: 'mixed', label: 'Mixed / Auto' },
-    ], p.ai_language, v => savePref('ai_language', v))),
-  ];
-  c.appendChild(buildCard('LANGUAGE', langRows));
 
   // Voice controls are hidden for now (voice responses stay on by default).
   // const voiceRows = [...] (removed from UI)
@@ -992,20 +866,6 @@ function renderAppearance() {
         }
       } catch (_) {}
     })),
-    buildRow('Reduce Animations', 'Minimize motion for accessibility', buildToggle('t-reduce_anim', p.reduce_animations, v => {
-      savePref('reduce_animations', v);
-      if (v) document.documentElement.classList.add('reduce-anim');
-      else document.documentElement.classList.remove('reduce-anim');
-    })),
-    buildRow('Visual Effects', 'Intensity of glass morphism effects', buildSelect([
-      { value: 'low', label: 'Low' },
-      { value: 'medium', label: 'Medium' },
-      { value: 'high', label: 'High' },
-    ], p.glass_intensity, v => savePref('glass_intensity', v))),
-    buildRow('Layout Density', 'Interface compactness', buildSelect([
-      { value: 'comfortable', label: 'Comfortable' },
-      { value: 'compact', label: 'Compact' },
-    ], p.layout_density, v => savePref('layout_density', v))),
   ];
   c.appendChild(buildCard('APPEARANCE', rows));
 }
@@ -1077,6 +937,7 @@ async function renderSubscription() {
   } catch {
     settingsEntitlements = null;
   }
+  try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
 
   renderSubscriptionContent(c, planCard);
 }
@@ -1084,19 +945,38 @@ async function renderSubscription() {
 function renderSubscriptionContent(container, planCard) {
   container.removeChild(planCard);
   const ent = settingsEntitlements;
-  const isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
+  const paid = (typeof Access !== 'undefined' && Access.isPaidEntitlement(ent))
+    || (ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active');
+  const trial = (typeof Access !== 'undefined' && Access.state.ready) ? Access.state : { reason: 'unknown', daysLeft: 0, trialEndsAt: null };
 
   const currentCard = document.createElement('div');
   currentCard.className = 'settings-card';
-  if (isPro) {
-    const expires = ent.expires_at || ent.premium_expires_at;
-    const expiresStr = expires ? new Date(expires).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' }) : 'No expiry';
+  if (paid) {
     currentCard.innerHTML = `
       <div class="plan-card">
         <div class="plan-icon pro">&#10024;</div>
         <div class="plan-info">
-          <h4>Anteemonee Pro ${badge('premium', 'Active')}</h4>
-          <p>Expires ${expiresStr}</p>
+          <h4>Anteemonee Lifetime ${badge('premium', 'Active')}</h4>
+          <p>One-time payment · Yours forever</p>
+        </div>
+      </div>`;
+  } else if (trial.reason === 'trial') {
+    const endStr = trial.trialEndsAt ? new Date(trial.trialEndsAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    currentCard.innerHTML = `
+      <div class="plan-card">
+        <div class="plan-icon free">&#9201;</div>
+        <div class="plan-info">
+          <h4>Free Trial ${badge('active', trial.daysLeft <= 1 ? 'Ends today' : trial.daysLeft + ' days left')}</h4>
+          <p>Full access until ${endStr}. Get lifetime access before it ends.</p>
+        </div>
+      </div>`;
+  } else if (trial.reason === 'blocked') {
+    currentCard.innerHTML = `
+      <div class="plan-card">
+        <div class="plan-icon free">&#128218;</div>
+        <div class="plan-info">
+          <h4>Trial Unavailable</h4>
+          <p>This device has already used its free trial. Get lifetime access to continue.</p>
         </div>
       </div>`;
   } else {
@@ -1104,54 +984,48 @@ function renderSubscriptionContent(container, planCard) {
       <div class="plan-card">
         <div class="plan-icon free">&#128218;</div>
         <div class="plan-info">
-          <h4>Free Plan</h4>
-          <p>Limited AI sessions and features</p>
+          <h4>Trial Expired</h4>
+          <p>Your 3-day free trial has ended. Get lifetime access to continue.</p>
         </div>
       </div>`;
   }
   container.appendChild(currentCard);
 
-  if (!isPro) {
+  if (!paid) {
     const upgradeCard = document.createElement('div');
     upgradeCard.className = 'settings-card';
     upgradeCard.innerHTML = `
       <div style="padding:16px 20px 0">
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">Anteemonee Premium</div>
-        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">Unlock the full power of your Student OS</div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">Anteemonee Lifetime</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">Pay once. Yours forever. No subscriptions.</div>
       </div>
       <div style="padding:0 20px 20px">
         <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:20px">
-          <span style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">Rs 400</span>
-          <span style="font-size:14px;color:var(--text-secondary)">/month</span>
+          <span style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">Rs 2,499</span>
+          <span style="font-size:14px;color:var(--text-secondary)">one-time</span>
         </div>
         <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:14px">
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>250 AI Tutor sessions per month</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>200 AI Question Scans per month</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Unlimited AI session extensions via ads</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Priority access to new features</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Ad-free experience</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Full AI Tutor access, forever</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>All flashcards, eBooks &amp; study tools</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>All future features included</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>One active session per account</span></li>
+          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>7-day money-back guarantee</span></li>
         </ul>
-        <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Premium - Rs 400/mo</a>
+        <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Lifetime Access - Rs 2,499</a>
       </div>`;
     container.appendChild(upgradeCard);
   }
 
-  const aiUsed = ent?.ai_used ?? 'â€”';
-  const aiLimit = ent?.ai_limit ?? 'â€”';
-  const scansUsed = ent?.scan_used ?? 'â€”';
-  const scansLimit = ent?.scan_limit ?? 'â€”';
-  const statusLabel = ent?.subscription_status || 'free';
+  const scansUsed = ent?.scan_used ?? '\u2014';
+  const scansLimit = ent?.scan_limit ?? '\u2014';
+  const planLabel = paid ? 'Lifetime' : trial.reason === 'trial' ? 'Free Trial' : trial.reason === 'blocked' ? 'Trial Unavailable' : 'Expired';
+  const statusLabel = paid ? 'active' : trial.reason === 'trial' ? 'trial' : 'expired';
 
   const usageRows = [
-    buildRow('Plan Type', isPro ? 'Premium' : 'Free', isPro ? badge('premium', 'Pro') : badge('inactive', 'Free')),
-    buildRow('Status', statusLabel, badge(isPro ? 'active' : 'inactive', statusLabel)),
-    buildRow('AI Sessions', `${aiUsed} / ${aiLimit}`, null),
+    buildRow('Plan Type', planLabel, paid ? badge('premium', 'Lifetime') : trial.reason === 'trial' ? badge('active', 'Trial') : badge('inactive', 'Expired')),
+    buildRow('Status', statusLabel, badge(paid ? 'active' : trial.reason === 'trial' ? 'active' : 'inactive', statusLabel)),
     buildRow('Scans', `${scansUsed} / ${scansLimit}`, null),
   ];
-  if (isPro && (ent?.expires_at || ent?.premium_expires_at)) {
-    const exp = ent.expires_at || ent.premium_expires_at;
-    usageRows.push(buildRow('Expiry Date', new Date(exp).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })));
-  }
   container.appendChild(buildCard('USAGE', usageRows));
 }
 
@@ -1175,8 +1049,6 @@ async function renderCoupons() {
 
     if (hasRedeemed) {
       const r = redemptions[0];
-      const start = new Date(r.premium_start_at).toLocaleDateString('en-GB');
-      const expiry = new Date(r.premium_expiry_at).toLocaleDateString('en-GB');
 
       const statusCard = document.createElement('div');
       statusCard.className = 'settings-card';
@@ -1185,9 +1057,9 @@ async function renderCoupons() {
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-title" style="color:var(--success)">Coupon Redeemed</div>
-            <div class="setting-desc">Premium active from ${start} - expires ${expiry}</div>
+            <div class="setting-desc">Lifetime access granted — no expiry</div>
           </div>
-          <span class="status-badge premium">Premium</span>
+          <span class="status-badge premium">Lifetime</span>
         </div>`;
       c.appendChild(statusCard);
     } else {
@@ -1206,7 +1078,7 @@ async function renderCoupons() {
     const infoRows = [
       buildRow('Coupon codes are case-insensitive'),
       buildRow('Each code can be redeemed once per account'),
-      buildRow('Premium codes extend your current subscription'),
+      buildRow('Redeeming a coupon grants lifetime access — no expiry'),
     ];
     c.appendChild(buildCard('HOW IT WORKS', infoRows));
   } catch (e) {
@@ -1266,7 +1138,7 @@ async function redeemCoupon() {
     }
 
     // Success
-    msgEl.textContent = 'Coupon redeemed successfully! Your subscription has been updated.';
+    msgEl.textContent = 'Coupon redeemed! Lifetime access is now active.';
     msgEl.style.color = 'var(--success)';
     msgEl.style.display = 'block';
     document.getElementById('coupon-code').value = '';
@@ -1341,50 +1213,6 @@ function renderConnected() {
     ];
     c.appendChild(buildCard('SECURITY NOTE', warnRows));
   }
-
-  renderMyReports(c);
-}
-
-async function renderMyReports(c) {
-  let reports = [];
-  try {
-    const res = await db.from('ai_reports')
-      .select('id, user_prompt, ai_message, description, status, admin_message, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (!res.error && Array.isArray(res.data)) reports = res.data;
-  } catch (_) { return; }
-  if (!reports.length) return;
-
-  const statusMeta = {
-    sent: { label: 'SENT', color: '#60a5fa' },
-    fixed: { label: 'FIXED', color: 'var(--success)' },
-    replied: { label: 'ADMIN REPLIED', color: 'var(--success)' },
-  };
-  const card = document.createElement('div');
-  card.className = 'settings-card';
-  const h = document.createElement('div');
-  h.className = 'settings-card-header';
-  h.textContent = 'MY REPORTS';
-  card.appendChild(h);
-
-  reports.forEach(r => {
-    const meta = statusMeta[r.status] || statusMeta.sent;
-    const when = new Date(r.created_at).toLocaleString();
-    const row = document.createElement('div');
-    row.className = 'setting-row';
-    const desc = (r.description || '').length > 160 ? (r.description || '').slice(0, 160) + '...' : (r.description || 'No description');
-    row.innerHTML = `<div class="setting-info"><div class="setting-title">Report &middot; ${when} <span style="color:${meta.color};font-size:11px;font-weight:600;margin-left:8px">${meta.label}</span></div><div class="setting-desc">${desc.replace(/</g, '&lt;')}</div></div>`;
-    card.appendChild(row);
-    if (r.status === 'replied' && r.admin_message) {
-      const adminRow = document.createElement('div');
-      adminRow.className = 'setting-row';
-      adminRow.innerHTML = `<div class="setting-info"><div class="setting-title" style="font-size:13px">Admin message</div><div class="setting-desc">${String(r.admin_message).replace(/</g, '&lt;')}</div></div>`;
-      card.appendChild(adminRow);
-    }
-  });
-
-  c.appendChild(card);
 }
 
 async function linkProvider(provider) {
@@ -1726,199 +1554,6 @@ function settingsLogoutAll() {
 }
 
 /* =========================
-   10. ADS
-   ========================= */
-
-let adsWatched = 0;
-let adsBonusSessions = 0;
-let adTimerInterval = null;
-let adCooldownInterval = null;
-
-async function renderAds() {
-  const c = document.getElementById('settings-ads-content');
-  c.innerHTML = '';
-
-  // Load bonus sessions from entitlements
-  try {
-    const { data: ent } = await db.rpc('get_entitlement_snapshot');
-    if (ent) {
-      adsBonusSessions = ent.bonus_sessions || 0;
-    }
-  } catch {}
-
-  // Count today's ad views to determine position in current round
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const { data: views } = await db.from('ad_views')
-      .select('id, ad_number')
-      .eq('user_id', currentUser.id)
-      .gte('watched_at', today + 'T00:00:00')
-      .lte('watched_at', today + 'T23:59:59');
-
-    adsWatched = views ? views.length : 0;
-  } catch {
-    adsWatched = 0;
-  }
-
-  const roundPos = adsWatched % 3; // 0, 1, or 2 â€” position in current round
-  const roundsCompleted = Math.floor(adsWatched / 3);
-  const nextAd = roundPos + 1; // which ad user needs to watch next (1, 2, or 3)
-
-  // Main card
-  const mainCard = document.createElement('div');
-  mainCard.className = 'settings-card';
-  mainCard.id = 'ads-main-card';
-  mainCard.innerHTML = `
-    <div style="padding:20px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">EARN FREE AI SESSIONS</div>
-      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px">Watch 3 ads to unlock 1 free AI session. Unlimited.</div>
-
-      <div id="ads-progress" style="display:flex;gap:12px;margin-bottom:20px">
-        ${[1,2,3].map(n => {
-          const done = n <= roundPos;
-          return `
-          <div style="flex:1;text-align:center">
-            <div id="ad-circle-${n}" style="width:56px;height:56px;border-radius:50%;border:3px solid ${done ? 'var(--accent)' : 'var(--border)'};display:flex;align-items:center;justify-content:center;margin:0 auto 8px;background:${done ? 'var(--accent)' : 'transparent'};transition:all 0.3s">
-              ${done
-                ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
-                : `<span style="font-size:18px;font-weight:700;color:var(--text-secondary)">${n}</span>`
-              }
-            </div>
-            <div style="font-size:12px;color:var(--text-secondary)">${done ? 'Done' : 'Ad ' + n}</div>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <div id="ads-counter" style="text-align:center;font-size:14px;color:var(--text-secondary);margin-bottom:16px">
-        ${roundPos === 0 && roundsCompleted > 0
-          ? `<span style="color:var(--success);font-weight:600">${roundsCompleted} session${roundsCompleted > 1 ? 's' : ''} earned today! Start new round.</span>`
-          : roundPos === 0
-            ? 'Watch 3 ads to earn a free AI session'
-            : `${roundPos}/3 ads in this round`
-        }
-      </div>
-
-      <div id="ads-timer-area" style="text-align:center;display:none">
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">Watching ad...</div>
-        <div id="ads-timer-display" style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">15s</div>
-        <div style="width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden">
-          <div id="ads-timer-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 1s linear"></div>
-        </div>
-      </div>
-
-      <div id="ads-btn-area" style="text-align:center">
-        <button class="btn-settings btn-settings-primary" id="ads-watch-btn" onclick="startAdWatch()">Watch Ad ${nextAd}</button>
-      </div>
-
-      ${adsBonusSessions > 0 ? `
-        <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-          <span style="font-size:13px;color:var(--success);font-weight:600">${adsBonusSessions} bonus session${adsBonusSessions > 1 ? 's' : ''} available</span>
-        </div>
-      ` : ''}
-    </div>`;
-  c.appendChild(mainCard);
-
-  // Info card
-  const infoCard = document.createElement('div');
-  infoCard.className = 'settings-card';
-  infoCard.innerHTML = `
-    <div class="settings-card-header">HOW IT WORKS</div>
-    <div class="setting-row">
-      <div class="setting-info">
-        <div class="setting-title">Watch 3 ads</div>
-        <div class="setting-desc">Each ad takes about 15 seconds</div>
-      </div>
-    </div>
-    <div class="setting-row">
-      <div class="setting-info">
-        <div class="setting-title">Earn 1 free AI session</div>
-        <div class="setting-desc">Session added instantly to your quota</div>
-      </div>
-    </div>
-    <div class="setting-row">
-      <div class="setting-info">
-            <div class="setting-title">Unlimited - no daily cap</div>
-        <div class="setting-desc">Keep watching, keep earning</div>
-      </div>
-    </div>`;
-  c.appendChild(infoCard);
-}
-
-function startAdWatch() {
-  const btn = document.getElementById('ads-watch-btn');
-  const timerArea = document.getElementById('ads-timer-area');
-  const timerDisplay = document.getElementById('ads-timer-display');
-  const timerBar = document.getElementById('ads-timer-bar');
-
-  if (!btn || adsWatched >= 3) return;
-
-  btn.style.display = 'none';
-  timerArea.style.display = 'block';
-
-  // Trigger popunder ad
-  triggerPopunder();
-
-  let seconds = 15;
-  let elapsed = 0;
-  timerDisplay.textContent = seconds + 's';
-  timerBar.style.width = '0%';
-
-  adTimerInterval = setInterval(() => {
-    seconds--;
-    elapsed++;
-    timerDisplay.textContent = seconds + 's';
-    timerBar.style.width = ((elapsed / 15) * 100) + '%';
-
-    if (seconds <= 0) {
-      clearInterval(adTimerInterval);
-      adTimerInterval = null;
-      completeAdWatch();
-    }
-  }, 1000);
-}
-
-async function completeAdWatch() {
-  const timerArea = document.getElementById('ads-timer-area');
-  const nextAd = (adsWatched % 3) + 1;
-
-  try {
-    const { data, error } = await db.rpc('award_ad_session', { p_ad_number: nextAd });
-    if (error) throw error;
-
-    if (data?.ok) {
-      adsWatched = data.ads_watched || (adsWatched + 1);
-      if (data.session_earned) {
-        adsBonusSessions = data.bonus_sessions || (adsBonusSessions + 1);
-        showToastSettings('Free AI session earned!');
-      } else {
-        showToastSettings(`Ad ${nextAd} watched! ${data.ads_in_round}/3 in this round`);
-      }
-    } else if (data?.error === 'RATE_LIMITED') {
-      const secs = data?.retry_after_seconds || 60;
-      showToastSettings(`Too many requests. Try again in about ${Math.ceil(secs / 60)} minute(s).`, true);
-    } else {
-      showToastSettings(data?.error || 'Failed to record ad', true);
-    }
-  } catch (err) {
-    showToastSettings(err.message || 'Failed to record ad', true);
-  }
-
-  timerArea.style.display = 'none';
-  renderAds();
-}
-
-const ADSTERRA_SMARTLINK = 'https://www.profitableratecpmnetwork.com/rtnup6w1?key=6cf320c4d4cc97bfb228efe455c2a411';
-
-function triggerPopunder() {
-  try {
-    window.open(ADSTERRA_SMARTLINK, '_blank', 'noopener,noreferrer,width=800,height=600');
-  } catch (e) {
-    // Popup blocked â€” try direct navigation fallback
-    window.open(ADSTERRA_SMARTLINK, '_blank');
-  }
-}
-
-/* =========================
    11. HELP & SUPPORT
    ========================= */
 
@@ -2013,7 +1648,7 @@ function renderAbout() {
   aboutCard.className = 'settings-card';
   aboutCard.innerHTML = `
     <div class="settings-profile-card" style="flex-direction:column;text-align:center;padding:28px 20px">
-      <img src="../assets/anteemonee.png" alt="Anteemonee" style="width:56px;height:56px;margin-bottom:12px;border-radius:14px">
+      <img src="assets/anteemonee.png" alt="Anteemonee" style="width:56px;height:56px;margin-bottom:12px;border-radius:14px">
       <h3 style="font-size:20px;font-weight:700;margin-bottom:4px">Anteemonee</h3>
       <p style="font-size:13px;color:var(--text-secondary)">The Student OS for Pakistan</p>
     </div>`;
@@ -2027,8 +1662,8 @@ function renderAbout() {
   c.appendChild(buildCard('APP INFORMATION', infoRows));
 
   const legalRows = [
-    buildClickableRow('Privacy Policy', 'How we handle your data', () => { window.location.href = 'privacy.html'; }),
-    buildClickableRow('Terms of Service', 'Terms of use', () => { window.location.href = 'terms.html'; }),
+    buildClickableRow('Privacy Policy', 'How we handle your data', () => { window.location.href = 'pages/privacy.html'; }),
+    buildClickableRow('Terms of Service', 'Terms of use', () => { window.location.href = 'pages/terms.html'; }),
   ];
   c.appendChild(buildCard('LEGAL', legalRows));
 }
@@ -2038,11 +1673,39 @@ function renderAbout() {
    ========================= */
 
 function settingsLogout() {
+  try {
+    if (window.AnteemoneeSettings && window.AnteemoneeSettings.close) window.AnteemoneeSettings.close();
+  } catch (_) {}
+  try {
+    if (typeof handleLogout === 'function') { handleLogout(); return; }
+  } catch (_) {}
   db.auth.signOut().then(() => {
-    window.location.href = '../index.html';
+    window.location.href = 'index.html';
   }).catch(() => {
-    window.location.href = '../index.html';
+    window.location.href = 'index.html';
   });
+}
+
+/* =========================
+   DANGER ZONE (bottom of page)
+   ========================= */
+
+function renderDangerZone() {
+  const c = document.getElementById('settings-danger-content');
+  if (!c) return;
+  c.innerHTML = '';
+  const dangerCard = document.createElement('div');
+  dangerCard.className = 'settings-danger-zone';
+  dangerCard.innerHTML = `
+    <div class="settings-card-header">DELETE ACCOUNT</div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-title">Delete Account</div>
+        <div class="setting-desc">Permanently delete your account and all data</div>
+      </div>
+      <button class="btn-settings btn-settings-danger" onclick="openDeleteModal()">Delete</button>
+    </div>`;
+  c.appendChild(dangerCard);
 }
 
 /* =========================
@@ -2062,6 +1725,8 @@ function closeDeleteModal() {
 function setupDeleteConfirmInput() {
   const input = document.getElementById('delete-confirm-input');
   if (input) {
+    if (input.dataset.deleteBound) return;
+    input.dataset.deleteBound = '1';
     input.addEventListener('input', () => {
       document.getElementById('delete-account-btn').disabled = input.value !== 'DELETE';
     });
@@ -2075,7 +1740,7 @@ async function confirmDeleteAccount() {
     const { error } = await db.rpc('delete_own_account');
     if (error) throw error;
     await db.auth.signOut();
-    window.location.href = '../index.html';
+    window.location.href = 'index.html';
   } catch (err) {
     showToastSettings(err.message || 'Failed to delete account.', true);
     setLoading(btn, false);

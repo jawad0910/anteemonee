@@ -116,9 +116,15 @@ async function openBetaModal() {
   }
 
   try {
-    const { data: ent } = await db.rpc('get_entitlement_snapshot');
-    const isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
-    if (!isPro) {
+    let hasAccess = false;
+    if (typeof Access !== 'undefined') {
+      await Access.init();
+      hasAccess = Access.state.access;
+    } else {
+      const { data: ent } = await db.rpc('get_entitlement_snapshot');
+      hasAccess = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
+    }
+    if (!hasAccess) {
       if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = ''; }
       document.getElementById('beta-premium-modal').classList.add('open');
       return;

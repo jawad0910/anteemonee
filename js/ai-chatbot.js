@@ -36,9 +36,12 @@
   async function refreshTier() {
     isPremiumTier = false;
     try {
-      if (typeof db === 'undefined' || !db) return false;
-      const { data: ent } = await db.rpc('get_entitlement_snapshot');
-      isPremiumTier = !!(ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active');
+      if (typeof Access !== 'undefined' && Access.state.ready) {
+        isPremiumTier = Access.state.access;
+      } else if (typeof db !== 'undefined' && db) {
+        const { data: ent } = await db.rpc('get_entitlement_snapshot');
+        isPremiumTier = (typeof Access !== 'undefined' && Access.isPaidEntitlement(ent));
+      }
     } catch (_) { isPremiumTier = false; }
     return isPremiumTier;
   }
@@ -586,10 +589,13 @@ if (idx >= 0 && idx < PERSONAS.length) {
     }
 
     // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
+    // Lifetime access: paid users + active 3-day trial pass, others hit the hard paywall.
+    try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
     const token = getAccessToken();
     if (!token) {
       if (!cached) showSessionError('Log in to start using AI chat.');
     } else {
+      try { if (typeof Access !== 'undefined') Access.applyChatPaywall(); } catch (_) {}
       // If cache had valid data, delay DB sync to avoid overwriting fresh state
       const delay = cached?.activeSession ? 3000 : 0;
       setTimeout(() => syncSessionFromDB(), delay);
@@ -1675,6 +1681,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
   var FB_DISLIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>';
   var FB_COPY_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
   var FB_CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  var FB_SPEAKER_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
 
   function bumpCounters(names) {
     try {
@@ -1849,7 +1856,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       wrap.className = 'msg-feedback';
       wrap.innerHTML = '<button class="fb-btn fb-like" type="button" title="Good response" aria-label="Like">' + FB_LIKE_SVG + '</button>' +
         '<button class="fb-btn fb-dislike" type="button" title="Bad response" aria-label="Dislike">' + FB_DISLIKE_SVG + '</button>' +
-        '<button class="fb-btn fb-copy" type="button" title="Copy response" aria-label="Copy">' + FB_COPY_SVG + '</button>';
+        '<button class="fb-btn fb-copy" type="button" title="Copy response" aria-label="Copy">' + FB_COPY_SVG + '</button>' +
+        '<button class="fb-btn fb-tts tts-btn" type="button" title="Listen to response" aria-label="Read aloud">' + FB_SPEAKER_SVG + '</button>';
       body.appendChild(wrap);
       var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
       wrap.dataset.voteKey = key;
@@ -1857,6 +1865,16 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       wrap.querySelector('.fb-like').addEventListener('click', function () { onVote(wrap, key, 'like'); });
       wrap.querySelector('.fb-dislike').addEventListener('click', function () { onVote(wrap, key, 'dislike'); });
       wrap.querySelector('.fb-copy').addEventListener('click', function () { onCopyMessage(wrap, idx); });
+      // TTS button: speak/stop this message's AI text
+      var ttsBtn = wrap.querySelector('.fb-tts');
+      if (ttsBtn) {
+        ttsBtn.addEventListener('click', function () {
+          var raw = (messages[idx] && messages[idx].content) || '';
+          if (raw && typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.toggleSpeak) {
+            window.AnteemoneeVoice.toggleSpeak(raw);
+          }
+        });
+      }
     } catch (_) {}
   }
 
@@ -2703,10 +2721,6 @@ function handleFileBlocks(div, text) {
           }
         }
         updateSessionPanel();
-        if (ent.ai_used >= ent.ai_limit && !activeSession) {
-          chatInput.disabled = true;
-          chatInput.placeholder = 'No sessions left this month';
-        }
         saveSessionState();
       }
     } catch (e) { console.warn('[Session] DB sync failed:', e); }
@@ -2739,9 +2753,7 @@ function handleFileBlocks(div, text) {
       if (!data?.ok) {
         const retrySecs = data?.retry_after_seconds || 0;
         const retryTxt = retrySecs > 0 ? ` Try again in ${formatRetryAfter(retrySecs)}.` : '';
-        const msg = data?.error === 'LIMIT_REACHED'
-          ? `You've used all your AI sessions for this month. Resets ${formatPeriodEnd(data.resets_at)}.`
-          : data?.error === 'RATE_LIMITED'
+        const msg = data?.error === 'RATE_LIMITED'
             ? `You're starting sessions a little too fast.${retryTxt}`
             : data?.error === 'NOT_AUTHENTICATED'
               ? 'Please log in to use AI chat.'
@@ -2769,17 +2781,9 @@ function handleFileBlocks(div, text) {
   }
 
   function showSessionError(msg) {
-    // Show error in the sidebar panel and lock input
-    const panel = document.getElementById('session-panel');
-    if (panel) {
-      panel.innerHTML = `<div class="session-error">${escapeHtml(msg)}</div>`;
-    }
-    const mobile = document.getElementById('session-panel-mobile');
-    if (mobile) {
-      mobile.innerHTML = `<div class="session-error">${escapeHtml(msg)}</div>`;
-    }
+    console.warn('[Session]', msg);
     chatInput.disabled = true;
-    chatInput.placeholder = 'No sessions available';
+    chatInput.placeholder = 'Error: ' + msg;
   }
 
   function formatPeriodEnd(iso) {
@@ -2815,22 +2819,31 @@ function handleFileBlocks(div, text) {
 
   function refreshAuthGate() {
     var authed = isAuthed();
+    var locked = false;
     try {
       document.body.classList.toggle('guest', !authed);
+      if (typeof Access !== 'undefined' && Access.state.ready) locked = Access.applyChatPaywall();
       var labels = document.querySelectorAll('.sidebar-label');
       for (var li = 0; li < labels.length; li++) labels[li].style.display = authed ? '' : 'none';
+      var wa = document.querySelectorAll('.welcome-action-btn');
+      for (var wi = 0; wi < wa.length; wi++) wa[wi].disabled = !authed || locked;
     } catch (_) {}
+    if (authed && !locked) return true;
+    if (locked) {
+      try {
+        chatInput.value = '';
+        chatInput.disabled = true;
+        chatInput.placeholder = 'Your free trial has ended — get lifetime access to continue.';
+        autoResize();
+        btnSend.disabled = true;
+        btnSend.style.display = 'flex';
+        btnStop.style.display = 'none';
+        isStreaming = false;
+      } catch (_) {}
+      return false;
+    }
     // model selector hidden permanently — auto routing handles models
     if (authed) return true;
-    var html = '<div class="session-guest"><span class="session-guest-title">Sign in required</span>'
-      + '<span class="session-guest-sub">Log in to start AI sessions.</span>'
-      + '<a class="session-guest-btn" href="pages/login.html">Log in</a></div>';
-    try {
-      var p1 = document.getElementById('session-panel');
-      if (p1) p1.innerHTML = html;
-      var p2 = document.getElementById('session-panel-mobile');
-      if (p2) p2.innerHTML = html;
-    } catch (_) {}
     try {
       chatInput.value = '';
       chatInput.disabled = true;
@@ -2844,66 +2857,7 @@ function handleFileBlocks(div, text) {
     return false;
   }
 
-  function updateSessionPanel() {
-    if (!isAuthed()) { refreshAuthGate(); return; }
-    const tokensUsed = estimatedTokensUsed || activeSession?.tokens_used || 0;
-    const msgCount = activeSession?.messages_count || 0;
-    const monthlyUsed = sessionUsage?.ai_used || 0;
-    const monthlyLimit = sessionUsage?.ai_limit || 25;
-    const monthlyLeft = Math.max(0, monthlyLimit - monthlyUsed);
-    const isActive = activeSession && new Date(activeSession.expires_at).getTime() > Date.now();
-
-    let html;
-
-    if (isActive) {
-      const startTimeStr = new Date(activeSession.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      html = `
-        <div class="session-header">
-          <span class="session-header-dot active"></span>
-          <span>Session Active</span>
-          <span class="session-header-meta">${startTimeStr} &middot; <span class="session-countdown">${formatCountdown(activeSession.expires_at)}</span></span>
-        </div>
-        <div class="session-meta">
-          <span>${formatTokens(tokensUsed)} tokens</span>
-          <span>${msgCount} msg${msgCount !== 1 ? 's' : ''}</span>
-          <span>${monthlyLeft}/${monthlyLimit} sessions</span>
-        </div>
-      `;
-    } else {
-      html = `
-        <div class="session-header">
-          <span class="session-header-dot inactive"></span>
-          <span>No Active Session</span>
-        </div>
-        <div class="session-meta">
-          <span>${monthlyLeft}/${monthlyLimit} sessions left</span>
-        </div>
-      `;
-    }
-
-    const panel = document.getElementById('session-panel');
-    if (panel) panel.innerHTML = html;
-    const mobile = document.getElementById('session-panel-mobile');
-    if (mobile) mobile.innerHTML = html;
-
-    if (isActive) startSessionTimer();
-  }
-
-  function formatCountdown(expiresAt) {
-    if (!expiresAt) return '--';
-    const ms = new Date(expiresAt).getTime() - Date.now();
-    if (ms <= 0) return 'Expired';
-    const totalSec = Math.floor(ms / 1000);
-    const min = Math.floor(totalSec / 60);
-    const sec = totalSec % 60;
-    return `${min}m ${sec.toString().padStart(2, '0')}s`;
-  }
-
-  function formatTokens(n) {
-    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'K';
-    return String(n);
-  }
+  function updateSessionPanel() {}
 
   // Display-only helper: turns server retry_after_seconds into friendly text.
   function formatRetryAfter(secs) {
@@ -2945,29 +2899,7 @@ function handleFileBlocks(div, text) {
     return Math.ceil((text || '').length / 4);
   }
 
-  function startSessionTimer() {
-    if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-    sessionTimerInterval = setInterval(() => {
-      if (!activeSession) { clearInterval(sessionTimerInterval); return; }
-      const text = formatCountdown(activeSession.expires_at);
-      document.querySelectorAll('.session-countdown').forEach(el => el.textContent = text);
-
-      if (text === 'Expired') {
-        clearInterval(sessionTimerInterval);
-        const expiredSessionId = activeSession?.id;
-        activeSession = null;
-        estimatedTokensUsed = 0;
-        stopStudyTimer();
-        clearSessionState();
-        updateSessionPanel();
-        // Clean up session in DB
-        if (expiredSessionId && db) {
-          db.rpc('end_ai_session', { p_session_id: expiredSessionId }).then(() => {}).catch(() => {});
-        }
-        showSessionExpiredPopup();
-      }
-    }, 1000);
-  }
+  function startSessionTimer() {}
 
   // ── Long-output continuation: when a response is cut off (model hit its ──
   // output limit) or a requested word count is far from met, keep streaming
@@ -3150,41 +3082,7 @@ function handleFileBlocks(div, text) {
     } catch (_) {}
   }
 
-  // â”€â”€ Token Exhausted Popup (Modal) â”€â”€
-  function showSessionExpiredPopup() {
-    const overlay = document.createElement('div');
-    overlay.className = 'session-modal-overlay';
-    overlay.id = 'token-exhausted-popup';
-    overlay.innerHTML = `
-      <div class="session-modal">
-        <button class="session-modal-close" id="btn-close-session-expired" title="Close">&times;</button>
-        <div class="session-modal-icon" style="background:rgba(255,183,77,0.12);color:#FFB74D">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <h3 class="session-modal-title">Session Expired</h3>
-        <p class="session-modal-desc">Your session time is up. Start a new session to continue.</p>
-        <button class="session-modal-btn" id="btn-start-new-session">Start New Session</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
-
-    document.getElementById('btn-close-session-expired')?.addEventListener('click', () => {
-      overlay.remove();
-    });
-
-    document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
-      overlay.remove();
-      const started = await startSession();
-      if (started) {
-        chatInput.disabled = false;
-        chatInput.placeholder = 'Ask Anteemonee anything...';
-        chatInput.focus();
-        estimatedTokensUsed = 0;
-        updateSessionPanel();
-      }
-    });
-  }
+  function showSessionExpiredPopup() {}
 
   // â"€â"€ Send / Stop â"€â"€
   // blocked/exhausted session leaves isStreaming=true forever and every
@@ -3236,6 +3134,7 @@ function handleFileBlocks(div, text) {
     const hasImages = pendingImages.length > 0;
     if ((!text && !hasImages) || isStreaming) return;
     if (!isAuthed()) { refreshAuthGate(); return; }
+    try { if (typeof Access !== 'undefined' && Access.state.ready && !Access.state.access) { refreshAuthGate(); return; } } catch (_) {}
 
     // Lock immediately â€” prevent double-send during any async gap
     isStreaming = true;
@@ -3394,6 +3293,8 @@ function handleFileBlocks(div, text) {
       attachFeedbackButtons(streamDiv);
       bumpCounters(['total_messages', 'ai_messages']);
       updateTokensAfterResponse(text, fullResponse);
+      // Auto-play TTS if the message was sent via voice (within last 30s)
+      try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(fullResponse); } catch (_) {}
       userNearBottom = true;
       if (scrollDownBtn) {
         scrollDownBtn.classList.remove('generating');
@@ -3461,6 +3362,7 @@ function handleFileBlocks(div, text) {
             attachFeedbackButtons(streamDiv);
             bumpCounters(['total_messages', 'ai_messages']);
             updateTokensAfterResponse(text, fullResponse);
+            try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(fullResponse); } catch (_) {}
             isStreaming = false;
             if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
             btnStop.style.display = 'none';
@@ -3551,6 +3453,7 @@ function handleFileBlocks(div, text) {
         attachFeedbackButtons(streamDiv);
         bumpCounters(['total_messages', 'ai_messages']);
         updateTokensAfterResponse(text, fullResponse);
+        try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(fullResponse); } catch (_) {}
       } else if (error && (error.name === 'AbortError' || /aborted|abort/i.test(error.message || ''))) {
         // User tapped Stop: keep whatever streamed so far, no error text.
         stopStatusCycle(statusCycle);
