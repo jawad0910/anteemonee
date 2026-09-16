@@ -203,6 +203,13 @@
     <a href="login.html" class="btn-primary" style="text-decoration:none">Sign In</a>
   </div>
 
+  <!-- PAYWALL -->
+  <div id="fc-paywall" style="display:none;max-width:560px;margin:0 auto;padding:160px 24px 80px;text-align:center">
+    <h2 style="margin-bottom:12px">Your free trial has ended</h2>
+    <p style="color:var(--text-secondary);margin-bottom:24px">Get lifetime access for Rs 2,499 — pay once, yours forever.</p>
+    <a href="payment.html" class="btn-primary" style="text-decoration:none">Get Lifetime Access</a>
+  </div>
+
   <!-- PAGE -->
   <main class="fc-page" id="fc-page" style="display:none">
     <div class="fc-head">
@@ -296,7 +303,7 @@ create index if not exists flashcards_user_due_idx
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=11"></script>
+  <script src="../js/app.js?v=12"></script>
   <script>
     (function () {
       'use strict';
@@ -349,6 +356,15 @@ create index if not exists flashcards_user_due_idx
           $('fc-not-auth').style.display = 'block';
           return;
         }
+        try {
+          if (typeof Access !== 'undefined') {
+            await Access.init();
+            if (!Access.state.access) {
+              $('fc-paywall').style.display = 'block';
+              return;
+            }
+          }
+        } catch (_) {}
         $('fc-page').style.display = 'block';
         try {
           if (new URLSearchParams(window.location.search).get('embed') === '1') {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Get Premium - Anteemonee</title>
-  <meta name="description" content="Upgrade to Anteemonee Premium. Get unlimited AI tutoring, advanced flashcards and premium study features.">
+  <title>Get Lifetime Access - Anteemonee</title>
+  <meta name="description" content="Get lifetime access to Anteemonee. Pay once, yours forever — AI tutor, flashcards and all study features.">
   <meta name="theme-color" content="#07080C">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../assets/anteemonee.png">
@@ -293,7 +293,7 @@
   <div id="payment-not-auth" style="display:none" class="payment-page">
     <div class="payment-card not-auth">
       <h2>Sign in required</h2>
-      <p>Please sign in to purchase Anteemonee Premium.</p>
+      <p>Please sign in to get lifetime access.</p>
       <a href="login.html" class="back-btn">Sign In</a>
     </div>
   </div>
@@ -305,8 +305,8 @@
       <!-- Already Premium -->
       <div id="already-premium" style="display:none" class="already-premium">
         <div class="check-icon">âœ“</div>
-        <h2>You're already Premium!</h2>
-        <p>Your subscription is active. Enjoy all the features.</p>
+        <h2>You have lifetime access!</h2>
+        <p>Your account is unlocked forever. Enjoy all the features.</p>
         <a href="settings.html" class="back-btn">Back to Settings</a>
       </div>
 
@@ -314,32 +314,36 @@
       <div id="checkout-section">
         <div class="payment-badge">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Anteemonee Premium
+          Anteemonee Lifetime
         </div>
 
-        <h1 class="payment-title">Upgrade to Premium</h1>
-        <p class="payment-subtitle">Unlock the full power of your Student OS.</p>
+        <h1 class="payment-title">Get Lifetime Access</h1>
+        <p class="payment-subtitle">Pay once. Yours forever. No subscriptions.</p>
 
         <div class="payment-price">
-          <span class="amount">Rs 400</span>
-          <span class="period">/month</span>
+          <span class="amount">Rs 2,499</span>
+          <span class="period">one-time</span>
         </div>
 
         <div class="payment-divider"></div>
 
         <ul class="feature-list">
-          <li><span class="check">âœ“</span>250 AI Tutor sessions per month</li>
-          <li><span class="check">âœ“</span>200 AI Question Scans per month</li>
-          <li><span class="check">âœ“</span>Unlimited AI session extensions via ads</li>
-          <li><span class="check">âœ“</span>Priority access to new features</li>
-          <li><span class="check">âœ“</span>Ad-free experience</li>
+          <li><span class="check">âœ"</span>Full AI Tutor access, forever</li>
+          <li><span class="check">âœ"</span>All flashcards, eBooks \& study tools</li>
+          <li><span class="check">âœ"</span>All future features included</li>
+          <li><span class="check">âœ"</span>One active session per account</li>
+          <li><span class="check">✓</span>7-day money-back guarantee</li>
         </ul>
+
+        <div id="trial-note" style="display:none;font-size:13px;color:var(--text-secondary);background:var(--accent-soft);border-radius:10px;padding:10px 14px;margin-bottom:20px"></div>
 
         <div id="payment-error" class="error-msg" style="display:none"></div>
 
         <button id="pay-btn" class="pay-btn" onclick="handlePay()">
-          Pay Now - Rs 400/mo
+          Pay Rs 2,499 Once
         </button>
+
+        <p style="text-align:center;font-size:12px;color:var(--text-secondary);margin:0 0 16px">Covered by our 7-day money-back guarantee.<br>Fair-use policy applies. See <a href="terms.html" style="color:var(--accent)">Terms</a>.</p>
 
         <a href="settings.html" class="cancel-link">Cancel - back to Settings</a>
       </div>
@@ -349,7 +353,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=11"></script>
-  <script src="../js/payment.js?v=9"></script>
+  <script src="../js/app.js?v=12"></script>
+  <script src="../js/payment.js?v=10"></script>
 </body>
 </html>

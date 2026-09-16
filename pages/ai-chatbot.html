@@ -36,7 +36,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=21">
-  <link rel="stylesheet" href="../css/ai-chatbot.css?v=30">
+  <link rel="stylesheet" href="../css/ai-chatbot.css?v=31">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 <body>
@@ -75,13 +75,6 @@
       <div class="sidebar-label">Chats</div>
       <div class="sidebar-history" id="sidebar-history"></div>
 
-      <div class="session-panel" id="session-panel">
-        <div class="session-loading">
-          <div class="session-shimmer"></div>
-          <div class="session-shimmer short"></div>
-        </div>
-      </div>
-
       <div class="model-selector sidebar-model loading" id="model-selector">
         <div class="model-selector-trigger" id="model-selector-trigger">
           <span class="model-dot" id="model-dot"></span>
@@ -106,6 +99,10 @@
 
       <div class="sidebar-account">
         <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
+        <div class="auth-actions" id="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login">Log in</a>
+          <a href="signup.html" class="btn-signup">Sign Up</a>
+        </div>
         <div class="auth-actions" id="auth-logged-in" style="display:none">
           <div class="profile-avatar-container" id="profile-avatar-container"></div>
           <div class="acct-meta acct-open-settings" id="acct-row" title="Open settings">
@@ -279,12 +276,6 @@
     </nav>
     <div class="sidebar-label">Chats</div>
     <div class="sidebar-history" id="sidebar-history-mobile"></div>
-    <div class="session-panel" id="session-panel-mobile">
-      <div class="session-loading">
-        <div class="session-shimmer"></div>
-        <div class="session-shimmer short"></div>
-      </div>
-    </div>
     <div class="model-selector sidebar-model loading" id="model-selector-mobile">
       <div class="model-selector-trigger" id="model-selector-trigger-mobile">
         <span class="model-dot" id="model-dot-mobile"></span>
@@ -374,10 +365,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=13"></script>
+  <script src="../js/app.js?v=14"></script>
   <script src="../js/ai-api-service.js?v=14"></script>
   <script src="../js/github.js?v=10"></script>
-  <script src="../js/ai-chatbot.js?v=35"></script>
+  <script src="../js/ai-chatbot.js?v=36"></script>
   <script>
     // "Coming soon" toast for sidebar features not built yet.
     (function () {

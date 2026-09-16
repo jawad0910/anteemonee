@@ -62,7 +62,6 @@
   }
 
   // â”€â”€ AI Session State â”€â”€
-  const TOKEN_LIMIT = 100000;
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
@@ -318,7 +317,22 @@
     }
 
     // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
+    try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
     const token = getAccessToken();
+    try {
+      document.body.classList.toggle('guest', !token);
+      if (typeof Access !== 'undefined') {
+        var _locked = Access.applyChatPaywall();
+        var _wb = document.querySelectorAll('.welcome-action-btn');
+        for (var _i = 0; _i < _wb.length; _i++) _wb[_i].disabled = !token || _locked;
+        if (_locked) {
+          chatInput.disabled = true;
+          chatInput.placeholder = 'Your free trial has ended — get lifetime access to continue.';
+        }
+      } else {
+        document.querySelectorAll('.welcome-action-btn').forEach(function(b){ b.disabled = !token; });
+      }
+    } catch (_) {}
     if (!token) {
       if (!cached) showSessionError('Log in to start using AI chat.');
     } else {
@@ -1567,15 +1581,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
           }
         }
         updateSessionPanel();
-        if (ent.ai_used >= ent.ai_limit && !activeSession) {
-          chatInput.disabled = true;
-          chatInput.placeholder = 'No sessions left this month';
-        }
-        if (activeSession && estimatedTokensUsed >= TOKEN_LIMIT) {
-          chatInput.disabled = true;
-          chatInput.placeholder = 'Tokens exhausted - start a new session';
-          showTokenExhaustedPopup();
-        }
         saveSessionState();
       }
     } catch (e) { console.warn('[Session] DB sync failed:', e); }
@@ -1608,9 +1613,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       if (!data?.ok) {
         const retrySecs = data?.retry_after_seconds || 0;
         const retryTxt = retrySecs > 0 ? ` Try again in ${formatRetryAfter(retrySecs)}.` : '';
-        const msg = data?.error === 'LIMIT_REACHED'
-          ? `You've used all your AI sessions for this month. Resets ${formatPeriodEnd(data.resets_at)}.`
-          : data?.error === 'RATE_LIMITED'
+        const msg = data?.error === 'RATE_LIMITED'
             ? `You're starting sessions a little too fast.${retryTxt}`
             : data?.error === 'NOT_AUTHENTICATED'
               ? 'Please log in to use AI chat.'
@@ -1621,6 +1624,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
       activeSession = data.session;
       sessionUsage = data.usage;
+      try { document.body.classList.remove('guest'); document.querySelectorAll('.welcome-action-btn').forEach(function(b){ b.disabled = false; }); } catch (_) {}
       // Always trust DB for tokens on new session
       estimatedTokensUsed = activeSession.tokens_used || 0;
       api.setAccessToken(token);
@@ -1638,130 +1642,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
   }
 
   function showSessionError(msg) {
-    // Show error in the sidebar panel and lock input
-    const panel = document.getElementById('session-panel');
-    if (panel) {
-      panel.innerHTML = `<div class="session-error">${escapeHtml(msg)}</div>`;
-    }
-    const mobile = document.getElementById('session-panel-mobile');
-    if (mobile) {
-      mobile.innerHTML = `<div class="session-error">${escapeHtml(msg)}</div>`;
-    }
+    console.warn('[Session]', msg);
     chatInput.disabled = true;
-    chatInput.placeholder = 'No sessions available';
-  }
-
-  function formatPeriodEnd(iso) {
-    if (!iso) return 'next month';
-    const d = new Date(iso);
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${months[d.getMonth()]} ${d.getDate()}`;
-  }
-
-  // â”€â”€ Cost calculation â”€â”€
-  // 100,000 tokens = $0.018 â†’ $0.00000018 per token
-  // PKR rate (update periodically)
-  const USD_TO_PKR = 280;
-  const COST_PER_TOKEN_USD = 0.018 / 100000;
-
-  function formatCostPKR(tokens) {
-    const pkr = tokens * COST_PER_TOKEN_USD * USD_TO_PKR;
-    if (pkr < 0.01) return 'Rs. 0';
-    if (pkr < 1) return 'Rs. ' + pkr.toFixed(2);
-    return 'Rs. ' + pkr.toFixed(pkr >= 100 ? 0 : 1);
-  }
-
-  function updateSessionPanel() {
-    const tokensUsed = estimatedTokensUsed || activeSession?.tokens_used || 0;
-    const tokenPct = Math.min(100, Math.round((tokensUsed / TOKEN_LIMIT) * 100));
-    const msgCount = activeSession?.messages_count || 0;
-    const monthlyUsed = sessionUsage?.ai_used || 0;
-    const monthlyLimit = sessionUsage?.ai_limit || 25;
-    const monthlyLeft = Math.max(0, monthlyLimit - monthlyUsed);
-    const isActive = activeSession && new Date(activeSession.expires_at).getTime() > Date.now();
-
-    let html;
-
-    if (isActive) {
-      const barClass = tokenPct >= 90 ? 'danger' : tokenPct >= 70 ? 'warn' : '';
-      const startTimeStr = new Date(activeSession.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      html = `
-        <div class="session-header">
-          <span class="session-header-dot active"></span>
-          <span>Session Active</span>
-        </div>
-        <div class="session-row">
-          <span class="session-label">Started</span>
-          <span class="session-value">${startTimeStr}</span>
-        </div>
-        <div class="session-row">
-          <span class="session-label">Ends in</span>
-          <span class="session-value countdown session-countdown">${formatCountdown(activeSession.expires_at)}</span>
-        </div>
-        <div class="session-progress">
-          <div class="session-progress-bar ${barClass}" style="width:${tokenPct}%"></div>
-        </div>
-        <div class="session-meta">
-          <span>${formatTokens(tokensUsed)} / ${formatTokens(TOKEN_LIMIT)} tokens</span>
-          <span>${msgCount} msg${msgCount !== 1 ? 's' : ''}</span>
-        </div>
-        <div class="session-cost">~${formatCostPKR(tokensUsed)}</div>
-        <div class="session-divider"></div>
-        ${streakCount > 0 ? `
-        <div class="session-row">
-          <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount} day${streakCount !== 1 ? 's' : ''} ðŸ”¥</span>
-        </div>` : `
-        <div class="session-row">
-          <span class="session-label">Streak</span>
-          <span class="session-value streak-value">0</span>
-        </div>`}
-        <div class="session-row">
-          <span class="session-label">Sessions left</span>
-          <span class="session-value">${monthlyLeft} / ${monthlyLimit}</span>
-        </div>
-      `;
-    } else {
-      html = `
-        <div class="session-header">
-          <span class="session-header-dot inactive"></span>
-          <span>No Active Session</span>
-        </div>
-        <div class="session-idle-hint">Send a message to start a ${sessionUsage?.session_minutes || 45} min session</div>
-        <div class="session-divider"></div>
-        <div class="session-row">
-          <span class="session-label">Streak</span>
-          <span class="session-value streak-value">${streakCount > 0 ? streakCount + ' day' + (streakCount !== 1 ? 's' : '') + ' ðŸ”¥' : '0'}</span>
-        </div>
-        <div class="session-row">
-          <span class="session-label">Sessions left</span>
-          <span class="session-value">${monthlyLeft} / ${monthlyLimit}</span>
-        </div>
-      `;
-    }
-
-    const panel = document.getElementById('session-panel');
-    if (panel) panel.innerHTML = html;
-    const mobile = document.getElementById('session-panel-mobile');
-    if (mobile) mobile.innerHTML = html;
-
-    if (isActive) startSessionTimer();
-  }
-
-  function formatCountdown(expiresAt) {
-    if (!expiresAt) return '--';
-    const ms = new Date(expiresAt).getTime() - Date.now();
-    if (ms <= 0) return 'Expired';
-    const totalSec = Math.floor(ms / 1000);
-    const min = Math.floor(totalSec / 60);
-    const sec = totalSec % 60;
-    return `${min}m ${sec.toString().padStart(2, '0')}s`;
-  }
-
-  function formatTokens(n) {
-    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'K';
-    return String(n);
+    chatInput.placeholder = 'Error: ' + msg;
   }
 
   // Display-only helper: turns server retry_after_seconds into friendly text.
@@ -1781,31 +1664,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     return Math.ceil((text || '').length / 4);
   }
 
-  function startSessionTimer() {
-    if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-    sessionTimerInterval = setInterval(() => {
-      if (!activeSession) { clearInterval(sessionTimerInterval); return; }
-      const text = formatCountdown(activeSession.expires_at);
-      document.querySelectorAll('.session-countdown').forEach(el => el.textContent = text);
-
-      if (text === 'Expired') {
-        clearInterval(sessionTimerInterval);
-        const expiredSessionId = activeSession?.id;
-        activeSession = null;
-        estimatedTokensUsed = 0;
-        stopStudyTimer();
-        clearSessionState();
-        removeTokenExhaustedPopup();
-        updateSessionPanel();
-        // Clean up session in DB
-        if (expiredSessionId && db) {
-          db.rpc('end_ai_session', { p_session_id: expiredSessionId }).then(() => {}).catch(() => {});
-        }
-        showSessionExpiredPopup();
-      }
-    }, 1000);
-  }
-
+  function startSessionTimer() {}
   function updateTokensAfterResponse(inputText, outputText) {
     if (!activeSession) return;
     const inputTk = estimateInputTokens(inputText);
@@ -1838,92 +1697,19 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     } catch (_) {}
   }
 
-  // â”€â”€ Token Exhausted Popup (Modal) â”€â”€
-  function showTokenExhaustedPopup() {
-    removeTokenExhaustedPopup();
-    const overlay = document.createElement('div');
-    overlay.className = 'session-modal-overlay';
-    overlay.id = 'token-exhausted-popup';
-    overlay.innerHTML = `
-      <div class="session-modal">
-        <button class="session-modal-close" id="btn-close-token-exhausted" title="Close">&times;</button>
-        <div class="session-modal-icon" style="background:rgba(255,107,107,0.12);color:#FF6B75">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        <h3 class="session-modal-title">Tokens Exhausted</h3>
-        <p class="session-modal-desc">You've used all 100K tokens for this session. Start a new session to keep chatting.</p>
-        <button class="session-modal-btn" id="btn-start-new-session">Start New Session</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
-
-    document.getElementById('btn-close-token-exhausted')?.addEventListener('click', () => {
-      removeTokenExhaustedPopup();
-    });
-
-    document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
-      removeTokenExhaustedPopup();
-      const started = await startSession();
-      if (started) {
-        chatInput.disabled = false;
-        chatInput.placeholder = 'Ask Anteemonee anything...';
-        chatInput.focus();
-        estimatedTokensUsed = 0;
-        updateSessionPanel();
-      }
-    });
-  }
-
-  function removeTokenExhaustedPopup() {
-    const existing = document.getElementById('token-exhausted-popup');
-    if (existing) existing.remove();
-  }
-
-  // â”€â”€ Session Expired Popup â”€â”€
-  function showSessionExpiredPopup() {
-    removeTokenExhaustedPopup();
-    const overlay = document.createElement('div');
-    overlay.className = 'session-modal-overlay';
-    overlay.id = 'token-exhausted-popup';
-    overlay.innerHTML = `
-      <div class="session-modal">
-        <button class="session-modal-close" id="btn-close-session-expired" title="Close">&times;</button>
-        <div class="session-modal-icon" style="background:rgba(255,183,77,0.12);color:#FFB74D">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <h3 class="session-modal-title">Session Expired</h3>
-        <p class="session-modal-desc">Your session time is up. Start a new session to continue.</p>
-        <button class="session-modal-btn" id="btn-start-new-session">Start New Session</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
-
-    document.getElementById('btn-close-session-expired')?.addEventListener('click', () => {
-      removeTokenExhaustedPopup();
-    });
-
-    document.getElementById('btn-start-new-session')?.addEventListener('click', async () => {
-      removeTokenExhaustedPopup();
-      const started = await startSession();
-      if (started) {
-        chatInput.disabled = false;
-        chatInput.placeholder = 'Ask Anteemonee anything...';
-        chatInput.focus();
-        estimatedTokensUsed = 0;
-        updateSessionPanel();
-      }
-    });
-  }
-
+  function showTokenExhaustedPopup() {}
+  function removeTokenExhaustedPopup() {}
+  function showSessionExpiredPopup() {}
   // â”€â”€ Send / Stop â”€â”€
   async function handleSend() {
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
     if ((!text && !hasImages) || isStreaming) return;
 
-    // Lock immediately â€” prevent double-send during any async gap
+    // Hard paywall: expired trial / no lifetime access cannot send.
+    try { if (typeof Access !== 'undefined' && Access.state.ready && !Access.state.access) { Access.applyChatPaywall(); chatInput.disabled = true; chatInput.placeholder = 'Your free trial has ended — get lifetime access to continue.'; return; } } catch (_) {}
+
+    // Lock immediately — prevent double-send during any async gap
     isStreaming = true;
     chatInput.disabled = true;
     btnSend.disabled = true;
@@ -1945,14 +1731,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
       startStudyTimer();
     }
 
-    // â”€â”€ Token budget check â”€â”€
-    const estInput = estimateInputTokens(text + (quote ? quote.text : '') + (studentContext ? JSON.stringify(studentContext) : ''));
-    if (estimatedTokensUsed + estInput >= TOKEN_LIMIT) {
-      showTokenExhaustedPopup();
-      chatInput.disabled = true;
-      chatInput.placeholder = 'Tokens exhausted - start a new session';
-      return;
-    }
 
     chatInput.value = '';
     autoResize();
@@ -2090,59 +1868,6 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
         handleSend();
         return;
       }
-      // â”€â”€ TOKEN_LIMIT: tokens exhausted but session still running â”€â”€
-      if (error.message && error.message.includes('TOKEN_LIMIT')) {
-        console.warn('[AI] Token limit reached. Session still active.');
-        // If we have a partial response, try to continue with other providers
-        if (fullResponse.length > 0) {
-          const providers = [0, 1, 2].filter(i => i !== selectedProviderIndex);
-          let continued = false;
-          for (const fallbackIndex of providers) {
-            try {
-              console.warn(`[AI] Token limit. Trying provider ${fallbackIndex} to continue...`);
-              const continuationMessages = [
-                ...apiMessages,
-                { role: 'assistant', content: fullResponse },
-                { role: 'user', content: 'Your previous response was cut off. Please continue from where you left off. Do not repeat what was already said - just continue the explanation.' },
-              ];
-              for await (const chunk of api.streamChat(continuationMessages, fallbackIndex)) {
-                if (chunk && chunk.includes('"type":"streak"')) {
-                  try { const p = JSON.parse(chunk); if (p.type === 'streak') { streakCount = p.current_streak || 0; longestStreak = p.longest_streak || 0; updateSessionPanel(); saveSessionState(); continue; } } catch (_) {}
-                }
-                fullResponse += chunk;
-                updateStreamingMessage(streamDiv, fullResponse);
-                if (userNearBottom) scrollToBottom();
-              }
-              continued = true;
-              break;
-            } catch (_) { continue; }
-          }
-          if (continued) {
-            finalizeStreamingMessage(streamDiv, fullResponse);
-            messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
-            updateTokensAfterResponse(text, fullResponse);
-            isStreaming = false;
-            if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
-            btnStop.style.display = 'none';
-            btnSend.style.display = 'flex';
-            btnSend.disabled = true;
-            if (estimatedTokensUsed < TOKEN_LIMIT) { chatInput.disabled = false; chatInput.focus(); } else { chatInput.disabled = true; chatInput.placeholder = 'Token limit reached for this session'; }
-            showTokenExhaustedPopup();
-            return;
-          }
-        }
-        // If no partial response or all providers failed
-        finalizeStreamingMessage(streamDiv, 'Token limit reached for this session. Start a new session to continue.');
-        messages.pop();
-        showTokenExhaustedPopup();
-        isStreaming = false;
-        if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
-        btnStop.style.display = 'none';
-        btnSend.style.display = 'flex';
-        chatInput.disabled = true;
-        chatInput.placeholder = 'Tokens exhausted - start a new session';
-        return;
-      }
       // â”€â”€ RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only â”€â”€
       if (error.message && (error.message.includes('RATE_LIMITED') || error.message.includes('CONCURRENT_LIMIT'))) {
         const secs = (error.retryAfter && Number(error.retryAfter)) || 30;
@@ -2226,14 +1951,8 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     btnStop.style.display = 'none';
     btnSend.style.display = 'flex';
     btnSend.disabled = true;
-    // Re-enable input if token budget allows
-    if (estimatedTokensUsed < TOKEN_LIMIT) {
-      chatInput.disabled = false;
-      chatInput.focus();
-    } else {
-      chatInput.disabled = true;
-      chatInput.placeholder = 'Token limit reached for this session';
-    }
+    chatInput.disabled = false;
+    chatInput.focus();
 
     const isFirstExchange = !activeConversationId;
     const firstUserText = messages.length ? messages[0].content : '';
