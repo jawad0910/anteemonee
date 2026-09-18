@@ -1,1 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>(function(){try{var m=localStorage.getItem('Anteemonee_theme_mode');var t=(m==='light'||m==='dark')?m:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t)}catch{}})()</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cpanteemonee</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/anteemonee.png">
+<link rel="stylesheet" href="../css/style.css?v=21">
+<link rel="stylesheet" href="css/panel.css?v=3">
+<style>[data-theme="dark"]{--bg:#000;--bg-elevated:#0a0a0a;--bg-card:#0d0d0f;--surface:#111113;--border:rgba(255,255,255,.08)}</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="gate" style="max-width:360px;margin:80px auto;padding:20px">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px"><img src="../assets/anteemonee.png" style="width:28px;height:28px;border-radius:8px"><b style="font-family:Fraunces,serif">cpanteemonee</b></div>
+  <form id="login" onsubmit="return doLogin(event)" style="display:flex;flex-direction:column;gap:10px">
+    <input id="u" class="cp-input" placeholder="admin" value="admin" autocomplete="username">
+    <input id="p" type="password" class="cp-input" placeholder="password" value="Anteemonee@2026" autocomplete="current-password">
+    <label style="font-size:12px;display:flex;gap:6px;align-items:center"><input id="stay" type="checkbox"> stay logged in</label>
+    <div id="err" style="display:none;color:#F87171;font-size:12px"></div>
+    <button class="cp-btn" type="submit" onclick="return doLogin(event)">Login</button>
+  </form>
+</div>
 
+<!-- APP -->
+<div id="app" class="cp-app" style="display:none">
+  <aside class="cp-sidebar" id="sidebar">
+    <div class="cp-brand"><img src="../assets/anteemonee.png"><b>cpanteemonee</b><button onclick="logout()" class="cp-btn ghost" style="margin-left:auto;padding:4px 8px;font-size:11px">logout</button></div>
+    <nav class="cp-nav">
+      <button class="active" data-n="dash" onclick="nav('dash')">Dashboard</button>
+      <button data-n="users" onclick="nav('users')">Users</button>
+      <button data-n="ebooks" onclick="nav('ebooks')">eBooks</button>
+      <button data-n="papers" onclick="nav('papers')">Past Papers</button>
+      <button data-n="notes" onclick="nav('notes')">Notes</button>
+      <button data-n="flashcards" onclick="nav('flashcards')">Flashcards</button>
+      <button data-n="defs" onclick="nav('defs')">Definitions</button>
+      <button data-n="tests" onclick="nav('tests')">Tests</button>
+      <button data-n="ai" onclick="nav('ai')">AI Models</button>
+      <button data-n="keys" onclick="nav('keys')">API Keys</button>
+      <button data-n="voice" onclick="nav('voice')">Voice</button>
+      <button data-n="pay" onclick="nav('pay')">Payments</button>
+      <button data-n="boards" onclick="nav('boards')">Boards</button>
+      <button data-n="tax" onclick="nav('tax')">Subjects / Taxonomy</button>
+      <button data-n="settings" onclick="nav('settings')">Settings</button>
+    </nav>
+    <div style="padding:10px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border)">DB: zkuytvjeqkpexcbyoyhz<br><span id="db-mode">mode: anon</span></div>
+  </aside>
+  <div class="cp-main">
+    <div class="cp-top"><h2 id="title">Dashboard</h2><button id="menu" class="cp-btn ghost" style="display:none">menu</button><div style="display:flex;gap:6px"><button class="cp-btn ghost" onclick="exportJSON()">Export</button><label class="cp-btn ghost" style="cursor:pointer"><input type="file" accept=".json" hidden onchange="importJSON(event)">Import</label></div></div>
+    <div class="cp-wrap">
+
+      <div id="sec-dash" class="cp-section active">
+        <div class="cp-grid4">
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">USERS</div><b id="s-users" style="font-size:22px">—</b></div>
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">PAID</div><b id="s-paid" style="font-size:22px">—</b></div>
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">EBOOKS</div><b id="s-ebooks" style="font-size:22px">—</b></div>
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">PAPERS</div><b id="s-papers" style="font-size:22px">—</b></div>
+        </div>
+        <div class="cp-grid4">
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">NOTES</div><b id="s-notes" style="font-size:22px">—</b></div>
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">FLASHCARDS</div><b id="s-fc" style="font-size:22px">—</b></div>
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">DEFS</div><b id="s-defs" style="font-size:22px">—</b></div>
+          <div class="cp-card"><div style="color:var(--text-muted);font-size:11px">KEYS ON</div><b id="s-keys" style="font-size:22px">—</b></div>
+        </div>
+      </div>
+
+      <div id="sec-users" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-users" class="cp-input" placeholder="search"><select id="f-users" class="cp-select" style="width:120px"><option value="all">all</option><option value="lifetime">lifetime</option><option value="free">free</option></select><button class="cp-btn ghost" onclick="loadUsers()">refresh</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>user</th><th>plan</th><th>status</th><th>joined</th><th></th></tr></thead><tbody id="tb-users"></tbody></table></div>
+      </div>
+
+      <div id="sec-ebooks" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-ebooks" class="cp-input" placeholder="search"><button class="cp-btn" onclick="editEbook()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>title</th><th>subject</th><th>class</th><th>status</th><th></th></tr></thead><tbody id="tb-ebooks"></tbody></table></div>
+      </div>
+
+      <div id="sec-papers" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-papers" class="cp-input" placeholder="search"><select id="f-papers" class="cp-select" style="width:120px"><option value="all">all</option><option value="annual">annual</option><option value="supplementary">supplementary</option><option value="topical">topical</option></select><button class="cp-btn" onclick="editPaper()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>type</th><th>subject</th><th>board</th><th>class</th><th>year</th><th>status</th><th></th></tr></thead><tbody id="tb-papers"></tbody></table></div>
+      </div>
+
+      <div id="sec-notes" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-notes" class="cp-input" placeholder="search"><button class="cp-btn" onclick="editNote()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>title</th><th>subject</th><th>chapter</th><th>status</th><th></th></tr></thead><tbody id="tb-notes"></tbody></table></div>
+      </div>
+
+      <div id="sec-flashcards" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-fc" class="cp-input" placeholder="search"><button class="cp-btn" onclick="editFc()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>front</th><th>back</th><th>subject</th><th></th></tr></thead><tbody id="tb-fc"></tbody></table></div>
+      </div>
+
+      <div id="sec-defs" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-defs" class="cp-input" placeholder="search"><button class="cp-btn" onclick="editDef()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>term</th><th>definition</th><th>subject</th><th></th></tr></thead><tbody id="tb-defs"></tbody></table></div>
+      </div>
+
+      <div id="sec-tests" class="cp-section">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="cp-btn" onclick="editTest()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>title</th><th>subject</th><th>qs</th><th>difficulty</th><th></th></tr></thead><tbody id="tb-tests"></tbody></table></div>
+      </div>
+
+      <div id="sec-ai" class="cp-section">
+        <div class="cp-card" style="display:flex;gap:8px;flex-wrap:wrap"><select id="ai-prov" class="cp-select" style="width:160px"><option value="0">0 Groq</option><option value="1">1 Qwen</option><option value="2">2 Mistral</option></select><input id="ai-url" class="cp-input" style="flex:1;min-width:200px" placeholder="edge url"><button class="cp-btn" onclick="saveAI()">save</button></div>
+        <div id="ai-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"></div>
+        <button class="cp-btn ghost" style="margin-top:10px" onclick="editModel()">+ model</button>
+      </div>
+
+      <div id="sec-keys" class="cp-section">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="cp-btn" onclick="editKey()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>provider</th><th>key</th><th>model</th><th>active</th><th></th></tr></thead><tbody id="tb-keys"></tbody></table></div>
+      </div>
+
+      <div id="sec-voice" class="cp-section">
+        <div class="cp-card" style="display:flex;flex-direction:column;gap:8px;max-width:480px">
+          <input id="v-openai" class="cp-input" placeholder="OpenAI key">
+          <input id="v-gemini" class="cp-input" placeholder="Gemini key">
+          <select id="v-tts" class="cp-select"><option value="alloy">alloy</option><option value="nova">nova</option><option value="shimmer">shimmer</option></select>
+          <select id="v-stt" class="cp-select"><option value="whisper-1">whisper-1</option><option value="gpt-4o-transcribe">gpt-4o-transcribe</option></select>
+          <button class="cp-btn" onclick="saveVoice()">save</button>
+        </div>
+      </div>
+
+      <div id="sec-pay" class="cp-section">
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>code</th><th>discount</th><th>used</th><th>expires</th><th>active</th><th></th></tr></thead><tbody id="tb-coupons"></tbody></table></div>
+        <button class="cp-btn" style="margin-top:10px" onclick="editCoupon()">+ coupon</button>
+      </div>
+
+      <div id="sec-boards" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-boards" class="cp-input" placeholder="search boards"><button class="cp-btn" onclick="editBoard()">+ add board</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>id</th><th>name</th><th>region</th><th></th></tr></thead><tbody id="tb-boards"></tbody></table></div>
+      </div>
+
+      <div id="sec-tax" class="cp-section">
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input id="q-tax" class="cp-input" placeholder="search"><select id="f-tax" class="cp-select" style="width:140px"><option value="all">all</option><option value="board">board</option><option value="class_level">class_level</option><option value="subject">subject</option></select><button class="cp-btn" onclick="editTax()">+ add</button></div>
+        <div class="cp-card" style="padding:0;overflow:auto"><table class="cp-table"><thead><tr><th>type</th><th>name</th><th>code</th><th></th></tr></thead><tbody id="tb-tax"></tbody></table></div>
+      </div>
+
+      <div id="sec-settings" class="cp-section">
+        <div class="cp-card" style="display:flex;flex-direction:column;gap:8px;max-width:500px">
+          <input id="set-ver" class="cp-input" placeholder="version">
+          <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input id="set-maint" type="checkbox"> maintenance</label>
+          <textarea id="set-ann" class="cp-textarea" placeholder="announcement"></textarea>
+          <textarea id="set-stats" class="cp-textarea" style="min-height:100px" placeholder='{"user_count": 1284}'></textarea>
+          <button class="cp-btn" onclick="saveSettings()">save</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="m-user" class="cp-modal"><div class="cp-modal-card"><form id="f-user" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mu-id"><input id="mu-name" class="cp-input" placeholder="username"><input id="mu-email" class="cp-input" placeholder="email"><input id="mu-full" class="cp-input" placeholder="full name"><select id="mu-plan" class="cp-select"><option value="free">free</option><option value="lifetime">lifetime</option><option value="premium">premium</option></select><select id="mu-status" class="cp-select"><option value="inactive">inactive</option><option value="active">active</option></select><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-user')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-ebook" class="cp-modal"><div class="cp-modal-card"><form id="f-ebook" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="me-id"><input id="me-title" class="cp-input" placeholder="title" required><input id="me-author" class="cp-input" placeholder="author"><input id="me-subject" class="cp-input" placeholder="subject"><input id="me-class" class="cp-input" placeholder="class"><input id="me-file" class="cp-input" placeholder="file url"><select id="me-status" class="cp-select"><option value="draft">draft</option><option value="published">published</option></select><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-ebook')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+ <div id="m-paper" class="cp-modal"><div class="cp-modal-card" style="max-width:520px"><form id="f-paper" style="display:flex;flex-direction:column;gap:12px"><input type="hidden" id="mp-id">
+  <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">TITLE</label><input id="mp-title" class="cp-input" placeholder="e.g. Physics Annual 2024" required></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">BOARD <a onclick="openM('m-board')" style="font-size:11px;color:var(--accent);cursor:pointer;margin-left:6px">+ New</a></label><select id="mp-board" class="cp-select"></select></div>
+    <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">SUBJECT</label><select id="mp-subject" class="cp-select"></select></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">CLASS</label><select id="mp-class" class="cp-select"></select></div>
+    <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">YEAR</label><input id="mp-year" class="cp-input" type="number" placeholder="2024" min="2000" max="2030" required></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">PAPER TYPE</label><select id="mp-type" class="cp-select"><option value="annual">annual</option><option value="supplementary">supplementary</option><option value="topical">topical</option></select></div>
+    <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">STATUS</label><select id="mp-status" class="cp-select"><option value="published">published</option><option value="draft">draft</option></select></div>
+  </div>
+  <div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">FILE / SOURCE URL</label><input id="mp-file" class="cp-input" placeholder="https://... or file_path"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px"><button type="button" class="cp-btn ghost" onclick="closeM('m-paper')">cancel</button><button class="cp-btn" type="submit">save</button></div>
+</form></div></div>
+<div id="m-note" class="cp-modal"><div class="cp-modal-card"><form id="f-note" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mn-id"><input id="mn-title" class="cp-input" placeholder="title" required><input id="mn-subject" class="cp-input" placeholder="subject"><input id="mn-chapter" class="cp-input" placeholder="chapter"><textarea id="mn-content" class="cp-textarea" placeholder="content"></textarea><select id="mn-status" class="cp-select"><option value="draft">draft</option><option value="published">published</option></select><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-note')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-fc" class="cp-modal"><div class="cp-modal-card"><form id="f-fc" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mf-id"><input id="mf-front" class="cp-input" placeholder="front" required><textarea id="mf-back" class="cp-textarea" placeholder="back"></textarea><input id="mf-subject" class="cp-input" placeholder="subject"><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-fc')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-def" class="cp-modal"><div class="cp-modal-card"><form id="f-def" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="md-id"><input id="md-term" class="cp-input" placeholder="term" required><textarea id="md-def" class="cp-textarea" placeholder="definition"></textarea><input id="md-subject" class="cp-input" placeholder="subject"><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-def')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-test" class="cp-modal"><div class="cp-modal-card"><form id="f-test" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mt-id"><input id="mt-title" class="cp-input" placeholder="title" required><input id="mt-subject" class="cp-input" placeholder="subject"><input id="mt-qs" class="cp-input" type="number" placeholder="questions"><select id="mt-diff" class="cp-select"><option value="easy">easy</option><option value="medium">medium</option><option value="hard">hard</option></select><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-test')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-model" class="cp-modal"><div class="cp-modal-card"><form id="f-model" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mm-id"><input id="mm-name" class="cp-input" placeholder="name" required><input id="mm-role" class="cp-input" placeholder="role"><select id="mm-prov" class="cp-select"><option value="0">0 Groq</option><option value="1">1 Qwen</option><option value="2">2 Mistral</option></select><textarea id="mm-prompt" class="cp-textarea" style="min-height:120px" placeholder="system prompt"></textarea><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-model')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-key" class="cp-modal"><div class="cp-modal-card"><form id="f-key" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mk-id"><select id="mk-prov" class="cp-select"><option>Groq</option><option>Qwen</option><option>Mistral</option><option>Gemini</option><option>OpenAI</option></select><input id="mk-key" class="cp-input" placeholder="key" required><input id="mk-model" class="cp-input" placeholder="model"><label style="display:flex;gap:6px;align-items:center"><input id="mk-on" type="checkbox" checked> active</label><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-key')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+<div id="m-coupon" class="cp-modal"><div class="cp-modal-card"><form id="f-coupon" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mc-id"><input id="mc-code" class="cp-input" placeholder="CODE" required><input id="mc-disc" class="cp-input" type="number" placeholder="discount %"><input id="mc-exp" class="cp-input" type="date"><label style="display:flex;gap:6px;align-items:center"><input id="mc-on" type="checkbox" checked> active</label><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-coupon')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+ <div id="m-tax" class="cp-modal"><div class="cp-modal-card"><form id="f-tax" style="display:flex;flex-direction:column;gap:8px"><input type="hidden" id="mx-id"><select id="mx-type" class="cp-select"><option value="board">board</option><option value="class_level">class_level</option><option value="subject">subject</option></select><input id="mx-name" class="cp-input" placeholder="name" required><input id="mx-code" class="cp-input" placeholder="code"><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-tax')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+ <div id="m-board" class="cp-modal"><div class="cp-modal-card"><form id="f-board" style="display:flex;flex-direction:column;gap:12px"><input type="hidden" id="mb-id"><div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">BOARD NAME</label><input id="mb-name" class="cp-input" placeholder="e.g. BISE Lahore" required></div><div><label style="font-size:11px;font-weight:700;color:var(--text-muted)">REGION</label><input id="mb-region" class="cp-input" placeholder="Punjab / Federal / Sindh"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="cp-btn ghost" onclick="closeM('m-board')">cancel</button><button class="cp-btn" type="submit">save</button></div></form></div></div>
+
+<div id="toast" class="cp-toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+<script src="js/panel.js?v=11"></script>
+<script>
+// Fallback login — works even if panel.js fails to bind
+(function(){
+  function doLogin(e){
+    if(e) e.preventDefault();
+    var uEl=document.getElementById('u'), pEl=document.getElementById('p'), err=document.getElementById('err'), gate=document.getElementById('gate'), app=document.getElementById('app');
+    var u=(uEl&&uEl.value||'').trim(), p=pEl&&pEl.value||'';
+    if(u==='admin' && p==='Anteemonee@2026'){
+      try{sessionStorage.setItem('cp_auth','1'); if(document.getElementById('stay')&&document.getElementById('stay').checked) localStorage.setItem('cpanteemonee_v1_stay','1');}catch(_){}
+      if(gate) gate.style.display='none';
+      if(app) app.style.display='flex';
+      try{if(window.loadDash) window.loadDash();}catch(_){}
+      if(err) err.style.display='none';
+      return false;
+    } else {
+      if(err){err.style.display='block';err.textContent='wrong login — use admin / Anteemonee@2026';}
+      return false;
+    }
+  }
+  window.doLogin=doLogin;
+  // direct bind as backup
+  var f=document.getElementById('login');
+  if(f && !f.dataset.fallbackBound){ f.dataset.fallbackBound='1'; f.addEventListener('submit', doLogin); }
+  // auto-open if already authed
+  try{
+    if(sessionStorage.getItem('cp_auth')==='1' || localStorage.getItem('cpanteemonee_v1_stay')==='1'){
+      var gate=document.getElementById('gate'), app=document.getElementById('app');
+      if(gate) gate.style.display='none';
+      if(app) app.style.display='flex';
+    }
+  }catch(_){}
+})();
+</script>
+</body>
+</html>
