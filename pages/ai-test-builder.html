@@ -17,7 +17,7 @@
   <meta name="description" content="Build custom AI practice tests for FSc and intermediate prep.">
   <meta name="robots" content="index, follow">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=22">
+  <link rel="stylesheet" href="../css/style.css?v=24">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; background: var(--bg) !important; }
@@ -78,7 +78,7 @@
     .mobile-menu-toggle.active span { background: transparent; }
     .mobile-menu-toggle.active span::before { top: 0; transform: rotate(45deg); }
     .mobile-menu-toggle.active span::after { top: 0; transform: rotate(-45deg); }
-    @media (max-width: 900px) { .mobile-menu-toggle { display: inline-flex; } }
+    @media (max-width: 900px) { .mobile-menu-toggle { display: inline-flex; } #landing-auth-in { display: none !important; } }
     #landing-auth { display: none; align-items: center; gap: 10px; }
     #landing-auth-in { align-items: center; }
     #pdf-modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(3,7,18,.72); backdrop-filter: blur(14px) saturate(1.1); -webkit-backdrop-filter: blur(14px) saturate(1.1); align-items: center; justify-content: center; padding: 18px; }
@@ -265,10 +265,9 @@
     <div class="nav-menu">
       <a href="ebooks.html">eBooks</a>
       <a href="flashcards.html">Flashcards</a>
-      <a href="definitions.html">Definitions</a>
+      <a href="past-papers.html">Past Papers</a>
     </div>
   </div>
-  <a href="past-papers.html">Past Papers</a>
   <a href="ai-chat.html">AI Assistant</a>
 </nav>
       <div class="header-actions">
@@ -286,7 +285,14 @@
   </header>
   <div class="mobile-menu" id="mobile-menu">
     <a href="../index.html" class="mobile-nav-link">Home</a>
-    <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="ebooks.html" class="mobile-nav-link">eBooks</a>
+        <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+        <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
     <a href="ai-chat.html" class="mobile-nav-link">AI Assistant</a>
     <div class="mobile-cta">
       <a href="login.html" class="btn-login">Log in</a>
@@ -555,7 +561,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }</script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=20"></script>
+  <script src="../js/app.js?v=24"></script>
   <script>
 (function () {
       // Mobile menu handled solely by setupMobileMenu() in app.js.
@@ -657,7 +663,7 @@
       window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
   })();
   </script>
-  <script src="../js/header-ai-dropdown.js?v=2"></script>
+  <script src="../js/header-ai-dropdown.js?v=4"></script>
   <script>
 (function () {
   var SUPA_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';

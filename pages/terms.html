@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=21">
+  <link rel="stylesheet" href="../css/style.css?v=24">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -118,10 +118,9 @@
           <div class="nav-menu">
             <a href="ebooks.html">eBooks</a>
             <a href="flashcards.html">Flashcards</a>
-            <a href="definitions.html">Definitions</a>
+            <a href="past-papers.html">Past Papers</a>
           </div>
         </div>
-        <a href="past-papers.html">Past Papers</a>
         <a href="ai-chat.html">AI Assistant</a>
       </nav>
       <div class="header-actions">
@@ -140,9 +139,14 @@
   <div class="mobile-menu" id="mobile-menu">
     <a href="dashboard.html" class="mobile-nav-link">Dashboard</a>
     <a href="board-notes.html" class="mobile-nav-link">Board Notes</a>
-    <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
-    <a href="definitions.html" class="mobile-nav-link">Definitions</a>
-    <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="ebooks.html" class="mobile-nav-link">eBooks</a>
+        <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+        <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
     <a href="ai-chat.html" class="mobile-nav-link">AI Assistant</a>
     <div class="mobile-cta">
       <a href="login.html" class="btn-login">Log in</a>
@@ -242,7 +246,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=20"></script>
+  <script src="../js/app.js?v=24"></script>
   <script>
     // Smart back: return to the page the user came from (e.g. signup),
     // otherwise fall back to index. Preserves ?mode=add_account etc.
@@ -363,6 +367,6 @@
       window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
   </script>
-  <script src="../js/header-ai-dropdown.js?v=2"></script>
+  <script src="../js/header-ai-dropdown.js?v=4"></script>
 </body>
 </html>
