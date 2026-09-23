@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=24">
+  <link rel="stylesheet" href="../css/style.css?v=25">
   <link rel="stylesheet" href="../css/settings.css?v=15">
   <style>
     [data-theme="dark"] {
@@ -91,7 +91,7 @@
   </style>
 </head>
 <body>
-  <header class="header" id="site-header" id="header">
+  <header class="header" id="site-header">
     <div class="header-inner">
       <a href="../index.html" class="site-logo-link">
         <img src="../assets/anteemonee.png" alt="Anteemonee" class="site-logo-img">
@@ -164,7 +164,6 @@
       <a href="login.html" class="site-btn-login">Log in</a>
       <a href="signup.html" class="site-btn-signup">Sign Up</a>
     </div>
-  </div>
   </div>
 
   <main class="settings-page" id="settings-page">
@@ -503,12 +502,12 @@
   </script>
   <script>
     (function () {
-      var hdr = document.getElementById('header');
+      var hdr = document.getElementById('site-header');
       function onScroll() { if (hdr) { if (window.scrollY > 20) hdr.classList.add('scrolled'); else hdr.classList.remove('scrolled'); } }
       window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
       var toggle = document.getElementById('site-menu-toggle');
       var menu = document.getElementById('site-mobile-menu');
-      if (toggle && menu) { toggle.addEventListener('click', function () { menu.classList.toggle('open'); }); }
+      if (toggle && menu) { toggle.addEventListener('click', function () { menu.classList.toggle('open'); toggle.classList.toggle('active'); }); }
       var avBtn = document.getElementById('site-avatar-btn');
       var drop = document.getElementById('site-dropdown');
       var ddTimeout;
@@ -521,7 +520,7 @@
       }
       document.addEventListener('click', function (e) {
         if (drop && !e.target.closest('.site-profile-wrap')) drop.classList.remove('open');
-        if (menu && !e.target.closest('.site-menu-toggle') && !e.target.closest('.site-mobile-menu')) menu.classList.remove('open');
+        if (menu && !e.target.closest('.site-menu-toggle') && !e.target.closest('.site-mobile-menu')) { menu.classList.remove('open'); if (toggle) toggle.classList.remove('active'); }
       });
       function updateSiteHeader(user) {
         var lo = document.getElementById('site-auth-logged-out');
