@@ -443,6 +443,7 @@ function updateAuthUI() {
     }
     renderProfileAvatar();
     renderMobileProfile();
+    renderHamburgerAccount();
 
     const footerLink = document.getElementById('footer-signup-link');
     if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = 'pages/account.html'; }
@@ -457,11 +458,17 @@ function updateAuthUI() {
     if (mobileLoggedIn) mobileLoggedIn.style.display = 'none';
     if (landingLoggedOut) landingLoggedOut.style.display = 'flex';
     if (landingLoggedIn) landingLoggedIn.style.display = 'none';
+    document.querySelectorAll('.hamburger-account').forEach(el => el.remove());
     // Show footer login/signup links when logged out
     document.querySelectorAll('.footer a[href*="login.html"], .footer a[href*="signup.html"]').forEach(function(a) {
       a.style.display = '';
     });
   }
+
+  // Hamburger menu CTA: never show Log in / Sign Up to a signed-in user.
+  document.querySelectorAll('.mobile-cta, .site-mobile-cta').forEach(function (el) {
+    el.style.display = currentUser ? 'none' : '';
+  });
 }
 
 /* =========================
@@ -523,24 +530,67 @@ function renderProfileAvatar() {
 }
 
 function renderMobileProfile() {
-  const container = document.getElementById('mobile-profile-section');
-  if (!container || !currentUser) return;
-  const { username, imgUrl } = getDisplayUser();
-  const initial = username.charAt(0).toUpperCase();
+  if (!currentUser) return;
+  document.querySelectorAll('#mobile-profile-section').forEach(container => {
+    container.innerHTML = hamburgerAccountHtml('mobile-nav-link');
+  });
+}
 
-  container.innerHTML = `
-    <div class="mobile-acc-dropdown mobile-acc-single" id="mobile-acc-dropdown">
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 0;">
-        <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;overflow:hidden;flex-shrink:0;">
-          ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${initial}</div>` : initial}
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:var(--text);">${username}</div>
-          <div style="font-size:12px;color:var(--text-secondary);">${currentUser?.email || ''}</div>
-        </div>
+// Basic info (pfp / name / email) + Account / Settings / Logout inside every
+// hamburger panel. Skips pages that already have #mobile-profile-section.
+function renderHamburgerAccount() {
+  document.querySelectorAll('.mobile-menu, .site-mobile-menu').forEach(panel => {
+    const existing = panel.querySelector('.hamburger-account');
+    if (!currentUser) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (panel.querySelector('#mobile-profile-section')) return;
+    let block = existing;
+    if (!block) {
+      block = document.createElement('div');
+      block.className = 'hamburger-account';
+      panel.prepend(block);
+    }
+    const linkCls = panel.classList.contains('site-mobile-menu') ? 'site-mobile-link' : 'mobile-nav-link';
+    block.innerHTML = hamburgerAccountHtml(linkCls);
+  });
+}
+
+function hamburgerAccountHtml(linkCls) {
+  const { fullName, username, imgUrl } = getDisplayUser();
+  const name = fullName || username || 'User';
+  const initial = (username || 'U').charAt(0).toUpperCase();
+  const avatarInner = imgUrl
+    ? `<img src="${escapeHtmlAttr(imgUrl)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="ha-initial" style="display:none">${escapeHtmlAttr(initial)}</span>`
+    : `<span class="ha-initial">${escapeHtmlAttr(initial)}</span>`;
+  return `
+    <div class="mobile-acc-dropdown ha-dropdown">
+      <button type="button" class="mobile-acc-toggle ha-toggle">
+        <span class="ha-card">
+          <span class="ha-avatar">${avatarInner}</span>
+          <span class="ha-text">
+            <span class="ha-name">${escapeHtmlAttr(name)}</span>
+            <span class="ha-email">${escapeHtmlAttr(currentUser?.email || '')}</span>
+          </span>
+        </span>
+        <span class="mobile-acc-chevron">▾</span>
+      </button>
+      <div class="mobile-acc-list">
+        <a href="${BASE}/pages/account.html" class="${linkCls} ha-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Account
+        </a>
+        <a href="${BASE}/pages/settings.html" class="${linkCls} ha-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+        <button type="button" class="${linkCls} ha-item ha-logout" onclick="handleLogout()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 /* =========================
@@ -673,19 +723,45 @@ function setupMobileMenu() {
       panel.classList.remove('open');
       toggle.classList.remove('active');
       document.body.style.overflow = '';
+      panel.querySelectorAll('.mobile-acc-dropdown.open').forEach(d => d.classList.remove('open'));
     }
 
     toggle.addEventListener('click', () => {
       panel.classList.contains('open') ? closeMenu() : openMenu();
     });
 
-    panel.querySelectorAll('a, button').forEach(link => {
-      link.addEventListener('click', (e) => {
-        if (e.target.closest('.mobile-acc-toggle')) return;
-        closeMenu();
+    // Delegated so accordions injected later (e.g. AI Assistant dropdown
+    // from header-ai-dropdown.js) also open/close, and so link taps still
+    // close the menu without needing per-element bindings.
+    if (panel.dataset.menuEvents !== '1') {
+      panel.dataset.menuEvents = '1';
+      panel.addEventListener('click', (e) => {
+        const acc = e.target.closest('.mobile-acc-toggle');
+        if (acc && panel.contains(acc)) {
+          const dd = acc.closest('.mobile-acc-dropdown');
+          if (dd) dd.classList.toggle('open');
+          return;
+        }
+        const item = e.target.closest('a, button');
+        if (item && panel.contains(item)) closeMenu();
       });
-    });
+    }
   }
+
+  // Site menus (ai-chat / settings) manage their own open/close; give them
+  // accordion delegation too (Library + account dropdown). Delegated on the
+  // panel so content injected later (header-ai-dropdown.js) works as well.
+  document.querySelectorAll('.site-mobile-menu').forEach((panel) => {
+    if (panel.dataset.menuEvents === '1') return;
+    panel.dataset.menuEvents = '1';
+    panel.addEventListener('click', (e) => {
+      const acc = e.target.closest('.mobile-acc-toggle');
+      if (acc && panel.contains(acc)) {
+        const dd = acc.closest('.mobile-acc-dropdown');
+        if (dd) dd.classList.toggle('open');
+      }
+    });
+  });
 }
 
 function setupIntersectionObserver() {}

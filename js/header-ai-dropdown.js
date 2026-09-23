@@ -4,7 +4,8 @@
     layers: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
     bookOpen: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
     chat: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
-    clipboard: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13l2 2 4-4"/></svg>'
+    clipboard: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13l2 2 4-4"/></svg>',
+    file: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
   };
 
   function ensureIconCss() {
@@ -85,6 +86,9 @@
     if (href.indexOf('ebooks') !== -1) return ICONS.book;
     if (href.indexOf('flashcards') !== -1) return ICONS.layers;
     if (href.indexOf('definitions') !== -1) return ICONS.bookOpen;
+    if (href.indexOf('past-papers') !== -1) return ICONS.file;
+    if (href.indexOf('ai-test-builder') !== -1) return ICONS.clipboard;
+    if (href.indexOf('ai-chat') !== -1) return ICONS.chat;
     return null;
   }
 
@@ -96,6 +100,19 @@
       var icon = iconForLibrary(a.getAttribute('href'));
       if (!icon) return;
       a.setAttribute('data-nav-icon', '1');
+      a.insertAdjacentHTML('afterbegin', icon);
+    });
+  }
+
+  // Icons inside the hamburger menu: eBooks / Flashcards / Definitions /
+  // Past Papers links + AI Tutor / AI Test Builder in the AI accordion.
+  function decorateMobileIcons() {
+    document.querySelectorAll('a.mobile-nav-link, a.site-mobile-link').forEach(function (a) {
+      if (a.getAttribute('data-menu-icon') === '1') return;
+      if (a.querySelector('svg')) { a.setAttribute('data-menu-icon', '1'); return; }
+      var icon = iconForLibrary(a.getAttribute('href'));
+      if (!icon) return;
+      a.setAttribute('data-menu-icon', '1');
       a.insertAdjacentHTML('afterbegin', icon);
     });
   }
@@ -119,20 +136,21 @@
       if (!isMobileAiLink(a)) return;
       if (a.getAttribute('data-ai-mobile') === '1') return;
       var cls = a.className;
-      var tutor = document.createElement('a');
-      tutor.className = cls;
-      tutor.setAttribute('href', p.ai);
-      tutor.setAttribute('data-ai-mobile', '1');
-      tutor.textContent = 'AI Tutor';
-      var test = document.createElement('a');
-      test.className = cls;
-      test.setAttribute('href', p.test);
-      test.setAttribute('data-ai-mobile', '1');
-      test.textContent = 'AI Test Builder';
+      // Same accordion pattern as the Library group in the hamburger menu.
+      var wrap = document.createElement('div');
+      wrap.className = 'mobile-acc-dropdown';
+      wrap.setAttribute('data-ai-mobile', '1');
+      wrap.innerHTML =
+        '<button type="button" class="' + cls + ' mobile-acc-toggle">AI Assistant <span class="mobile-acc-chevron">▾</span></button>' +
+        '<div class="mobile-acc-list">' +
+          '<a href="' + p.ai + '" class="' + cls + '">' + ICONS.chat + 'AI Tutor</a>' +
+          '<a href="' + p.test + '" class="' + cls + '">' + ICONS.clipboard + 'AI Test Builder</a>' +
+        '</div>';
       a.setAttribute('data-ai-mobile', '1');
-      a.replaceWith(tutor, test);
+      a.replaceWith(wrap);
     });
 
+    decorateMobileIcons();
     markCurrent();
   }
 
