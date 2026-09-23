@@ -37,9 +37,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" href="assets/anteemonee.png">
-  <link rel="stylesheet" href="css/style.css?v=21">
-  <link rel="stylesheet" href="css/ai-chatbot.css?v=45">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=21">
+  <link rel="stylesheet" href="../css/ai-chatbot.css?v=45">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
     [data-theme="dark"] {
@@ -116,30 +116,30 @@
   <!-- ── SITE HEADER ── -->
   <header class="header" id="site-header">
     <div class="header-inner">
-      <a href="index.html" class="logo-link">
-        <img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
         <span class="logo-text">Anteemonee</span>
       </a>
       <nav class="landing-nav" aria-label="Primary">
-  <a href="pages/dashboard.html">Dashboard</a>
+  <a href="dashboard.html">Dashboard</a>
   <div class="nav-drop">
     <a href="#">Library <span class="caret">▾</span></a>
     <div class="nav-menu">
-      <a href="pages/ebooks.html">eBooks</a>
-      <a href="pages/flashcards.html">Flashcards</a>
-      <a href="pages/definitions.html">Definitions</a>
+      <a href="ebooks.html">eBooks</a>
+      <a href="flashcards.html">Flashcards</a>
+      <a href="definitions.html">Definitions</a>
     </div>
   </div>
-  <a href="pages/past-papers.html">Past Papers</a>
-  <a href="pages/ai-chat.html">AI Assistant</a>
+  <a href="past-papers.html">Past Papers</a>
+  <a href="ai-chat.html">AI Assistant</a>
 </nav>
       <div class="header-actions">
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
-          <a href="pages/signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
+          <a href="login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
         </div>
         <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
         <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
@@ -147,16 +147,16 @@
     </div>
   </header>
   <div class="site-mobile-menu" id="site-mobile-menu">
-  <a href="pages/dashboard.html" class="site-mobile-link">Dashboard</a>
-  <a href="pages/board-notes.html" class="site-mobile-link">Board Notes</a>
-  <a href="pages/flashcards.html" class="site-mobile-link">Flashcards</a>
-  <a href="pages/definitions.html" class="site-mobile-link">Definitions</a>
-  <a href="pages/past-papers.html" class="site-mobile-link">Past Papers</a>
-  <a href="pages/ai-chat.html" class="site-mobile-link">AI Assistant</a>
+  <a href="dashboard.html" class="site-mobile-link">Dashboard</a>
+  <a href="board-notes.html" class="site-mobile-link">Board Notes</a>
+  <a href="flashcards.html" class="site-mobile-link">Flashcards</a>
+  <a href="definitions.html" class="site-mobile-link">Definitions</a>
+  <a href="past-papers.html" class="site-mobile-link">Past Papers</a>
+  <a href="ai-chat.html" class="site-mobile-link">AI Assistant</a>
 
     <div class="site-mobile-cta">
-      <a href="pages/login.html" class="site-btn-login">Log in</a>
-      <a href="pages/signup.html" class="site-btn-signup">Sign Up</a>
+      <a href="login.html" class="site-btn-login">Log in</a>
+      <a href="signup.html" class="site-btn-signup">Sign Up</a>
     </div>
   </div>
 
@@ -204,8 +204,8 @@
       <div class="sidebar-account">
         <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
         <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login">Log in</a>
-          <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+          <a href="login.html" class="btn-login">Log in</a>
+          <a href="signup.html" class="btn-signup">Sign Up</a>
         </div>
         <div class="auth-actions" id="auth-logged-in" style="display:none">
           <div class="profile-avatar-container" id="profile-avatar-container"></div>
@@ -235,7 +235,7 @@
 
       <div id="chats-loading" role="status" aria-label="Loading chats">
         <div class="chats-loading-box">
-          <img src="assets/anteemonee.png" alt="Anteemonee" class="chats-loading-logo">
+          <img src="../assets/anteemonee.png" alt="Anteemonee" class="chats-loading-logo">
           <div class="chats-loading-spinner" aria-hidden="true"></div>
           <div class="chats-loading-text">Loading your chats…</div>
         </div>
@@ -330,7 +330,7 @@
   <div class="mobile-sidebar" id="mobile-sidebar">
     <div class="mobile-sidebar-header">
       <div style="display:flex;align-items:center;gap:10px">
-        <img src="assets/anteemonee.png" alt="Anteemonee" class="mobile-brand-logo">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="mobile-brand-logo">
         <span class="mobile-brand-text">Anteemonee</span>
       </div>
       <button class="btn-close-sidebar" id="btn-close-sidebar" aria-label="Close">
@@ -399,7 +399,7 @@
     <button class="voice-close" id="voice-close" aria-label="Close voice mode">×</button>
     <div class="voice-call">
       <div class="call-header">
-        <img src="assets/anteemonee.png" alt="Anteemonee" class="call-avatar">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="call-avatar">
         <div class="call-name">Anteemonee</div>
         <div class="call-status" id="voice-status">Connecting…</div>
       </div>
@@ -455,13 +455,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
-  <script src="js/account-manager.js?v=11"></script>
-  <script src="js/app.js?v=19"></script>
-  <script src="js/ai-api-service.js?v=14"></script>
-  <script src="js/ai-chatbot.js?v=44"></script>
-  <script src="js/voice-chat.js?v=19"></script>
-  <script src="js/realtime-call.js?v=6"></script>
-  <script src="js/gemini-live-call.js?v=6"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=19"></script>
+  <script src="../js/ai-api-service.js?v=14"></script>
+  <script src="../js/ai-chatbot.js?v=44"></script>
+  <script src="../js/voice-chat.js?v=19"></script>
+  <script src="../js/realtime-call.js?v=6"></script>
+  <script src="../js/gemini-live-call.js?v=6"></script>
   <script>
     // "Coming soon" toast for sidebar features not built yet.
     (function () {
@@ -900,8 +900,8 @@
                     '</div>' +
                   '</div>' +
                   '<div class="dropdown-divider"></div>' +
-                  '<a href="pages/account.html" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account</a>' +
-                  '<a href="pages/settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>' +
+                  '<a href="account.html" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account</a>' +
+                  '<a href="settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>' +
                   '<div class="dropdown-divider"></div>' +
                   '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>' +
                 '</div>' +
