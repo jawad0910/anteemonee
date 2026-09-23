@@ -13,1297 +13,685 @@
       } catch (_) {}
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-  <title>Anteemonee - AI Study Tutor & Flashcards for Pakistan Students</title>
-  <meta name="description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects. Anteemonee is Pakistan's smartest Student OS.">
-  <meta name="keywords" content="AI tutor Pakistan, flashcards, study chat, FSc preparation, matric exam prep, student AI, Anteemonee, online tutor, study assistant">
-  <meta name="theme-color" content="#07080C">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anteemonee - FSc, Matric & Intermediate Past Papers, Notes & AI Tutor</title>
+  <meta name="description" content="Anteemonee is Pakistan's Student OS for FSc, matric and intermediate: board notes, topical & yearly past papers with solutions, AI tutor, flashcards, test builder and live voice calls.">
+  <meta name="keywords" content="FSc preparation, matric past papers, intermediate notes, BISE past papers, AI tutor Pakistan, flashcards FSc, Anteemonee">
+  <meta name="theme-color" content="#0B0F19">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/">
-  <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Anteemonee - AI Study Tutor & Flashcards for Pakistan Students">
-  <meta property="og:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
+  <meta property="og:title" content="Anteemonee - Master every FSc subject">
+  <meta property="og:description" content="Notes, past papers with solutions, AI tutor, flashcards and test builder for Pakistani board students.">
   <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
   <meta property="og:url" content="https://anteemonee.com/">
-  <meta property="og:site_name" content="Anteemonee">
-  <meta property="og:locale" content="en_PK">
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Anteemonee - AI Study Tutor & Flashcards for Pakistan Students">
-  <meta name="twitter:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
-  <meta name="twitter:image" content="https://anteemonee.com/assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/anteemonee.png">
   <link rel="stylesheet" href="css/style.css?v=21">
-  <link rel="stylesheet" href="css/ai-chatbot.css?v=39">
-  <link rel="stylesheet" href="css/settings.css?v=15">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
-    /* Inline settings inside the main-page popup (replaces old iframe).
-       NOTE: css/settings.css also defines .settings-modal for the old
-       standalone delete dialog — the rules below restore the wide popup
-       dimensions and must stay AFTER that stylesheet. */
-    #settings-overlay .settings-modal {
-      position: relative; display: flex;
-      width: 100%; max-width: 920px; height: min(740px, calc(100dvh - 40px));
-      padding: 0; overflow: hidden;
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
     }
-    #settings-overlay .settings-page {
-      flex: 1; min-width: 0; min-height: 0; max-width: none;
-      margin: 0; padding: 22px 20px 48px; overflow-y: auto;
+    /* ── CA-style header: flat bar, inline nav ── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
+    .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-hero-visual { position: relative; min-width: 0; }
+    .call-mock {
+      background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+      border: 1px solid var(--liquid-border); border-radius: var(--radius-xl);
+      box-shadow: var(--liquid-inset), var(--liquid-shadow);
+      padding: 20px; max-width: 420px; margin-left: auto;
     }
-    /* Paged mode: sidebar nav, one section visible at a time
-       (settings.css hides .settings-category unless .active). */
-    #settings-overlay .settings-layout {
-      display: grid; grid-template-columns: 240px minmax(0, 1fr);
-      gap: 24px; align-items: start;
-    }
-    #settings-overlay .settings-sidebar {
-      position: sticky; top: 0; min-width: 0; max-height: 100%;
-      overflow-y: auto;
-    }
-    #settings-overlay .settings-content { min-width: 0; overflow-x: hidden; }
-    #settings-overlay .setting-row { flex-wrap: wrap; }
-    #settings-overlay .setting-row > *:last-child { margin-left: auto; }
-    #settings-overlay .settings-header { margin-bottom: 24px; }
-    #settings-not-auth { text-align: center; padding: 60px 20px; }
-    /* Delete-account confirm (renamed to avoid clashing with popup .settings-modal). */
-    .del-overlay {
-      display: none; position: absolute; inset: 0; z-index: 5;
-      align-items: center; justify-content: center; padding: 20px;
-      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    }
-    .del-overlay.show { display: flex; }
-    .del-box {
-      background: var(--liquid-bg-strong, var(--bg-card));
-      border: 1px solid var(--liquid-border, var(--border));
-      border-radius: 16px; padding: 28px; max-width: 440px; width: 100%;
-      max-height: 80vh; overflow-y: auto;
-      box-shadow: var(--liquid-shadow, 0 20px 60px rgba(0,0,0,0.4));
-    }
-    .del-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
-    .del-box p { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
-    .del-box .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-    .del-box .confirm-input {
-      width: 100%; padding: 10px 14px; margin-top: 12px; box-sizing: border-box;
-      background: var(--surface-recessed); border: none; border-radius: 8px;
-      color: var(--text); font-size: 16px; font-family: inherit;
-      box-shadow: var(--neo-shadow-recessed-sm);
-    }
-    .del-box .confirm-input:focus { outline: none; box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px rgba(255,102,117,0.3); }
-    @media (max-width: 768px) {
-      #settings-overlay .settings-page { padding: 20px 14px 48px; }
-      #settings-overlay .settings-layout { grid-template-columns: 1fr; gap: 0; }
-      /* Sidebar becomes a slide-in drawer contained inside the modal. */
-      #settings-overlay .settings-sidebar {
-        display: block; position: absolute; inset: 0; z-index: 3;
-        border-radius: 18px; padding: 56px 16px 24px; overflow-y: auto;
-        transform: translateX(-100%); transition: transform 0.25s ease;
-        max-height: none;
-      }
-      #settings-overlay .settings-sidebar.open { transform: translateX(0); }
-      #settings-overlay .settings-mobile-back { display: flex; }
-    }
+    .call-mock-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .call-mock-head img { width: 36px; height: 36px; border-radius: 11px; }
+    .call-mock-head b { display: block; font-size: 14px; }
+    .call-mock-head span { font-size: 11.5px; color: var(--text-muted); }
+    .mock-bubble { border-radius: 14px; padding: 10px 14px; font-size: 13px; line-height: 1.55; margin-bottom: 8px; max-width: 92%; }
+    .mock-bubble.user { background: var(--accent); color: var(--on-accent); margin-left: auto; border-bottom-right-radius: 4px; }
+    .mock-bubble.ai { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-bottom-left-radius: 4px; }
+    .mock-voice { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 14px; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--liquid-border-soft); font-size: 12.5px; font-weight: 600; color: var(--accent-primary); }
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pdot 1.2s infinite; }
+    @keyframes pdot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 30px; }
+    .step { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 20px 16px; position: relative; }
+    .step .n { font-family: 'Fraunces', Georgia, serif; font-size: 26px; font-weight: 700; color: var(--accent); }
+    .step h3 { font-size: 14.5px; margin: 8px 0 6px; }
+    .step p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+    .step.star { background: linear-gradient(135deg, var(--accent) 0%, #A855F7 100%); border: none; color: #fff; }
+    .step.star p { color: rgba(255,255,255,0.85); }
+    .step.star .n { color: #fff; }
+    @media (max-width: 900px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
+    .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 26px; }
+    .tool { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 18px 16px; transition: all .2s; }
+    .tool:hover { transform: translateY(-3px); border-color: var(--liquid-border); }
+    .tool .ti { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-primary); margin-bottom: 12px; font-size: 18px; }
+    .tool h3 { font-size: 14px; margin-bottom: 4px; }
+    .tool h3 .soon { font-size: 10px; font-weight: 700; background: var(--accent-soft); color: var(--accent-primary); border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
+    .tool p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+    @media (max-width: 900px) { .tools-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .tools-grid { grid-template-columns: 1fr; } }
+    .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 26px; max-width: 860px; }
+    .price-card { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 28px 26px; position: relative; }
+    .price-card.hot { border: 2px solid var(--accent); box-shadow: 0 12px 40px rgba(99,102,241,0.25); }
+    .price-card .flag { position: absolute; top: -12px; left: 24px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
+    .price-card h3 { font-size: 16px; margin-bottom: 4px; }
+    .price-card .amt { font-family: 'Fraunces', Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
+    .price-card .per { font-size: 13px; color: var(--text-muted); }
+    .price-card ul { list-style: none; margin: 18px 0 22px; }
+    .price-card li { font-size: 13.5px; padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; color: var(--text-secondary); }
+    .price-card li i { color: var(--accent-primary); font-style: normal; font-weight: 700; }
+    @media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
+    .unified-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 28px; }
+    .unified-col { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 24px; }
+    .unified-col-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--accent-primary); letter-spacing: -0.01em; }
+    .unified-steps { display: flex; flex-direction: column; gap: 14px; }
+    .u-step { display: flex; gap: 12px; align-items: flex-start; }
+    .u-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+    .u-step b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+    .u-step p { font-size: 12px; color: var(--text-secondary); line-height: 1.55; margin: 0; }
+    .unified-tools { display: flex; flex-direction: column; gap: 10px; }
+    .u-tool { display: flex; gap: 10px; padding: 10px; background: var(--bg-card); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-md); transition: all .2s; }
+    .u-tool:hover { border-color: var(--liquid-border); transform: translateX(2px); }
+    .u-ti { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+    .u-tool b { display: block; font-size: 12.5px; margin-bottom: 1px; }
+    .u-tool p { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin: 0; }
+    @media (max-width: 1100px) { .unified-grid { grid-template-columns: 1fr; } .steps-col { grid-column: 1 / -1; } }
+    @media (max-width: 760px) { .unified-grid { grid-template-columns: 1fr; } }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 4px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; background: none; border: none; font-family: inherit; }
+    .faq-q span:last-child { color: var(--accent-primary); font-size: 20px; flex-shrink: 0; }
+    .faq-a { display: none; padding: 0 4px 18px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 720px; }
+    .faq-item.open .faq-a { display: block; }
+    
+    /* Landing profile dropdown */
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    .cta-band { background: linear-gradient(135deg, #4338CA 0%, #312E81 100%); border-radius: var(--radius-xl); padding: 56px 32px; text-align: center; color: #fff; margin-top: 70px; }
+    .cta-band h2 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 10px; }
+    .cta-band p { opacity: 0.85; margin-bottom: 24px; }
+    .btn-white { display: inline-block; background: #fff; color: #111; font-weight: 700; padding: 14px 34px; border-radius: 999px; font-size: 15px; }
+    .section { padding: 70px 24px; }
+    .section-inner { max-width: 1280px; margin: 0 auto; }
   </style>
 </head>
 <body>
-
-  <div class="chatbot-layout">
-    <!-- ============ LEFT SIDEBAR: features + history + account ============ -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <a href="index.html" class="brand-link">
-          <img src="assets/anteemonee.png" alt="Anteemonee" class="brand-logo">
-          <span class="brand-name">Anteemonee</span>
-        </a>
-        <button class="sidebar-collapse" id="sidebar-collapse" aria-label="Close sidebar" title="Close sidebar">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+  <header class="header" id="site-header" id="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-link">
+        <img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+<nav class="landing-nav" aria-label="Primary">
+  <a href="pages/dashboard.html">Dashboard</a>
+  <div class="nav-drop">
+    <a href="#features">Library <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="pages/ebooks.html">eBooks</a>
+      <a href="pages/flashcards.html">Flashcards</a>
+      <a href="pages/definitions.html">Definitions</a>
+    </div>
+  </div>
+  <a href="pages/past-papers.html">Past Papers</a>
+  <a href="pages/ai-chat.html">AI Assistant</a>
+</nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
-      </div>
-
-      <div class="sidebar-top">
-        <button class="btn-new-chat" id="btn-new-chat">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          New chat
-        </button>
-      </div>
-
-      <nav class="feat-nav" aria-label="Features">
-        <button class="feat-item" type="button" data-view="flashcards">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
-          <span>Flashcards</span>
-        </button>
-        <button class="feat-item" type="button" data-soon="eBooks are coming soon">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
-          <span>eBooks</span><em class="feat-soon">Soon</em>
-        </button>
-      </nav>
-
-      <div class="sidebar-label">Chats</div>
-      <div class="sidebar-history" id="sidebar-history"></div>
-
-      <div class="model-selector sidebar-model loading" id="model-selector">
-        <div class="model-selector-trigger" id="model-selector-trigger">
-          <span class="model-dot" id="model-dot"></span>
-          <span class="model-selected-name" id="model-selected-name">Chipa Sahab</span>
-          <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="pages/login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="pages/signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
         </div>
-        <div class="model-dropdown" id="model-dropdown">
-          <button class="model-option active" data-model="0" data-name="Chipa Sahab">
-            <span class="model-option-dot dot-blue"></span>
-            <span class="model-option-name">Chipa Sahab</span>
-          </button>
-          <button class="model-option" data-model="1" data-name="Coder">
-            <span class="model-option-dot dot-green"></span>
-            <span class="model-option-name">Coder</span>
-          </button>
-        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
       </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="pages/dashboard.html" class="mobile-nav-link">Dashboard</a>
+    <a href="pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <a href="pages/flashcards.html" class="mobile-nav-link">Flashcards</a>
+    <a href="pages/definitions.html" class="mobile-nav-link">Definitions</a>
+    <a href="pages/past-papers.html" class="mobile-nav-link">Past Papers</a>
+    <a href="pages/ai-chat.html" class="mobile-nav-link">AI Assistant</a>
+    <div class="mobile-cta">
+      <a href="pages/login.html" class="btn-login">Log in</a>
+      <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
 
-      <div class="sidebar-account">
-        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
-        <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login">Log in</a>
-          <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-glow hero-glow-1"></div>
+      <div class="hero-glow hero-glow-2"></div>
+      <div class="hero-inner">
+        <div class="hero-text">
+          <div class="hero-badge">🇵🇰 Pakistan's Student OS for FSc, Matric & Intermediate</div>
+          <h1>Your board prep, finally sorted.</h1>
+          <p class="hero-desc">Notes, past papers, AI tutor, flashcards & test builder. Everything you need in one place.</p>
+          <div class="hero-actions">
+            <span id="hero-cta-loading" class="auth-shimmer" style="width:150px;height:50px;border-radius:999px"></span>
+            <a href="pages/signup.html" class="btn-primary" id="hero-start-free" style="display:none">Start free →</a>
+            <a href="pages/dashboard.html" class="btn-primary" id="hero-dashboard" style="display:none">Dashboard →</a>
+            <a href="pages/ai-chat.html" class="btn-secondary">Open AI Assistant</a>
+          </div>
+          <div class="hero-chips">
+            <div class="hero-chip">📖<span>Notes</span></div>
+            <div class="hero-chip">📝<span>Past Papers</span></div>
+            <div class="hero-chip">🤖<span>AI Tutor</span></div>
+            <div class="hero-chip">🃏<span>Flashcards</span></div>
+            <div class="hero-chip">🎙️<span>Voice Call</span></div>
+            <div class="hero-chip">📊<span>Test Builder</span></div>
+          </div>
+          <div class="hero-trust" id="hero-trust">
+            <div class="trust-text">Free 3-day trial · No card needed · One-time payment</div>
+          </div>
         </div>
-        <div class="auth-actions" id="auth-logged-in" style="display:none">
-          <div class="profile-avatar-container" id="profile-avatar-container"></div>
-          <div class="acct-meta acct-open-settings" id="acct-row" title="Open settings">
-            <span class="acct-name" id="acct-name">…</span>
-            <span class="acct-plan" id="acct-plan">Free plan</span>
+        <div class="landing-hero-visual">
+          <div class="call-mock">
+            <div class="call-mock-head">
+              <img src="assets/anteemonee.png" alt="Anteemonee">
+              <div><b>Anteemonee AI Tutor</b><span>Knows your board, class & group</span></div>
+            </div>
+            <div class="mock-bubble user" id="hero-last-user">Explain enzyme action, FSc Biology Ch 3</div>
+            <div class="mock-bubble ai" id="hero-last-ai">Enzymes lower activation energy without being consumed. Think lock-and-key: substrate fits the active site… <b>References:</b> Biology XII, p. 42</div>
+            <div class="mock-voice"><span class="pulse-dot"></span> Live voice call: ask out loud, interrupt anytime</div>
           </div>
         </div>
       </div>
-    </aside>
+    </section>
 
-    <button id="sidebar-reopen" aria-label="Open sidebar" title="Open sidebar">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-    </button>
-
-    <!-- ============ MAIN CHAT COLUMN ============ -->
-    <main class="chat-main">
-      <div class="chat-topbar">
-        <button class="chat-history-btn" id="chat-history-btn" aria-label="Open chat history">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-
-        <div class="topbar-actions">
-          <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
-        </div>
-      </div>
-
-      <div class="app-view" id="view-chat">
-      <div class="chat-content" id="chat-content">
-        <div class="chat-welcome" id="chat-welcome">
-          <h1 class="welcome-title skel-text">What can I help with?</h1>
-          <p class="welcome-subtitle">Ask me anything about your studies.</p>
-          <div class="welcome-actions">
-            <button class="welcome-action-btn" data-prompt="Create a flashcard for: ">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-              <span>Create Flashcard</span>
-            </button>
-            <button class="welcome-action-btn" data-welcome-flashcards>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-              <span>Start Review</span>
-            </button>
-            <button class="welcome-action-btn" data-prompt="Explain a topic: ">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              <span>Explain a Topic</span>
-            </button>
-            <button class="welcome-action-btn" data-prompt="Quiz me on: ">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span>Quiz Me</span>
-            </button>
-          </div>
-        </div>
-        <div class="messages-list" id="messages-list"></div>
-      </div>
-      </div>
-
-      <div class="app-view" id="view-flashcards">
-        <iframe id="flashcards-frame" title="Flashcards" loading="lazy"></iframe>
-      </div>
-
-      <button class="scroll-down-btn" id="scroll-down-btn" aria-label="Scroll to bottom" title="Scroll to bottom">
-        <svg class="scroll-down-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        <div class="generating-dots"><span></span><span></span><span></span></div>
-      </button>
-
-      <div class="chat-input-area">
-        <div class="image-preview-bar" id="image-preview-bar" style="display:none"></div>
-        <div class="chat-input-wrapper">
-          <input type="file" id="image-file-input" accept="image/*" multiple style="display:none">
-          <div class="chat-input-row-top">
-            <textarea class="chat-input" id="chat-input" placeholder="Ask Anteemonee anything..." rows="1"></textarea>
-          </div>
-          <div class="chat-input-row-bottom">
-            <div class="chat-input-row-left">
-              <div class="plus-wrapper" id="plus-wrapper">
-                <button class="input-btn btn-plus" id="btn-plus" title="Add">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </button>
-                <div class="plus-dropdown" id="plus-dropdown">
-                  <button class="plus-dropdown-item" data-action="photo">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span>Photo</span>
-                  </button>
-                  <button class="plus-dropdown-item" data-action="think">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
-                    <span class="plus-dropdown-label">Think</span>
-                    <span class="plus-check"></span>
-                  </button>
-                  <button class="plus-dropdown-item" data-action="research">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <span class="plus-dropdown-label">Research</span>
-                    <span class="plus-check"></span>
-                  </button>
-                  <button class="plus-dropdown-item" id="plus-github-item" data-action="github">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    <span class="plus-dropdown-label">GitHub</span>
-                    <span class="plus-check"></span>
-                  </button>
-                </div>
-              </div>
-              <div class="modes-bar" id="modes-bar"></div>
+    <!-- UNIFIED: YOUR COMPLETE STUDENT OS -->
+    <section class="section" id="complete" style="padding-top:10px">
+      <div class="section-inner">
+        <div class="section-label">Everything you need in one place</div>
+        <h2 class="section-title">9 tools · 4 steps · 1 payment</h2>
+        <p class="section-desc">From first chapter to board day: study, practice, ask, evaluate. No subscriptions, ever.</p>
+        
+        <div class="unified-grid">
+          <!-- STEPS COLUMN -->
+          <div class="unified-col steps-col">
+            <h3 class="unified-col-title">Your 4-Step Loop</h3>
+            <div class="unified-steps">
+              <div class="u-step"><span class="u-num">1</span><div><b>Study</b><p>Board-aligned notes, flashcards & definitions for every chapter.</p></div></div>
+              <div class="u-step"><span class="u-num">2</span><div><b>Practice</b><p>Topical & yearly BISE papers with step-by-step solutions.</p></div></div>
+              <div class="u-step"><span class="u-num">3</span><div><b>Ask</b><p>24/7 AI tutor that knows your class, board & textbooks. Voice or text.</p></div></div>
+              <div class="u-step"><span class="u-num">4</span><div><b>Evaluate</b><p>MCQs with instant checking, streaks & progress tracking.</p></div></div>
             </div>
-            <div class="chat-input-row-right">
-              <button class="input-btn btn-voice" id="btn-voice" title="Voice mode" aria-label="Voice mode">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-              </button>
-              <button class="input-btn btn-stop" id="btn-stop" title="Stop generating" style="display:none">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-              </button>
-              <button class="input-btn btn-send" id="btn-send" title="Send" disabled>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-              </button>
+          </div>
+          
+          <!-- TOOLS COLUMN -->
+          <div class="unified-col tools-col">
+            <h3 class="unified-col-title">9 Tools Included</h3>
+            <div class="unified-tools">
+              <div class="u-tool"><span class="u-ti">📖</span><div><b>Board Notes</b><p>Chapter-wise, Punjab/Federal/KPK boards</p></div></div>
+              <div class="u-tool"><span class="u-ti">🃏</span><div><b>Flashcards</b><p>Spaced-repetition, build from chat in one tap</p></div></div>
+              <div class="u-tool"><span class="u-ti">📅</span><div><b>Yearly Past Papers</b><p>Full board papers by year, marking-scheme answers</p></div></div>
+              <div class="u-tool"><span class="u-ti">🤖</span><div><b>AI Tutor</b><p>Answers cite your actual textbook page</p></div></div>
+              <div class="u-tool"><span class="u-ti">✅</span><div><b>MCQ Solver</b><p>Board-pattern MCQs with instant explanations</p></div></div>
+              <div class="u-tool"><span class="u-ti">🎙️</span><div><b>Live Voice Call</b><p>Talk hands-free, interrupt anytime</p></div></div>
+              <div class="u-tool"><span class="u-ti">🔥</span><div><b>Streaks & Progress</b><p>Daily streaks & study-time tracking</p></div></div>
+              <div class="u-tool"><span class="u-ti">📚</span><div><b>eBooks</b><p>Full textbook library inside the app</p></div></div>
+              <div class="u-tool"><span class="u-ti">🧠</span><div><b>AI Memory</b><p>Remembers your weak topics & goals</p></div></div>
             </div>
           </div>
         </div>
-        <p class="chat-disclaimer">Anteemonee can make mistakes. Verify important information.</p>
+        
+        <div style="text-align:center;margin-top:32px"><a href="pages/ai-chat.html" class="btn-primary">Try the AI Tutor now</a></div>
       </div>
-    </main>
-  </div>
+    </section>
 
-  <!-- SITE NAV (kept for account/theme wiring in app.js) -->
-  <div class="mobile-menu">
-    <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
-    <div id="mobile-auth-logged-out" style="display:none">
-      <a href="index.html" class="mobile-nav-link">Home</a>
-      <a href="index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="pages/flashcards.html" class="mobile-nav-link">Flashcards</a>
-      <a href="pages/download.html" class="mobile-nav-link">Download App</a>
-      <div class="mobile-cta">
-        <a href="pages/login.html" class="btn-login">Log in</a>
-        <a href="pages/signup.html" class="btn-signup">Sign Up</a>
-      </div>
-    </div>
-    <div id="mobile-auth-logged-in" style="display:none">
-      <div id="mobile-profile-section"></div>
-      <a href="index.html" class="mobile-nav-link">Home</a>
-      <a href="index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="pages/flashcards.html" class="mobile-nav-link">Flashcards</a>
-      <a href="pages/account.html" class="mobile-nav-link">Account</a>
-      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
-    </div>
-  </div>
-
-  <!-- HISTORY DRAWER (mobile) -->
-  <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
-  <div class="mobile-sidebar" id="mobile-sidebar">
-    <div class="mobile-sidebar-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="assets/anteemonee.png" alt="Anteemonee" class="mobile-brand-logo">
-        <span class="mobile-brand-text">Anteemonee</span>
-      </div>
-      <button class="btn-close-sidebar" id="btn-close-sidebar" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-    <div class="sidebar-top">
-      <button class="btn-new-chat" id="btn-new-chat-mobile">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        New Chat
-      </button>
-    </div>
-    <nav class="feat-nav" aria-label="Features">
-      <button class="feat-item" type="button" data-view="flashcards">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
-        <span>Flashcards</span>
-      </button>
-      <button class="feat-item" type="button" data-soon="eBooks are coming soon">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
-        <span>eBooks</span><em class="feat-soon">Soon</em>
-      </button>
-      <button class="feat-item" type="button" onclick="if(window.AnteemoneeSettings&&window.AnteemoneeSettings.open)window.AnteemoneeSettings.open()">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>Settings</span>
-      </button>
-    </nav>
-    <div class="sidebar-label">Chats</div>
-    <div class="sidebar-history" id="sidebar-history-mobile"></div>
-    <div class="model-selector sidebar-model loading" id="model-selector-mobile">
-      <div class="model-selector-trigger" id="model-selector-trigger-mobile">
-        <span class="model-dot" id="model-dot-mobile"></span>
-        <span class="model-selected-name" id="model-selected-name-mobile">Chipa Sahab</span>
-        <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
-      <div class="model-dropdown" id="model-dropdown-mobile">
-        <button class="model-option active" data-model="0" data-name="Chipa Sahab">
-          <span class="model-option-dot dot-blue"></span>
-          <span class="model-option-name">Chipa Sahab</span>
-        </button>
-        <button class="model-option" data-model="1" data-name="Coder">
-          <span class="model-option-dot dot-green"></span>
-          <span class="model-option-name">Coder</span>
-        </button>
-      </div>
-      </div>
-    <div class="drawer-account" id="drawer-account" style="display:none" title="Open settings">
-      <div class="drawer-avatar" id="m-acct-avatar"><span>?</span></div>
-      <div class="acct-meta">
-        <span class="acct-name" id="m-acct-name">…</span>
-        <span class="acct-plan" id="m-acct-plan">Free plan</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Image lightbox -->
-  <div class="image-lightbox" id="image-lightbox">
-    <button class="lb-close" id="lb-close">&times;</button>
-    <img id="lb-img" src="" alt="Full image">
-  </div>
-
-  <div class="github-panel-overlay" id="github-panel">
-    <div class="github-panel">
-      <div class="github-panel-header">
-        <h3>GitHub for Coder</h3>
-        <button class="github-panel-close" id="github-panel-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="github-panel-status" id="github-panel-status"></div>
-      <div class="github-panel-body" id="github-panel-body"></div>
-    </div>
-  </div>
-
-  <!-- SETTINGS POPUP (inline — full settings UI, no iframe) -->
-  <div class="settings-overlay" id="settings-overlay">
-    <div class="settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
-      <button class="settings-close" id="settings-close" aria-label="Close settings">&times;</button>
-
-      <!-- NOT AUTH -->
-      <div id="settings-not-auth" style="display:none;flex:1;overflow-y:auto">
-        <h2 style="margin-bottom:12px">Sign in required</h2>
-        <p style="color:var(--text-secondary);margin-bottom:24px">Please sign in to access your settings.</p>
-        <a href="pages/login.html" class="btn-settings btn-settings-primary">Sign In</a>
-      </div>
-
-      <!-- SETTINGS PAGE (inlined from old pages/settings.html) -->
-      <div class="settings-page" id="settings-page" style="display:none">
-
-        <div class="settings-header">
-          <h1>Settings</h1>
-          <p>Manage your Anteemonee experience and preferences.</p>
-        </div>
-
-        <div class="settings-layout">
-
-          <!-- SIDEBAR -->
-          <aside class="settings-sidebar" id="settings-sidebar">
-            <button class="settings-nav-item active" data-cat="security">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Login & Security
-            </button>
-            <button class="settings-nav-item" data-cat="ai">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              AI Personalization
-            </button>
-            <button class="settings-nav-item" data-cat="appearance">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              Appearance
-            </button>
-            <div class="settings-nav-divider"></div>
-            <button class="settings-nav-item" data-cat="subscription">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              Subscription
-            </button>
-            <button class="settings-nav-item" data-cat="coupons">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-              Coupons
-            </button>
-            <button class="settings-nav-item" data-cat="connected">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              Connected Accounts
-            </button>
-            <div class="settings-nav-divider"></div>
-            <button class="settings-nav-item" data-cat="help">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              Help & Support
-            </button>
-            <button class="settings-nav-item" data-cat="danger">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              Danger Zone
-            </button>
-            <div class="settings-nav-divider"></div>
-            <button class="settings-nav-item" onclick="settingsLogout()" style="color:#FF6675">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Log Out
-            </button>
-          </aside>
-
-          <!-- MAIN CONTENT -->
-          <main class="settings-content" id="settings-content">
-
-            <!-- ============ LOGIN & SECURITY ============ -->
-            <div class="settings-category active" data-cat="security">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Login & Security</h2>
-                <p>Manage your password and login methods.</p>
-              </div>
-              <div id="settings-security-content"></div>
-            </div>
-
-            <!-- ============ AI PERSONALIZATION ============ -->
-            <div class="settings-category" data-cat="ai">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>AI Personalization</h2>
-                <p>Customize how the AI tutor works for you.</p>
-              </div>
-              <div id="settings-ai-content"></div>
-            </div>
-
-            <!-- ============ APPEARANCE ============ -->
-            <div class="settings-category" data-cat="appearance">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Appearance</h2>
-                <p>Customize the look and feel of Anteemonee.</p>
-              </div>
-              <div id="settings-appearance-content"></div>
-            </div>
-
-            <!-- ============ LANGUAGE ============ -->
-            <div class="settings-category" data-cat="language" style="display:none">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Language</h2>
-                <p>Set your preferred language and region.</p>
-              </div>
-              <div id="settings-language-content"></div>
-            </div>
-
-            <!-- ============ PRIVACY ============ -->
-            <div class="settings-category" data-cat="privacy" style="display:none">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Privacy</h2>
-                <p>Control your data and visibility.</p>
-              </div>
-              <div id="settings-privacy-content"></div>
-            </div>
-
-            <!-- ============ SUBSCRIPTION ============ -->
-            <div class="settings-category" data-cat="subscription">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Subscription</h2>
-                <p>View your plan and manage premium access.</p>
-              </div>
-              <div id="settings-subscription-content"></div>
-            </div>
-
-            <!-- ============ COUPONS ============ -->
-            <div class="settings-category" data-cat="coupons">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Coupons</h2>
-                <p>Redeem a coupon code for premium access.</p>
-              </div>
-              <div id="settings-coupons-content"></div>
-            </div>
-
-            <!-- ============ CONNECTED ACCOUNTS ============ -->
-            <div class="settings-category" data-cat="connected">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Connected Accounts</h2>
-                <p>Manage linked login providers.</p>
-              </div>
-              <div id="settings-connected-content"></div>
-            </div>
-
-            <!-- ============ HELP & SUPPORT ============ -->
-            <div class="settings-category" data-cat="help">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Help & Support</h2>
-                <p>Get help or send feedback.</p>
-              </div>
-              <div id="settings-help-content"></div>
-            </div>
-
-            <!-- ============ DANGER ZONE ============ -->
-            <div class="settings-category" data-cat="danger">
-
-              <button class="settings-mobile-back" onclick="showSidebar()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Settings
-              </button>
-              <div class="settings-category-header">
-                <h2>Danger Zone</h2>
-                <p>Irreversible account actions.</p>
-              </div>
-              <div id="settings-danger-content"></div>
-            </div>
-
-          </main>
-        </div>
-      </div>
-
-      <!-- DELETE ACCOUNT MODAL -->
-      <div class="del-overlay" id="delete-account-modal">
-        <div class="del-box">
-          <h3>Delete Account</h3>
-          <p>This action is <strong style="color:#FF6675">permanent and irreversible</strong>. All your data including profile, academic information, study progress, AI history, and preferences will be permanently deleted.</p>
-          <p>Type <strong style="color:#FF6675">DELETE</strong> to confirm:</p>
-          <input type="text" class="confirm-input" id="delete-confirm-input" placeholder='Type "DELETE"'>
-          <div class="modal-actions">
-            <button class="btn-settings btn-settings-secondary" onclick="closeDeleteModal()">Cancel</button>
-            <button class="btn-settings btn-settings-danger" id="delete-account-btn" onclick="confirmDeleteAccount()" disabled>Delete Permanently</button>
+    <!-- PRICING -->
+    <section class="section" id="pricing" style="padding-top:10px">
+      <div class="section-inner">
+        <div class="section-label">Pricing</div>
+        <h2 class="section-title">One payment. Yours forever.</h2>
+        <p class="section-desc">No subscriptions. No monthly tension. Start with a free 3-day trial.</p>
+        <div class="pricing-grid">
+          <div class="price-card">
+            <h3>Free Trial</h3>
+            <div class="amt">Rs 0</div><div class="per">3 days · full access</div>
+            <ul>
+              <li><i>✓</i> Full AI Tutor for 3 days</li>
+              <li><i>✓</i> Flashcards & notes</li>
+              <li><i>✓</i> Live voice call</li>
+              <li><i>✓</i> No card required</li>
+            </ul>
+            <a href="pages/signup.html" class="btn-secondary" style="width:100%">Start free trial</a>
+          </div>
+          <div class="price-card hot">
+            <div class="flag">MOST POPULAR</div>
+            <h3>Lifetime Access</h3>
+            <div class="amt">Rs 2,499</div><div class="per">one-time · yours forever</div>
+            <ul>
+              <li><i>✓</i> Everything in trial, forever</li>
+              <li><i>✓</i> All future features included</li>
+              <li><i>✓</i> Past papers & eBooks</li>
+              <li><i>✓</i> 7-day money-back guarantee</li>
+            </ul>
+            <a href="pages/payment.html" class="btn-primary" style="width:100%">Get lifetime access</a>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- TOAST -->
-      <div class="settings-toast" id="settings-toast"></div>
-
-    </div>
-  </div>
-  <div class="set-saved" id="set-saved">Saved</div>
-
-  <!-- PROFILE POPUP (ChatGPT-style) -->
-  <div class="profile-overlay" id="profile-overlay">
-    <div class="profile-modal" role="dialog" aria-modal="true" aria-label="Profile">
-      <button class="profile-close" id="profile-close" aria-label="Close profile">&times;</button>
-      <div class="profile-frame-wrap">
-        <iframe id="profile-frame" title="Profile"></iframe>
-      </div>
-    </div>
-  </div>
-
-  <!-- VOICE MODE — ChatGPT-style full-screen -->
-  <div class="voice-overlay" id="voice-overlay" aria-hidden="true">
-    <div class="voice-overlay-bg"></div>
-    <button class="voice-close" id="voice-close" aria-label="Close voice mode">×</button>
-    <div class="voice-overlay-inner">
-      <div class="voice-orb-wrap" id="voice-orb-wrap">
-        <div class="voice-orb" id="voice-orb">
-          <div class="voice-orb-core"></div>
-          <div class="voice-orb-ring"></div>
-          <div class="voice-orb-ring delay"></div>
+    <!-- FAQ -->
+    <section class="section" id="faq" style="padding-top:10px">
+      <div class="section-inner" style="max-width:820px">
+        <div class="section-label">Questions</div>
+        <h2 class="section-title">Everything you need to know</h2>
+        <div id="faq-list">
+          <div class="faq-item"><button class="faq-q">Which boards and classes are covered?<span>+</span></button><div class="faq-a">Punjab (Lahore, Gujranwala, Multan, Faisalabad, Rawalpindi…), Federal, KPK and Sindh boards: Matric (9th/10th), FSc Pre-Medical & Pre-Engineering, ICS and ICom.</div></div>
+          <div class="faq-item"><button class="faq-q">Is there really no monthly fee?<span>+</span></button><div class="faq-a">Correct. Rs 2,499 once, lifetime access. No subscriptions, no renewals, with a 7-day money-back guarantee.</div></div>
+          <div class="faq-item"><button class="faq-q">Can I study in Urdu or Roman Urdu?<span>+</span></button><div class="faq-a">Yes. The tutor replies in English, Urdu script or Roman Urdu. Set your preference in Settings, or just write how you speak.</div></div>
+          <div class="faq-item"><button class="faq-q">Does it work on mobile?<span>+</span></button><div class="faq-a">Fully. Anteemonee is a web app that works on any phone browser, plus a downloadable app on the Download page.</div></div>
+          <div class="faq-item"><button class="faq-q">How accurate are the AI answers?<span>+</span></button><div class="faq-a">Answers are grounded in your course textbooks with page references, and every response can be verified. Always cross-check critical exam answers with your book.</div></div>
         </div>
-        <div class="voice-wave" id="voice-wave" aria-hidden="true">
-          <span></span><span></span><span></span><span></span><span></span>
+        <div class="cta-band" style="display:none">
+          <h2>Ready to top your board?</h2>
+          <p>Start free in seconds. No card needed.</p>
+          <a href="pages/signup.html" class="btn-white">Start free →</a>
         </div>
       </div>
-      <div class="voice-status" id="voice-status">Listening… just speak</div>
-      <div class="voice-transcript" id="voice-transcript" aria-live="polite"></div>
-      <div class="voice-controls">
-        <button class="voice-mic-btn" id="voice-mic-btn" aria-label="Pause listening">
-          <svg class="voice-mic-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          <span class="voice-mic-label" id="voice-mic-label">Listening… tap to pause</span>
-        </button>
-        <button class="voice-exit-btn" id="voice-exit-btn" type="button">Exit voice</button>
-      </div>
-      <div class="voice-hint" style="font-size:12px;color:var(--text-tertiary);margin-top:2px;opacity:0.9">Hands-free — just speak, it auto stops on silence. Tap mic to pause. Speak while AI is talking to interrupt.</div>
-      <div class="voice-unsupported" id="voice-unsupported" style="display:none">Voice not supported in this browser. Try Chrome or Safari 16+.</div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- LOGOUT CONFIRM -->
-  <div class="logout-overlay" id="logout-overlay">
-    <div class="logout-modal" role="dialog" aria-modal="true" aria-label="Confirm log out">
-      <h3>Are you sure you<br>want to log out?</h3>
-      <div class="logout-account">
-        <span class="logout-avatar" id="logout-avatar"><span>?</span></span>
-        <span class="logout-meta">
-          <span class="logout-name" id="logout-name">…</span>
-          <span class="logout-email" id="logout-email">…</span>
-        </span>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="logo-link"><img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric & intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="index.html">Home</a>
+            <a href="pages/ai-chat.html">AI Assistant</a>
+            <a href="pages/flashcards.html">Flashcards</a>
+            <a href="pages/download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="pages/ai-chat.html">AI Tutor</a>
+            <a href="pages/flashcards.html">Flashcards</a>
+            <a href="pages/payment.html">Lifetime Access</a>
+        </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="pages/privacy.html">Privacy Policy</a>
+            <a href="pages/terms.html">Terms of Service</a>
+            <a href="pages/login.html">Log in</a>
+            <a href="pages/signup.html">Sign Up</a>
+          </div>
+        </div>
       </div>
-      <button class="logout-confirm" id="logout-confirm" type="button">Log out</button>
-      <button class="logout-cancel" id="logout-cancel" type="button">Cancel</button>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
     </div>
-  </div>
+  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
   <script src="js/account-manager.js?v=11"></script>
-  <script src="js/app.js?v=14"></script>
-  <script src="js/settings.js?v=16"></script>
-  <script src="js/ai-api-service.js?v=14"></script>
-  <script src="js/github.js?v=10"></script>
-  <script src="js/ai-chatbot.js?v=37"></script>
-  <script src="js/voice-chat.js?v=10"></script>
+  <script src="js/app.js?v=19"></script>
   <script>
-    // "Coming soon" toast for sidebar features not built yet.
+    // Landing: mobile menu, auth buttons, FAQ. Theme handled by app.js via .theme-toggle class.
     (function () {
-      var timer = null;
-      function toast(msg) {
-        var t = document.getElementById('feat-toast');
-        if (!t) {
-          t = document.createElement('div');
-          t.id = 'feat-toast';
-          t.setAttribute('role', 'status');
-          t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 32px);text-align:center;padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--text);background:var(--liquid-bg-strong,rgba(20,28,23,0.85));border:1px solid var(--liquid-border,rgba(255,255,255,0.14));box-shadow:0 10px 34px rgba(0,0,0,0.35);opacity:0;pointer-events:none;transition:opacity 0.25s ease;';
-          document.body.appendChild(t);
-        }
-        t.textContent = msg;
-        t.style.opacity = '1';
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(function () { t.style.opacity = '0'; }, 2400);
+      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
+      if (mt && mm) {
+        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
+        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
       }
-      document.querySelectorAll('[data-soon]').forEach(function (el) {
-        el.addEventListener('click', function () {
-          toast(el.getAttribute('data-soon') || 'Coming soon');
-        });
-      });
-    })();
-  </script>
-  <script>
-    // Sidebar identity: username + email + live Free/Premium plan.
-    (function () {
-      function userNow() {
+      // Auth-aware header buttons - wait for app.js to set currentUser
+      var heroLastChatDone = false;
+      function escHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+      function stripMd(s) {
+        var t = String(s || '');
+        t = t.replace(/```[\s\S]*?```/g, ' ');
+        t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+        t = t.replace(/(\*\*|__)(.*?)\1/g, '$2');
+        t = t.replace(/(^|[\s(>])\*([^*\n]+)\*/g, '$1$2');
+        t = t.replace(/`([^`\n]+)`/g, '$1');
+        t = t.replace(/^#{1,6}\s+/gm, '');
+        t = t.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+        return t;
+      }
+      async function loadHeroLastChat() {
+        if (heroLastChatDone) return;
+        var userEl = document.getElementById('hero-last-user');
+        var aiEl = document.getElementById('hero-last-ai');
+        if (!userEl || !aiEl) return;
+        // Keep fake data as fallback — only overwrite when a real chat exists
+        var user = null;
+        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) user = currentUser; } catch (_) {}
+        var best = null; // {userText, aiText, ts}
+        // 1) Try Supabase (premium, cross-device)
         try {
-          if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return currentUser;
-        } catch (_) {}
-        return null;
-      }
-      function profileNow() {
-        try {
-          if (typeof currentProfile !== 'undefined' && currentProfile) return currentProfile;
-        } catch (_) {}
-        return null;
-      }
-      var planDone = false;
-      async function fill() {
-        var user = userNow();
-        if (!user) return false;
-        var prof = profileNow() || {};
-        var name = prof.full_name || prof.username || user.user_metadata?.full_name || user.user_metadata?.name || (user.email || '').split('@')[0] || 'User';
-        var email = user.email || '';
-        var nameEl = document.getElementById('acct-name');
-        if (nameEl) nameEl.textContent = name;
-        var userMeta = (user && user.user_metadata) || {};
-        var imgUrl = prof.profile_image_url || userMeta.avatar_url || userMeta.picture || '';
-        var initial = String(name || '?').charAt(0).toUpperCase().replace(/[<>&"']/g, '');
-        var mName = document.getElementById('m-acct-name');
-        if (mName) mName.textContent = name;
-        var mAv = document.getElementById('m-acct-avatar');
-        if (mAv) {
-          var safeImg = String(imgUrl).replace(/"/g, '');
-          mAv.innerHTML = '<span>' + initial + '</span>' + (safeImg ? '<img src="' + safeImg + '" alt="" onerror="this.remove()">' : '');
-        }
-        var mRow = document.getElementById('drawer-account');
-        if (mRow) mRow.style.display = 'flex';
-        if (!planDone && typeof db !== 'undefined' && db) {
-          planDone = true;
-          try {
-            var res = await db.rpc('get_entitlement_snapshot');
-            var ent = res && res.data;
-            var isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
-            var planEl = document.getElementById('acct-plan');
-            if (planEl) {
-              planEl.textContent = isPro ? 'Premium' : 'Free plan';
-              planEl.classList.toggle('is-pro', !!isPro);
+          if (user && typeof db !== 'undefined' && db) {
+            var res = await db.from('chat_conversations')
+              .select('messages,updated_at')
+              .eq('user_id', user.id)
+              .order('updated_at', { ascending: false })
+              .limit(10);
+            var rows = (res && !res.error && Array.isArray(res.data)) ? res.data : [];
+            for (var i = 0; i < rows.length; i++) {
+              var msgs = rows[i] && rows[i].messages;
+              if (!Array.isArray(msgs) || !msgs.length) continue;
+              var u = null, a = null;
+              for (var k = msgs.length - 1; k >= 0; k--) {
+                if (!a && msgs[k] && msgs[k].role === 'assistant' && msgs[k].content) a = msgs[k].content;
+                if (!u && msgs[k] && msgs[k].role === 'user' && msgs[k].content) u = msgs[k].content;
+                if (u && a) break;
+              }
+              if (u && a) {
+                best = { userText: u, aiText: a, ts: rows[i].updated_at };
+                break;
+              }
             }
-            var mPlan = document.getElementById('m-acct-plan');
-            if (mPlan) {
-              mPlan.textContent = isPro ? 'Premium' : 'Free plan';
-              mPlan.classList.toggle('is-pro', !!isPro);
+          }
+        } catch (_) {}
+        // 2) Fallback: localStorage per-subject keys (free tier)
+        if (!best) {
+          try {
+            var uid = user && user.id ? user.id : 'anon';
+            var prefix = 'Anteemonee_ai_conversations_' + uid + '_';
+            var legacyKeys = ['Anteemonee_ai_conversations_' + uid, 'Anteemonee_ai_conversations_anon'];
+            var candidates = [];
+            for (var s = 0; s < localStorage.length; s++) {
+              var key = localStorage.key(s);
+              if (key && key.indexOf(prefix) === 0) {
+                try {
+                  var arr = JSON.parse(localStorage.getItem(key) || '[]');
+                  if (Array.isArray(arr)) arr.forEach(function(c){ candidates.push(c); });
+                } catch (_) {}
+              }
+            }
+            legacyKeys.forEach(function(key){
+              try {
+                var arr = JSON.parse(localStorage.getItem(key) || '[]');
+                if (Array.isArray(arr)) arr.forEach(function(c){ candidates.push(c); });
+              } catch (_) {}
+            });
+            candidates.sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); });
+            for (var j = 0; j < candidates.length; j++) {
+              var msgs = candidates[j] && candidates[j].messages;
+              if (!Array.isArray(msgs) || !msgs.length) continue;
+              var u2 = null, a2 = null;
+              for (var k2 = msgs.length - 1; k2 >= 0; k2--) {
+                if (!a2 && msgs[k2] && msgs[k2].role === 'assistant' && msgs[k2].content) a2 = msgs[k2].content;
+                if (!u2 && msgs[k2] && msgs[k2].role === 'user' && msgs[k2].content) u2 = msgs[k2].content;
+                if (u2 && a2) break;
+              }
+              if (u2 && a2) { best = { userText: u2, aiText: a2 }; break; }
             }
           } catch (_) {}
         }
-        return true;
+        if (!best) return; // keep fake data
+        heroLastChatDone = true;
+        try {
+          var uText = stripMd(best.userText).slice(0, 90);
+          var aText = stripMd(best.aiText).slice(0, 160);
+          if (uText) userEl.textContent = uText;
+          if (aText) aiEl.textContent = aText;
+        } catch (_) {}
       }
-      ['acct-row', 'drawer-account'].forEach(function (id) {
-        var row = document.getElementById(id);
-        if (row && !row.dataset.menuBound) {
-          row.dataset.menuBound = '1';
-          row.style.cursor = 'pointer';
-          row.addEventListener('click', function (e) {
-            if (e.target.closest && e.target.closest('.profile-avatar-container')) return;
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            
+            var dropdownHtml = 
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+'<a href="pages/account.html" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="pages/settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+
+            // Hero buttons: resolve only after entitlement is known (no flicker).
+            // Both CTAs stay hidden behind a shimmer until then.
             try {
-              if (window.AcctMenu && window.AcctMenu.toggle) window.AcctMenu.toggle(id);
+              var startBtn = document.getElementById('hero-start-free');
+              var dashBtn = document.getElementById('hero-dashboard');
+              var ctaLoader = document.getElementById('hero-cta-loading');
+              var pricingEl = document.getElementById('pricing');
+              var trustEl = document.getElementById('hero-trust');
+              function resolveHeroCtas(isPaid) {
+                if (ctaLoader) ctaLoader.style.display = 'none';
+                if (isPaid) {
+                  if (pricingEl) pricingEl.style.display = 'none';
+                  if (startBtn) startBtn.style.display = 'none';
+                  if (dashBtn) dashBtn.style.display = '';
+                  if (trustEl) trustEl.style.display = 'none';
+                } else {
+                  if (pricingEl) pricingEl.style.display = '';
+                  if (startBtn) startBtn.style.display = '';
+                  if (dashBtn) dashBtn.style.display = '';
+                  if (trustEl) trustEl.style.display = '';
+                }
+              }
+              // Premium check runs once (renderLandingAuth polls until auth is ready)
+              if (!window._heroEntitlementChecked && typeof db !== 'undefined' && db) {
+                window._heroEntitlementChecked = true;
+                var settled = false;
+                function settlePaid(v) {
+                  if (settled) return;
+                  settled = true;
+                  resolveHeroCtas(v);
+                }
+                // Safety: never trap the user behind the loader
+                setTimeout(function() { settlePaid(false); }, 4000);
+                db.rpc('get_entitlement_snapshot').then(function(res) {
+                  var ent = (res && res.data) || null;
+                  var isPaid = !!(ent && (
+                    (ent.plan_type === 'lifetime' && ent.subscription_status !== 'refunded') ||
+                    ((ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active')
+                  ));
+                  settlePaid(isPaid);
+                }).catch(function() { settlePaid(false); });
+              } else if (!window._heroEntitlementChecked) {
+                resolveHeroCtas(false);
+              }
             } catch (_) {}
-          });
+            // Show last AI chat in hero preview (keep fake data if none)
+            try { loadHeroLastChat(); } catch (_) {}
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+            var pricingEl = document.getElementById('pricing');
+            if (pricingEl) pricingEl.style.display = '';
+            // Resolve logged-out CTAs only after the auth check finishes,
+            // otherwise logged-in users see a flash of "Start free" first.
+            // Falls back after ~12s if app.js never reports readiness.
+            if (window.__authReady === true || window._heroAuthTries > 40) {
+              var startBtn = document.getElementById('hero-start-free');
+              var dashBtn = document.getElementById('hero-dashboard');
+              var ctaLoader = document.getElementById('hero-cta-loading');
+              if (ctaLoader) ctaLoader.style.display = 'none';
+              if (startBtn) startBtn.style.display = '';
+              if (dashBtn) dashBtn.style.display = 'none';
+              var trustEl = document.getElementById('hero-trust');
+              if (trustEl) trustEl.style.display = '';
+            }
+          }
+        } catch (_) {}
+      }
+      
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        
+        // Hover: keep open when moving from button to dropdown
+        var hideTimer = null;
+        function scheduleHide() {
+          hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150);
         }
-      });
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      
+      // Single click-outside handler (added once)
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+      
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+      
+      // Expose to global scope for inline onclick handlers
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') {
+            handleLogout();
+          } else {
+            // Fallback: clear session and reload
+            localStorage.removeItem('Anteemonee_theme_mode');
+            window.location.href = 'index.html';
+          }
+        } catch (_) {
+          window.location.href = 'index.html';
+        }
+      }
+      
+      window.handleLandingLogout = handleLandingLogout;
+      
+      // Check immediately and then after app.js initializes
+      renderLandingAuth();
       var tries = 0;
+      window._heroAuthTries = 0;
       var timer = setInterval(function () {
         tries++;
-        fill();
-        if (tries > 20) clearInterval(timer);
-      }, 500);
-      fill();
-    })();
-  </script>
-  <script>
-    // Follow the device theme only while the saved mode is System (default).
-    (function () {
-      function currentMode() {
-        try {
-          var m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme');
-          return (m === 'light' || m === 'dark') ? m : 'system';
-        } catch (_) { return 'system'; }
-      }
-      function applyDeviceTheme() {
-        if (currentMode() !== 'system') return;
-        try {
-          var mq = window.matchMedia('(prefers-color-scheme: light)');
-          document.documentElement.setAttribute('data-theme', mq.matches ? 'light' : 'dark');
-        } catch (_) {}
-      }
-      document.addEventListener('DOMContentLoaded', applyDeviceTheme);
-      try {
-        var mq2 = window.matchMedia('(prefers-color-scheme: light)');
-        if (mq2.addEventListener) mq2.addEventListener('change', applyDeviceTheme);
-        else if (mq2.addListener) mq2.addListener(applyDeviceTheme);
-      } catch (_) {}
-      applyDeviceTheme();
-    })();
-  </script>
-  <script>
-    // Model selector removed — auto-switching handles persona. Just clear
-    // any skeleton states immediately so the welcome UI shows instantly.
-    (function () {
-      try {
-        ['model-selector', 'model-selector-mobile'].forEach(function (id) {
-          var m = document.getElementById(id);
-          if (m) m.classList.remove('loading');
-        });
-        var sub = document.querySelector('.welcome-subtitle');
-        if (sub) sub.classList.remove('skel-text');
-        var title = document.querySelector('.welcome-title');
-        if (title) title.classList.remove('skel-text');
-      } catch (_) {}
-    })();
-  </script>
-  <script>
-    // Embedded views (Chat / Flashcards), greeting, sidebar collapse.
-    (function () {
-      function showView(name) {
-        var fc = name === 'flashcards';
-        document.body.classList.toggle('show-flashcards', fc);
-        var btns = document.querySelectorAll('[data-view]');
-        for (var i = 0; i < btns.length; i++) {
-          btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === name);
-        }
-        if (fc) {
-          var fr = document.getElementById('flashcards-frame');
-          if (fr && !fr.getAttribute('src')) fr.setAttribute('src', 'pages/flashcards.html?embed=1');
-          try {
-            var closer = document.getElementById('btn-close-sidebar');
-            var drawer = document.getElementById('mobile-sidebar');
-            if (closer && drawer && drawer.classList.contains('active')) closer.click();
-          } catch (_) {}
-        } else {
-          try {
-            var cc = document.getElementById('chat-content');
-            if (cc) cc.scrollTop = cc.scrollHeight;
-          } catch (_) {}
-        }
-      }
-      var viewBtns = document.querySelectorAll('[data-view]');
-      for (var v = 0; v < viewBtns.length; v++) {
-        (function (b) {
-          b.addEventListener('click', function () { showView(b.getAttribute('data-view')); });
-        })(viewBtns[v]);
-      }
-      window.AnteemoneeViews = {
-        showView: showView,
-        showFlashcards: function (editId) {
-          var fr = document.getElementById('flashcards-frame');
-          var url = 'pages/flashcards.html?embed=1' + (editId ? '&edit=' + encodeURIComponent(editId) : '');
-          if (fr) fr.setAttribute('src', url);
-          showView('flashcards');
-        }
-      };
-
-      // Sidebar collapse (desktop). Preference remembered on this device.
-      var collapsed = false;
-      try { collapsed = localStorage.getItem('Anteemonee_sidebar') === 'closed'; } catch (_) {}
-      function applyCollapse() { document.body.classList.toggle('sidebar-collapsed', collapsed); }
-      var cBtn = document.getElementById('sidebar-collapse');
-      if (cBtn) cBtn.addEventListener('click', function () {
-        collapsed = true;
-        try { localStorage.setItem('Anteemonee_sidebar', 'closed'); } catch (_) {}
-        applyCollapse();
-      });
-      var rBtn = document.getElementById('sidebar-reopen');
-      if (rBtn) rBtn.addEventListener('click', function () {
-        collapsed = false;
-        try { localStorage.setItem('Anteemonee_sidebar', 'open'); } catch (_) {}
-        applyCollapse();
-      });
-      applyCollapse();
-
-      // Time-based greeting with first name.
-      function daypart() {
-        var h = new Date().getHours();
-        if (h < 12) return 'Good morning';
-        if (h < 17) return 'Good afternoon';
-        return 'Good evening';
-      }
-      function paintGreeting() {
-        var t = document.querySelector('.welcome-title');
-        if (!t) return;
-        t.classList.remove('skel-text');
-        var full = '';
-        try {
-          var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};
-          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
-          var meta = (user && user.user_metadata) || {};
-          full = prof.full_name || prof.username || meta.full_name || meta.name || '';
-          if (!full && user.email) full = String(user.email).split('@')[0];
-        } catch (_) {}
-        var first = String(full || '').trim().split(/\s+/)[0] || '';
-        t.textContent = daypart() + (first ? ', ' + first : '');
-      }
-      paintGreeting();
-      var gtries = 0;
-      var gtimer = setInterval(function () {
-        gtries++;
-        paintGreeting();
-        if (gtries > 24) clearInterval(gtimer);
-      }, 500);
-      setInterval(paintGreeting, 60000);
-
-      // Welcome quick action buttons
-      (function () {
-        document.querySelectorAll('.welcome-action-btn[data-prompt]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var input = document.getElementById('chat-input');
-            if (input) { input.value = btn.getAttribute('data-prompt'); input.focus(); }
-          });
-        });
-        var revBtn = document.querySelector('[data-welcome-flashcards]');
-        if (revBtn) revBtn.addEventListener('click', function () {
-          if (window.AnteemoneeViews) window.AnteemoneeViews.showFlashcards();
-        });
-      })();
-    })();
-  </script>
-  <script>
-    // Settings popup: inline settings UI (no iframe).
-    (function () {
-      var overlay = document.getElementById('settings-overlay');
-      if (!overlay) return;
-      function isAuthed() {
-        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return true; } catch (_) {}
-        return false;
-      }
-      function paintAuth() {
-        var notAuth = document.getElementById('settings-not-auth');
-        var page = document.getElementById('settings-page');
-        if (!notAuth || !page) return;
-        if (isAuthed()) { notAuth.style.display = 'none'; page.style.display = 'block'; }
-        else { notAuth.style.display = 'block'; page.style.display = 'none'; }
-      }
-      function openSettings(hash) {
-        paintAuth();
-        overlay.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        try {
-          if (typeof ensureInlineSettings === 'function') ensureInlineSettings();
-          else if (typeof initSettings === 'function') initSettings();
-        } catch (_) {}
-        if (hash) {
-          try {
-            var cat = String(hash).replace(/^#/, '');
-            if (document.querySelector('.settings-category[data-cat="' + cat + '"]')) {
-              setTimeout(function () { try { switchCategory(cat); } catch (_) {} }, 60);
-            }
-          } catch (_) {}
-        } else {
-          var sp = document.getElementById('settings-page');
-          if (sp) sp.scrollTop = 0;
-        }
-      }
-      function closeSettings() {
-        overlay.classList.remove('show');
-        document.body.style.overflow = '';
-      }
-      window.AnteemoneeSettings = { open: openSettings, close: closeSettings };
-      document.getElementById('settings-close').addEventListener('click', closeSettings);
-      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeSettings(); });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && overlay.classList.contains('show')) closeSettings();
-      });
-      // Every settings.html link on this page opens the popup instead.
-      document.addEventListener('click', function (e) {
-        var a = e.target && e.target.closest ? e.target.closest('a[href$="settings.html"]') : null;
-        if (!a) return;
-        e.preventDefault();
-        openSettings();
-      });
-    })();
-  </script>
-  <script>
-    // Profile popup: same pattern as Settings — full account.html embedded.
-    (function () {
-      var overlay = document.getElementById('profile-overlay');
-      if (!overlay) return;
-      function openProfile() {
-        overlay.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        var fr = document.getElementById('profile-frame');
-        if (fr && !fr.getAttribute('src')) fr.setAttribute('src', 'pages/account.html?embed=1');
-      }
-      function closeProfile() {
-        overlay.classList.remove('show');
-        document.body.style.overflow = '';
-      }
-      window.AnteemoneeProfile = { open: openProfile, close: closeProfile };
-      document.getElementById('profile-close').addEventListener('click', closeProfile);
-      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeProfile(); });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && overlay.classList.contains('show')) closeProfile();
-      });
-    })();
-  </script>
-  <script>
-    // Logout confirmation: wrap handleLogout so every logout click asks first.
-    (function () {
-      var overlay = document.getElementById('logout-overlay');
-      if (!overlay) return;
-      var realLogout = null;
-      try {
-        if (typeof handleLogout === 'function') realLogout = handleLogout;
-      } catch (_) {}
-      function fillIdentity() {
-        try {
-          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
-          var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};
-          var meta = user.user_metadata || {};
-          var name = prof.full_name || prof.username || meta.full_name || meta.name || (user.email || '').split('@')[0] || 'User';
-          var email = user.email || '';
-          var img = prof.profile_image_url || meta.avatar_url || meta.picture || '';
-          var initial = String(name || '?').charAt(0).toUpperCase().replace(/[<>&"']/g, '');
-          document.getElementById('logout-name').textContent = name;
-          document.getElementById('logout-email').textContent = email;
-          document.getElementById('logout-avatar').innerHTML = '<span>' + initial + '</span>'
-            + (img ? '<img src="' + String(img).replace(/"/g, '') + '" alt="" onerror="this.remove()">' : '');
-        } catch (_) {}
-      }
-      function openLogout() {
-        fillIdentity();
-        overlay.classList.add('show');
-      }
-      function closeLogout() { overlay.classList.remove('show'); }
-      document.getElementById('logout-cancel').addEventListener('click', closeLogout);
-      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeLogout(); });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && overlay.classList.contains('show')) closeLogout();
-      });
-      document.getElementById('logout-confirm').addEventListener('click', function () {
-        closeLogout();
-        try { if (realLogout) realLogout(); } catch (_) {}
-      });
-      try { window.handleLogout = function () { openLogout(); }; } catch (_) {}
-    })();
-  </script>
-  <script>
-    // ChatGPT-style account dropdown: avatar + name + plan, actions, switcher.
-    (function () {
-      function esc(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      }
-      function svg(inner) {
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
-      }
-      var I = {
-        spark: svg('<path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>'),
-        tune: svg('<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'),
-        user: svg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
-        gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
-        help: svg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>'),
-        out: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>')
-      };
-
-      function identity() {
-        var user = null, prof = {};
-        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) user = currentUser; } catch (_) {}
-        try { if (typeof currentProfile !== 'undefined' && currentProfile) prof = currentProfile; } catch (_) {}
-        var meta = (user && user.user_metadata) || {};
-        var name = prof.full_name || prof.username || meta.full_name || meta.name || ((user && user.email) || '').split('@')[0] || 'User';
-        var img = prof.profile_image_url || meta.avatar_url || meta.picture || '';
-        var pro = false;
-        try {
-          var planEl = document.getElementById('acct-plan');
-          pro = !!(planEl && planEl.classList.contains('is-pro'));
-        } catch (_) {}
-        return { name: name, img: img, initial: String(name || '?').charAt(0).toUpperCase(), plan: pro ? 'Premium' : 'Free', isPro: pro };
-      }
-
-      function closeMenus() {
-        var open = document.querySelectorAll('.acct-menu');
-        for (var i = 0; i < open.length; i++) open[i].remove();
-      }
-
-      function openPopup(hash) {
-        try {
-          if (window.AnteemoneeSettings && window.AnteemoneeSettings.open) window.AnteemoneeSettings.open(hash);
-        } catch (_) {}
-      }
-
-      function buildMenu(rowId) {
-        var row = document.getElementById(rowId);
-        if (!row) return null;
-        var fixed = rowId !== 'acct-row';
-        var d = identity();
-        var menu = document.createElement('div');
-        menu.className = 'acct-menu' + (fixed ? ' fixed' : '');
-        menu.id = fixed ? 'acct-menu-m' : 'acct-menu';
-        var head = '<div class="acct-menu-head" data-go="profiles" title="Switch account"><span class="acct-avatar-mini">'
-          + (d.img ? '<img src="' + String(d.img).replace(/"/g, '') + '" alt="" onerror="this.remove()">' : '')
-          + '<span>' + esc(d.initial) + '</span></span>'
-          + '<span class="acct-head-meta"><span class="acct-head-name">' + esc(d.name) + '</span>'
-          + '<span class="acct-head-plan">' + esc(d.plan) + '</span></span>'
-          + '<span class="acct-chev">›</span></div>';
-        /* account switch list lives in the profiles menu now */
-        menu.innerHTML = ''
-          + '<button class="acct-item" data-act="profile">' + I.user + '<span>Profile</span></button>'
-          + '<button class="acct-item" data-act="settings">' + I.gear + '<span>Settings</span></button>'
-          + '<div class="acct-menu-sep"></div>'
-          + '<button class="acct-item danger" data-act="logout">' + I.out + '<span>Log out</span></button>';
-        menu.dataset.row = rowId;
-        menu.addEventListener('click', function (e) {
-          var go = e.target.closest ? e.target.closest('[data-go]') : null;
-          if (go) {
-            var scope0 = menu.parentNode || document;
-            var exf0 = scope0.querySelector ? scope0.querySelector('.acct-fly') : null;
-            if (exf0) { exf0.remove(); return; }
-            var r = menu.dataset.row;
-            if (go.getAttribute('data-go') === 'profiles') buildProfilesMenu(r, true);
-            else { closeMenus(); buildMenu(r); }
-            return;
-          }
-          var b = e.target.closest ? e.target.closest('[data-act]') : null;
-          if (!b) return;
-          var act = b.getAttribute('data-act');
-          closeMenus();
-          if (act === 'profile') { if (window.AnteemoneeProfile) window.AnteemoneeProfile.open(); }
-          else if (act === 'logout') { try { if (typeof handleLogout === 'function') handleLogout(); } catch (_) {} }
-          else openPopup();
-        });
-        (function () {
-          try {
-            if (!(window.matchMedia && window.matchMedia('(hover: hover)').matches)) return;
-            var headEl = menu.querySelector('[data-go]');
-            if (!headEl) return;
-            var ht = null;
-            headEl.addEventListener('mouseenter', function () {
-              if (Date.now() - (window.__acctHoverAt || 0) < 900) return;
-              if (ht) clearTimeout(ht);
-              ht = setTimeout(function () {
-                ht = null;
-                if (!document.body.contains(headEl)) return;
-                var scope = menu.parentNode || document;
-                if (scope.querySelector && scope.querySelector('.acct-fly')) return;
-                window.__acctHoverAt = Date.now();
-                buildProfilesMenu(menu.dataset.row, true);
-              }, 220);
-            });
-            headEl.addEventListener('mouseleave', function () { if (ht) { clearTimeout(ht); ht = null; } });
-          } catch (_) {}
-        })();
-        if (fixed) document.body.appendChild(menu);
-        else row.parentNode.insertBefore(menu, row);
-        return menu;
-      }
-
-      function toggle(rowId) {
-        var id = rowId === 'acct-row' ? 'acct-menu' : 'acct-menu-m';
-        // Remove-then-maybe-rebuild so data is always fresh.
-        var ex = document.getElementById(id);
-        var wasOpen = !!ex;
-        closeMenus();
-        if (!wasOpen) buildMenu(rowId);
-      }
-
-      document.addEventListener('click', function (e) {
-        if (e.target.closest && (e.target.closest('.acct-menu') || e.target.closest('#acct-row') || e.target.closest('#drawer-account'))) return;
-        closeMenus();
-      });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
-
-      /* Profiles dropdown: all signed-in accounts + add (max 3). Opens
-         from the avatar on click, and on hover (devices with a mouse). */
-      var PLUS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-
-      function buildProfilesMenu(rowId, fly) {
-        var fixed = rowId !== 'acct-row';
-        var id = fixed ? 'acct-profiles-m' : 'acct-profiles';
-        var oldFly = document.getElementById(id);
-        if (oldFly) oldFly.remove();
-        var menu = document.createElement('div');
-        menu.className = 'acct-menu' + (fixed ? ' fixed' : '') + (fly && !fixed ? ' acct-fly' : '');
-        menu.id = id;
-        if (fly && !fixed) menu.dataset.fly = '1';
-        var html = '';
-        var accs = [];
-        var active = null;
-        try {
-          if (typeof AccountManager !== 'undefined' && AccountManager.getSavedAccounts) accs = AccountManager.getSavedAccounts() || [];
-          if (typeof AccountManager !== 'undefined' && AccountManager.getActiveUserId) active = AccountManager.getActiveUserId();
-        } catch (_) {}
-        if (!accs.length) html += '<div class="acct-empty-note">No saved accounts.</div>';
-        accs.forEach(function (a) {
-          var nm = a.displayName || a.email || 'Account';
-          html += '<button class="acct-item" data-sw="' + esc(a.userId) + '">'
-            + '<span class="acct-avatar-mini sm">' + esc(String(nm).charAt(0).toUpperCase()) + '</span>'
-            + '<span class="acct-switch-meta"><span>' + esc(nm) + '</span>'
-            + '<span class="acct-switch-mail">' + esc(a.email || '') + '</span></span>'
-            + (a.userId === active ? '<span class="acct-check">✓</span>' : '') + '</button>';
-        });
-        var canAdd = false;
-        try { canAdd = typeof AccountManager !== 'undefined' && AccountManager.hasAvailableSlot ? AccountManager.hasAvailableSlot() : false; } catch (_) {}
-        if (canAdd) {
-          html += '<div class="acct-menu-sep"></div>'
-            + '<button class="acct-item" data-add="1">' + PLUS_SVG + '<span>Add another account</span></button>';
-        }
-        menu.innerHTML = html;
-        menu.dataset.row = rowId;
-        menu.addEventListener('click', function (e) {
-          var go2 = e.target.closest ? e.target.closest('[data-go]') : null;
-          if (go2) {
-            if (menu.dataset.fly) { menu.remove(); return; }
-            var r2 = menu.dataset.row;
-            closeMenus();
-            buildMenu(r2);
-            return;
-          }
-          var swBtn = e.target.closest ? e.target.closest('[data-sw]') : null;
-          if (swBtn) {
-            closeMenus();
-            try { if (typeof switchToAccount === 'function') switchToAccount(swBtn.getAttribute('data-sw')); } catch (_) {}
-            return;
-          }
-          if (e.target.closest && e.target.closest('[data-add]')) {
-            closeMenus();
-            try { if (typeof addAnotherAccount === 'function') addAnotherAccount(); } catch (_) {}
-          }
-        });
-        (function () {
-          try {
-            if (!(window.matchMedia && window.matchMedia('(hover: hover)').matches)) return;
-            var headEl2 = menu.querySelector('[data-go]');
-            if (!headEl2) return;
-            var ht2 = null;
-            headEl2.addEventListener('mouseenter', function () {
-              if (Date.now() - (window.__acctHoverAt || 0) < 900) return;
-              if (ht2) clearTimeout(ht2);
-              ht2 = setTimeout(function () {
-                ht2 = null;
-                if (!document.body.contains(headEl2)) return;
-                window.__acctHoverAt = Date.now();
-                var r2 = menu.dataset.row;
-                closeMenus();
-                buildMenu(r2);
-              }, 220);
-            });
-            headEl2.addEventListener('mouseleave', function () { if (ht2) { clearTimeout(ht2); ht2 = null; } });
-          } catch (_) {}
-        })();
-        if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
-          menu.addEventListener('mouseleave', function () {
-            if (menu.dataset.fly) menu.remove();
-            else closeMenus();
-          });
-        }
-        if (fixed) document.body.appendChild(menu);
-        else {
-          var row = document.getElementById('acct-row');
-          if (row && row.parentNode) row.parentNode.insertBefore(menu, row);
-        }
-        if (fly && !fixed) {
-          // Dock beside the open menu: align bottom edges, clamp on-screen.
-          try {
-            var mainMenu = document.getElementById('acct-menu');
-            if (mainMenu) {
-              var mr = mainMenu.getBoundingClientRect();
-              var mh = menu.offsetHeight || 320;
-              var mtop = mr.bottom - mh;
-              mtop = Math.max(12, Math.min(mtop, window.innerHeight - mh - 12));
-              menu.style.top = mtop + 'px';
-            }
-          } catch (_) {}
-        }
-      }
-
-      function toggleProfiles(rowId) {
-        var id = rowId === 'acct-row' ? 'acct-profiles' : 'acct-profiles-m';
-        var wasOpen = !!document.getElementById(id);
-        closeMenus();
-        if (!wasOpen) buildProfilesMenu(rowId);
-      }
-
-      var hoverOK = false;
-      try { hoverOK = window.matchMedia && window.matchMedia('(hover: hover)').matches; } catch (_) {}
-      [{ sel: '#auth-logged-in .profile-avatar-container', row: 'acct-row' }, { sel: '#m-acct-avatar', row: 'drawer-account' }].forEach(function (o) {
-        var av = document.querySelector(o.sel);
-        if (!av) return;
-        av.addEventListener('click', function (e) {
-          e.stopPropagation();
-          toggle(o.row);
+        window._heroAuthTries = tries;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        // Stop polling once auth check is complete (app.js sets window.__authReady = true)
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+      // FAQ
+      document.querySelectorAll('.faq-item').forEach(function (it) {
+        it.querySelector('.faq-q').addEventListener('click', function () {
+          var open = it.classList.contains('open');
+          document.querySelectorAll('.faq-item').forEach(function (o) { o.classList.remove('open'); o.querySelector('.faq-q span').textContent = '+'; });
+          if (!open) { it.classList.add('open'); it.querySelector('.faq-q span').textContent = '–'; }
         });
       });
-      window.AcctMenu = { toggle: toggle, toggleProfiles: toggleProfiles, close: closeMenus };
+      // Header shadow on scroll
+      var hdr = document.getElementById('header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
   </script>
+  <script src="js/header-ai-dropdown.js?v=2"></script>
 </body>
 </html>
