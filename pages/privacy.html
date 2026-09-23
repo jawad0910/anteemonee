@@ -1,14 +1,24 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - Anteemonee</title>
   <meta name="description" content="Read the Privacy Policy for Anteemonee. Learn how we collect, use and protect your personal data. Your privacy matters to us.">
-  <meta name="theme-color" content="#07080C">
+  <meta name="theme-color" content="#0B0F19">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/pages/privacy.html">
-  <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Privacy Policy - Anteemonee">
   <meta property="og:description" content="Read the Privacy Policy for Anteemonee. Learn how we collect, use and protect your personal data.">
@@ -16,140 +26,354 @@
   <meta property="og:url" content="https://anteemonee.com/pages/privacy.html">
   <meta property="og:site_name" content="Anteemonee">
   <meta property="og:locale" content="en_PK">
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Privacy Policy - Anteemonee">
   <meta name="twitter:description" content="Read the Privacy Policy for Anteemonee. Learn how we collect, use and protect your personal data.">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="../css/style.css?v=18">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=21">
   <style>
-    .legal-page { max-width: 720px; margin: 0 auto; padding: 120px 24px 80px; }
-    .legal-page h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
-    .legal-page .legal-updated { color: var(--text-secondary); font-size: 14px; margin-bottom: 40px; }
-    .legal-page h2 { font-size: 1.25rem; font-weight: 600; margin: 32px 0 12px; }
-    .legal-page p, .legal-page li { color: var(--text-secondary); font-size: 15px; line-height: 1.7; margin-bottom: 12px; }
-    .legal-page ul { padding-left: 20px; margin-bottom: 16px; }
-    .legal-page li { margin-bottom: 8px; }
-    .legal-back { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 14px; font-weight: 500; text-decoration: none; margin-bottom: 24px; }
-    .legal-back:hover { opacity: 0.8; }
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    /* ── Site header (matches signup / dashboard / ai-chat) ── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
+    .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+
+    /* ── Legal (new theme) ── */
+    .legal-wrap { max-width: 780px; margin: 0 auto; padding: 104px 24px 80px; }
+    .legal-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 13.5px; font-weight: 600; text-decoration: none; margin-bottom: 20px; padding: 10px 18px 10px 14px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); transition: all var(--neo-duration) var(--neo-tween); cursor: pointer; }
+    .legal-back:hover { color: var(--text); border-color: var(--liquid-border); transform: translateX(-3px); }
+    .legal-card { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 40px 36px; box-shadow: var(--liquid-inset), var(--liquid-shadow); }
+    .legal-card h1 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; margin: 0 0 8px; letter-spacing: -0.01em; color: var(--text); }
+    .legal-updated { color: var(--text-muted); font-size: 13px; margin-bottom: 28px; }
+    .legal-card h2 { font-size: 1.1rem; font-weight: 700; margin: 28px 0 10px; color: var(--text); }
+    .legal-card p, .legal-card li { color: var(--text-secondary); font-size: 14.5px; line-height: 1.75; margin-bottom: 10px; }
+    .legal-card ul { padding-left: 20px; margin-bottom: 14px; }
+    .legal-card li { margin-bottom: 6px; }
+    @media (max-width: 560px) { .legal-wrap { padding: 96px 16px 60px; } .legal-card { padding: 28px 20px; } }
   </style>
 </head>
 <body>
-
-  <header class="header">
+  <header class="header" id="site-header">
     <div class="header-inner">
       <a href="../index.html" class="logo-link">
         <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
         <span class="logo-text">Anteemonee</span>
       </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <a href="dashboard.html">Dashboard</a>
+        <div class="nav-drop">
+          <a href="#">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="ebooks.html">eBooks</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="definitions.html">Definitions</a>
+          </div>
+        </div>
+        <a href="past-papers.html">Past Papers</a>
+        <a href="ai-chat.html">AI Assistant</a>
+      </nav>
       <div class="header-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
-        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
-        <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="login.html" class="btn-login">Login</a>
-          <a href="signup.html" class="btn-signup">Sign Up</a>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
         </div>
-        <div class="auth-actions" id="auth-logged-in" style="display:none">
-          <div class="profile-avatar-container" id="profile-avatar-container"></div>
-        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
       </div>
-
-      <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
     </div>
   </header>
-
-  <!-- MOBILE MENU -->
-  <div class="mobile-menu">
-    <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
-    <div id="mobile-auth-logged-out" style="display:none">
-      <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#features" class="mobile-nav-link">Features</a>
-      <a href="../index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="download.html" class="mobile-nav-link">Download App</a>
-      <div class="mobile-cta">
-        <a href="login.html" class="btn-login">Log in</a>
-        <a href="signup.html" class="btn-signup">Sign Up</a>
-      </div>
-    </div>
-    <div id="mobile-auth-logged-in" style="display:none">
-      <div id="mobile-profile-section"></div>
-      <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="account.html" class="mobile-nav-link">Account</a>
-      <a href="settings.html" class="mobile-nav-link">Settings</a>
-      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="dashboard.html" class="mobile-nav-link">Dashboard</a>
+    <a href="board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+    <a href="definitions.html" class="mobile-nav-link">Definitions</a>
+    <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+    <a href="ai-chat.html" class="mobile-nav-link">AI Assistant</a>
+    <div class="mobile-cta">
+      <a href="login.html" class="btn-login">Log in</a>
+      <a href="signup.html" class="btn-signup">Sign Up</a>
     </div>
   </div>
 
-  <div class="legal-page">
-    <a href="../index.html" class="legal-back">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to Anteemonee
+  <main class="legal-wrap">
+    <a href="../index.html" class="legal-back" id="legal-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span>Back</span>
     </a>
-    <h1>Privacy Policy</h1>
-    <p class="legal-updated">Last updated: September 2026</p>
+    <div class="legal-card">
+      <h1>Privacy Policy</h1>
+      <p class="legal-updated">Last updated: September 2026</p>
 
-    <h2>1. Information We Collect</h2>
-    <p>We collect information you provide directly to us, such as:</p>
-    <ul>
-      <li>Account information (name, email, phone number)</li>
-      <li>Academic profile (education system, board, class, subjects)</li>
-      <li>Usage data (study time, practice attempts)</li>
-      <li>Anonymous device identifier (used only to enforce the one-free-trial-per-device limit)</li>
-      <li>Content you create (notes, flashcards, chat messages)</li>
-    </ul>
+      <h2>1. Information We Collect</h2>
+      <p>We collect information you provide directly to us, such as:</p>
+      <ul>
+        <li>Account information (name, email, phone number)</li>
+        <li>Academic profile (education system, board, class, subjects)</li>
+        <li>Usage data (study time, practice attempts)</li>
+        <li>Anonymous device identifier (used only to enforce the one-free-trial-per-device limit)</li>
+        <li>Content you create (notes, flashcards, chat messages)</li>
+      </ul>
 
-    <h2>2. How We Use Your Information</h2>
-    <p>We use your information to:</p>
-    <ul>
-      <li>Provide and improve the Anteemonee platform</li>
-      <li>Personalize your learning experience</li>
-      <li>Track academic progress and provide recommendations</li>
-      <li>Communicate with you about updates and features</li>
-      <li>Ensure platform security and prevent abuse</li>
-    </ul>
+      <h2>2. How We Use Your Information</h2>
+      <p>We use your information to:</p>
+      <ul>
+        <li>Provide and improve the Anteemonee platform</li>
+        <li>Personalize your learning experience</li>
+        <li>Track academic progress and provide recommendations</li>
+        <li>Communicate with you about updates and features</li>
+        <li>Ensure platform security and prevent abuse</li>
+      </ul>
 
-    <h2>3. Data Sharing</h2>
-    <p>We do not sell your personal data. We may share information with:</p>
-    <ul>
-      <li>Service providers who help us operate the platform</li>
-      <li>When required by law or to protect our rights</li>
-    </ul>
+      <h2>3. Data Sharing</h2>
+      <p>We do not sell your personal data. We may share information with:</p>
+      <ul>
+        <li>Service providers who help us operate the platform</li>
+        <li>When required by law or to protect our rights</li>
+      </ul>
 
-    <h2>4. AI Memory</h2>
-    <p>When AI Memory is enabled, Anteemonee remembers useful facts from your AI chats (such as your name, goals, weak or strong topics, language preference, and exam targets) so the tutor can personalize future answers. This memory:</p>
-    <ul>
-      <li>Is stored privately on your account and is never shared with other users</li>
-      <li>Is used only to personalize your own AI responses</li>
-      <li>Never includes passwords, OTPs, payment details, or other credentials. Our system is instructed to ignore such information</li>
-      <li>Is on by default, and you can turn it off anytime in Settings, then AI, then AI Memory. Turning it off stops new learning and stops the AI from using stored memories</li>
-      <li>Can be permanently deleted anytime with the Clear AI Memory button in Settings, and is deleted automatically if you delete your account</li>
-    </ul>
+      <h2>4. AI Memory</h2>
+      <p>When AI Memory is enabled, Anteemonee remembers useful facts from your AI chats (such as your name, goals, weak or strong topics, language preference, and exam targets) so the tutor can personalize future answers. This memory:</p>
+      <ul>
+        <li>Is stored privately on your account and is never shared with other users</li>
+        <li>Is used only to personalize your own AI responses</li>
+        <li>Never includes passwords, OTPs, payment details, or other credentials. Our system is instructed to ignore such information</li>
+        <li>Is on by default, and you can turn it off anytime in Settings, then AI, then AI Memory. Turning it off stops new learning and stops the AI from using stored memories</li>
+        <li>Can be permanently deleted anytime with the Clear AI Memory button in Settings, and is deleted automatically if you delete your account</li>
+      </ul>
 
-    <h2>5. Data Security</h2>
-    <p>We implement industry-standard security measures to protect your data, including encryption, access controls, and regular security audits.</p>
+      <h2>5. Data Security</h2>
+      <p>We implement industry-standard security measures to protect your data, including encryption, access controls, and regular security audits.</p>
 
-    <h2>6. Your Rights</h2>
-    <p>You have the right to:</p>
-    <ul>
-      <li>Access your personal data</li>
-      <li>Correct inaccurate data</li>
-      <li>Delete your account and data</li>
-      <li>Export your data</li>
-    </ul>
+      <h2>6. Your Rights</h2>
+      <p>You have the right to:</p>
+      <ul>
+        <li>Access your personal data</li>
+        <li>Correct inaccurate data</li>
+        <li>Delete your account and data</li>
+        <li>Export your data</li>
+      </ul>
 
-    <h2>7. Contact Us</h2>
-    <p>If you have questions about this Privacy Policy, please contact us through the Anteemonee app or at our support channels.</p>
-  </div>
+      <h2>7. Contact Us</h2>
+      <p>If you have questions about this Privacy Policy, please contact us through the Anteemonee app or at our support channels.</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="ai-chat.html">AI Assistant</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="ai-chat.html">AI Tutor</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="payment.html">Lifetime Access</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="login.html">Log in</a>
+            <a href="signup.html">Sign Up</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=11"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=19"></script>
+  <script>
+    // Smart back: return to the page the user came from (e.g. signup),
+    // otherwise fall back to index. Preserves ?mode=add_account etc.
+    (function () {
+      var back = document.getElementById('legal-back');
+      if (!back) return;
+      back.addEventListener('click', function (e) {
+        e.preventDefault();
+        var fallback = back.getAttribute('href') || '../index.html';
+        try {
+          var ref = document.referrer || '';
+          if (ref) {
+            var r = new URL(ref, window.location.href);
+            var cur = new URL(window.location.href);
+            var sameOrigin = r.origin === cur.origin;
+            var notSelf = r.pathname !== cur.pathname;
+            if (sameOrigin && notSelf) { window.location.href = ref; return; }
+          }
+        } catch (_) {}
+        try {
+          if (window.history && window.history.length > 1) { window.history.back(); return; }
+        } catch (_) {}
+        window.location.href = fallback;
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
+      if (mt && mm) {
+        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
+        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
+      }
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="account.html" class="dropdown-item">Account</a>' +
+                  '<a href="settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()">Settings</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Logout</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        var hideTimer = null;
+        function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      window.toggleLandingProfileDropdown = function () {
+        var d = document.getElementById('landing-profile-dropdown-menu');
+        if (d) d.classList.toggle('open');
+      };
+      window.closeLandingProfileDropdown = function () {
+        var d = document.getElementById('landing-profile-dropdown-menu');
+        if (d) d.classList.remove('open');
+      };
+      window.handleLandingLogout = function () {
+        try {
+          if (typeof handleLogout === 'function') handleLogout();
+          else window.location.href = '../index.html';
+        } catch (_) { window.location.href = '../index.html'; }
+      };
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=2"></script>
 </body>
 </html>

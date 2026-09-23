@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
   <title>Flashcards - Anteemonee</title>
   <meta name="description" content="Create, review and master flashcards with spaced repetition. Track your progress with Leitner boxes. Everything is saved to your Anteemonee account.">
   <meta name="keywords" content="flashcards, spaced repetition, Leitner system, study cards, create flashcards, Anteemonee, Pakistan students">
-  <meta name="theme-color" content="#0C1410">
+  <meta name="theme-color" content="#0B0F19">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/pages/flashcards.html">
   <!-- Open Graph -->
@@ -30,6 +41,55 @@
   <link rel="stylesheet" href="../css/style.css?v=12">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .landing-nav a.active { color: var(--accent); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 8px; }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+
     .fc-page { max-width: 1080px; margin: 0 auto; padding: 112px 24px 90px; min-height: 100vh; }
     .fc-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
     .fc-head h1 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; letter-spacing: -0.01em; }
@@ -138,61 +198,49 @@
 <body>
 
   <!-- HEADER -->
-  <header class="header">
+  <header class="header" id="site-header" id="header">
     <div class="header-inner">
       <a href="../index.html" class="logo-link">
         <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="logo-text-wrap">
-          <span class="logo-text">Anteemonee</span>
-          <span class="logo-sub">Student OS for Pakistan</span>
-        </span>
+        <span class="logo-text">Anteemonee</span>
       </a>
-      <nav class="desktop-nav">
-        <a href="../index.html#features">Features</a>
-        <a href="../index.html">AI Chat</a>
-        <a href="flashcards.html" class="active">Flashcards</a>
-        <a href="download.html">Download</a>
-      </nav>
+<nav class="landing-nav" aria-label="Primary">
+  <a href="dashboard.html">Dashboard</a>
+  <div class="nav-drop">
+    <a href="#">Library <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="ebooks.html">eBooks</a>
+      <a href="flashcards.html">Flashcards</a>
+      <a href="definitions.html">Definitions</a>
+    </div>
+  </div>
+  <a href="past-papers.html">Past Papers</a>
+  <a href="ai-chat.html">AI Assistant</a>
+</nav>
       <div class="header-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
-        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
-        <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="login.html" class="btn-login">Login</a>
-          <a href="signup.html" class="btn-signup">Sign Up</a>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
         </div>
-        <div class="auth-actions" id="auth-logged-in" style="display:none">
-          <div class="profile-avatar-container" id="profile-avatar-container"></div>
-        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
       </div>
-      <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
     </div>
   </header>
 
-  <!-- MOBILE MENU -->
-  <div class="mobile-menu">
-    <div id="mobile-auth-loading"><div class="auth-shimmer" style="margin:12px auto;width:100px"></div></div>
-    <div id="mobile-auth-logged-out" style="display:none">
-      <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#features" class="mobile-nav-link">Features</a>
-      <a href="../index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
-      <a href="download.html" class="mobile-nav-link">Download App</a>
-      <div class="mobile-cta">
-        <a href="login.html" class="btn-login">Log in</a>
-        <a href="signup.html" class="btn-signup">Sign Up</a>
-      </div>
-    </div>
-    <div id="mobile-auth-logged-in" style="display:none">
-      <div id="mobile-profile-section"></div>
-      <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
-      <a href="account.html" class="mobile-nav-link">Account</a>
-      <a href="settings.html" class="mobile-nav-link">Settings</a>
-      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
+  <div class="mobile-menu" id="mobile-menu">
+  <a href="../index.html" class="mobile-nav-link">Dashboard</a>
+  <a href="board-notes.html" class="mobile-nav-link">Board Notes</a>
+  <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+  <a href="definitions.html" class="mobile-nav-link">Definitions</a>
+  <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+  <a href="ai-chat.html" class="mobile-nav-link">AI Assistant</a>
+    <div class="mobile-cta">
+      <a href="login.html" class="btn-login">Log in</a>
+      <a href="signup.html" class="btn-signup">Sign Up</a>
     </div>
   </div>
 
@@ -215,481 +263,111 @@
     <div class="fc-head">
       <div>
         <h1>Flashcards</h1>
-        <p id="fc-count-line">Saved to your account. Review on time, remember longer.</p>
-      </div>
-      <div class="fc-actions">
-        <button class="btn-secondary" id="fc-review-btn" type="button">Review due<span class="fc-due-badge" id="fc-due-count">0</span></button>
-        <button class="btn-primary" id="fc-new-btn" type="button">+ New card</button>
+        <p id="fc-count-line">Choose a subject to begin.</p>
       </div>
     </div>
-
-    <div class="fc-setup" id="fc-setup" style="display:none">
-      <h3>Database table missing</h3>
-      <p>Your flashcards are stored in Supabase, but the <code>flashcards</code> table does not exist yet. Run this SQL once in your Supabase dashboard (SQL editor), then reload this page.</p>
-      <pre>create table if not exists public.flashcards (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users (id) on delete cascade,
-  front text not null,
-  back text not null default '',
-  subject text not null default 'General',
-  box int not null default 1,
-  next_review timestamptz not null default now(),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-alter table public.flashcards enable row level security;
-create policy "Users manage own flashcards"
-  on public.flashcards for all
-  using (auth.uid () = user_id)
-  with check (auth.uid () = user_id);
-create index if not exists flashcards_user_due_idx
-  on public.flashcards (user_id, next_review);</pre>
+    <div style="display:flex;gap:8px;margin-bottom:16px"></div>
+    <div id="subject-screen">
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-size:1.4rem;margin:0 0 6px">Choose a subject to open its <span style="color:var(--accent)">Flashcards.</span></h2>
+      <div style="margin:18px 0 12px;font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--text-muted)">ALL SUBJECTS</div>
+      <div id="subject-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+</div>
+    </div>
+    <div id="flashcard-view" style="display:none">
+      <button id="back-to-subjects" style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;cursor:pointer;margin-bottom:12px">← Back to subjects</button>
+      <h3 id="selected-subject-title" style="font-family:'Fraunces',Georgia,serif;font-size:1.3rem;margin:0 0 12px"></h3>
     </div>
 
-    <div class="fc-filters" id="fc-filters"></div>
-
-    <div class="fc-form-card" id="fc-form-card" style="display:none">
-      <h2 id="fc-form-title">New flashcard</h2>
-      <div class="form-group">
-        <label for="fc-subject">Subject</label>
-        <select class="form-input" id="fc-subject">
-          <option value="Physics">Physics</option>
-          <option value="Biology">Biology</option>
-          <option value="Chemistry">Chemistry</option>
-          <option value="Mathematics">Mathematics</option>
-          <option value="Computer Science">Computer Science</option>
-          <option value="General" selected>General</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="fc-front">Front (question / term)</label>
-        <textarea class="form-input" id="fc-front" maxlength="2000" placeholder="What do you want to remember?"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="fc-back">Back (answer / definition)</label>
-        <textarea class="form-input" id="fc-back" maxlength="4000" placeholder="The answer"></textarea>
-      </div>
-      <div class="fc-form-row">
-        <button class="btn-primary" id="fc-save-btn" type="button">Save card</button>
-        <button class="btn-secondary" id="fc-cancel-btn" type="button">Cancel</button>
-        <button class="btn-secondary fc-danger-btn" id="fc-delete-btn" type="button" style="display:none;color:var(--error)">Delete</button>
-      </div>
-    </div>
-
-    <div class="fc-loading" id="fc-loading">
-      <div class="fc-skeleton"></div>
-      <div class="fc-skeleton"></div>
-    </div>
-
-    <div class="fc-grid" id="fc-grid"></div>
-    <div class="fc-empty" id="fc-empty" style="display:none">
-      <h3>No flashcards yet</h3>
-      <p>Create your first card, or select any text in AI Chat and tap Flashcard to save it here.</p>
-    </div>
+    <div id="fc-main-content" style="display:none"></div>
   </main>
-
-  <!-- REVIEW -->
-  <div class="fc-review-overlay" id="fc-review">
-    <div class="fc-review-box">
-      <div class="fc-review-top">
-        <span id="fc-review-progress">1 / 1</span>
-        <button class="fc-review-exit" id="fc-review-exit" type="button">End review</button>
-      </div>
-      <div id="fc-review-body"></div>
-    </div>
-  </div>
 
   <div class="fc-toast" id="fc-toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=12"></script>
+  <script src="../js/app.js?v=19"></script>
   <script>
     (function () {
       'use strict';
 
-      // Embed mode ASAP (before the auth gate) so site chrome never flashes.
       try {
         if (new URLSearchParams(window.location.search).get('embed') === '1') {
           document.body.classList.add('embed');
         }
       } catch (_) {}
 
-      var REVIEW_INTERVAL_MIN = [0, 10, 1440, 4320, 10080, 20160]; // index = box (1..5)
-      var state = { cards: [], filter: 'All', editingId: null, queue: [], qIndex: 0, flipped: false, loading: true };
-
-      function $(id) { return document.getElementById(id); }
-      function esc(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      }
-
-      var toastTimer = null;
-      function toast(msg) {
-        var el = $('fc-toast');
-        if (!el) return;
-        el.textContent = msg;
-        el.classList.add('show');
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
-      }
+      var officialCards = [];
+      var SUBJECTS = [
+        {name:'Physics', code:'9702', color:'#818CF8', bg:'rgba(129,140,248,.15)', decks:0},
+        {name:'Chemistry', code:'9701', color:'#60A5FA', bg:'rgba(96,165,250,.15)', decks:0},
+        {name:'Biology', code:'9700', color:'#34D399', bg:'rgba(52,211,153,.15)', decks:0},
+        {name:'Mathematics', code:'9709', color:'#A78BFA', bg:'rgba(167,139,250,.15)', decks:0},
+        {name:'English', code:'9093', color:'#FBBF24', bg:'rgba(251,191,36,.15)', decks:0},
+      ];
 
       function uid() {
-        try {
-          if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return currentUser.id;
-        } catch (_) {}
+        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return currentUser.id; } catch (_) {}
         return null;
       }
 
-      function isMissingTable(err) {
-        if (!err) return false;
-        var msg = String((err.message || '') + ' ' + (err.details || '') + ' ' + (err.hint || ''));
-        return err.code === '42P01' || /flashcards/i.test(msg) && /not exist|schema cache|Could not find the table/i.test(msg);
+      function subjectCard(s) {
+        return '<div data-subject="' + s.name + '" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:transform .15s;display:flex;flex-direction:column;gap:10px">'
+          + '<div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:36px;border-radius:10px;background:' + s.bg + ';color:' + s.color + ';display:flex;align-items:center;justify-content:center;font-weight:700">' + s.name.charAt(0) + '</div></div>'
+          + '<div style="font-weight:700">' + s.name + '</div>'
+          + '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;background:' + s.bg + ';border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;color:' + s.color + '"><span>' + s.decks + ' decks</span><span style="margin-left:auto">→</span></div>'
+          + '</div>';
       }
 
-      document.addEventListener('DOMContentLoaded', init);
+      function renderSubjects() {
+        var grid = document.getElementById('subject-grid');
+        if (!grid) return;
+        SUBJECTS.forEach(function(s) {
+          s.decks = officialCards.filter(function(c) { return (c.subject || '').toLowerCase() === s.name.toLowerCase(); }).length;
+        });
+        grid.innerHTML = SUBJECTS.map(function(s){ return subjectCard(s); }).join('');
+        grid.querySelectorAll('[data-subject]').forEach(function(el) {
+          el.addEventListener('click', function() { openSubject(el.dataset.subject); });
+        });
+      }
+
+      function openSubject(name) {
+        window.location.href = 'flashcards-subject.html?subject=' + encodeURIComponent(name);
+      }
+
+      async function loadSubjectCounts() {
+        try {
+          var res = await withTimeout(
+            db.from('official_flashcards').select('subject'),
+            10000, 'load subjects'
+          );
+          if (!res.error && Array.isArray(res.data)) officialCards = res.data;
+        } catch (_) {}
+        renderSubjects();
+      }
 
       async function init() {
         try { await checkAuth(); } catch (_) {}
         if (!uid()) {
-          $('fc-not-auth').style.display = 'block';
+          document.getElementById('fc-not-auth').style.display = 'block';
           return;
         }
         try {
           if (typeof Access !== 'undefined') {
             await Access.init();
             if (!Access.state.access) {
-              $('fc-paywall').style.display = 'block';
+              document.getElementById('fc-paywall').style.display = 'block';
               return;
             }
           }
         } catch (_) {}
-        $('fc-page').style.display = 'block';
-        try {
-          if (new URLSearchParams(window.location.search).get('embed') === '1') {
-            document.body.classList.add('embed');
-            // Break out of the frame for auth/account navigation.
-            Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function (a) {
-              a.setAttribute('target', '_top');
-            });
-          }
-        } catch (_) {}
-        bindEvents();
-        await loadCards();
-        await openEditFromUrl();
+        document.getElementById('fc-page').style.display = 'block';
+
+        loadSubjectCounts();
       }
 
-      function bindEvents() {
-        $('fc-new-btn').addEventListener('click', function () { openForm(null); });
-        $('fc-cancel-btn').addEventListener('click', closeForm);
-        $('fc-save-btn').addEventListener('click', saveCard);
-        $('fc-delete-btn').addEventListener('click', deleteEditing);
-        $('fc-review-btn').addEventListener('click', startReview);
-        $('fc-review-exit').addEventListener('click', closeReview);
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeReview(); });
-      }
-
-      async function loadCards() {
-        state.loading = true;
-        render();
-        try {
-          if (typeof db === 'undefined' || !db) throw new Error('Database unavailable. Check your connection and reload.');
-          var res = await withTimeout(
-            db.from('flashcards').select('*').eq('user_id', uid()).order('updated_at', { ascending: false }).limit(1000),
-            12000, 'flashcards'
-          );
-          if (res.error) throw res.error;
-          state.cards = Array.isArray(res.data) ? res.data : [];
-          $('fc-setup').style.display = 'none';
-        } catch (err) {
-          console.warn('[Flashcards] load failed:', err);
-          if (isMissingTable(err)) {
-            $('fc-setup').style.display = 'block';
-            state.cards = [];
-          } else {
-            toast('Could not load flashcards: ' + (err.message || 'unknown error'));
-            state.cards = [];
-          }
-        }
-        state.loading = false;
-        render();
-      }
-
-      function subjects() {
-        var seen = {};
-        var out = [];
-        state.cards.forEach(function (c) {
-          var s = (c.subject || 'General').trim() || 'General';
-          if (!seen[s]) { seen[s] = true; out.push(s); }
-        });
-        out.sort();
-        return out;
-      }
-
-      function dueCount() {
-        var now = Date.now();
-        return state.cards.filter(function (c) {
-          return c.front && String(c.front).trim() && c.back && String(c.back).trim() && new Date(c.next_review).getTime() <= now;
-        }).length;
-      }
-
-      function filteredCards() {
-        if (state.filter === 'All') return state.cards;
-        return state.cards.filter(function (c) {
-          return ((c.subject || 'General').trim() || 'General') === state.filter;
-        });
-      }
-
-      function dueLabel(c) {
-        if (!c.front || !String(c.front).trim()) return { text: 'Needs question', due: false };
-        if (!c.back || !String(c.back).trim()) return { text: 'Needs answer', due: false };
-        var t = new Date(c.next_review).getTime();
-        if (isNaN(t) || t <= Date.now()) return { text: 'Due now', due: true };
-        var mins = Math.round((t - Date.now()) / 60000);
-        if (mins < 60) return { text: 'Due in ' + mins + 'm', due: false };
-        var hours = Math.round(mins / 60);
-        if (hours < 48) return { text: 'Due in ' + hours + 'h', due: false };
-        return { text: 'Due in ' + Math.round(hours / 24) + 'd', due: false };
-      }
-
-      function render() {
-        // Counts
-        var due = dueCount();
-        $('fc-due-count').textContent = String(due);
-        $('fc-review-btn').disabled = due === 0;
-        $('fc-review-btn').style.opacity = due === 0 ? '0.5' : '';
-        var total = state.cards.length;
-        $('fc-count-line').textContent = total === 0
-          ? 'Saved to your account. Review on time, remember longer.'
-          : total + (total === 1 ? ' card' : ' cards') + ' saved to your account' + (due > 0 ? ' - ' + due + ' due for review.' : '. All caught up!');
-
-        // Filters
-        var subs = subjects();
-        if (state.filter !== 'All' && subs.indexOf(state.filter) === -1) state.filter = 'All';
-        var fHtml = '<button class="fc-chip' + (state.filter === 'All' ? ' active' : '') + '" data-sub="All" type="button">All</button>';
-        subs.forEach(function (s) {
-          fHtml += '<button class="fc-chip' + (state.filter === s ? ' active' : '') + '" data-sub="' + esc(s) + '" type="button">' + esc(s) + '</button>';
-        });
-        $('fc-filters').innerHTML = fHtml;
-        Array.prototype.forEach.call($('fc-filters').querySelectorAll('.fc-chip'), function (chip) {
-          chip.addEventListener('click', function () {
-            state.filter = chip.getAttribute('data-sub') || 'All';
-            render();
-          });
-        });
-        // Grid
-        var list = filteredCards();
-        $('fc-loading').style.display = state.loading ? 'flex' : 'none';
-        $('fc-empty').style.display = (!state.loading && list.length === 0) ? 'block' : 'none';
-        var html = '';
-        list.forEach(function (c) {
-          var dl = dueLabel(c);
-          var dots = '';
-          for (var i = 1; i <= 5; i++) dots += '<i class="' + (i <= (c.box || 1) ? 'on' : '') + '"></i>';
-          html += '<div class="fc-card" data-id="' + esc(c.id) + '">'
-            + '<span class="fc-subject">' + esc((c.subject || 'General').trim() || 'General') + '</span>'
-            + '<div class="fc-front' + ((!c.front || !String(c.front).trim()) ? ' is-empty' : '') + '">'
-            + esc((c.front && String(c.front).trim()) ? c.front : 'No question yet - tap Edit to add one.') + '</div>'
-            + '<div class="fc-back' + ((!c.back || !String(c.back).trim()) ? ' is-empty' : '') + '">'
-            + esc((c.back && String(c.back).trim()) ? c.back : 'No answer yet - tap Edit to add one.') + '</div>'
-            + '<div class="fc-meta"><span class="fc-box-dots">' + dots + '</span>'
-            + '<span class="fc-due' + (dl.due ? ' is-due' : '') + '">' + esc(dl.text) + '</span></div>'
-            + '<div class="fc-card-actions">'
-            + '<button class="fc-mini-btn fc-edit" type="button">Edit</button>'
-            + '<button class="fc-mini-btn fc-del danger" type="button">Delete</button>'
-            + '</div></div>';
-        });
-        $('fc-grid').innerHTML = html;
-        Array.prototype.forEach.call($('fc-grid').querySelectorAll('.fc-card'), function (el) {
-          var id = el.getAttribute('data-id');
-          el.querySelector('.fc-edit').addEventListener('click', function () { openForm(id); });
-          el.querySelector('.fc-del').addEventListener('click', function () { deleteCard(id); });
-        });
-      }
-
-      function openForm(id) {
-        state.editingId = id || null;
-        var card = id ? state.cards.filter(function (c) { return String(c.id) === String(id); })[0] : null;
-        $('fc-form-title').textContent = card ? 'Edit flashcard' : 'New flashcard';
-        var subSel = $('fc-subject');
-        Array.prototype.slice.call(subSel.querySelectorAll('option[data-custom]')).forEach(function (o) { o.remove(); });
-        var wanted = card ? ((card.subject || 'General').trim() || 'General') : (state.filter !== 'All' ? state.filter : 'General');
-        var hasOpt = Array.prototype.some.call(subSel.options, function (o) { return o.value === wanted; });
-        if (!hasOpt && wanted) {
-          var extra = document.createElement('option');
-          extra.value = wanted;
-          extra.textContent = wanted;
-          extra.setAttribute('data-custom', '1');
-          subSel.appendChild(extra);
-        }
-        subSel.value = wanted || 'General';
-        $('fc-front').value = card ? (card.front || '') : '';
-        $('fc-back').value = card ? (card.back || '') : '';
-        $('fc-delete-btn').style.display = card ? '' : 'none';
-        $('fc-form-card').style.display = 'block';
-        $('fc-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(function () {
-          var target = $('fc-front');
-          if (card) {
-            if (!(card.front && String(card.front).trim())) target = $('fc-front');
-            else if (!(card.back && String(card.back).trim())) target = $('fc-back');
-          }
-          target.focus();
-        }, 350);
-      }
-
-      function closeForm() {
-        state.editingId = null;
-        $('fc-form-card').style.display = 'none';
-        // Drop ?edit= without reloading so refreshes don't reopen the form.
-        try {
-          var url = new URL(window.location.href);
-          if (url.searchParams.has('edit')) {
-            url.searchParams.delete('edit');
-            window.history.replaceState({}, '', url.toString());
-          }
-        } catch (_) {}
-      }
-
-      async function saveCard() {
-        var front = $('fc-front').value.trim();
-        var back = $('fc-back').value.trim();
-        var subject = $('fc-subject').value || 'General';
-        if (!front) { toast('Write something on the front first.'); $('fc-front').focus(); return; }
-        var btn = $('fc-save-btn');
-        btn.disabled = true;
-        try {
-          var now = new Date().toISOString();
-          if (state.editingId) {
-            var res = await withTimeout(
-              db.from('flashcards').update({ front: front, back: back, subject: subject, updated_at: now }).eq('id', state.editingId).eq('user_id', uid()),
-              12000, 'save card'
-            );
-            if (res.error) throw res.error;
-            toast('Card updated.');
-          } else {
-            var res2 = await withTimeout(
-              db.from('flashcards').insert({ user_id: uid(), front: front, back: back, subject: subject }),
-              12000, 'save card'
-            );
-            if (res2.error) throw res2.error;
-            toast('Card saved to your account.');
-          }
-          closeForm();
-          await loadCards();
-        } catch (err) {
-          console.warn('[Flashcards] save failed:', err);
-          toast(isMissingTable(err) ? 'Table missing - see the setup box above.' : ('Save failed: ' + (err.message || 'unknown error')));
-        }
-        btn.disabled = false;
-      }
-
-      async function deleteCard(id) {
-        var card = state.cards.filter(function (c) { return String(c.id) === String(id); })[0];
-        var preview = card ? String(card.front || '').slice(0, 60) : 'this card';
-        if (!confirm('Delete "' + preview + '"?')) return;
-        try {
-          var res = await withTimeout(
-            db.from('flashcards').delete().eq('id', id).eq('user_id', uid()),
-            12000, 'delete card'
-          );
-          if (res.error) throw res.error;
-          if (state.editingId && String(state.editingId) === String(id)) closeForm();
-          toast('Card deleted.');
-          await loadCards();
-        } catch (err) {
-          toast('Delete failed: ' + (err.message || 'unknown error'));
-        }
-      }
-
-      function deleteEditing() {
-        if (state.editingId) deleteCard(state.editingId);
-      }
-
-      async function openEditFromUrl() {
-        var id = null;
-        try { id = new URLSearchParams(window.location.search).get('edit'); } catch (_) {}
-        if (!id) return;
-        var card = state.cards.filter(function (c) { return String(c.id) === String(id); })[0];
-        if (!card) { toast('That card was not found in your account.'); return; }
-        openForm(id);
-        if (!card.front || !String(card.front).trim()) toast('Saved from chat - now add the question.');
-      }
-
-      /* ---------- Review (Leitner) ---------- */
-
-      function startReview() {
-        var now = Date.now();
-        state.queue = state.cards.filter(function (c) {
-          return c.front && String(c.front).trim() && c.back && String(c.back).trim() && new Date(c.next_review).getTime() <= now;
-        });
-        if (!state.queue.length) { toast('Nothing due right now. All caught up!'); return; }
-        state.qIndex = 0;
-        state.flipped = false;
-        $('fc-review').classList.add('show');
-        document.body.style.overflow = 'hidden';
-        renderReview();
-      }
-
-      function closeReview() {
-        $('fc-review').classList.remove('show');
-        document.body.style.overflow = '';
-        state.queue = [];
-      }
-
-      function renderReview() {
-        var body = $('fc-review-body');
-        if (state.qIndex >= state.queue.length) {
-          body.innerHTML = '<div class="fc-review-done"><h3>Review complete</h3>'
-            + '<p>You reviewed ' + state.queue.length + ' card' + (state.queue.length === 1 ? '' : 's') + '.</p>'
-            + '<button class="btn-primary" id="fc-done-btn" type="button">Done</button></div>';
-          $('fc-review-progress').textContent = state.queue.length + ' / ' + state.queue.length;
-          $('fc-done-btn').addEventListener('click', function () { closeReview(); loadCards(); });
-          return;
-        }
-        var c = state.queue[state.qIndex];
-        $('fc-review-progress').textContent = (state.qIndex + 1) + ' / ' + state.queue.length;
-        var shown = state.flipped ? c.back : c.front;
-        body.innerHTML = '<div class="fc-review-card" id="fc-flip" role="button" tabindex="0">'
-          + '<span class="fc-review-subject">' + esc((c.subject || 'General').trim() || 'General') + '</span>'
-          + '<span class="fc-review-label">' + (state.flipped ? 'Answer' : 'Question') + '</span>'
-          + '<div class="fc-review-text">' + esc(shown) + '</div>'
-          + '<span class="fc-review-hint">' + (state.flipped ? 'How well did you know it?' : 'Tap to reveal the answer') + '</span>'
-          + '</div>'
-          + '<div class="fc-review-btns" id="fc-grade-btns" style="display:' + (state.flipped ? 'flex' : 'none') + '">'
-          + '<button class="btn-secondary" id="fc-again-btn" type="button">Again</button>'
-          + '<button class="btn-primary" id="fc-good-btn" type="button">I knew it</button>'
-          + '</div>';
-        var flip = $('fc-flip');
-        flip.addEventListener('click', function () {
-          if (!state.flipped) { state.flipped = true; renderReview(); }
-        });
-        flip.addEventListener('keydown', function (e) {
-          if ((e.key === 'Enter' || e.key === ' ') && !state.flipped) { e.preventDefault(); state.flipped = true; renderReview(); }
-        });
-        if (state.flipped) {
-          $('fc-again-btn').addEventListener('click', function (e) { e.stopPropagation(); grade(false); });
-          $('fc-good-btn').addEventListener('click', function (e) { e.stopPropagation(); grade(true); });
-        }
-      }
-
-      async function grade(knewIt) {
-        var c = state.queue[state.qIndex];
-        state.qIndex++;
-        state.flipped = false;
-        renderReview();
-        try {
-          var box = knewIt ? Math.min(5, (c.box || 1) + 1) : 1;
-          var next = new Date(Date.now() + REVIEW_INTERVAL_MIN[box] * 60000).toISOString();
-          await db.from('flashcards').update({ box: box, next_review: next, updated_at: new Date().toISOString() })
-            .eq('id', c.id).eq('user_id', uid());
-          c.box = box;
-          c.next_review = next;
-        } catch (err) {
-          console.warn('[Flashcards] grade save failed:', err);
-        }
-      }
+      document.addEventListener('DOMContentLoaded', init);
+      setTimeout(function() { try { renderSubjects(); } catch(e) {} }, 500);
+      setTimeout(function() { try { renderSubjects(); } catch(e) {} }, 1000);
     })();
   </script>
   <script>
@@ -714,5 +392,115 @@ create index if not exists flashcards_user_due_idx
       } catch (_) {}
     })();
   </script>
+  <script>
+    // Landing auth + mobile menu
+    (function () {
+      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
+      if (mt && mm) {
+        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
+        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
+      }
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="account.html" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="settings.html" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        var hideTimer = null;
+        function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') handleLogout();
+          else window.location.href = '../index.html';
+        } catch (_) { window.location.href = '../index.html'; }
+      }
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      window.handleLandingLogout = handleLandingLogout;
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 20) clearInterval(timer);
+        if (typeof currentUser !== 'undefined' && currentUser) clearInterval(timer);
+      }, 300);
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=2"></script>
 </body>
 </html>

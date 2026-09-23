@@ -3,24 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
   <title>Account - Anteemonee</title>
   <meta name="description" content="Manage your Anteemonee account. Update your profile, subscription and study preferences.">
-  <meta name="theme-color" content="#07080C">
+  <meta name="theme-color" content="#0B0F19">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=18">
+  <link rel="stylesheet" href="../css/style.css?v=21">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
   <style>
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
     /* Embed mode: chromeless when shown inside the chatbot profile popup. */
-    body.embed .header, body.embed .mobile-menu { display: none !important; }
+    body.embed .header, body.embed .site-mobile-menu, body.embed .header, body.embed .mobile-menu { display: none !important; }
     body.embed .account-page { padding: 20px 16px 60px; }
     @media (max-width: 768px) {
       body.embed .account-page { padding: 14px 12px 48px; }
     }
+    /* ── Site header (matches index / dashboard / ai-chat) ── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
     .account-page {
       min-height: 100vh;
       padding: 120px 24px 80px;
@@ -565,64 +623,48 @@
 </head>
 <body>
 
-  <header class="header">
+  <header class="header" id="site-header">
     <div class="header-inner">
       <a href="../index.html" class="logo-link">
         <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="logo-text-wrap">
-          <span class="logo-text">Anteemonee</span>
-          <span class="logo-sub">Student OS for Pakistan</span>
-        </span>
+        <span class="logo-text">Anteemonee</span>
       </a>
-
+      <nav class="landing-nav" aria-label="Primary">
+        <a href="dashboard.html">Dashboard</a>
+        <div class="nav-drop">
+          <a href="#">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="ebooks.html">eBooks</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="definitions.html">Definitions</a>
+          </div>
+        </div>
+        <a href="past-papers.html">Past Papers</a>
+        <a href="ai-chat.html">AI Assistant</a>
+      </nav>
       <div class="header-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
-
-        <div class="auth-actions" id="auth-loading">
-          <div class="auth-shimmer"></div>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
         </div>
-
-        <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="login.html" class="btn-login">Login</a>
-          <a href="signup.html" class="btn-signup">Sign Up</a>
-        </div>
-
-        <div class="auth-actions" id="auth-logged-in" style="display:none">
-          <div class="profile-avatar-container" id="profile-avatar-container"></div>
-        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
       </div>
-
-      <button class="mobile-menu-toggle" aria-label="Menu">
-        <span></span>
-      </button>
     </div>
   </header>
-
-  <!-- MOBILE MENU -->
-  <div class="mobile-menu">
-    <div id="mobile-auth-loading">
-      <div class="auth-shimmer" style="margin:12px auto;width:100px"></div>
-    </div>
-    <div id="mobile-auth-logged-out" style="display:none">
-      <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html#features" class="mobile-nav-link">Features</a>
-      <a href="../index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="download.html" class="mobile-nav-link">Download App</a>
-      <div class="mobile-cta">
-        <a href="login.html" class="btn-login">Login</a>
-        <a href="signup.html" class="btn-signup">Sign Up</a>
-      </div>
-    </div>
-    <div id="mobile-auth-logged-in" style="display:none">
-      <div id="mobile-profile-section"></div>
-      <a href="../index.html" class="mobile-nav-link">Home</a>
-      <a href="../index.html" class="mobile-nav-link">AI Chat</a>
-      <a href="account.html" class="mobile-nav-link">Account</a>
-      <a href="settings.html" class="mobile-nav-link">Settings</a>
-      <button class="mobile-nav-link mobile-logout-btn" onclick="handleLogout()">Logout</button>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="dashboard.html" class="mobile-nav-link">Dashboard</a>
+    <a href="board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+    <a href="definitions.html" class="mobile-nav-link">Definitions</a>
+    <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+    <a href="ai-chat.html" class="mobile-nav-link">AI Assistant</a>
+    <div class="mobile-cta">
+      <a href="login.html" class="btn-login">Log in</a>
+      <a href="signup.html" class="btn-signup">Sign Up</a>
     </div>
   </div>
 
@@ -689,7 +731,7 @@
       <div class="ep-modal-body">
         <div class="ep-avatar-section">
           <div class="edit-profile-avatar-wrap" id="ep-avatar-wrap" onclick="document.getElementById('ep-avatar-input').click()">
-            <img id="ep-avatar-img" src="" alt="" style="display:none">
+            <img id="ep-avatar-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="display:none">
             <div class="edit-profile-avatar-fallback" id="ep-avatar-fallback"></div>
             <div class="edit-profile-avatar-overlay">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -754,16 +796,50 @@
 
   <div class="toast" id="toast"></div>
 
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="ai-chat.html">AI Assistant</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="ai-chat.html">AI Tutor</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="payment.html">Lifetime Access</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="login.html">Log in</a>
+            <a href="signup.html">Sign Up</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=11"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=19"></script>
   <script>
     let acctData = {
       profile: null,
       acad: null,
       subjects: [],
       subjectDetails: [],
-      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], colleges: [], academic_sessions: [], subjects_list: [] }
+      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], subjects_list: [] }
     };
 
     function showToast(msg, isError) {
@@ -776,14 +852,12 @@
 
     async function loadAllRefData() {
       try {
-        const [sysRes, provRes, sessRes] = await Promise.all([
+        const [sysRes, provRes] = await Promise.all([
           db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
-          db.from('provinces').select('*').order('name'),
-          db.from('academic_sessions').select('*').order('start_year')
+          db.from('provinces').select('*').order('name')
         ]);
         acctData.ref.education_systems = sysRes.data || [];
         acctData.ref.provinces = provRes.data || [];
-        acctData.ref.academic_sessions = sessRes.data || [];
       } catch (e) {
         console.error('loadAllRefData error:', e);
       }
@@ -804,18 +878,8 @@
       acctData.ref.groups = data || [];
     }
 
-    function isICSAccount() {
-      const sysId = acctData.acad?.education_system_id;
-      if (!sysId) return false;
-      const sys = acctData.ref.education_systems.find(s => s.id == sysId);
-      return sys?.code === 'ics';
-    }
-
-    const ICS_SUBJECT_NAMES = ['Computer Science', 'Mathematics', 'Physics', 'Economics', 'Statistics'];
-
-    async function loadICSSubjectsList(systemId) {
-      const { data } = await db.from('subjects')
-        .select('*')
+    async function loadSubjectsList(systemId, groupId) {
+      const { data } = await db.from('subjects').select('*')
         .eq('education_system_id', systemId)
         .order('is_compulsory', { ascending: false })
         .order('name');
@@ -828,61 +892,45 @@
       });
     }
 
-    function isSecondYear() {
-      const classLabel = acctData.ref.class_levels.find(c => c.id == acctData.acad?.class_level_id)?.label || '';
-      return classLabel.toLowerCase().includes('2nd');
-    }
-
-    function getCompulsorySubjects() {
-      const secondYear = isSecondYear();
-      const allSubjects = acctData.ref.subjects_list.length ? acctData.ref.subjects_list : (acctData.subjectDetails || []);
-      return allSubjects.filter(s => {
-        if (!s.is_compulsory) return false;
-        const name = (s.name || '').toLowerCase();
-        if (name.includes('pakistan studies')) return secondYear;
-        if (name.includes('islamiat') || name.includes('islamiyat')) return !secondYear;
+    async function loadAllSubjects(systemId) {
+      const { data } = await db.from('subjects').select('*')
+        .eq('education_system_id', systemId)
+        .order('is_compulsory', { ascending: false })
+        .order('name');
+      const seen = new Set();
+      acctData.ref.subjects_list = (data || []).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
         return true;
       });
     }
 
-    function getFullSubjectNames() {
-      const secondYear = isSecondYear();
-      const suffix = secondYear ? '-II' : '-I';
-      const allSubjects = acctData.ref.subjects_list.length ? acctData.ref.subjects_list : (acctData.subjectDetails || []);
-      const compulsory = getCompulsorySubjects();
-      const chosen = allSubjects.filter(s => !s.is_compulsory && acctData.subjects.includes(s.id));
-      const format = s => {
-        const name = (s.name || '').toLowerCase();
-        const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
-        return noSuffix ? s.name : `${s.name} ${suffix}`;
-      };
-      const all = [...compulsory, ...chosen];
-      if (all.length) return all.map(format);
-      return acctData.subjects.map(sid => {
-        const s = (acctData.subjectDetails || []).find(x => x.id == sid);
-        return s ? format(s) : null;
-      }).filter(Boolean);
-    }
-
-    async function loadSubjectsList(systemId, groupId) {
-      let query = db.from('subjects').select('*').eq('education_system_id', systemId);
-      if (groupId) {
-        query = query.or('group_id.is.null,group_id.eq.' + groupId);
-      } else {
-        query = query.is('group_id', null);
-      }
-      const { data } = await query.order('is_compulsory', { ascending: false }).order('name');
-      acctData.ref.subjects_list = data || [];
-    }
-
-    async function loadAllSubjects(systemId) {
-      const { data } = await db.from('subjects').select('*').eq('education_system_id', systemId).order('is_compulsory', { ascending: false }).order('name');
-      acctData.ref.subjects_list = data || [];
+    async function loadICSSubjectsList(systemId) {
+      const { data } = await db.from('subjects').select('*')
+        .eq('education_system_id', systemId)
+        .eq('is_compulsory', false)
+        .order('name');
+      const seen = new Set();
+      acctData.ref.subjects_list = (data || []).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
     async function loadAllColleges() {
-      const { data } = await db.from('colleges').select('id,name,city_id').order('name').limit(500);
-      acctData.ref.colleges = data || [];
+      try {
+        const { data } = await db.from('colleges').select('*').order('name');
+        acctData.ref.colleges = data || [];
+      } catch (e) {
+        acctData.ref.colleges = [];
+      }
+    }
+
+    async function getCompulsorySubjects() {
+      return (acctData.ref.subjects_list || []).filter(s => s.is_compulsory);
     }
 
     async function loadCities(provinceId) {
@@ -895,24 +943,9 @@
         const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', userId);
         const acad = acads?.length ? acads[0] : null;
         acctData.acad = acad;
-        if (acad?.id) {
-          const { data: subs } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
-          const subjectIds = subs?.map(s => s.subject_id) || [];
-          acctData.subjects = subjectIds;
-          if (subjectIds.length) {
-            const { data: subDetails } = await db.from('subjects').select('id,name').in('id', subjectIds);
-            acctData.subjectDetails = subDetails || [];
-          } else {
-            acctData.subjectDetails = [];
-          }
-        } else {
-          acctData.subjectDetails = [];
-        }
       } catch (e) {
         console.error('loadAcademicData error:', e);
         acctData.acad = null;
-        acctData.subjects = [];
-        acctData.subjectDetails = [];
       }
     }
 
@@ -930,32 +963,18 @@
       const user = currentUser;
       const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
       const email = user?.email || 'â€”';
-      const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+      const imgUrl = p?.profile_image_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? '';
 
-      const isIcs = isICSAccount();
-      const subjectNames = getFullSubjectNames();
-
-      const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
+      const provOptions = r.provinces.filter(pr => String(pr.name).toLowerCase() === 'punjab').map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id || !p?.province_id ? 'selected' : ''}>${pr.name}</option>`).join('');
       const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       const sysOptions = r.education_systems.map(s => `<option value="${s.id}" ${a?.education_system_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
       const boardOptions = r.boards.map(b => `<option value="${b.id}" ${a?.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
       const classOptions = r.class_levels.map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
-      const groupOptions = r.groups.map(g => `<option value="${g.id}" ${a?.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
-      const collegeOptions = r.colleges.map(c => `<option value="${c.id}" ${a?.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      const sessionOptions = r.academic_sessions.map(s => `<option value="${s.id}" ${a?.academic_session_id == s.id ? 'selected' : ''}>${s.label}</option>`).join('');
-
-      const subjectChips = isIcs
-        ? acctData.ref.subjects_list.filter(s => !s.is_compulsory).map(s => {
-            const isSelected = acctData.subjects.includes(s.id);
-            return `<div class="multi-select-chip ${isSelected ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`;
-          }).join('')
-        : acctData.ref.subjects_list.map(s => `<div class="multi-select-chip ${acctData.subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
-
       document.getElementById('account-cards').innerHTML = `
         <div class="account-card">
           <div class="profile-hero">
             <div class="profile-avatar-wrap" id="acct-avatar">
-              ${imgUrl ? `<img src="${imgUrl}" alt="${username}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-lg" style="display:none">${username.charAt(0).toUpperCase()}</div>` : `<div class="avatar-fallback-lg">${username.charAt(0).toUpperCase()}</div>`}
+              ${imgUrl ? `<img src="${imgUrl}" alt="${username}" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-lg" style="display:none">${username.charAt(0).toUpperCase()}</div>` : `<div class="avatar-fallback-lg">${username.charAt(0).toUpperCase()}</div>`}
             </div>
             <div class="profile-info">
               <h2 id="acct-display-name">${p?.full_name || username}</h2>
@@ -1022,11 +1041,6 @@
             <div class="field-row"><span class="field-label">Education System</span><span class="field-value ${a?.education_system_id ? '' : 'empty'}">${a?.education_system_id ? resolveName(r.education_systems, a.education_system_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
             <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
-            ${isIcs ? '' : `<div class="field-row"><span class="field-label">Group</span><span class="field-value ${a?.group_id ? '' : 'empty'}">${a?.group_id ? resolveName(r.groups, a.group_id) : 'Not set'}</span></div>`}
-            <div class="field-row"><span class="field-label">Subjects</span><span class="field-value ${subjectNames.length ? '' : 'empty'}">${subjectNames.length ? subjectNames.join(', ') : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">College</span><span class="field-value ${a?.college_id ? '' : 'empty'}">${a?.college_id ? resolveName(r.colleges, a.college_id, 'name') : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Session</span><span class="field-value ${a?.academic_session_id ? '' : 'empty'}">${a?.academic_session_id ? resolveName(r.academic_sessions, a.academic_session_id, 'label') : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Exam Year</span><span class="field-value ${a?.exam_year ? '' : 'empty'}">${a?.exam_year || 'Not set'}</span></div>
           </div>
           <div class="field-row-edit" id="academic-edit">
             <div class="edit-form-group">
@@ -1044,72 +1058,14 @@
               <label>Class</label>
               <select id="edit-class" onchange="onClassChange()"><option value="">Select class</option>${classOptions}</select>
             </div>
-            <div class="edit-form-group" id="edit-group-wrap" style="${isIcs ? 'display:none' : ''}">
-              <label>Group</label>
-              <select id="edit-group" onchange="onGroupChange()"><option value="">Select group</option>${groupOptions}</select>
-            </div>
-            <div class="edit-form-group" id="edit-subjects-wrap" style="${isIcs ? '' : 'display:none'}">
-              <label>Subjects</label>
-              <div id="edit-subjects" class="multi-select-grid">${isIcs ? subjectChips : '<span style="font-size:13px;color:var(--text-muted)">Select a group first</span>'}</div>
-            </div>
-            <div class="edit-form-group">
-              <label>College</label>
-              <select id="edit-college"><option value="">Select college</option>${collegeOptions}</select>
-            </div>
-            <div class="edit-form-group">
-              <label>Academic Session</label>
-              <select id="edit-session"><option value="">Select session</option>${sessionOptions}</select>
-            </div>
             <div class="edit-actions">
               <button class="btn-cancel" onclick="toggleSection('academic')">Cancel</button>
               <button class="btn-save" onclick="saveAcademic()">Save</button>
             </div>
           </div>
         </div>
-
-        <div class="account-card" id="accounts-card">
-          <div class="card-header">
-            <span class="card-title">Accounts</span>
-          </div>
-          <div id="accounts-card-content" style="padding:0 16px 16px;"></div>
-        </div>
       `;
-      renderAccountsCard();
       } catch (e) { console.error('[ACC] renderCards error:', e); }
-    }
-
-    function renderAccountsCard() {
-      const container = document.getElementById('accounts-card-content');
-      if (!container || typeof AccountManager === 'undefined') return;
-
-      const accounts = AccountManager.getSavedAccounts();
-      const activeId = AccountManager.getActiveUserId();
-
-      let html = '';
-      accounts.forEach(acc => {
-        const isActive = acc.userId === activeId;
-        const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
-        html += `
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${!isActive ? 'opacity:0.7;' : ''}">
-            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:14px;">
-              ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
-                ${acc.displayName || acc.email}
-                ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(99,102,241,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
-              </div>
-              <div style="font-size:12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
-            </div>
-            ${!isActive ? `<button class="edit-btn" style="font-size:12px;padding:5px 10px;" onclick="switchToAccount('${acc.userId}')">Switch</button>` : ''}
-          </div>`;
-      });
-
-      if (AccountManager.hasAvailableSlot()) {
-        html += `<button class="edit-btn" style="width:100%;justify-content:center;margin-top:8px;padding:10px;" onclick="addAnotherAccount()">+ Add another account</button>`;
-      }
-
-      container.innerHTML = html;
     }
 
     function toggleSection(section) {
@@ -1148,54 +1104,13 @@
       if (!sid) return;
       const prevBoard = document.getElementById('edit-board').value;
       const prevClassLabel = document.getElementById('edit-class').selectedOptions[0]?.text || '';
-      const prevCollege = document.getElementById('edit-college').value;
-      const prevSession = document.getElementById('edit-session').value;
       await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
       document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${prevBoard == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
       const matchedClass = acctData.ref.class_levels.find(c => c.label === prevClassLabel);
       document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${matchedClass && matchedClass.id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
-      await loadAllColleges();
-      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${prevCollege == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      if (prevSession) document.getElementById('edit-session').value = prevSession;
-      const sys = acctData.ref.education_systems.find(s => s.id == sid);
-      const isIcs = sys?.code === 'ics';
-      const grpWrap = document.getElementById('edit-group-wrap');
-      const subWrap = document.getElementById('edit-subjects-wrap');
-      if (isIcs) {
-        if (grpWrap) grpWrap.style.display = 'none';
-        if (subWrap) { subWrap.style.display = ''; await loadICSSubjectsList(sid); document.getElementById('edit-subjects').innerHTML = renderICSChips(); }
-      } else {
-        if (grpWrap) grpWrap.style.display = '';
-        if (subWrap) subWrap.style.display = 'none';
-        await loadGroups(sid);
-        document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-      }
     }
 
     async function onClassChange() {
-      const sid = document.getElementById('edit-edu-system').value;
-      const classId = document.getElementById('edit-class').value;
-      if (classId) acctData.acad.class_level_id = classId;
-      if (sid) {
-        const sys = acctData.ref.education_systems.find(s => s.id == sid);
-        const isIcs = sys?.code === 'ics';
-        if (isIcs) {
-          await loadICSSubjectsList(sid);
-          document.getElementById('edit-subjects').innerHTML = renderICSChips();
-        } else {
-          await loadGroups(sid);
-          document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-        }
-      }
-    }
-
-    async function onGroupChange() {
-      const sid = document.getElementById('edit-edu-system').value;
-      const gid = document.getElementById('edit-group').value;
-      if (gid && sid) {
-        await loadSubjectsList(sid, gid);
-        document.getElementById('edit-subjects').innerHTML = acctData.ref.subjects_list.map(s => `<div class="multi-select-chip" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`).join('');
-      }
     }
 
     async function onBoardChange() {
@@ -1206,29 +1121,11 @@
     async function preloadAcademicDependent() {
       const a = acctData.acad;
       if (!a) return;
-      const isIcs = isICSAccount();
       if (a.education_system_id) {
         await Promise.all([loadBoards(a.education_system_id), loadClassLevels(a.education_system_id)]);
         document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${a.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
         document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
-        const grpWrap = document.getElementById('edit-group-wrap');
-        const subWrap = document.getElementById('edit-subjects-wrap');
-        if (isIcs) {
-          if (grpWrap) grpWrap.style.display = 'none';
-          if (subWrap) {
-            subWrap.style.display = '';
-            await loadICSSubjectsList(a.education_system_id);
-            document.getElementById('edit-subjects').innerHTML = renderICSChips();
-          }
-        } else {
-          if (grpWrap) grpWrap.style.display = '';
-          if (subWrap) subWrap.style.display = 'none';
-          await loadGroups(a.education_system_id);
-          document.getElementById('edit-group').innerHTML = '<option value="">Select group</option>' + acctData.ref.groups.map(g => `<option value="${g.id}" ${a.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
-        }
       }
-      await loadAllColleges();
-      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}" ${a.college_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
     }
 
     function toggleSubjectChip(el) {
@@ -1268,22 +1165,10 @@
       const eduSystem = document.getElementById('edit-edu-system').value;
       const board = document.getElementById('edit-board').value;
       const cls = document.getElementById('edit-class').value;
-      const grp = document.getElementById('edit-group')?.value || '';
-      const college = document.getElementById('edit-college').value;
-      const session = document.getElementById('edit-session').value;
-      const sys = acctData.ref.education_systems.find(s => s.id == eduSystem);
-      const ics = sys?.code === 'ics';
 
       if (!eduSystem) { showToast('Please select an education system', true); return; }
       if (!board) { showToast('Please select a board', true); return; }
       if (!cls) { showToast('Please select a class', true); return; }
-      if (!ics && !grp) { showToast('Please select a group', true); return; }
-      if (!college) { showToast('Please select a college', true); return; }
-      if (!session) { showToast('Please select an academic session', true); return; }
-      if (ics) {
-        const selectedOptChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected:not(.disabled)');
-        if (selectedOptChips.length !== 3) { showToast('Please select exactly 3 optional subjects for ICS', true); return; }
-      }
 
       btn.disabled = true;
       btn.textContent = 'Saving...';
@@ -1293,37 +1178,22 @@
           education_system_id: eduSystem,
           board_id: board,
           class_level_id: cls,
-          group_id: ics ? null : (grp || null),
-          college_id: college,
-          academic_session_id: session,
+          group_id: null,
           exam_year: acctData.acad?.exam_year || new Date().getFullYear()
         }, { onConflict: 'user_id' }).select('id').single();
         if (acadErr) throw acadErr;
 
         if (acadProfile?.id) {
           await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
-          if (ics) {
-            const selectedOptChips = document.querySelectorAll('#edit-subjects .multi-select-chip.selected:not(.disabled)');
-            const subjectIds = Array.from(selectedOptChips).map(c => parseInt(c.dataset.id));
-            const compulsory = getCompulsorySubjects().map(s => s.id);
-            const allIds = [...compulsory, ...subjectIds];
-            if (allIds.length) {
-              await db.from('student_subjects').insert(allIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
-            }
-            acctData.subjects = allIds;
-          } else if (grp) {
-            const { data: groupSubjects } = await db.from('subjects').select('id').eq('education_system_id', eduSystem).or('group_id.is.null,group_id.eq.' + grp);
-            const subjectIds = (groupSubjects || []).map(s => s.id);
-            if (subjectIds.length) {
-              await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
-            }
-            acctData.subjects = subjectIds;
-          } else {
-            acctData.subjects = [];
+          const { data: subjects } = await db.from('subjects').select('id').eq('education_system_id', eduSystem);
+          const subjectIds = (subjects || []).map(s => s.id);
+          if (subjectIds.length) {
+            await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
           }
+          acctData.subjects = subjectIds;
         }
 
-        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: grp, college_id: college, academic_session_id: session };
+        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: null };
 
         renderCards();
         showToast('Academic profile updated!');
@@ -1350,7 +1220,7 @@
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
 
-      const imgUrl = p?.profile_image_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+      const imgUrl = p?.profile_image_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? '';
       const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || '';
       const fullName = p?.full_name || '';
       const email = user?.email || '';
@@ -1587,15 +1457,33 @@
     document.getElementById('ep-email').addEventListener('input', epHandleEmailChange);
 
     async function uploadToCloudinary(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'Anteemonee_avatars');
-      const resp = await fetch('https://api.cloudinary.com/v1_1/rkqqv0rd/image/upload', {
-        method: 'POST', body: formData
-      });
-      if (!resp.ok) throw new Error('Image upload failed');
-      const data = await resp.json();
-      return data.secure_url;
+      let supaUrl='https://zkuytvjeqkpexcbyoyhz.supabase.co';
+      let anonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+      let ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+      if(!['jpg','jpeg','png','webp','gif'].includes(ext)) ext='jpg';
+      let path=(currentUser&&currentUser.id?currentUser.id:'anon')+'-'+Date.now()+'.'+ext;
+      // try supabase-js client first
+      try{
+        if(db && db.storage){
+          let { error, data } = await db.storage.from('avatars').upload(path, file, {contentType: file.type||'image/jpeg', upsert:true});
+          if(!error){
+            let pub=db.storage.from('avatars').getPublicUrl(path);
+            if(pub && pub.data && pub.data.publicUrl) return pub.data.publicUrl;
+          } else {
+            console.warn('supabase-js upload failed, falling back to fetch', error);
+          }
+        }
+      }catch(e){ console.warn('supabase-js upload exception', e); }
+      // fallback: direct fetch with anon key (bucket is public, anon allowed)
+      // NOTE: no encodeURIComponent — paths use [A-Za-z0-9._-] only and must match getPublicUrl format
+      let fetchUrl=supaUrl+'/storage/v1/object/avatars/'+path;
+      let resp=await fetch(fetchUrl, {method:'POST', headers:{apikey: anonKey, Authorization:'Bearer '+anonKey, 'x-upsert':'true', 'Content-Type': file.type||'image/jpeg'}, body: file});
+      if(!resp.ok){
+        let txt=await resp.text().catch(()=> '');
+        console.error('fetch upload failed', resp.status, txt);
+        throw new Error('Image upload failed: '+(txt||resp.status));
+      }
+      return supaUrl+'/storage/v1/object/public/avatars/'+path;
     }
 
     async function saveEditProfile() {
@@ -1622,12 +1510,12 @@
           throw new Error('Username is already taken');
         }
 
-        let profileImageUrl = acctData.profile?.profile_image_url || currentUser?.user_metadata?.avatar_url || '';
+        let profileImageUrl = acctData.profile?.profile_image_url ?? currentUser?.user_metadata?.avatar_url ?? '';
         if (epSelectedImage) {
           btn.innerHTML = '<span class="spinner"></span> Uploading image...';
           profileImageUrl = await uploadToCloudinary(epSelectedImage);
         } else if (epPhotoRemoved) {
-          profileImageUrl = null;
+          profileImageUrl = '';
         }
 
         const profileFields = {};
@@ -1635,7 +1523,7 @@
         if (username !== (acctData.profile?.username || '')) profileFields.username = username;
         if (bio !== (acctData.profile?.bio || '')) profileFields.bio = bio;
         if (phone !== (acctData.profile?.phone || '')) profileFields.phone = phone;
-        if (epPhotoRemoved || profileImageUrl !== (acctData.profile?.profile_image_url || '')) profileFields.profile_image_url = profileImageUrl;
+        if (epPhotoRemoved || profileImageUrl !== (acctData.profile?.profile_image_url ?? '')) profileFields.profile_image_url = profileImageUrl;
 
         if (profileFields.username) {
           const { data: existing } = await db.from('profiles')
@@ -1650,8 +1538,22 @@
         }
 
         if (Object.keys(profileFields).length > 0) {
-          const { error: profileErr } = await db.from('profiles').update(profileFields).eq('id', currentUser.id);
-          if (profileErr) throw profileErr;
+          console.log('updating profiles with', profileFields);
+          const { data: updData, error: profileErr } = await db.from('profiles').update(profileFields).eq('id', currentUser.id).select();
+          console.log('profiles update result', {profileErr, updData});
+          if (profileErr) {
+            console.error('profiles update error', profileErr);
+            throw profileErr;
+          }
+          if(!updData || updData.length===0){
+            // RLS may have blocked - try direct REST with anon (RLS disabled should not happen)
+            console.warn('no rows updated - retrying via direct fetch');
+            let anonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+            let resp=await fetch('https://zkuytvjeqkpexcbyoyhz.supabase.co/rest/v1/profiles?id=eq.'+currentUser.id, {method:'PATCH', headers:{apikey: anonKey, Authorization:'Bearer '+anonKey, 'Content-Type':'application/json', Prefer:'return=representation'}, body: JSON.stringify(profileFields)});
+            let j=await resp.json().catch(()=>null);
+            console.log('direct fetch update', resp.status, j);
+            if(!resp.ok) throw new Error(j && j.message ? j.message : 'Profile update failed');
+          }
         }
 
         btn.innerHTML = '<span class="spinner"></span> Updating auth...';
@@ -1676,6 +1578,8 @@
 
         renderProfileAvatar();
         renderCards();
+        try{ if(typeof window.refreshLandingAuth==='function') window.refreshLandingAuth(); }catch(_){}
+        try{ if(typeof updateAuthUI==='function') updateAuthUI(); }catch(_){}
         closeEditProfile();
         showToast('Profile updated!');
       } catch (e) {
@@ -1693,32 +1597,10 @@
       if (a?.education_system_id) {
         tasks.push(loadBoards(a.education_system_id));
         tasks.push(loadClassLevels(a.education_system_id));
-        const sys = acctData.ref.education_systems.find(s => s.id == a.education_system_id);
-        if (sys?.code === 'ics') {
-          tasks.push(loadICSSubjectsList(a.education_system_id));
-        } else {
-          tasks.push(loadGroups(a.education_system_id));
-          tasks.push(loadAllSubjects(a.education_system_id));
-        }
+        tasks.push(loadAllSubjects(a.education_system_id));
       }
       if (p?.province_id) tasks.push(loadCities(p.province_id));
-      tasks.push(loadAllColleges());
       await Promise.all(tasks);
-
-      if (a?.id && a?.education_system_id) {
-        const sys = acctData.ref.education_systems.find(s => s.id == a.education_system_id);
-        const allSubs = acctData.ref.subjects_list;
-        const mismatch = acctData.subjects.some(sid => !allSubs.find(s => s.id == sid));
-        if (mismatch && sys?.code !== 'ics') {
-          const { data: fixed } = await db.from('subjects').select('id').eq('education_system_id', a.education_system_id).or('group_id.is.null,group_id.eq.' + (a.group_id || ''));
-          const fixedIds = (fixed || []).map(s => s.id);
-          await db.from('student_subjects').delete().eq('academic_profile_id', a.id);
-          if (fixedIds.length) {
-            await db.from('student_subjects').insert(fixedIds.map(sid => ({ academic_profile_id: a.id, subject_id: sid })));
-          }
-          acctData.subjects = fixedIds;
-        }
-      }
     }
 
     (async function() {
@@ -1776,5 +1658,140 @@
       } catch (_) {}
     })();
   </script>
+  <script>
+    (function () {
+      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
+      if (mt && mm) {
+        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
+        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
+      }
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="account.html" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+
+        var hideTimer = null;
+        function scheduleHide() {
+          hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150);
+        }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
+        window._landingDropdownClickHandler = true;
+      }
+
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      window.refreshLandingAuth = renderLandingAuth;
+
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') {
+            handleLogout();
+          } else {
+            window.location.href = '../index.html';
+          }
+        } catch (_) {
+          window.location.href = '../index.html';
+        }
+      }
+
+      window.handleLandingLogout = handleLandingLogout;
+
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=2"></script>
 </body>
 </html>

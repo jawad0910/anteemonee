@@ -1,0 +1,972 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="../">
+  <meta charset="UTF-8">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+  <title>Anteemonee - AI Study Tutor & Flashcards for Pakistan Students</title>
+  <meta name="description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects. Anteemonee is Pakistan's smartest Student OS.">
+  <meta name="keywords" content="AI tutor Pakistan, flashcards, study chat, FSc preparation, matric exam prep, student AI, Anteemonee, online tutor, study assistant">
+  <meta name="theme-color" content="#07080C">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://anteemonee.com/pages/ai-chat.html">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Anteemonee - AI Study Tutor & Flashcards for Pakistan Students">
+  <meta property="og:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
+  <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
+  <meta property="og:url" content="https://anteemonee.com/">
+  <meta property="og:site_name" content="Anteemonee">
+  <meta property="og:locale" content="en_PK">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Anteemonee - AI Study Tutor & Flashcards for Pakistan Students">
+  <meta name="twitter:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
+  <meta name="twitter:image" content="https://anteemonee.com/assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/anteemonee.png">
+  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/ai-chatbot.css?v=45">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <style>
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
+    .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    /* Mobile menu *//* Mobile menu */
+    .site-mobile-menu { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--bg-elevated); border-bottom: 1px solid var(--border); padding: 16px 24px; z-index: 190; flex-direction: column; gap: 4px; box-shadow: var(--neo-shadow-float); }
+    .site-mobile-menu.open { display: flex; }
+    .site-mobile-link { font-size: 15px; font-weight: 500; color: var(--text-secondary); padding: 12px 8px; border-radius: 10px; text-decoration: none; transition: color .15s; }
+    .site-mobile-link:hover { color: var(--text); background: var(--surface); }
+    .site-mobile-cta { display: flex; gap: 8px; margin-top: 8px; }
+    .site-mobile-cta .site-btn-login { flex: 1; text-align: center; border: 1px solid var(--border); border-radius: 8px; }
+    .site-mobile-cta .site-btn-signup { flex: 1; text-align: center; }
+    @media (max-width: 900px) { .site-nav { display: none; } }
+    .site-menu-toggle { width: 38px; height: 38px; border-radius: 50%; display: none; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; }
+    @media (max-width: 900px) { .site-menu-toggle { display: inline-flex; } .site-auth-btns { display: none; } }
+    .chatbot-layout { top: 72px; }
+    /* Force consistent background everywhere */
+    body, .sidebar, .chat-main, .mobile-sidebar, html, .chat-input-area { background: var(--bg) !important; }
+    .sidebar, .mobile-sidebar, .chat-input-area { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: var(--border) !important; }
+    .chat-disclaimer { background: var(--bg) !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ── SITE HEADER ── -->
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-link">
+        <img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+  <a href="pages/dashboard.html">Dashboard</a>
+  <div class="nav-drop">
+    <a href="#">Library <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="pages/ebooks.html">eBooks</a>
+      <a href="pages/flashcards.html">Flashcards</a>
+      <a href="pages/definitions.html">Definitions</a>
+    </div>
+  </div>
+  <a href="pages/past-papers.html">Past Papers</a>
+  <a href="pages/ai-chat.html">AI Assistant</a>
+</nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="pages/login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="pages/signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="site-mobile-menu" id="site-mobile-menu">
+  <a href="pages/dashboard.html" class="site-mobile-link">Dashboard</a>
+  <a href="pages/board-notes.html" class="site-mobile-link">Board Notes</a>
+  <a href="pages/flashcards.html" class="site-mobile-link">Flashcards</a>
+  <a href="pages/definitions.html" class="site-mobile-link">Definitions</a>
+  <a href="pages/past-papers.html" class="site-mobile-link">Past Papers</a>
+  <a href="pages/ai-chat.html" class="site-mobile-link">AI Assistant</a>
+
+    <div class="site-mobile-cta">
+      <a href="pages/login.html" class="site-btn-login">Log in</a>
+      <a href="pages/signup.html" class="site-btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <div class="chatbot-layout">
+    <!-- ============ LEFT SIDEBAR: features + history + account ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-name" style="font-size:16px;font-weight:700;padding-left:2px">AI Tutor</span>
+        <button class="sidebar-collapse" id="sidebar-collapse" aria-label="Close sidebar" title="Close sidebar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
+
+      <div class="sidebar-top">
+        <button class="btn-new-chat" id="btn-new-chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          New chat
+        </button>
+      </div>
+
+      <nav class="feat-nav" aria-label="Features">
+      </nav>
+
+      <div class="sidebar-label">Chats</div>
+      <div class="sidebar-history" id="sidebar-history"></div>
+
+      <div class="model-selector sidebar-model loading" id="model-selector">
+        <div class="model-selector-trigger" id="model-selector-trigger">
+          <span class="model-dot" id="model-dot"></span>
+          <span class="model-selected-name" id="model-selected-name">Chipa Sahab</span>
+          <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="model-dropdown" id="model-dropdown">
+          <button class="model-option active" data-model="0" data-name="Chipa Sahab">
+            <span class="model-option-dot dot-blue"></span>
+            <span class="model-option-name">Chipa Sahab</span>
+          </button>
+          <button class="model-option" data-model="1" data-name="Coder">
+            <span class="model-option-dot dot-green"></span>
+            <span class="model-option-name">Coder</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-account">
+        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
+        <div class="auth-actions" id="auth-logged-out" style="display:none">
+          <a href="pages/login.html" class="btn-login">Log in</a>
+          <a href="pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div class="auth-actions" id="auth-logged-in" style="display:none">
+          <div class="profile-avatar-container" id="profile-avatar-container"></div>
+          <div class="acct-meta acct-open-settings" id="acct-row" title="Open settings">
+            <span class="acct-name" id="acct-name">…</span>
+            <span class="acct-plan" id="acct-plan">Free plan</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <button id="sidebar-reopen" aria-label="Open sidebar" title="Open sidebar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+    </button>
+
+    <!-- ============ MAIN CHAT COLUMN ============ -->
+    <main class="chat-main">
+      <div class="chat-topbar">
+        <button class="chat-history-btn" id="chat-history-btn" aria-label="Open chat history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="topbar-actions">
+          <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
+        </div>
+      </div>
+
+      <div id="chats-loading" role="status" aria-label="Loading chats">
+        <div class="chats-loading-box">
+          <img src="assets/anteemonee.png" alt="Anteemonee" class="chats-loading-logo">
+          <div class="chats-loading-spinner" aria-hidden="true"></div>
+          <div class="chats-loading-text">Loading your chats…</div>
+        </div>
+      </div>
+      <div class="app-view" id="view-chat">
+      <div class="chat-content" id="chat-content">
+        <div class="chat-welcome" id="chat-welcome">
+          <h1 class="welcome-title skel-text">What can I help with?</h1>
+          <p class="welcome-subtitle">Ask me anything about your studies.</p>
+          <div class="welcome-actions">
+            <button class="welcome-action-btn" data-prompt="Explain a topic: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>Explain a Topic</span>
+            </button>
+            <button class="welcome-action-btn" data-prompt="Quiz me on: ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Quiz Me</span>
+            </button>
+          </div>
+        </div>
+        <div class="messages-list" id="messages-list"></div>
+      </div>
+      </div>
+
+      <button class="scroll-down-btn" id="scroll-down-btn" aria-label="Scroll to bottom" title="Scroll to bottom">
+        <svg class="scroll-down-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="generating-dots"><span></span><span></span><span></span></div>
+      </button>
+
+      <div class="chat-input-area">
+        <div class="image-preview-bar" id="image-preview-bar" style="display:none"></div>
+        <div class="chat-input-wrapper">
+          <input type="file" id="image-file-input" accept="image/*" multiple style="display:none">
+          <div class="chat-input-row-top">
+            <div class="subject-pill-wrap" id="subject-pill-wrap">
+              <button class="subject-pill" id="subject-pill" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span class="subject-dot" id="subject-dot"></span>
+                <span id="subject-name">Physics</span>
+                <span class="subject-caret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+              </button>
+              <div class="subject-dropdown" id="subject-dropdown" role="listbox">
+                <div class="subject-list" id="subject-list"></div>
+              </div>
+            </div>
+            <textarea class="chat-input" id="chat-input" placeholder="Ask anything about Physics..." rows="1"></textarea>
+          </div>
+          <div class="chat-input-row-bottom">
+            <div class="chat-input-row-left">
+              <div class="plus-wrapper" id="plus-wrapper">
+                <button class="input-btn btn-plus" id="btn-plus" title="Add">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <div class="plus-dropdown" id="plus-dropdown">
+                  <button class="plus-dropdown-item" data-action="photo">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>Photo</span>
+                  </button>
+                  <button class="plus-dropdown-item" data-action="think">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+                    <span class="plus-dropdown-label">Think</span>
+                    <span class="plus-check"></span>
+                  </button>
+                  <button class="plus-dropdown-item" data-action="research">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span class="plus-dropdown-label">Research</span>
+                    <span class="plus-check"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="modes-bar" id="modes-bar"></div>
+            </div>
+            <div class="chat-input-row-right">
+              <button class="input-btn btn-voice" id="btn-voice" title="Voice mode" aria-label="Voice mode">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </button>
+              <button class="input-btn btn-stop" id="btn-stop" title="Stop generating" style="display:none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              </button>
+              <button class="input-btn btn-send" id="btn-send" title="Send" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="chat-disclaimer">Anteemonee can make mistakes. Verify important information.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- HISTORY DRAWER (mobile) -->
+  <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
+  <div class="mobile-sidebar" id="mobile-sidebar">
+    <div class="mobile-sidebar-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="assets/anteemonee.png" alt="Anteemonee" class="mobile-brand-logo">
+        <span class="mobile-brand-text">Anteemonee</span>
+      </div>
+      <button class="btn-close-sidebar" id="btn-close-sidebar" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="sidebar-top">
+      <button class="btn-new-chat" id="btn-new-chat-mobile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        New Chat
+      </button>
+    </div>
+    <nav class="feat-nav" aria-label="Features">
+      <button class="feat-item" type="button" onclick="if(window.AnteemoneeSettings&&window.AnteemoneeSettings.open)window.AnteemoneeSettings.open()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+    <div class="sidebar-label">Chats</div>
+    <div class="sidebar-history" id="sidebar-history-mobile"></div>
+    <div class="model-selector sidebar-model loading" id="model-selector-mobile">
+      <div class="model-selector-trigger" id="model-selector-trigger-mobile">
+        <span class="model-dot" id="model-dot-mobile"></span>
+        <span class="model-selected-name" id="model-selected-name-mobile">Chipa Sahab</span>
+        <svg class="model-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div class="model-dropdown" id="model-dropdown-mobile">
+        <button class="model-option active" data-model="0" data-name="Chipa Sahab">
+          <span class="model-option-dot dot-blue"></span>
+          <span class="model-option-name">Chipa Sahab</span>
+        </button>
+        <button class="model-option" data-model="1" data-name="Coder">
+          <span class="model-option-dot dot-green"></span>
+          <span class="model-option-name">Coder</span>
+        </button>
+      </div>
+      </div>
+    <div class="drawer-account" id="drawer-account" style="display:none" title="Open settings">
+      <div class="drawer-avatar" id="m-acct-avatar"><span>?</span></div>
+      <div class="acct-meta">
+        <span class="acct-name" id="m-acct-name">…</span>
+        <span class="acct-plan" id="m-acct-plan">Free plan</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image lightbox -->
+  <div class="image-lightbox" id="image-lightbox">
+    <button class="lb-close" id="lb-close">&times;</button>
+    <img id="lb-img" src="" alt="Full image">
+  </div>
+
+  <!-- PROFILE POPUP (ChatGPT-style) -->
+  <div class="profile-overlay" id="profile-overlay">
+    <div class="profile-modal" role="dialog" aria-modal="true" aria-label="Profile">
+      <button class="profile-close" id="profile-close" aria-label="Close profile">&times;</button>
+      <div class="profile-frame-wrap">
+        <iframe id="profile-frame" title="Profile"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOICE MODE — Phone-call style realtime -->
+  <div class="voice-overlay" id="voice-overlay" aria-hidden="true">
+    <div class="voice-overlay-bg"></div>
+    <button class="voice-close" id="voice-close" aria-label="Close voice mode">×</button>
+    <div class="voice-call">
+      <div class="call-header">
+        <img src="assets/anteemonee.png" alt="Anteemonee" class="call-avatar">
+        <div class="call-name">Anteemonee</div>
+        <div class="call-status" id="voice-status">Connecting…</div>
+      </div>
+      <div class="call-center">
+        <div class="voice-orb-wrap" id="voice-orb-wrap">
+          <div class="voice-orb" id="voice-orb">
+            <div class="voice-orb-core"></div>
+            <div class="voice-orb-ring"></div>
+            <div class="voice-orb-ring delay"></div>
+          </div>
+          <div class="voice-wave" id="voice-wave" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="call-messages" id="call-messages" aria-live="polite"></div>
+        <div class="voice-transcript call-captions" id="voice-transcript" aria-live="polite" style="display:none"></div>
+        <div class="voice-unsupported" id="voice-unsupported" style="display:none">Voice not supported in this browser. Try Chrome or Safari 16+.</div>
+      </div>
+      <div class="call-controls">
+        <button class="call-btn" id="call-mute-btn" aria-label="Mute">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <span>Mute</span>
+        </button>
+        <button class="call-end-btn" id="voice-exit-btn" type="button" aria-label="End call">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" style="transform:rotate(135deg);transform-origin:center"/></svg>
+        </button>
+
+      </div>
+      <!-- hidden compat: keep mic btn for old JS -->
+      <button id="voice-mic-btn" style="display:none" aria-hidden="true"></button>
+      <span id="voice-mic-label" style="display:none"></span>
+    </div>
+  </div>
+
+  <!-- LOGOUT CONFIRM -->
+  <div class="logout-overlay" id="logout-overlay">
+    <div class="logout-modal" role="dialog" aria-modal="true" aria-label="Confirm log out">
+      <h3>Are you sure you<br>want to log out?</h3>
+      <div class="logout-account">
+        <span class="logout-avatar" id="logout-avatar"><span>?</span></span>
+        <span class="logout-meta">
+          <span class="logout-name" id="logout-name">…</span>
+          <span class="logout-email" id="logout-email">…</span>
+        </span>
+      </div>
+      <button class="logout-confirm" id="logout-confirm" type="button">Log out</button>
+      <button class="logout-cancel" id="logout-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+  <script src="js/account-manager.js?v=11"></script>
+  <script src="js/app.js?v=19"></script>
+  <script src="js/ai-api-service.js?v=14"></script>
+  <script src="js/ai-chatbot.js?v=44"></script>
+  <script src="js/voice-chat.js?v=19"></script>
+  <script src="js/realtime-call.js?v=6"></script>
+  <script src="js/gemini-live-call.js?v=6"></script>
+  <script>
+    // "Coming soon" toast for sidebar features not built yet.
+    (function () {
+      var timer = null;
+      function toast(msg) {
+        var t = document.getElementById('feat-toast');
+        if (!t) {
+          t = document.createElement('div');
+          t.id = 'feat-toast';
+          t.setAttribute('role', 'status');
+          t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 32px);text-align:center;padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--text);background:var(--liquid-bg-strong,rgba(20,28,23,0.85));border:1px solid var(--liquid-border,rgba(255,255,255,0.14));box-shadow:0 10px 34px rgba(0,0,0,0.35);opacity:0;pointer-events:none;transition:opacity 0.25s ease;';
+          document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = '1';
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function () { t.style.opacity = '0'; }, 2400);
+      }
+      document.querySelectorAll('[data-soon]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          toast(el.getAttribute('data-soon') || 'Coming soon');
+        });
+      });
+    })();
+  </script>
+  <script>
+    // Sidebar identity: username + email + live Free/Premium plan.
+    (function () {
+      function userNow() {
+        try {
+          if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return currentUser;
+        } catch (_) {}
+        return null;
+      }
+      function profileNow() {
+        try {
+          if (typeof currentProfile !== 'undefined' && currentProfile) return currentProfile;
+        } catch (_) {}
+        return null;
+      }
+      var planDone = false;
+      async function fill() {
+        var user = userNow();
+        if (!user) return false;
+        var prof = profileNow() || {};
+        var name = prof.full_name || prof.username || user.user_metadata?.full_name || user.user_metadata?.name || (user.email || '').split('@')[0] || 'User';
+        var email = user.email || '';
+        var nameEl = document.getElementById('acct-name');
+        if (nameEl) nameEl.textContent = name;
+        var userMeta = (user && user.user_metadata) || {};
+        var imgUrl = prof.profile_image_url ?? userMeta.avatar_url ?? userMeta.picture ?? '';
+        var initial = String(name || '?').charAt(0).toUpperCase().replace(/[<>&"']/g, '');
+        var mName = document.getElementById('m-acct-name');
+        if (mName) mName.textContent = name;
+        var mAv = document.getElementById('m-acct-avatar');
+        if (mAv) {
+          var safeImg = String(imgUrl).replace(/"/g, '');
+          mAv.innerHTML = '<span>' + initial + '</span>' + (safeImg ? '<img src="' + safeImg + '" alt="" onerror="this.remove()">' : '');
+        }
+        var mRow = document.getElementById('drawer-account');
+        if (mRow) mRow.style.display = 'flex';
+        if (!planDone && typeof db !== 'undefined' && db) {
+          planDone = true;
+          try {
+            var res = await db.rpc('get_entitlement_snapshot');
+            var ent = res && res.data;
+            var isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
+            var planEl = document.getElementById('acct-plan');
+            if (planEl) {
+              planEl.textContent = isPro ? 'Premium' : 'Free plan';
+              planEl.classList.toggle('is-pro', !!isPro);
+            }
+            var mPlan = document.getElementById('m-acct-plan');
+            if (mPlan) {
+              mPlan.textContent = isPro ? 'Premium' : 'Free plan';
+              mPlan.classList.toggle('is-pro', !!isPro);
+            }
+          } catch (_) {}
+        }
+        return true;
+      }
+      ['acct-row', 'drawer-account'].forEach(function (id) {
+        var row = document.getElementById(id);
+        if (row && !row.dataset.menuBound) {
+          row.dataset.menuBound = '1';
+          row.style.cursor = 'pointer';
+          row.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('.profile-avatar-container')) return;
+            try {
+              if (window.AcctMenu && window.AcctMenu.toggle) window.AcctMenu.toggle(id);
+            } catch (_) {}
+          });
+        }
+      });
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        fill();
+        if (tries > 20) clearInterval(timer);
+      }, 500);
+      fill();
+    })();
+  </script>
+  <script>
+    // Follow the device theme only while the saved mode is System (default).
+    (function () {
+      function currentMode() {
+        try {
+          var m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme');
+          return (m === 'light' || m === 'dark') ? m : 'system';
+        } catch (_) { return 'system'; }
+      }
+      function applyDeviceTheme() {
+        if (currentMode() !== 'system') return;
+        try {
+          var mq = window.matchMedia('(prefers-color-scheme: light)');
+          document.documentElement.setAttribute('data-theme', mq.matches ? 'light' : 'dark');
+        } catch (_) {}
+      }
+      document.addEventListener('DOMContentLoaded', applyDeviceTheme);
+      try {
+        var mq2 = window.matchMedia('(prefers-color-scheme: light)');
+        if (mq2.addEventListener) mq2.addEventListener('change', applyDeviceTheme);
+        else if (mq2.addListener) mq2.addListener(applyDeviceTheme);
+      } catch (_) {}
+      applyDeviceTheme();
+    })();
+  </script>
+  <script>
+    // Model selector removed — auto-switching handles persona. Just clear
+    // any skeleton states immediately so the welcome UI shows instantly.
+    (function () {
+      try {
+        ['model-selector', 'model-selector-mobile'].forEach(function (id) {
+          var m = document.getElementById(id);
+          if (m) m.classList.remove('loading');
+        });
+        var sub = document.querySelector('.welcome-subtitle');
+        if (sub) sub.classList.remove('skel-text');
+        var title = document.querySelector('.welcome-title');
+        if (title) title.classList.remove('skel-text');
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // Sidebar collapse, greeting, welcome buttons.
+    (function () {
+      // Sidebar collapse (desktop). Preference remembered on this device.
+      var collapsed = false;
+      try { collapsed = localStorage.getItem('Anteemonee_sidebar') === 'closed'; } catch (_) {}
+      function applyCollapse() { document.body.classList.toggle('sidebar-collapsed', collapsed); }
+      var cBtn = document.getElementById('sidebar-collapse');
+      if (cBtn) cBtn.addEventListener('click', function () {
+        collapsed = true;
+        try { localStorage.setItem('Anteemonee_sidebar', 'closed'); } catch (_) {}
+        applyCollapse();
+      });
+      var rBtn = document.getElementById('sidebar-reopen');
+      if (rBtn) rBtn.addEventListener('click', function () {
+        collapsed = false;
+        try { localStorage.setItem('Anteemonee_sidebar', 'open'); } catch (_) {}
+        applyCollapse();
+      });
+      applyCollapse();
+
+      // Time-based greeting with first name.
+      function daypart() {
+        var h = new Date().getHours();
+        if (h < 12) return 'Good morning';
+        if (h < 17) return 'Good afternoon';
+        return 'Good evening';
+      }
+      function paintGreeting() {
+        var t = document.querySelector('.welcome-title');
+        if (!t) return;
+        t.classList.remove('skel-text');
+        var full = '';
+        try {
+          var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
+          var meta = (user && user.user_metadata) || {};
+          full = prof.full_name || prof.username || meta.full_name || meta.name || '';
+          if (!full && user.email) full = String(user.email).split('@')[0];
+        } catch (_) {}
+        var first = String(full || '').trim().split(/\s+/)[0] || '';
+        t.textContent = daypart() + (first ? ', ' + first : '');
+      }
+      paintGreeting();
+      var gtries = 0;
+      var gtimer = setInterval(function () {
+        gtries++;
+        paintGreeting();
+        if (gtries > 24) clearInterval(gtimer);
+      }, 500);
+      setInterval(paintGreeting, 60000);
+
+      // Welcome quick action buttons
+      (function () {
+        document.querySelectorAll('.welcome-action-btn[data-prompt]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var input = document.getElementById('chat-input');
+            if (input) { input.value = btn.getAttribute('data-prompt'); input.focus(); }
+          });
+        });
+      })();
+    })();
+  </script>
+  <script>
+    // Profile popup: same pattern as Settings — full account.html embedded.
+    (function () {
+      var overlay = document.getElementById('profile-overlay');
+      if (!overlay) return;
+      function openProfile() {
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        var fr = document.getElementById('profile-frame');
+        if (fr && !fr.getAttribute('src')) fr.setAttribute('src', 'pages/account.html?embed=1');
+      }
+      function closeProfile() {
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+      window.AnteemoneeProfile = { open: openProfile, close: closeProfile };
+      document.getElementById('profile-close').addEventListener('click', closeProfile);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeProfile(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('show')) closeProfile();
+      });
+    })();
+  </script>
+  <script>
+    // Logout confirmation: wrap handleLogout so every logout click asks first.
+    (function () {
+      var overlay = document.getElementById('logout-overlay');
+      if (!overlay) return;
+      var realLogout = null;
+      try {
+        if (typeof handleLogout === 'function') realLogout = handleLogout;
+      } catch (_) {}
+      function fillIdentity() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
+          var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};
+          var meta = user.user_metadata || {};
+          var name = prof.full_name || prof.username || meta.full_name || meta.name || (user.email || '').split('@')[0] || 'User';
+          var email = user.email || '';
+          var img = prof.profile_image_url ?? meta.avatar_url ?? meta.picture ?? '';
+          var initial = String(name || '?').charAt(0).toUpperCase().replace(/[<>&"']/g, '');
+          document.getElementById('logout-name').textContent = name;
+          document.getElementById('logout-email').textContent = email;
+          document.getElementById('logout-avatar').innerHTML = '<span>' + initial + '</span>'
+            + (img ? '<img src="' + String(img).replace(/"/g, '') + '" alt="" onerror="this.remove()">' : '');
+        } catch (_) {}
+      }
+      function openLogout() {
+        fillIdentity();
+        overlay.classList.add('show');
+      }
+      function closeLogout() { overlay.classList.remove('show'); }
+      document.getElementById('logout-cancel').addEventListener('click', closeLogout);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeLogout(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('show')) closeLogout();
+      });
+      document.getElementById('logout-confirm').addEventListener('click', function () {
+        closeLogout();
+        try { if (realLogout) realLogout(); } catch (_) {}
+      });
+      try { window.handleLogout = function () { openLogout(); }; } catch (_) {}
+    })();
+  </script>
+  <script>
+    // ChatGPT-style account dropdown: avatar + name + plan, actions, switcher.
+    (function () {
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+      function svg(inner) {
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+      }
+      var I = {
+        spark: svg('<path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>'),
+        tune: svg('<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'),
+        user: svg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+        gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
+        help: svg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>'),
+        out: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>')
+      };
+
+      function identity() {
+        var user = null, prof = {};
+        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) user = currentUser; } catch (_) {}
+        try { if (typeof currentProfile !== 'undefined' && currentProfile) prof = currentProfile; } catch (_) {}
+        var meta = (user && user.user_metadata) || {};
+        var name = prof.full_name || prof.username || meta.full_name || meta.name || ((user && user.email) || '').split('@')[0] || 'User';
+        var img = prof.profile_image_url ?? meta.avatar_url ?? meta.picture ?? '';
+        var pro = false;
+        try {
+          var planEl = document.getElementById('acct-plan');
+          pro = !!(planEl && planEl.classList.contains('is-pro'));
+        } catch (_) {}
+        return { name: name, img: img, initial: String(name || '?').charAt(0).toUpperCase(), plan: pro ? 'Premium' : 'Free', isPro: pro };
+      }
+
+      function closeMenus() {
+        var open = document.querySelectorAll('.acct-menu');
+        for (var i = 0; i < open.length; i++) open[i].remove();
+      }
+
+      function openPopup(hash) {
+        try {
+          if (window.AnteemoneeSettings && window.AnteemoneeSettings.open) window.AnteemoneeSettings.open(hash);
+        } catch (_) {}
+      }
+
+      function buildMenu(rowId) {
+        var row = document.getElementById(rowId);
+        if (!row) return null;
+        var fixed = rowId !== 'acct-row';
+        var d = identity();
+        var menu = document.createElement('div');
+        menu.className = 'acct-menu' + (fixed ? ' fixed' : '');
+        menu.id = fixed ? 'acct-menu-m' : 'acct-menu';
+        menu.innerHTML = ''
+          + '<button class="acct-item" data-act="profile">' + I.user + '<span>Profile</span></button>'
+          + '<button class="acct-item" data-act="settings">' + I.gear + '<span>Settings</span></button>'
+          + '<div class="acct-menu-sep"></div>'
+          + '<button class="acct-item danger" data-act="logout">' + I.out + '<span>Log out</span></button>';
+        menu.dataset.row = rowId;
+        menu.addEventListener('click', function (e) {
+          var b = e.target.closest ? e.target.closest('[data-act]') : null;
+          if (!b) return;
+          var act = b.getAttribute('data-act');
+          closeMenus();
+          if (act === 'profile') { if (window.AnteemoneeProfile) window.AnteemoneeProfile.open(); }
+          else if (act === 'logout') { try { if (typeof handleLogout === 'function') handleLogout(); } catch (_) {} }
+          else openPopup();
+        });
+        if (fixed) document.body.appendChild(menu);
+        else row.parentNode.insertBefore(menu, row);
+        return menu;
+      }
+
+      function toggle(rowId) {
+        var id = rowId === 'acct-row' ? 'acct-menu' : 'acct-menu-m';
+        // Remove-then-maybe-rebuild so data is always fresh.
+        var ex = document.getElementById(id);
+        var wasOpen = !!ex;
+        closeMenus();
+        if (!wasOpen) buildMenu(rowId);
+      }
+
+      document.addEventListener('click', function (e) {
+        if (e.target.closest && (e.target.closest('.acct-menu') || e.target.closest('#acct-row') || e.target.closest('#drawer-account'))) return;
+        closeMenus();
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
+
+      /* Profiles dropdown: all signed-in accounts + add (max 3). Opens
+         from the avatar on click, and on hover (devices with a mouse). */
+      var PLUS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+      function buildProfilesMenu() {}
+
+      function toggleProfiles() {}
+
+      var hoverOK = false;
+      try { hoverOK = window.matchMedia && window.matchMedia('(hover: hover)').matches; } catch (_) {}
+      [{ sel: '#auth-logged-in .profile-avatar-container', row: 'acct-row' }, { sel: '#m-acct-avatar', row: 'drawer-account' }].forEach(function (o) {
+        var av = document.querySelector(o.sel);
+        if (!av) return;
+        av.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggle(o.row);
+        });
+      });
+      window.AcctMenu = { toggle: toggle, toggleProfiles: toggleProfiles, close: closeMenus };
+    })();
+  </script>
+
+  <!-- Site header JS (landing-auth avatar + dropdown, no dashboard globals) -->
+  <script>
+    (function () {
+      /* Header scroll effect */
+      var hdr = document.getElementById('site-header');
+      function onScroll() {
+        if (!hdr) return;
+        if (window.scrollY > 10) hdr.classList.add('scrolled');
+        else hdr.classList.remove('scrolled');
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      /* Mobile menu toggle (header button) */
+      var toggle = document.getElementById('menu-toggle');
+      var menu = document.getElementById('mobile-menu');
+      if (toggle && !toggle.dataset.bound) {
+        toggle.dataset.bound = '1';
+        toggle.addEventListener('click', function () {
+          toggle.classList.toggle('active');
+          if (menu) menu.classList.remove('open');
+          var sm = document.getElementById('site-mobile-menu');
+          if (sm) sm.classList.toggle('open');
+        });
+      }
+
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            loggedIn.innerHTML =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="pages/account.html" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account</a>' +
+                  '<a href="pages/settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedIn.innerHTML = '';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        var hideTimer = null;
+        function scheduleHide() {
+          hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150);
+        }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
+        window._landingDropdownClickHandler = true;
+      }
+
+      window.toggleLandingProfileDropdown = function () {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      };
+      window.closeLandingProfileDropdown = function () {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      };
+      window.handleLandingLogout = function () {
+        try {
+          if (typeof handleLogout === 'function') handleLogout();
+          else window.location.href = 'index.html';
+        } catch (_) { window.location.href = 'index.html'; }
+      };
+
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=2"></script>
+</body>
+</html>
