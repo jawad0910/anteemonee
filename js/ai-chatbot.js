@@ -2278,7 +2278,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     document.getElementById('report-popup-no').addEventListener('click', closeReportPopup);
     document.getElementById('report-popup-yes').addEventListener('click', function () {
       try { sessionStorage.setItem('anteemonee_report_draft', JSON.stringify({ prompt: prompt, aiMessage: aiText })); } catch (_) {}
-      window.location.href = 'pages/report.html';
+      window.location.href = 'report.html';
     });
   }
 
@@ -2874,7 +2874,7 @@ function handleFileBlocks(div, text) {
               return;
             }
           } catch (_) {}
-          window.location.href = 'pages/flashcards.html?edit=' + encodeURIComponent(ins.data.id);
+          window.location.href = 'flashcards.html?edit=' + encodeURIComponent(ins.data.id);
         } catch (err) {
           console.warn('[AI] Auto flashcard failed:', err);
           showChatToast('Could not create flashcard.');
@@ -2913,7 +2913,7 @@ function handleFileBlocks(div, text) {
           return;
         }
       } catch (_) {}
-      window.location.href = 'pages/flashcards.html?edit=' + encodeURIComponent(ins.data.id);
+      window.location.href = 'flashcards.html?edit=' + encodeURIComponent(ins.data.id);
     } catch (err) {
       console.warn('[AI] Flashcard save failed:', err);
       var msg = (err && err.message) || 'unknown error';

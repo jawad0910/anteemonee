@@ -16,20 +16,16 @@
     document.head.appendChild(st);
   }
   function fixPrefixes() {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-    var inPages = false;
-    for (var i = 0; i < links.length; i++) {
-      var href = links[i].getAttribute('href') || '';
-      if (href.indexOf('../css/style.css') !== -1) { inPages = true; break; }
-      if (/^(css\/style\.css)/.test(href)) { inPages = false; }
+    var file = 'ai-test-builder.html';
+    // Resolve against document.baseURI so pages with a <base> tag (or nested
+    // paths) still get a link that lands in /pages/.
+    function resolvesUnderPages(rel) {
+      try {
+        return /\/pages\/[^/]+$/.test(new URL(rel, document.baseURI).pathname);
+      } catch (_) { return false; }
     }
-    var path = location.pathname.replace(/\\/g, '/');
-    if (path.indexOf('/pages/') !== -1) inPages = true;
-    if (path.endsWith('/index.html') || path === '/' || /\/$/.test(path)) {
-      if (path.indexOf('/pages/') === -1) inPages = false;
-    }
-    if (inPages) return { ai: 'ai-chat.html', test: 'ai-test-builder.html' };
-    return { ai: 'pages/ai-chat.html', test: 'pages/ai-test-builder.html' };
+    if (resolvesUnderPages(file)) return { ai: 'ai-chat.html', test: file };
+    return { ai: 'pages/ai-chat.html', test: 'pages/' + file };
   }
 
   function dropdownHtml(p, label) {
