@@ -204,21 +204,6 @@
           </button>
         </div>
       </div>
-
-      <div class="sidebar-account">
-        <div class="auth-actions" id="auth-loading"><div class="auth-shimmer"></div></div>
-        <div class="auth-actions" id="auth-logged-out" style="display:none">
-          <a href="login.html" class="btn-login">Log in</a>
-          <a href="signup.html" class="btn-signup">Sign Up</a>
-        </div>
-        <div class="auth-actions" id="auth-logged-in" style="display:none">
-          <div class="profile-avatar-container" id="profile-avatar-container"></div>
-          <div class="acct-meta acct-open-settings" id="acct-row" title="Open settings">
-            <span class="acct-name" id="acct-name">…</span>
-            <span class="acct-plan" id="acct-plan">Free plan</span>
-          </div>
-        </div>
-      </div>
     </aside>
 
     <button id="sidebar-reopen" aria-label="Open sidebar" title="Open sidebar">
@@ -347,12 +332,6 @@
         New Chat
       </button>
     </div>
-    <nav class="feat-nav" aria-label="Features">
-      <button class="feat-item" type="button" onclick="if(window.AnteemoneeSettings&&window.AnteemoneeSettings.open)window.AnteemoneeSettings.open()">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>Settings</span>
-      </button>
-    </nav>
     <div class="sidebar-label">Chats</div>
     <div class="sidebar-history" id="sidebar-history-mobile"></div>
     <div class="model-selector sidebar-model loading" id="model-selector-mobile">
@@ -372,13 +351,6 @@
         </button>
       </div>
       </div>
-    <div class="drawer-account" id="drawer-account" style="display:none" title="Open settings">
-      <div class="drawer-avatar" id="m-acct-avatar"><span>?</span></div>
-      <div class="acct-meta">
-        <span class="acct-name" id="m-acct-name">…</span>
-        <span class="acct-plan" id="m-acct-plan">Free plan</span>
-      </div>
-    </div>
   </div>
 
   <!-- Image lightbox -->
