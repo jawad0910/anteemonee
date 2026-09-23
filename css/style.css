@@ -452,6 +452,72 @@ ul { list-style: none; }
   background: var(--surface); border: 1px dashed var(--accent);
 }
 
+/* Library accordion inside hamburger menus — styled like nav links */
+.mobile-menu .mobile-nav-link.mobile-acc-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  background: none; box-shadow: none; margin-bottom: 0;
+  border: none; border-bottom: 1px solid var(--border);
+  padding: 16px 12px; font-size: 16px; font-weight: 500;
+  color: var(--text-secondary); border-radius: var(--radius-sm);
+}
+.mobile-menu .mobile-nav-link.mobile-acc-toggle:hover { color: var(--text); background: var(--neo-highlight); box-shadow: none; }
+.site-mobile-menu .mobile-acc-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; box-sizing: border-box; text-align: left;
+  background: none; box-shadow: none; margin-bottom: 0;
+  border: none; border-bottom: 1px solid var(--border);
+  padding: 12px 8px; font-size: 15px; font-weight: 500;
+  color: var(--text-secondary); font-family: inherit; cursor: pointer;
+  border-radius: 10px;
+}
+.site-mobile-menu .mobile-acc-toggle:hover { color: var(--text); background: var(--surface); box-shadow: none; }
+.mobile-menu .mobile-acc-list .mobile-nav-link { border-bottom: none; padding: 12px 12px 12px 24px; font-size: 15px; }
+.site-mobile-menu .mobile-acc-list .site-mobile-link { padding: 12px 8px 12px 20px; }
+/* Menu links with leading icons (eBooks, Flashcards, Past Papers, AI Tutor…) */
+a.mobile-nav-link, a.site-mobile-link { display: flex; align-items: center; gap: 12px; }
+a.mobile-nav-link > svg, a.site-mobile-link > svg { flex-shrink: 0; opacity: 0.75; }
+
+/* Hamburger account dropdown: pfp / name / email card toggles
+   Account / Settings / Logout (uses .mobile-acc-* accordion behavior) */
+.hamburger-account { width: 100%; }
+.hamburger-account .ha-dropdown { width: 100%; }
+.mobile-menu .ha-toggle, .site-mobile-menu .ha-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; width: 100%; box-sizing: border-box; text-align: left;
+  padding: 12px; border: none; border-radius: var(--radius-md);
+  background: var(--surface); box-shadow: var(--neo-shadow-recessed-sm);
+  margin-bottom: 6px; cursor: pointer; font-family: inherit; color: var(--text);
+  transition: box-shadow 0.2s ease;
+}
+.mobile-menu .ha-toggle:hover, .site-mobile-menu .ha-toggle:hover {
+  box-shadow: var(--neo-shadow-recessed); background: var(--surface); color: var(--text);
+}
+.ha-card {
+  display: flex; align-items: center; gap: 12px;
+  min-width: 0; flex: 1;
+}
+.ha-avatar {
+  width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+}
+.ha-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ha-initial {
+  color: #fff; font-weight: 700; font-size: 16px;
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+}
+.ha-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ha-name {
+  font-size: 14.5px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ha-email {
+  font-size: 12px; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mobile-menu .ha-item, .site-mobile-menu .ha-item { display: flex; align-items: center; gap: 12px; }
+.ha-item svg { flex-shrink: 0; opacity: 0.75; }
+.ha-logout, .site-mobile-menu .ha-logout { color: var(--error); }
+
 /* Profile Avatar & Dropdown — neomorphic */
 .profile-btn {
   width: 40px; height: 40px; border-radius: 50%; padding: 0; overflow: hidden;
@@ -749,6 +815,8 @@ ul { list-style: none; }
   .header-actions, .site-header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   .header-actions .btn-login, .header-actions .btn-cta-header, .header-actions .btn-signup, .site-header-actions .btn-login { display: none; }
   #auth-loading, #auth-logged-out, #auth-logged-in { display: none !important; }
+  /* Account lives in the hamburger menu on mobile, not as a header avatar */
+  #landing-auth-in, .header #profile-avatar-container { display: none !important; }
   .theme-toggle { display: flex; flex-shrink: 0; }
   .mobile-menu-toggle { display: flex; flex-shrink: 0; }
   .hero { padding: 110px 16px 50px; }
