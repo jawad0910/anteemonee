@@ -357,6 +357,18 @@ ul { list-style: none; }
 .mobile-menu-toggle.active span::before { top: 50%; transform: rotate(45deg); }
 .mobile-menu-toggle.active span::after { bottom: auto; top: 50%; transform: rotate(-45deg); }
 
+/* Site header hamburger bars (settings / ai-chat use .site-menu-toggle) */
+.site-menu-toggle span, .site-menu-toggle span::before, .site-menu-toggle span::after {
+  display: block; width: 18px; height: 2px; background: currentColor; border-radius: 2px;
+  position: relative; transition: all 0.2s;
+}
+.site-menu-toggle span::before, .site-menu-toggle span::after { content: ''; position: absolute; left: 0; }
+.site-menu-toggle span::before { top: -6px; }
+.site-menu-toggle span::after { top: 6px; }
+.site-menu-toggle.active span { background: transparent; }
+.site-menu-toggle.active span::before { top: 0; transform: rotate(45deg); }
+.site-menu-toggle.active span::after { top: 0; transform: rotate(-45deg); }
+
 /* Mobile Menu — floating liquid-glass sheet */
 .mobile-menu {
   display: none; position: fixed; top: 88px; left: 12px; right: 12px; bottom: 12px;
