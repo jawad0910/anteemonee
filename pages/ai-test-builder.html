@@ -17,7 +17,7 @@
   <meta name="description" content="Build custom AI practice tests for FSc and intermediate prep.">
   <meta name="robots" content="index, follow">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=24">
+  <link rel="stylesheet" href="../css/style.css?v=25">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; background: var(--bg) !important; }
@@ -475,7 +475,7 @@
         <p id="atb-done-title">Your practice test PDF is ready.</p>
         <div class="atb-actions">
           <button class="atb-btn ghost" id="atb-view" type="button">View</button>
-          <a class="atb-btn" id="atb-download" href="#" target="_blank" rel="noopener">Download PDF</a>
+          <a class="atb-btn" id="atb-download" href="#">Download PDF</a>
           <button class="atb-btn ghost" id="atb-finish" type="button">Done</button>
         </div>
       </div>
@@ -1331,9 +1331,10 @@
         var sub = [r.subject, r.board_name, when].filter(Boolean).join(' · ');
         var title = String(r.title || 'Test');
         var escTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        var escUrl = String(url).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
         return '<div class="atb-hist-item"><div><b>' + title.replace(/</g, '&lt;') + '</b><span>' + String(sub).replace(/</g, '&lt;') + '</span></div>' +
-          '<div class="atb-hist-actions"><button type="button" class="atb-hist-view" data-url="' + String(url).replace(/"/g, '&quot;') + '" data-title="' + escTitle + '">View</button>' +
-          '<a href="' + String(url).replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Download</a></div></div>';
+          '<div class="atb-hist-actions"><button type="button" class="atb-hist-view" data-url="' + escUrl + '" data-title="' + escTitle + '">View</button>' +
+          '<a href="' + escUrl + '" class="atb-hist-dl" data-url="' + escUrl + '" data-title="' + escTitle + '">Download</a></div></div>';
       }).join('');
     } catch (_) {}
   }
@@ -1436,8 +1437,21 @@
     $('atb-view').addEventListener('click', function () {
       if (currentPdfUrl) openPdf(currentPdfUrl, currentPdfTitle || 'Practice Test');
     });
+    $('atb-download').addEventListener('click', function (e) {
+      e.preventDefault();
+      var u = this.getAttribute('href') || '';
+      if (u && u !== '#') downloadPdf(u, currentPdfTitle || 'Practice Test', this);
+    });
     var histList = $('atb-history-list');
     if (histList) histList.addEventListener('click', function (e) {
+      var dl = e.target && e.target.closest ? e.target.closest('.atb-hist-dl') : null;
+      if (dl) {
+        e.preventDefault();
+        var du = dl.getAttribute('data-url') || dl.getAttribute('href') || '';
+        var dt = dl.getAttribute('data-title') || 'Practice Test';
+        if (du && du !== '#') downloadPdf(du, dt, dl);
+        return;
+      }
       var btn = e.target && e.target.closest ? e.target.closest('.atb-hist-view') : null;
       if (!btn) return;
       var u = btn.getAttribute('data-url') || '';
@@ -1673,6 +1687,47 @@
     document.body.style.overflow = '';
     pdfDoc = null;
     pdfShowLoader(false);
+  }
+
+  function pdfFileName(title) {
+    var base = String(title || 'Practice Test').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
+    return (base || 'practice-test') + '.pdf';
+  }
+
+  async function downloadPdf(url, title, btn) {
+    if (!url || url === '#') return;
+    var fname = pdfFileName(title);
+    var sep = url.indexOf('?') === -1 ? '?' : '&';
+    // Supabase Storage: ?download= sets Content-Disposition: attachment with a filename
+    var dlUrl = url + sep + 'download=' + encodeURIComponent(fname);
+    var oldText = btn ? btn.textContent : '';
+    if (btn) { btn.textContent = 'Downloading…'; btn.setAttribute('aria-disabled', 'true'); }
+    try {
+      var res = await fetch(dlUrl);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var blob = await res.blob();
+      var href = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = href;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(href); }, 10000);
+    } catch (e) {
+      try { console.error('[atb] download failed:', e); } catch (_) {}
+      // Fallback: server-forced download in a new tab (attachment header, not inline view)
+      var a2 = document.createElement('a');
+      a2.href = dlUrl;
+      a2.download = fname;
+      a2.target = '_blank';
+      a2.rel = 'noopener';
+      document.body.appendChild(a2);
+      a2.click();
+      a2.remove();
+    } finally {
+      if (btn) { btn.textContent = oldText || 'Download'; btn.removeAttribute('aria-disabled'); }
+    }
   }
 
   function wirePdfViewer() {
