@@ -1,13 +1,12 @@
 ﻿/**
- * Anteemonee Multi-Account Manager
- * Manages up to 3 simultaneous Supabase auth sessions in IndexedDB.
- * Single source of truth for account switching, session isolation, and cache scoping.
+ * Anteemonee Account Manager
+ * Single-account session manager using IndexedDB.
  */
 const AccountManager = (() => {
   const DB_NAME = 'Anteemonee_accounts';
   const DB_VERSION = 1;
   const STORE_NAME = 'sessions';
-  const MAX_ACCOUNTS = 3;
+  const MAX_ACCOUNTS = 1;
   const ACTIVE_KEY = 'active_user_id';
 
   let _db = null;
@@ -160,7 +159,7 @@ const AccountManager = (() => {
       email: user.email || '',
       displayName: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || '',
       username: profile?.username || user.user_metadata?.username || '',
-      avatarUrl: profile?.profile_image_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+      avatarUrl: profile?.profile_image_url ?? user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? '',
       lastUsedAt: new Date().toISOString(),
       sessionStatus: 'active',
       // Store the full Supabase session (tokens)

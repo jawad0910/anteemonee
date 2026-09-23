@@ -7,7 +7,7 @@
 class AiApiService {
   constructor() {
     this.supabaseUrl = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
-    this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjUwNjcyMTIsImV4cCI6MjA0MDY0MzIxMn0._VJbk4XQCnN0BxMbFQP5OqWKjAwXf8lGLgN4Lfxpmk0';
+    this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
     this.edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/ai-chat`;
     this.activeProvider = 0;
     this._currentAbort = null;

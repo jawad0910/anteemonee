@@ -18,8 +18,8 @@
 
   // â”€â”€ Per-user localStorage keys â”€â”€
   function chatStorageKey() {
-    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_conversations_' + currentUser.id;
-    return 'Anteemonee_ai_conversations_anon';
+    var base = (typeof currentUser !== 'undefined' && currentUser?.id) ? 'Anteemonee_ai_conversations_' + currentUser.id : 'Anteemonee_ai_conversations_anon';
+    return base + '_' + subjectSlug(selectedSubject);
   }
   function personaStorageKey() {
     if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_persona_' + currentUser.id;
@@ -85,7 +85,8 @@
   // ── Pinned chats helpers (per-user, localStorage + optional DB column) ──
   function pinnedStorageKey() {
     var uid = currentUserId();
-    return uid ? 'Anteemonee_pinned_' + uid : 'Anteemonee_pinned_anon';
+    var base = uid ? 'Anteemonee_pinned_' + uid : 'Anteemonee_pinned_anon';
+    return base + '_' + subjectSlug(selectedSubject);
   }
   function loadPinnedMap() {
     try {
@@ -149,6 +150,7 @@
     const uid = currentUserId();
     if (!uid || !conv) return false;
     try {
+      const subj = conv.subject || selectedSubject || 'Physics';
       const row = {
         id: conv.id,
         user_id: uid,
@@ -156,20 +158,23 @@
         title_locked: !!conv.titleLocked,
         messages: Array.isArray(conv.messages) ? conv.messages : [],
         updated_at: new Date().toISOString(),
+        subject: subj,
       };
       // pinned column is optional — try to include it if present in conv
       if (typeof conv.pinned === 'boolean') row.pinned = !!conv.pinned;
       const { error } = await db.from('chat_conversations').upsert(row, { onConflict: 'id' });
       if (error) {
-        // fallback if pinned column missing
-        if (typeof row.pinned !== 'undefined' && /pinned|column/i.test(error.message||'')) {
-          delete row.pinned;
+        // fallback if subject/pinned column missing
+        if (/subject|pinned|column/i.test(error.message||'')) {
+          if (typeof row.subject !== 'undefined' && /subject|column/i.test(error.message||'')) delete row.subject;
+          if (typeof row.pinned !== 'undefined' && /pinned|column/i.test(error.message||'')) delete row.pinned;
           const retry = await db.from('chat_conversations').upsert(row, { onConflict: 'id' });
           if (retry.error) return false;
         } else {
           return false;
         }
       }
+      try { setMappedConvSubject(conv.id, subj); } catch (_) {}
       trimDbConversations(uid);
       return true;
     } catch (_) { return false; }
@@ -189,8 +194,27 @@
   async function loadConversationsFromDb(uid) {
     try {
       const { data, error } = await db.from('chat_conversations')
+        .select('id,title,title_locked,messages,pinned,subject')
+        .eq('user_id', uid).order('updated_at', { ascending: false }).limit(150);
+      if (!error && data) {
+        return data.map(r => {
+          var subj = resolveConvSubject(r);
+          if (r && r.id && isKnownSubject(r.subject)) setMappedConvSubject(r.id, r.subject);
+          return {
+            id: r.id,
+            title: r.title || 'New Chat',
+            titleLocked: !!r.title_locked,
+            messages: Array.isArray(r.messages) ? r.messages : [],
+            pinned: !!r.pinned,
+            subject: subj,
+          };
+        });
+      }
+    } catch (_) {}
+    try {
+      const { data, error } = await db.from('chat_conversations')
         .select('id,title,title_locked,messages,pinned')
-        .eq('user_id', uid).order('updated_at', { ascending: false }).limit(50);
+        .eq('user_id', uid).order('updated_at', { ascending: false }).limit(150);
       if (!error && data) {
         return data.map(r => ({
           id: r.id,
@@ -198,12 +222,13 @@
           titleLocked: !!r.title_locked,
           messages: Array.isArray(r.messages) ? r.messages : [],
           pinned: !!r.pinned,
+          subject: resolveConvSubject(r),
         }));
       }
     } catch (_) {}
     const { data, error } = await db.from('chat_conversations')
       .select('id,title,title_locked,messages')
-      .eq('user_id', uid).order('updated_at', { ascending: false }).limit(50);
+      .eq('user_id', uid).order('updated_at', { ascending: false }).limit(150);
     if (error) throw error;
     return (data || []).map(r => ({
       id: r.id,
@@ -211,6 +236,7 @@
       titleLocked: !!r.title_locked,
       messages: Array.isArray(r.messages) ? r.messages : [],
       pinned: false,
+      subject: resolveConvSubject(r),
     }));
   }
 
@@ -220,6 +246,7 @@
 
   // Route a persistence write to DB (premium) or localStorage (free/guest).
   function persistConversation(convId) {
+    try { if (window.__voiceEphemeral) return; } catch (_) {} // call chats: never saved
     if (isPremiumTier && currentUserId()) {
       const conv = conversations.find(c => c.id === (convId || activeConversationId));
       if (conv) saveConversationToDb(conv).catch(() => {});
@@ -285,14 +312,28 @@
       try {
         await pruneDbConversations(uid);
         const rows = await loadConversationsFromDb(uid);
+        // Separate chats per subject: only keep current subject
+        const filtered = rows.filter(function(r){
+          var s = r.subject || 'Physics';
+          return s === selectedSubject;
+        });
         const local = readLocalConversations();
-        if (rows.length === 0 && local.length > 0) {
+        // Tag local rows with subject for consistency
+        local.forEach(function(c){ if (!c.subject) c.subject = selectedSubject; });
+        if (filtered.length === 0 && local.length > 0) {
           // One-time upgrade migration: push this browser's chats to the DB.
           conversations = local.slice(0, 50);
-          for (const c of conversations) { await saveConversationToDb(c); }
-          try { localStorage.removeItem(chatStorageKey()); } catch (_) {}
+          for (const c of conversations) { c.subject = c.subject || selectedSubject; await saveConversationToDb(c); }
+          // keep local per-subject key, do not remove — it is the free-tier store
         } else {
-          conversations = rows;
+          conversations = filtered.slice(0, 50);
+          // Merge any local-only chats for this subject not yet in DB
+          var ids = {};
+          conversations.forEach(function(c){ ids[c.id]=1; });
+          local.forEach(function(c){
+            if (!ids[c.id] && (c.subject||selectedSubject)===selectedSubject) conversations.push(c);
+          });
+          conversations = conversations.slice(0, 50);
         }
       } catch (_) {
         conversations = readLocalConversations();
@@ -415,6 +456,237 @@
     },
   ];
   let activePersonaIndex = 0;
+
+  // ── Subject State ──
+  const CHAT_SUBJECTS = [
+    { name: 'Physics', code: '9702', color: '#2E7D32', bg: 'rgba(46,125,50,0.15)' },
+    { name: 'Chemistry', code: '9701', color: '#C49557', bg: 'rgba(196,149,87,0.15)' },
+    { name: 'Biology', code: '9700', color: '#8E44AD', bg: 'rgba(142,68,173,0.15)' },
+    { name: 'Computer Science', code: '9618', color: '#2980B9', bg: 'rgba(41,128,185,0.15)' },
+    { name: 'Mathematics', code: '9709', color: '#8E44AD', bg: 'rgba(142,68,173,0.15)' },
+    { name: 'English', code: '9093', color: '#F39C12', bg: 'rgba(243,156,18,0.15)' }
+  ];
+  let selectedSubject = 'Physics';
+  function subjectSlug(name) { return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'physics'; }
+  function subjectStorageKey() {
+    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_subject_' + currentUser.id;
+    return 'Anteemonee_ai_subject_anon';
+  }
+  function getSelectedSubject() { return selectedSubject; }
+  function getSubjectMeta(name) {
+    var n = String(name || '').toLowerCase();
+    return CHAT_SUBJECTS.find(function(s){ return s.name.toLowerCase() === n; }) || CHAT_SUBJECTS[0];
+  }
+  function loadSelectedSubject() {
+    try {
+      var saved = localStorage.getItem(subjectStorageKey());
+      if (saved && CHAT_SUBJECTS.some(function(s){ return s.name === saved; })) {
+        selectedSubject = saved;
+      }
+    } catch (_) {}
+  }
+  function saveSelectedSubject() {
+    try { localStorage.setItem(subjectStorageKey(), selectedSubject); } catch (_) {}
+  }
+  // Per-conversation subject map (fallback when the DB has no subject column yet).
+  // Without this, every DB row loads as 'Physics' and other subjects lose their chats on refresh.
+  function convSubjectMapKey() {
+    try {
+      if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return 'Anteemonee_conv_subjects_' + currentUser.id;
+    } catch (_) {}
+    return 'Anteemonee_conv_subjects_anon';
+  }
+  function isKnownSubject(name) {
+    return CHAT_SUBJECTS.some(function(s){ return s.name === name; });
+  }
+  function getMappedConvSubject(id) {
+    try {
+      var m = JSON.parse(localStorage.getItem(convSubjectMapKey()) || '{}');
+      var s = m && m[id];
+      return isKnownSubject(s) ? s : null;
+    } catch (_) { return null; }
+  }
+  function setMappedConvSubject(id, subj) {
+    if (!id || !isKnownSubject(subj)) return;
+    try {
+      var key = convSubjectMapKey();
+      var m = {};
+      try { m = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (_) { m = {}; }
+      m[id] = subj;
+      var keys = Object.keys(m);
+      if (keys.length > 200) {
+        var drop = keys.length - 200;
+        for (var i = 0; i < drop; i++) delete m[keys[i]];
+      }
+      localStorage.setItem(key, JSON.stringify(m));
+    } catch (_) {}
+  }
+  function removeMappedConvSubject(id) {
+    try {
+      var key = convSubjectMapKey();
+      var m = JSON.parse(localStorage.getItem(key) || '{}') || {};
+      if (m && m[id]) { delete m[id]; localStorage.setItem(key, JSON.stringify(m)); }
+    } catch (_) {}
+  }
+  function resolveConvSubject(r) {
+    if (r && isKnownSubject(r.subject)) return r.subject;
+    var mapped = r && r.id ? getMappedConvSubject(r.id) : null;
+    if (mapped) return mapped;
+    return 'Physics';
+  }
+  function updateSubjectUI() {
+    try {
+      var meta = getSubjectMeta(selectedSubject);
+      var dot = document.getElementById('subject-dot');
+      var nameEl = document.getElementById('subject-name');
+      var input = document.getElementById('chat-input');
+      var pill = document.getElementById('subject-pill');
+      if (dot) dot.style.background = meta.color;
+      if (nameEl) nameEl.textContent = meta.name;
+      if (input) input.placeholder = 'Ask anything about ' + meta.name + '...';
+      if (pill) {
+        pill.style.borderColor = meta.color + '40';
+      }
+      // Update welcome subtitle if needed
+      var sub = document.querySelector('.welcome-subtitle');
+      if (sub && selectedSubject) {
+        // keep generic, but could show subject
+      }
+    } catch (_) {}
+  }
+  function renderSubjectList() {
+    var list = document.getElementById('subject-list');
+    if (!list) return;
+    list.innerHTML = CHAT_SUBJECTS.map(function(s){
+      var isActive = s.name === selectedSubject;
+      return '<div class="subject-item' + (isActive ? ' active' : '') + '" data-subject="' + s.name.replace(/"/g,'&quot;') + '">' +
+        '<span class="dot" style="background:' + s.color + '"></span>' +
+        '<span>' + s.name + '</span>' +
+        '</div>';
+    }).join('');
+    list.querySelectorAll('.subject-item').forEach(function(el){
+      el.addEventListener('click', function(){
+        var name = el.getAttribute('data-subject');
+        selectSubject(name);
+      });
+    });
+  }
+  async function selectSubject(name) {
+    if (!name || name === selectedSubject) {
+      // just close dropdown
+      var dd = document.getElementById('subject-dropdown');
+      var pill = document.getElementById('subject-pill');
+      if (dd) dd.classList.remove('open');
+      if (pill) { pill.classList.remove('open'); pill.setAttribute('aria-expanded','false'); }
+      return;
+    }
+    // Save current subject's conversations before switching
+    // No need to explicitly save, they are already persisted via chatStorageKey
+    selectedSubject = name;
+    saveSelectedSubject();
+    updateSubjectUI();
+    renderSubjectList();
+    var dd = document.getElementById('subject-dropdown');
+    var pill = document.getElementById('subject-pill');
+    if (dd) dd.classList.remove('open');
+    if (pill) { pill.classList.remove('open'); pill.setAttribute('aria-expanded','false'); }
+    // Reload conversations for new subject
+    try { showChatsLoading('Loading ' + name + ' chats…'); } catch (_) {}
+    try {
+      // Clear current UI
+      activeConversationId = null;
+      messages = [];
+      var ml = document.getElementById('messages-list');
+      if (ml) ml.innerHTML = '';
+      var welcome = document.getElementById('chat-welcome');
+      if (welcome) welcome.style.display = 'flex';
+      var mList = document.getElementById('messages-list');
+      if (mList) mList.style.display = 'none';
+      // Reload from storage/DB for new subject
+      await initConversationStore();
+      try { applyPinnedState(); } catch(_) {}
+      renderHistory();
+      // Update filtered view if needed
+      var inp = document.getElementById('chat-input');
+      if (inp) inp.focus();
+    } catch(e) { console.warn('[Subject] switch failed', e); }
+    finally { try { hideChatsLoading(); } catch (_) {} }
+  }
+  function setupSubjectDropdown() {
+    var pill = document.getElementById('subject-pill');
+    var dd = document.getElementById('subject-dropdown');
+    var wrap = document.getElementById('subject-pill-wrap');
+    if (!pill || !dd) return;
+    if (pill.dataset.bound) return;
+    pill.dataset.bound = '1';
+    pill.addEventListener('click', function(e){
+      e.stopPropagation();
+      var isOpen = dd.classList.contains('open');
+      if (isOpen) {
+        dd.classList.remove('open');
+        pill.classList.remove('open');
+        pill.setAttribute('aria-expanded','false');
+      } else {
+        dd.classList.add('open');
+        pill.classList.add('open');
+        pill.setAttribute('aria-expanded','true');
+        renderSubjectList();
+      }
+    });
+    document.addEventListener('click', function(e){
+      if (!wrap.contains(e.target)) {
+        dd.classList.remove('open');
+        pill.classList.remove('open');
+        pill.setAttribute('aria-expanded','false');
+      }
+    });
+    // Close on outside click for mobile
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') {
+        dd.classList.remove('open');
+        pill.classList.remove('open');
+        pill.setAttribute('aria-expanded','false');
+      }
+    });
+    renderSubjectList();
+    updateSubjectUI();
+  }
+
+  // ── Chats loading screen ──
+  var _chatsLoadingFallback = null;
+  function showChatsLoading(text) {
+    try {
+      var el = document.getElementById('chats-loading');
+      if (el) {
+        var t = el.querySelector('.chats-loading-text');
+        if (t && text) t.textContent = text;
+        el.classList.remove('hidden');
+      }
+      // Safety: never trap the user behind the loader
+      try {
+        if (_chatsLoadingFallback) clearTimeout(_chatsLoadingFallback);
+        _chatsLoadingFallback = setTimeout(function(){ try { hideChatsLoading(); } catch (_) {} }, 15000);
+      } catch (_) {}
+      var sh = document.getElementById('sidebar-history');
+      if (sh) sh.classList.add('is-loading');
+      var shm = document.getElementById('sidebar-history-mobile');
+      if (shm) shm.classList.add('is-loading');
+    } catch (_) {}
+  }
+  function hideChatsLoading() {
+    try {
+      if (_chatsLoadingFallback) { clearTimeout(_chatsLoadingFallback); _chatsLoadingFallback = null; }
+    } catch (_) {}
+    try {
+      var el = document.getElementById('chats-loading');
+      if (el) el.classList.add('hidden');
+      var sh = document.getElementById('sidebar-history');
+      if (sh) sh.classList.remove('is-loading');
+      var shm = document.getElementById('sidebar-history-mobile');
+      if (shm) shm.classList.remove('is-loading');
+    } catch (_) {}
+  }
+
   // Auto model routing: coding -> Coder, everything else -> Chipa Sahab
   function isCodingTask(text) {
     if (!text) return false;
@@ -481,7 +753,14 @@
     memoryEnabled: true,
     personalization: '',
     emojis: false,
+    references: false,
   };
+  function referencesStorageKey() {
+    try {
+      if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) return 'Anteemonee_ai_references_' + currentUser.id;
+    } catch (_) {}
+    return 'Anteemonee_ai_references_anon';
+  }
 
   // â”€â”€ AI Memory (durable facts remembered from past chats) â”€â”€
   let aiMemories = [];
@@ -514,7 +793,17 @@
           if (typeof data.ai_memory_enabled === 'boolean') aiPrefs.memoryEnabled = data.ai_memory_enabled;
           if (typeof data.ai_personalization === 'string') aiPrefs.personalization = data.ai_personalization;
           if (typeof data.ai_emojis === 'boolean') aiPrefs.emojis = data.ai_emojis;
+          if (typeof data.ai_references === 'boolean') aiPrefs.references = data.ai_references;
         }
+      }
+    } catch (_) {}
+    // Local fallback (works before the DB column exists, and per-user)
+    try {
+      var localRef = localStorage.getItem(referencesStorageKey());
+      if (localRef === '1' || localRef === '0') aiPrefs.references = (localRef === '1');
+      else {
+        var legacyRef = localStorage.getItem('Anteemonee_ai_references');
+        if (legacyRef === '1' || legacyRef === '0') aiPrefs.references = (legacyRef === '1');
       }
     } catch (_) {}
     // Legacy fallback for explanation level set before it moved to the database.
@@ -530,6 +819,7 @@
   document.addEventListener('DOMContentLoaded', init);
 
   async function init() {
+    try { showChatsLoading('Loading your chats…'); } catch (_) {}
     if (typeof currentUser === 'undefined' || !currentUser) {
       try {
         const { data: { session } } = await db.auth.getSession();
@@ -543,7 +833,25 @@
     }
     // Tier-aware chat store: premium chats live in the database (all devices),
     // free-tier chats stay in this browser's localStorage only.
+    // Subject must load first so chatStorageKey is per-subject.
+    // Reload after auth too (anon key -> user key).
+    try { loadSelectedSubject(); } catch (_) {}
+    try { updateSubjectUI(); } catch (_) {}
     await refreshTier();
+    try {
+      // Re-load subject with resolved user id (migrate anon choice if needed)
+      var anonSubj = null;
+      try { anonSubj = localStorage.getItem('Anteemonee_ai_subject_anon'); } catch (_) {}
+      try { loadSelectedSubject(); } catch (_) {}
+      if (anonSubj && CHAT_SUBJECTS.some(function(s){ return s.name===anonSubj; })) {
+        try {
+          var userKey = subjectStorageKey();
+          if (!localStorage.getItem(userKey)) localStorage.setItem(userKey, anonSubj);
+        } catch (_) {}
+        try { loadSelectedSubject(); } catch (_) {}
+      }
+    } catch (_) {}
+    try { updateSubjectUI(); } catch (_) {}
     await initConversationStore();
     // Load persona from localStorage (per-user)
     try {
@@ -603,7 +911,10 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     try { renderHistory(); } catch (e) { console.warn('[AI] renderHistory failed:', e); }
     bindEvents();
+    try { setupSubjectDropdown(); } catch (e) { console.warn('[Subject] setup failed', e); }
+    try { updateSubjectUI(); renderSubjectList(); } catch (_) {}
     updatePersonaUI();
+    try { hideChatsLoading(); } catch (_) {}
     chatInput.focus();
     // Periodic streak check (every 5 min)
     setInterval(() => { refreshStreak(); saveSessionState(); }, 5 * 60 * 1000);
@@ -961,7 +1272,9 @@ if (idx >= 0 && idx < PERSONAS.length) {
     if (!query || query.trim().length < 3) return [];
 
     // Build a smarter query: extract key terms from the user's question
-    const searchQuery = query
+    // Bias toward selected subject so Physics chats pull Physics book, etc.
+    var subj = selectedSubject || 'Physics';
+    const searchQuery = (subj + ' ' + query)
       .replace(/\b(explain|what is|what are|define|tell me about|how does|how do|describe|give me|help me with)\b/gi, '')
       .trim()
       .slice(0, 200);
@@ -972,7 +1285,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       const { data, error } = await db.rpc('search_textbook_pages', {
         p_query: searchQuery,
         p_book_id: null,
-        p_limit: 3,
+        p_limit: 8,
         p_class_level_id: studentContext?.classLevelId || null,
       });
 
@@ -983,49 +1296,66 @@ if (idx >= 0 && idx < PERSONAS.length) {
           const { data: retryData } = await db.rpc('search_textbook_pages', {
             p_query: searchQuery,
             p_book_id: null,
-            p_limit: 3,
+            p_limit: 8,
           });
-          return retryData || [];
+          return prioritizeSubjectPages(retryData || [], subj);
         }
         return [];
       }
       if (!data || data.length === 0) return [];
-      return data;
+      return prioritizeSubjectPages(data, subj);
     } catch (e) {
       console.warn('[AI] Textbook search failed:', e);
       return [];
     }
   }
 
+  function prioritizeSubjectPages(pages, subj) {
+    if (!pages || !pages.length) return pages || [];
+    var s = String(subj || '').toLowerCase();
+    if (!s) return pages;
+    var matched = [];
+    var rest = [];
+    pages.forEach(function(p){
+      var t = String(p.book_title || '').toLowerCase();
+      if (t.includes(s)) matched.push(p);
+      else rest.push(p);
+    });
+    return matched.concat(rest).slice(0, 5);
+  }
+
   function formatTextbookContext(pages) {
     if (!pages || pages.length === 0) return '';
 
-    const sections = pages.slice(0, 2).map(p => {
+    const sections = pages.slice(0, 3).map(p => {
       const title = p.book_title || 'Unknown Book';
       const page = p.printed_page_number || p.page_number;
       const chapter = p.chapter_name ? `, Chapter: ${p.chapter_name}` : '';
       const topic = p.topic_name ? `, Topic: ${p.topic_name}` : '';
-      const fullText = (p.full_text || p.snippet || '').slice(0, 1200);
+      const fullText = (p.full_text || p.snippet || '').slice(0, 1500);
       return `[BOOK: "${title}"${chapter}${topic}, PAGE: ${page}]\n${fullText}`;
     });
 
-    return `\n\n===== TEXTBOOK REFERENCE (STUDY MODE) =====
-The student's question matches the following textbook content. You MUST study this content carefully and base your primary explanation on it.
-
-${sections.join('\n\n---\n\n')}
-
-===== INSTRUCTIONS FOR THIS RESPONSE =====
-1. Study the textbook content above carefully. It is from the student's actual course book.
-2. Explain the concept step-by-step, using the textbook content as your PRIMARY source.
-3. Add your own knowledge to enhance the explanation (examples, analogies, further clarification).
-4. CRITICAL: At the VERY END of your response, you MUST include a References section in this EXACT format:
+    var refBlock = aiPrefs.references
+      ? `4. REFERENCES ON — MANDATORY: At the VERY END of your response (after everything else), you MUST include a References section in this EXACT format:
 
 ---
 **References:**
 - [Book Name], p. [page number]
 ---
 
-This References section is MANDATORY. Every response that uses textbook content MUST end with it. List ALL books and pages you referenced. Do NOT skip this step.`;
+List ALL books and pages you referenced from the block above. Do NOT invent references. Do NOT skip this step. MUST means MUST.`
+      : `4. REFERENCES OFF: Do NOT include any References section. Just end your answer normally.`;
+    return `\n\n===== TEXTBOOK REFERENCE — READ FIRST =====
+You were given the student's EXACT Punjab board textbook excerpts below (from 11th/12th Biology, Chemistry, Physics, Computer Science, English 2025 editions now ingested). You MUST read and comprehend these excerpts BEFORE writing your answer. Do NOT answer from general memory alone. Your explanation must be GROUNDED in these excerpts.
+
+${sections.join('\n\n---\n\n')}
+
+===== INSTRUCTIONS FOR THIS RESPONSE =====
+1. FIRST: Read all textbook excerpts above completely — they are your source of truth for this question.
+2. Explain step-by-step using the textbook as your PRIMARY source, quoting or paraphrasing key lines where relevant.
+3. Then enhance with your own knowledge (examples, analogies, exam tips) but keep the textbook's facts central.
+${refBlock}`;
   }
 
   // â”€â”€ AI preference rules injected into the system prompt â”€â”€
@@ -1061,7 +1391,18 @@ This References section is MANDATORY. Every response that uses textbook content 
       ? 'EMOJIS â€” CRITICAL: The student ENABLED emojis. You MUST use relevant emojis naturally throughout every response (headings, key points, encouragement). Be generous but tasteful.'
       : 'EMOJIS â€” CRITICAL: The student DISABLED emojis. You MUST NEVER use any emojis or emoticons anywhere in your responses. Plain text only, no exceptions.';
 
-    return [styleRule, levelRule, langRule, suggestRule, emojiRule, personalRule].filter(Boolean).join('\n\n');
+    const referencesRule = aiPrefs.references
+      ? `REFERENCES — ON — MANDATORY, MUST MEANS MUST: After EVERY substantive response (anything except a plain greeting), you MUST end with a References section as the ABSOLUTE LAST thing in your response (after the answer, after any study-suggestion closing lines, after everything). Exact format:
+
+---
+**References:**
+- [Book Name], p. [page number]  (for every textbook excerpt above that you used — list ALL of them, never invent a book or page)
+- [Website URL]  (for every website/online source you relied on — if you searched the internet or used web knowledge beyond the textbooks, list each site/URL; if you used no websites, omit website lines)
+
+Rules: textbook lines cite the exact book + page from the excerpts block above. Website lines cite the site/URL where you saw the information. NEVER skip this section. NEVER place anything after it.`
+      : 'REFERENCES — OFF: NEVER include a References section in any response. Just answer and stop (plus study-suggestion closing lines only if those are enabled). Do not cite books, pages, or websites.';
+
+    return [styleRule, levelRule, langRule, suggestRule, emojiRule, referencesRule, personalRule].filter(Boolean).join('\n\n');
   }
 
   // â”€â”€ System Prompt â”€â”€
@@ -1133,10 +1474,29 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
           if (ghCtx) ctx += ghCtx;
         } catch (_) {}
       }
+      // Voice mode — short spoken responses, no filler words
+      if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.voiceMode) {
+        ctx += `\n\nVOICE MODE ACTIVE — CRITICAL RULES:
+- Give SHORT, direct answers. 1-3 sentences max unless the user explicitly asks for detail.
+- Get straight to the point. No preamble, no summaries.
+- NEVER use filler words: hmm, ohh, yess, um, uh, well, so, basically, actually, right, okay so. Just answer.
+- Speak naturally like a helpful tutor, not like you're reading an essay.
+- For simple questions: answer in ONE sentence.
+- Never say "Sure!", "Of course!", "Great question!" — just answer.`;
+      }
       return ctx;
     }
 
+    var subjMeta = getSubjectMeta(selectedSubject);
+    var subjName = subjMeta ? subjMeta.name : (selectedSubject || 'Physics');
+    var subjCode = subjMeta ? subjMeta.code : '';
     let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (xâ‚€, vÂ², âˆš2), no LaTeX, no HTML.
+
+SELECTED SUBJECT — CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are now a dedicated ${subjName} tutor for this entire response.
+- Answer ONLY within ${subjName}: all explanations, examples, formulas, diagrams (text), and exam tips must be for ${subjName}.
+- If the question is from another subject, briefly note it belongs to another subject but still try to help within ${subjName} context where possible; do not switch subjects on your own.
+- Prefer ${subjName} textbook excerpts provided below over general knowledge. Cite the ${subjName} book in References.
+- Use ${subjName} terminology, syllabus order, and board-exam style (Pakistan FSc/Matric).
 
 ${aiPrefsPrompt()}
 
@@ -1149,7 +1509,7 @@ STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No
 BEHAVIOR:
 - For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance.
 - FLASHCARD CREATION: When the user asks to create or make a flashcard:
-  - If they gave a clear topic, term, or question: detect the school subject yourself (e.g. Biology, Chemistry, Physics, Math, English, Computer Science) and output the card in this exact format, then the confirmation line, and nothing else:
+  - If they gave a clear topic, term, or question: use the SELECTED SUBJECT ("${subjName}") as the card subject unless the user explicitly names a different subject, and output the card in this exact format, then the confirmation line, and nothing else:
     **Subject:** [Subject name, or General if unclear]
     **Front:** [Clear, concise question or concept to test]
     **Back:** [Complete, accurate answer, 2-5 sentences max]
@@ -1166,16 +1526,9 @@ BEHAVIOR:
   - The extension determines the file type: .txt for plain text, .md for markdown, .pdf for PDF, .docx for Word, .html for HTML, .csv for CSV, .json for JSON
   - After the block, add a short line: "Your beautifully designed file is ready! Click Download below."
   - The app will automatically convert the markdown inside the block to a beautifully designed downloadable file with colors, headers, footers, and styling. NEVER mention manual steps.
-- CRITICAL â€” REFERENCES: When textbook content is provided in the system, you MUST ALWAYS end your response with a "References" section in this exact format:
-
----
-**References:**
-- [Book Name], p. [page number]
----
-
-This is MANDATORY for every academic response that uses textbook content. List ALL books and pages you referenced. Place this section at the very end of your response, after everything else.
-- For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly. Do NOT include references for casual chat.
-- NEVER fabricate book references. Only cite books that are actually provided in the textbook content block.`;
+- REFERENCES TOGGLE (student setting, default OFF): ${aiPrefs.references ? 'ON — You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], p. [page number]\n- [Website URL]\n---\n\nList ALL textbook books+pages you used from the excerpts block (never invent), PLUS every website/URL you relied on if you searched the internet or used web knowledge beyond the textbooks (omit website lines if none). Place it at the very end, after everything else. MUST means MUST, no exceptions.' : 'OFF — NEVER include a References section in any response. Just answer and stop.'}
+- For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly.${aiPrefs.references ? ' Do NOT include references for plain greetings/small talk (no source to cite).' : ' Do NOT include references for casual chat.'}
+- NEVER fabricate book references. Only cite books that are actually provided in the textbook content block. NEVER fabricate website URLs; only list sites you actually used.`;
 
     if (studentContext) {
       ctx += `\n\nSTUDENT CONTEXT:
@@ -1206,6 +1559,18 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
 SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writing code, debugging, building apps or websites, GitHub, or programming questions.
 - If the student asks for coding or programming work: decline in ONE short line, say coding work is done by Coder (the coding agent) and you are only for studies. Then output the marker [SWITCH_TO_ZARDARI] alone on its own line at the very end so the app can show a switch button.`;
+
+    // Voice mode — short spoken responses, no filler words
+    if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.voiceMode) {
+      ctx += `\n\nVOICE MODE ACTIVE — CRITICAL RULES:
+- Give SHORT, direct answers. 1-3 sentences max unless the user explicitly asks for detail.
+- Get straight to the point. No preamble, no summaries, no "in conclusion".
+- NEVER use filler words: hmm, ohh, yess, um, uh, well, so, basically, actually, right, okay so, let me see, good question. Just answer.
+- Speak naturally like a helpful tutor, not like you're reading an essay.
+- For simple questions (definitions, formulas, yes/no): answer in ONE sentence.
+- For explanations: give the key idea first, then only add detail if needed.
+- Never say "Sure!", "Of course!", "Great question!" or similar — just answer.`;
+    }
 
     return ctx;
   }
@@ -1345,11 +1710,12 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
   }
 
   function saveConversation() {
+    try { if (window.__voiceEphemeral) return; } catch (_) {} // call chats: never saved, never listed
     if (messages.length === 0) return;
     if (!activeConversationId) {
       activeConversationId = 'conv_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
       const title = messages[0]?.content?.slice(0, 50) || 'New Chat';
-      conversations.unshift({ id: activeConversationId, title, titleLocked: false, pinned: false, messages: [...messages], updatedAt: Date.now() });
+      conversations.unshift({ id: activeConversationId, title, titleLocked: false, pinned: false, subject: selectedSubject, messages: [...messages], updatedAt: Date.now() });
       // keep pinned chats: evict oldest unpinned first
       if (conversations.length > 50) {
         var evictIdx = -1;
@@ -1359,9 +1725,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       }
     } else {
       const conv = conversations.find(c => c.id === activeConversationId);
-      if (conv) { conv.messages = [...messages]; conv.updatedAt = Date.now(); }
-      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, pinned: false, messages: [...messages], updatedAt: Date.now() });
+      if (conv) { conv.messages = [...messages]; conv.updatedAt = Date.now(); conv.subject = conv.subject || selectedSubject; }
+      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, pinned: false, subject: selectedSubject, messages: [...messages], updatedAt: Date.now() });
     }
+    try { setMappedConvSubject(activeConversationId, selectedSubject); } catch (_) {}
     if (!(isPremiumTier && currentUserId())) removeExpiredFromMemory();
     persistConversation();
     renderHistory();
@@ -1415,8 +1782,13 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
   }
 
   function renderHistory() {
+    // Separate per subject: only show current subject's chats
+    var visible = conversations.filter(function(c){
+      var s = c.subject || 'Physics';
+      return s === selectedSubject;
+    });
     // pinned first, then by recency
-    var sorted = conversations.slice().sort(function(a,b){
+    var sorted = visible.slice().sort(function(a,b){
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
       return (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0);
@@ -1463,6 +1835,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     if (idx === -1) return;
     conversations.splice(idx, 1);
     try { var m=loadPinnedMap(); if(m[id]){ delete m[id]; savePinnedMap(m);} } catch(_){}
+    try { removeMappedConvSubject(id); } catch (_) {}
     if (isPremiumTier && currentUserId()) deleteConversationFromDb(id);
     else writeLocalConversations();
     if (activeConversationId === id) {
@@ -3580,6 +3953,26 @@ function handleFileBlocks(div, text) {
     document.getElementById('mobile-sidebar-overlay')?.classList.remove('active');
     document.body.style.overflow = '';
   }
+
+  // Voice-call scratch space: call turns live in `messages` while on call,
+  // then are rewound on hang-up — never saved, never in history.
+  window.AnteemoneeVoiceStore = {
+    mark() { try { return messages.length; } catch (_) { return 0; } },
+    rewind(n) {
+      try {
+        n = Math.max(0, n | 0);
+        if (messages.length > n) messages = messages.slice(0, n);
+        messagesList.innerHTML = '';
+        if (!messages.length) { welcome.style.display = 'flex'; messagesList.style.display = 'none'; }
+        else {
+          welcome.style.display = 'none'; messagesList.style.display = 'flex';
+          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null }));
+        }
+        try { renderHistory(); } catch (_) {}
+        try { scrollToBottom(); } catch (_) {}
+      } catch (_) {}
+    },
+  };
 })();
 
 function copyCodeBlock(btn) {

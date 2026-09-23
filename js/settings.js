@@ -57,6 +57,7 @@ async function refreshInlineSettings() {
     await renderSubscription();
     await renderCoupons();
     renderConnected();
+    renderVoiceCall();
     renderHelp();
     renderDangerZone();
   } catch (e) {
@@ -90,6 +91,8 @@ async function initSettings() {
   await renderSubscription();
   await renderCoupons();
   renderConnected();
+  renderAccounts();
+  renderVoiceCall();
   renderHelp();
   renderDangerZone();
   setupNavSidebar();
@@ -188,6 +191,11 @@ function showToastSettings(msg, isError) {
 let savePrefTimers = {};
 function savePref(key, value) {
   settingsPrefs = { ...settingsPrefs, [key]: value };
+  // Local mirror so the chatbot toggle works instantly, even before the DB column exists
+  try {
+    var uid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : 'anon';
+    if (key === 'ai_references') localStorage.setItem('Anteemonee_ai_references_' + uid, value ? '1' : '0');
+  } catch (_) {}
   clearTimeout(savePrefTimers[key]);
   savePrefTimers[key] = setTimeout(async () => {
     try {
@@ -257,6 +265,7 @@ function showSidebar() {
 
 function renderSecurity() {
   const c = document.getElementById('settings-security-content');
+  if (!c) return;
   c.innerHTML = '';
 
   const pwCard = document.createElement('div');
@@ -576,6 +585,7 @@ async function disable2FA() {
 
 function renderAI() {
   const c = document.getElementById('settings-ai-content');
+  if (!c) return;
   c.innerHTML = '';
   const p = settingsPrefs || {};
 
@@ -655,6 +665,7 @@ function renderAI() {
   const prefRows = [
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),
     buildRow('Emojis', 'Use emojis in AI responses', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
+    buildRow('References', 'Show book pages + website sources after every AI response (off by default)', buildToggle('t-ai_references', p.ai_references === true, v => savePref('ai_references', v))),
   ];
   c.appendChild(buildCard('SUGGESTIONS', prefRows));
 
@@ -849,6 +860,7 @@ async function loadMemoryLastUpdated() {
 
 function renderAppearance() {
   const c = document.getElementById('settings-appearance-content');
+  if (!c) return;
   c.innerHTML = '';
   const p = settingsPrefs || {};
 
@@ -876,6 +888,7 @@ function renderAppearance() {
 
 function renderLanguage() {
   const c = document.getElementById('settings-language-content');
+  if (!c) return;
   c.innerHTML = '';
   const p = settingsPrefs || {};
 
@@ -898,6 +911,7 @@ function renderLanguage() {
 
 function renderPrivacy() {
   const c = document.getElementById('settings-privacy-content');
+  if (!c) return;
   c.innerHTML = '';
   const p = settingsPrefs || {};
 
@@ -923,6 +937,7 @@ function renderPrivacy() {
 
 async function renderSubscription() {
   const c = document.getElementById('settings-subscription-content');
+  if (!c) return;
   c.innerHTML = '';
 
   const planCard = document.createElement('div');
@@ -1032,6 +1047,7 @@ function renderSubscriptionContent(container, planCard) {
 
 async function renderCoupons() {
   const c = document.getElementById('settings-coupons-content');
+  if (!c) return;
   c.innerHTML = '<div class="skeleton" style="height:120px;margin:16px 0"></div>';
 
   try {
@@ -1072,12 +1088,7 @@ async function renderCoupons() {
       c.appendChild(inputCard);
     }
 
-    const infoRows = [
-      buildRow('Coupon codes are case-insensitive'),
-      buildRow('Each code can be redeemed once per account'),
-      buildRow('Redeeming a coupon grants lifetime access — no expiry'),
-    ];
-    c.appendChild(buildCard('HOW IT WORKS', infoRows));
+
   } catch (e) {
     c.innerHTML = '<div class="settings-card"><div class="setting-row"><div class="setting-info"><div class="setting-title">Unable to load coupon info</div></div></div></div>';
   }
@@ -1157,6 +1168,7 @@ async function redeemCoupon() {
 
 function renderConnected() {
   const c = document.getElementById('settings-connected-content');
+  if (!c) return;
   c.innerHTML = '';
   const providers = currentUser?.app_metadata?.providers || [];
   const identities = currentUser?.identities || [];
@@ -1201,8 +1213,6 @@ function renderConnected() {
   if (linkRows.length) {
     c.appendChild(buildCard('LINK ACCOUNTS', linkRows));
   }
-
-  renderGithubCard(c);
 
   if (!canDisconnectAny && providerCount === 1) {
     const warnRows = [
@@ -1280,42 +1290,6 @@ function buildProviderRow(provider, name, status, isConnected, canDisconnect, id
   return row;
 }
 
-async function renderGithubCard(c) {
-  let gh = null;
-  try {
-    const res = await db.from('github_connections').select('github_username').maybeSingle();
-    gh = res.data || null;
-  } catch (_) { return; }
-  if (!gh) return;
-  const row = buildProviderRow('github', 'GitHub', '@' + gh.github_username, true, false, null);
-  const btn = document.createElement('button');
-  btn.className = 'btn-settings btn-settings-danger';
-  btn.style.cssText = 'padding:6px 12px;font-size:12px;flex-shrink:0';
-  btn.textContent = 'Disconnect';
-  btn.onclick = disconnectGithub;
-  row.appendChild(btn);
-  const card = document.createElement('div');
-  card.className = 'settings-card';
-  const h = document.createElement('div');
-  h.className = 'settings-card-header';
-  h.textContent = 'GITHUB';
-  card.appendChild(h);
-  card.appendChild(row);
-  c.appendChild(card);
-}
-
-async function disconnectGithub() {
-  if (!confirm('Disconnect GitHub from Anteemonee?')) return;
-  try {
-    const { error } = await db.from('github_connections').delete().eq('user_id', currentUser.id);
-    if (error) throw error;
-    showToastSettings('GitHub disconnected successfully');
-    renderConnected();
-  } catch (err) {
-    showToastSettings('Failed to disconnect GitHub: ' + (err.message || 'unknown error'), true);
-  }
-}
-
 async function disconnectProvider(provider, identity) {  const providerName = provider === 'google' ? 'Google' : 'Spotify';
 
   const providers = currentUser?.app_metadata?.providers || [];
@@ -1351,154 +1325,125 @@ async function refreshUser() {
 }
 
 /* =========================
+   9a. VOICE CALL (included — no key needed)
+   ========================= */
+
+function renderVoiceCall() {
+  const c = document.getElementById('settings-voice-content');
+  if (!c) return;
+  c.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'settings-card';
+  card.innerHTML = `
+    <div class="settings-card-header">LIVE VOICE CALL</div>
+    <div style="padding:16px 20px">
+      <div class="setting-row" style="border:none;padding:4px 0">
+        <div class="setting-info">
+          <div class="setting-title" style="color:var(--success)">● Included — no setup needed</div>
+          <div class="setting-desc">Tap the voice button in chat to start a live call. Just sign in and speak.</div>
+        </div>
+      </div>
+    </div>`;
+  c.appendChild(card);
+  const infoCard = document.createElement('div');
+  infoCard.className = 'settings-card';
+  infoCard.innerHTML = `
+    <div class="settings-card-header">HOW IT WORKS</div>
+    <div class="setting-row"><div class="setting-info"><div class="setting-title">1. Start a call</div><div class="setting-desc">Tap the voice button — live duplex call, interrupt anytime</div></div></div>
+    <div class="setting-row"><div class="setting-info"><div class="setting-title">2. Speak naturally</div><div class="setting-desc">Ask about FSc, matric, biology, chemistry, physics, math</div></div></div>`;
+  c.appendChild(infoCard);
+
+  // Voice picker + preview
+  const voices = ['Kore', 'Zephyr', 'Puck', 'Charon', 'Fenrir', 'Leda', 'Aoede', 'Callirrhoe', 'Autonoe', 'Umbriel'];
+  let uid = 'anon';
+  try { if (typeof currentUser !== 'undefined' && currentUser?.id) uid = currentUser.id; } catch (_) {}
+  const vkey = 'Anteemonee_tts_voice_' + uid;
+  let cur = 'Kore';
+  try { const s = localStorage.getItem(vkey); if (s && voices.includes(s)) cur = s; } catch (_) {}
+  const vCard = document.createElement('div');
+  vCard.className = 'settings-card';
+  vCard.innerHTML = `
+    <div class="settings-card-header">AI VOICE</div>
+    <div style="padding:16px 20px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="tts-voice-select" class="setting-select" style="flex:1;min-width:160px">
+          ${voices.map(v => `<option value="${v}" ${v === cur ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+        <button class="btn-settings btn-settings-secondary" id="tts-voice-preview">Preview</button>
+      </div>
+      <div id="tts-voice-msg" style="font-size:12px;margin-top:8px;display:none"></div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">Pick the clearest voice for you. Preview plays a sample.</div>
+    </div>`;
+  c.appendChild(vCard);
+  const sel = vCard.querySelector('#tts-voice-select');
+  sel.addEventListener('change', () => {
+    try { localStorage.setItem(vkey, sel.value); } catch (_) {}
+    showToastSettings('Voice set to ' + sel.value);
+  });
+  vCard.querySelector('#tts-voice-preview').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const msg = vCard.querySelector('#tts-voice-msg');
+    btn.disabled = true; btn.textContent = 'Playing…'; msg.style.display = 'none';
+    try {
+      let url = 'https://zkuytvjeqkpexcbyoyhz.supabase.co', anon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+      try { if (typeof db !== 'undefined' && db.auth) { const { data } = await db.auth.getSession(); var tok = data?.session?.access_token; } } catch (_) {}
+      const res = await fetch(url + '/functions/v1/voice-tts', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + (tok || anon), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: 'Assalamu alaikum! I am Anteemonee, your study tutor. How clear is my voice?', voice: sel.value }),
+      });
+      if (!res.ok) { const d = await res.text().catch(() => ''); throw new Error(d.slice(0, 120) || ('TTS ' + res.status)); }
+      const ct = res.headers.get('content-type') || '';
+      let src = '';
+      if (ct.includes('audio/')) src = URL.createObjectURL(await res.blob());
+      else { const j = await res.json(); if (j.error || !j.audio) throw new Error(j.error || 'No audio'); src = 'data:audio/wav;base64,' + j.audio; }
+      const a = new Audio(src);
+      a.onended = () => { btn.disabled = false; btn.textContent = 'Preview'; };
+      a.onerror = () => { btn.disabled = false; btn.textContent = 'Preview'; };
+      await a.play();
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Preview';
+      msg.textContent = 'Preview failed: ' + ((err && err.message) || 'error');
+      msg.style.color = '#FF6675'; msg.style.display = 'block';
+    }
+  });
+}
+
+/* =========================
    9b. ACCOUNTS (Multi-Account)
    ========================= */
 
 function renderAccounts() {
-  const c = document.getElementById('settings-accounts-content');
-  if (!c) return;
-  c.innerHTML = '';
-
-  const accounts = AccountManager.getSavedAccounts();
-  const activeId = AccountManager.getActiveUserId();
-
-  // Accounts list card
-  const listCard = document.createElement('div');
-  listCard.className = 'settings-card';
-
-  let accountsHtml = '<div class="settings-card-header">SIGNED IN ACCOUNTS</div>';
-
-  accounts.forEach(acc => {
-    const isActive = acc.userId === activeId;
-    const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
-    accountsHtml += `
-      <div class="setting-row" style="gap:12px;">
-        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
-          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:14px;">
-            ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
-          </div>
-          <div style="min-width:0;">
-            <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
-              ${acc.displayName || acc.email}
-              ${isActive ? '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(99,102,241,0.1);padding:1px 6px;border-radius:6px;">Active</span>' : ''}
-              ${acc.sessionStatus === 'expired' ? '<span style="font-size:11px;font-weight:600;color:#ff6675;background:rgba(255,102,117,0.1);padding:1px 6px;border-radius:6px;">Expired</span>' : ''}
-            </div>
-            <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.email}</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          ${!isActive ? `<button class="btn-settings btn-settings-secondary" style="font-size:12px;padding:6px 12px;" onclick="settingsSwitchAccount('${acc.userId}')">Switch</button>` : ''}
-          ${!isActive ? `<button class="btn-settings btn-settings-danger" style="font-size:12px;padding:6px 12px;" onclick="settingsRemoveAccount('${acc.userId}')">Remove</button>` : ''}
-        </div>
-      </div>`;
-  });
-
-  listCard.innerHTML = accountsHtml;
-  c.appendChild(listCard);
-
-  // Actions card
-  const actionsCard = document.createElement('div');
-  actionsCard.className = 'settings-card';
-  let actionsHtml = '<div class="settings-card-header">ACTIONS</div>';
-
-  if (AccountManager.hasAvailableSlot()) {
-    actionsHtml += `
-      <div class="setting-row clickable" onclick="settingsAddAccount()">
-        <div class="setting-info">
-          <div class="setting-title" style="color:var(--accent);">+ Add another account</div>
-          <div class="setting-desc">Sign in to another Anteemonee account on this browser</div>
-        </div>
-      </div>`;
-  } else {
-    actionsHtml += `
-      <div class="setting-row">
-        <div class="setting-info">
-          <div class="setting-title" style="color:var(--text-secondary);">Account limit reached</div>
-          <div class="setting-desc">Maximum 3 accounts per browser. Remove an account to add a new one.</div>
-        </div>
-      </div>`;
+  const container = document.getElementById('settings-accounts-content');
+  if (!container) return;
+  if (!currentUser) {
+    container.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">Sign in to manage your account.</p>';
+    return;
   }
-
-  actionsHtml += `
-    <div class="setting-row clickable" onclick="settingsLogoutCurrent()">
-      <div class="setting-info">
-        <div class="setting-title">Log out current account</div>
-        <div class="setting-desc">Sign out of ${accounts.find(a => a.userId === activeId)?.displayName || accounts.find(a => a.userId === activeId)?.email || 'this account'}</div>
+  const name = currentUser.displayName || currentUser.email || 'User';
+  const email = currentUser.email || '';
+  const initial = name.charAt(0).toUpperCase();
+  const avatar = currentUser.photoURL;
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;overflow:hidden;flex-shrink:0;">
+        ${avatar ? `<img src="${avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : initial}
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--text);">${name}</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${email}</div>
       </div>
     </div>
-    <div class="setting-row clickable" onclick="settingsLogoutAll()">
-      <div class="setting-info">
-        <div class="setting-title" style="color:#ff6675;">Log out of all accounts</div>
-        <div class="setting-desc">Remove all saved accounts from this browser</div>
-      </div>
-    </div>`;
-
-  actionsCard.innerHTML = actionsHtml;
-  c.appendChild(actionsCard);
+  `;
 }
 
-async function settingsSwitchAccount(userId) {
-  const modal = document.createElement('div');
-  modal.className = 'account-modal-overlay';
-  modal.style.display = 'flex';
-  modal.innerHTML = `
-    <div class="account-modal">
-      <div class="account-modal-header">
-        <h3>Switch account</h3>
-        <button class="account-modal-close" onclick="this.closest('.account-modal-overlay').remove()">&times;</button>
-      </div>
-      <div class="account-modal-body">
-        <p>Switching will reload the page with the selected account's data.</p>
-      </div>
-      <div class="account-modal-footer">
-        <button class="btn-settings btn-settings-secondary" onclick="this.closest('.account-modal-overlay').remove()">Cancel</button>
-        <button class="btn-settings btn-settings-primary" onclick="this.closest('.account-modal-overlay').remove(); switchToAccount('${userId}')">Switch</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-}
+function settingsSwitchAccount() {}
 
-function settingsRemoveAccount(userId) {
-  const accounts = AccountManager.getSavedAccounts();
-  const acc = accounts.find(a => a.userId === userId);
-  if (!acc) return;
+function settingsRemoveAccount() {}
 
-  const modal = document.createElement('div');
-  modal.className = 'account-modal-overlay';
-  modal.style.display = 'flex';
-  modal.innerHTML = `
-    <div class="account-modal">
-      <div class="account-modal-header">
-        <h3>Remove account</h3>
-        <button class="account-modal-close" onclick="this.closest('.account-modal-overlay').remove()">&times;</button>
-      </div>
-      <div class="account-modal-body">
-        <p>Remove <strong>${acc.displayName || acc.email}</strong> from this browser?</p>
-        <p style="margin-top:8px;font-size:12px;color:var(--text-secondary);">This only removes the saved login from this browser. the Anteemonee account and all its data remain untouched.</p>
-      </div>
-      <div class="account-modal-footer">
-        <button class="btn-settings btn-settings-secondary" onclick="this.closest('.account-modal-overlay').remove()">Cancel</button>
-        <button class="btn-settings btn-settings-danger" onclick="this.closest('.account-modal-overlay').remove(); doRemoveAccount('${userId}')">Remove</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-}
+function doRemoveAccount() {}
 
-async function doRemoveAccount(userId) {
-  const result = await AccountManager.removeAccount(userId);
-  if (result.removedActive && result.nextAccount) {
-    await switchToAccount(result.nextAccount.userId);
-  } else {
-    renderAccounts();
-    showToastSettings('Account removed from this browser');
-  }
-}
-
-function settingsAddAccount() {
-  addAnotherAccount();
-}
+function settingsAddAccount() {}
 
 async function settingsLogoutCurrent() {
   const accounts = AccountManager.getSavedAccounts();
@@ -1556,6 +1501,7 @@ function settingsLogoutAll() {
 
 function renderHelp() {
   const c = document.getElementById('settings-help-content');
+  if (!c) return;
   c.innerHTML = '';
 
   const linksRows = [
@@ -1677,9 +1623,9 @@ function settingsLogout() {
     if (typeof handleLogout === 'function') { handleLogout(); return; }
   } catch (_) {}
   db.auth.signOut().then(() => {
-    window.location.href = 'index.html';
+    window.location.href = '/index.html';
   }).catch(() => {
-    window.location.href = 'index.html';
+    window.location.href = '/index.html';
   });
 }
 
@@ -1737,7 +1683,7 @@ async function confirmDeleteAccount() {
     const { error } = await db.rpc('delete_own_account');
     if (error) throw error;
     await db.auth.signOut();
-    window.location.href = 'index.html';
+    window.location.href = '/index.html';
   } catch (err) {
     showToastSettings(err.message || 'Failed to delete account.', true);
     setLoading(btn, false);

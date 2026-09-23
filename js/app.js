@@ -264,6 +264,14 @@ function resolveTheme(mode) {
 }
 function applyThemeMode(mode) {
   document.documentElement.setAttribute('data-theme', resolveTheme(mode));
+  updateThemeIcon();
+}
+function updateThemeIcon() {
+  var current = document.documentElement.getAttribute('data-theme');
+  var btns = document.querySelectorAll('.theme-toggle');
+  var sunSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  var moonSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  btns.forEach(function(btn) { btn.innerHTML = current === 'dark' ? sunSvg : moonSvg; });
 }
 function setThemeMode(mode) {
   if (mode !== 'light' && mode !== 'dark') mode = 'system';
@@ -281,7 +289,7 @@ try {
 } catch (e) {}
 
 function setupTheme() {
-  try { applyThemeMode(getThemeMode()); } catch (e) {}
+  try { applyThemeMode(getThemeMode()); updateThemeIcon(); } catch (e) {}
   // Follow device changes while in system mode.
   try {
     const mq = window.matchMedia('(prefers-color-scheme: light)');
@@ -337,8 +345,17 @@ async function checkAuth() {
   } catch (e) {
     console.error('Auth check failed:', e);
   }
+  // If already logged in, never land on the login/signup pages (unless adding another account).
+  if (currentUser && /login\.html|signup\.html/.test(window.location.pathname)) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') !== 'add_account') {
+      window.location.href = REDIRECT_URL;
+      return;
+    }
+  }
   updateAuthUI();
   setupAuthPages();
+  window.__authReady = true;
 }
 
 async function loadProfile() {
@@ -374,8 +391,10 @@ async function ensureProfile() {
   if (!currentUser) return null;
   if (!currentProfile) await loadProfile();
   if (currentProfile) {
+    // Only seed Google avatar when user never set one (null/undefined).
+    // Never overwrite: '' means user explicitly removed photo, URL means custom upload.
     const avatarUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
-    if (avatarUrl && currentProfile.profile_image_url !== avatarUrl) {
+    if (avatarUrl && currentProfile.profile_image_url == null) {
       await db.from('profiles').update({ profile_image_url: avatarUrl }).eq('id', currentUser.id);
       currentProfile.profile_image_url = avatarUrl;
     }
@@ -405,6 +424,8 @@ function updateAuthUI() {
   const mobileLoggedOut = document.getElementById('mobile-auth-logged-out');
   const mobileLoggedIn = document.getElementById('mobile-auth-logged-in');
   const mobileAuthLoading = document.getElementById('mobile-auth-loading');
+  const landingLoggedOut = document.getElementById('landing-auth');
+  const landingLoggedIn = document.getElementById('landing-auth-in');
 
   if (authLoading) authLoading.style.display = 'none';
   if (mobileAuthLoading) mobileAuthLoading.style.display = 'none';
@@ -414,16 +435,32 @@ function updateAuthUI() {
     if (loggedIn) loggedIn.style.display = 'flex';
     if (mobileLoggedOut) mobileLoggedOut.style.display = 'none';
     if (mobileLoggedIn) mobileLoggedIn.style.display = 'block';
+    if (landingLoggedOut) landingLoggedOut.style.display = 'none';
+    if (landingLoggedIn) {
+      // Landing page has its own dropdown rendering in index.html inline script
+      // Only show the container, don't overwrite innerHTML
+      landingLoggedIn.style.display = 'flex';
+    }
     renderProfileAvatar();
     renderMobileProfile();
 
     const footerLink = document.getElementById('footer-signup-link');
     if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = 'pages/account.html'; }
+    // Hide footer login/signup links when logged in
+    document.querySelectorAll('.footer a[href*="login.html"], .footer a[href*="signup.html"]').forEach(function(a) {
+      a.style.display = 'none';
+    });
   } else {
     if (loggedOut) loggedOut.style.display = 'flex';
     if (loggedIn) loggedIn.style.display = 'none';
     if (mobileLoggedOut) mobileLoggedOut.style.display = 'block';
     if (mobileLoggedIn) mobileLoggedIn.style.display = 'none';
+    if (landingLoggedOut) landingLoggedOut.style.display = 'flex';
+    if (landingLoggedIn) landingLoggedIn.style.display = 'none';
+    // Show footer login/signup links when logged out
+    document.querySelectorAll('.footer a[href*="login.html"], .footer a[href*="signup.html"]').forEach(function(a) {
+      a.style.display = '';
+    });
   }
 }
 
@@ -434,7 +471,7 @@ function updateAuthUI() {
 function getDisplayUser() {
   const fullName = currentProfile?.full_name || currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || '';
   const username = currentProfile?.username || currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'User';
-  const imgUrl = currentProfile?.profile_image_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || '';
+  const imgUrl = currentProfile?.profile_image_url ?? currentUser?.user_metadata?.avatar_url ?? currentUser?.user_metadata?.picture ?? '';
   return { fullName, username, imgUrl };
 }
 
@@ -442,7 +479,6 @@ function renderProfileAvatar() {
   const container = document.getElementById('profile-avatar-container');
   if (!container) return;
   const { fullName, username, imgUrl } = getDisplayUser();
-  const accountCount = AccountManager.getAccountCount();
 
   container.innerHTML = `
     <button class="profile-btn" onclick="toggleProfileDropdown()" aria-label="Profile menu">
@@ -465,19 +501,6 @@ function renderProfileAvatar() {
         </div>
       </div>
       <div class="dropdown-divider"></div>
-      ${accountCount > 1 ? `
-        <button class="dropdown-item" onclick="toggleProfileDropdown(); showAccountSwitcherModal();">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Switch account
-        </button>
-      ` : ''}
-      ${AccountManager.hasAvailableSlot() ? `
-        <button class="dropdown-item" onclick="toggleProfileDropdown(); addAnotherAccount();">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add another account
-        </button>
-      ` : ''}
-      ${accountCount > 1 || AccountManager.hasAvailableSlot() ? '<div class="dropdown-divider"></div>' : ''}
       <a href="${BASE}/pages/account.html" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Account
@@ -489,10 +512,6 @@ function renderProfileAvatar() {
       <a href="${BASE}/" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-7 7v-1.27A2 2 0 0 1 13 22H4a2 2 0 0 1-2-2v-7.55A7 7 0 0 1 4 8h1V5.73C4.4 5.39 4 4.74 4 4a2 2 0 0 1 2-2h6z"/><circle cx="8.5" cy="13" r="1"/><circle cx="15.5" cy="13" r="1"/></svg>
         AI Chat
-      </a>
-      <a href="${BASE}/pages/download.html" class="dropdown-item">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download App
       </a>
       <div class="dropdown-divider"></div>
       <button class="dropdown-item dropdown-logout" onclick="handleLogout()">
@@ -507,98 +526,21 @@ function renderMobileProfile() {
   const container = document.getElementById('mobile-profile-section');
   if (!container || !currentUser) return;
   const { username, imgUrl } = getDisplayUser();
-  const accounts = AccountManager.getSavedAccounts();
-
-  let accountsListHTML = '';
-  accounts.filter(acc => acc.userId !== currentUser.id).forEach(acc => {
-    const isCurrent = acc.userId === currentUser.id;
-    const initial = (acc.displayName || acc.email || '?')[0].toUpperCase();
-    accountsListHTML += `
-      <div class="mobile-acc-item ${isCurrent ? 'mobile-acc-current' : ''}" data-user-id="${acc.userId}" data-current="${isCurrent}">
-        <div class="mobile-acc-avatar">
-          ${acc.imgUrl ? `<img src="${acc.imgUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback" style="display:none">${initial}</div>` : `<div class="avatar-fallback">${initial}</div>`}
-        </div>
-        <div class="mobile-acc-info">
-          <span class="mobile-acc-name">${acc.username || acc.displayName || 'User'}</span>
-          <span class="mobile-acc-email">${acc.email || ''}</span>
-        </div>
-        ${isCurrent ? '<svg class="mobile-acc-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-      </div>
-    `;
-  });
-
-  const otherAccounts = accounts.filter(a => a.userId !== currentUser.id);
-  const hasSlot = AccountManager.hasAvailableSlot();
-  const showDropdown = otherAccounts.length > 0 || hasSlot;
+  const initial = username.charAt(0).toUpperCase();
 
   container.innerHTML = `
-    <div class="mobile-acc-dropdown ${showDropdown ? '' : 'mobile-acc-single'}" id="mobile-acc-dropdown">
-      <button class="mobile-acc-toggle ${showDropdown ? '' : 'no-dropdown'}" id="mobile-acc-toggle">
-        <div class="mobile-acc-toggle-left">
-          <div class="mobile-avatar">
-            <img src="${imgUrl}" alt="${username}" class="mobile-avatar-img"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-            <div class="avatar-fallback mobile-avatar-fallback" style="${imgUrl ? 'display:none' : ''}">${username.charAt(0).toUpperCase()}</div>
-          </div>
-          <div class="mobile-profile-text">
-            <span class="mobile-username">${username}</span>
-            <span class="mobile-email">${currentUser?.email || ''}</span>
-          </div>
+    <div class="mobile-acc-dropdown mobile-acc-single" id="mobile-acc-dropdown">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 0;">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;overflow:hidden;flex-shrink:0;">
+          ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${initial}</div>` : initial}
         </div>
-        ${showDropdown ? '<svg class="mobile-acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' : ''}
-      </button>
-      <div class="mobile-acc-list" id="mobile-acc-list">
-        ${accountsListHTML}
-        ${hasSlot ? `
-        <div class="mobile-acc-divider"></div>
-        <div class="mobile-acc-item mobile-acc-add" id="mobile-acc-add">
-          <div class="mobile-acc-avatar mobile-acc-add-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </div>
-          <span class="mobile-acc-name">Add another account</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);">${username}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${currentUser?.email || ''}</div>
         </div>
-        ` : ''}
       </div>
     </div>
   `;
-
-  setupMobileAccountDropdown();
-}
-
-function setupMobileAccountDropdown() {
-  const toggle = document.getElementById('mobile-acc-toggle');
-  const dropdown = document.getElementById('mobile-acc-dropdown');
-  const addBtn = document.getElementById('mobile-acc-add');
-  if (!toggle || !dropdown) return;
-
-  toggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle('open');
-  });
-
-  dropdown.querySelectorAll('.mobile-acc-item[data-user-id]').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const userId = item.getAttribute('data-user-id');
-      const isCurrent = item.getAttribute('data-current') === 'true';
-      if (!isCurrent) {
-        const panel = document.querySelector('.mobile-menu');
-        if (panel) panel.classList.remove('open');
-        document.body.style.overflow = '';
-        switchToAccount(userId);
-      }
-    });
-  });
-
-  if (addBtn) {
-    addBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const panel = document.querySelector('.mobile-menu');
-      if (panel) panel.classList.remove('open');
-      document.body.style.overflow = '';
-      addAnotherAccount();
-    });
-  }
 }
 
 /* =========================
@@ -625,19 +567,11 @@ document.addEventListener('click', (e) => {
 async function handleLogout() {
   try {
     try { await Access.releaseSlot(); } catch (_) {}
-    // Remove this account from multi-account store
-    const removed = await AccountManager.removeAccount(currentUser?.id);
-
+    try { await AccountManager.logoutAll(); } catch (_) {}
     await db.auth.signOut();
     currentUser = null;
     currentProfile = null;
-
-    // If other accounts remain, switch to the next one
-    if (removed && removed.nextAccount) {
-      await switchToAccount(removed.nextAccount.userId);
-    } else {
-      window.location.href = BASE + '/index.html';
-    }
+    window.location.href = BASE + '/index.html';
   } catch (e) {
     console.error('Logout failed:', e);
   }
@@ -650,270 +584,21 @@ async function handleLogout() {
 let _switchingAccount = false;
 
 async function switchToAccount(userId, options = {}) {
-  if (_switchingAccount) return;
-  _switchingAccount = true;
-
-  try {
-    showAccountSwitchOverlay();
-
-    const accountData = await AccountManager.switchAccount(userId);
-    if (!accountData || !accountData.session) {
-      hideAccountSwitchOverlay();
-      _switchingAccount = false;
-      if (options.silent) throw new Error('NO_SESSION');
-      const accounts = AccountManager.getSavedAccounts();
-      const acc = accounts.find(a => a.userId === userId);
-      if (acc) showSessionExpiredModal(acc);
-      return;
-    }
-
-    // Apply the session â€” Supabase will auto-refresh if needed
-    const { error } = await db.auth.setSession({
-      access_token: accountData.session.access_token,
-      refresh_token: accountData.session.refresh_token,
-    });
-
-    if (error) {
-      // Try with just refresh token (Supabase can issue new access token)
-      const { error: retryError } = await db.auth.setSession({
-        refresh_token: accountData.session.refresh_token,
-      });
-      if (retryError) {
-        console.error('[AccountSwitch] setSession failed:', retryError);
-        hideAccountSwitchOverlay();
-        _switchingAccount = false;
-        if (options.silent) throw new Error('SESSION_EXPIRED');
-        const accounts = AccountManager.getSavedAccounts();
-        const acc = accounts.find(a => a.userId === userId);
-        showSessionExpiredModal(acc || { userId, email: 'Unknown', displayName: 'Unknown' });
-        return;
-      }
-    }
-
-    // Refresh global state
-    currentUser = (await db.auth.getUser()).data.user;
-    currentProfile = null;
-    await loadProfile();
-
-    // Update saved account metadata with fresh info
-    await AccountManager.saveCurrentSession(currentUser, (await db.auth.getSession()).data.session);
-
-    sessionStorage.removeItem('Anteemonee_session_id');
-    updateAuthUI();
-    hideAccountSwitchOverlay();
-    _switchingAccount = false;
-    window.location.reload();
-  } catch (e) {
-    console.error('[AccountSwitch] failed:', e);
-    hideAccountSwitchOverlay();
-    _switchingAccount = false;
-    throw e;
-  }
+  window.location.reload();
 }
 
-async function addAnotherAccount() {
-  if (!AccountManager.hasAvailableSlot()) {
-    showAccountLimitModal();
-    return;
-  }
-
-  // Save current URL so we can return after adding
-  const returnTo = window.location.href;
-  sessionStorage.setItem('Anteemonee_add_account_return', returnTo);
-  sessionStorage.setItem('Anteemonee_adding_account', 'true');
-
-  // Redirect to login page in "add account" mode
-  window.location.href = BASE + '/pages/login.html?mode=add_account';
-}
-
-async function logoutAllAccounts() {
-  try {
-    try { await Access.releaseSlot(); } catch (_) {}
-    await AccountManager.logoutAll();
-    await db.auth.signOut();
-    currentUser = null;
-    currentProfile = null;
-    window.location.href = BASE + '/index.html';
-  } catch (e) {
-    console.error('[LogoutAll] failed:', e);
-  }
-}
-
-function showAccountSwitchOverlay() {
-  let overlay = document.getElementById('account-switch-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'account-switch-overlay';
-    overlay.innerHTML = `
-      <div class="switch-overlay-content">
-        <div class="switch-spinner"></div>
-        <div class="switch-text">Switching account...</div>
-      </div>`;
-    document.body.appendChild(overlay);
-  }
-  overlay.style.display = 'flex';
-}
-
-function hideAccountSwitchOverlay() {
-  const overlay = document.getElementById('account-switch-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
-
-function showAccountLimitModal() {
-  const accounts = AccountManager.getSavedAccounts();
-  let modal = document.getElementById('account-limit-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'account-limit-modal';
-    modal.className = 'account-modal-overlay';
-    modal.innerHTML = `
-      <div class="account-modal">
-        <div class="account-modal-header">
-          <h3>Account limit reached</h3>
-          <button class="account-modal-close" onclick="closeAccountLimitModal()">&times;</button>
-        </div>
-        <div class="account-modal-body">
-          <p>You can have up to 3 accounts signed in on this browser.</p>
-          <div class="account-modal-accounts" id="limit-modal-accounts"></div>
-        </div>
-        <div class="account-modal-footer">
-          <button class="btn-settings btn-settings-secondary" onclick="closeAccountLimitModal()">Close</button>
-          <button class="btn-settings btn-settings-primary" onclick="closeAccountLimitModal(); if (window.AnteemoneeSettings && window.AnteemoneeSettings.open) window.AnteemoneeSettings.open(); else window.location.href='${BASE}/index.html'">Manage accounts</button>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-  }
-
-  const listEl = modal.querySelector('#limit-modal-accounts');
-  listEl.innerHTML = accounts.map(a => `
-    <div class="limit-account-row">
-      <div class="limit-account-avatar">${a.avatarUrl ? `<img src="${a.avatarUrl}" alt="">` : `<span>${(a.displayName || a.email || '?')[0].toUpperCase()}</span>`}</div>
-      <div class="limit-account-info">
-        <span class="limit-account-name">${a.displayName || a.email}</span>
-        <span class="limit-account-email">${a.email}</span>
-      </div>
-    </div>
-  `).join('');
-
-  modal.style.display = 'flex';
-}
-
-function closeAccountLimitModal() {
-  const modal = document.getElementById('account-limit-modal');
-  if (modal) modal.style.display = 'none';
-}
-
-function showSessionExpiredModal(account) {
-  let modal = document.getElementById('session-expired-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'session-expired-modal';
-    modal.className = 'account-modal-overlay';
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-    document.body.appendChild(modal);
-  }
-
-  const initial = (account.displayName || account.email || '?')[0].toUpperCase();
-  modal.innerHTML = `
-    <div class="account-modal">
-      <div class="account-modal-header">
-        <h3>Session expired</h3>
-        <button class="account-modal-close" onclick="document.getElementById('session-expired-modal').remove()">&times;</button>
-      </div>
-      <div class="account-modal-body">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-          <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:15px;">
-            ${account.avatarUrl ? `<img src="${account.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<span>${initial}</span>`}
-          </div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--text);">${account.displayName || account.email}</div>
-            <div style="font-size:12px;color:var(--text-secondary);">${account.email}</div>
-          </div>
-        </div>
-        <p style="font-size:13px;color:var(--text-secondary);">The session for this account has expired. Please sign in again to continue.</p>
-      </div>
-      <div class="account-modal-footer">
-        <button class="btn-settings btn-settings-secondary" onclick="document.getElementById('session-expired-modal').remove()">Cancel</button>
-        <button class="btn-settings btn-settings-primary" onclick="document.getElementById('session-expired-modal').remove(); reAuthAccount('${account.userId}')">Sign in again</button>
-      </div>
-    </div>`;
-  modal.style.display = 'flex';
-}
-
-async function reAuthAccount(userId) {
-  // Remove the expired account, then redirect to login in add-account mode
-  await AccountManager.removeAccount(userId);
-  const returnTo = window.location.href;
-  sessionStorage.setItem('Anteemonee_add_account_return', returnTo);
-  sessionStorage.setItem('Anteemonee_adding_account', 'true');
-  window.location.href = BASE + '/pages/login.html?mode=add_account';
-}
-
-function showAccountSwitcherModal() {
-  const accounts = AccountManager.getSavedAccounts();
-  const activeId = AccountManager.getActiveUserId();
-  let modal = document.getElementById('account-switcher-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'account-switcher-modal';
-    modal.className = 'account-modal-overlay';
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeAccountSwitcherModal();
-    });
-    document.body.appendChild(modal);
-  }
-
-  modal.innerHTML = `
-    <div class="account-modal">
-      <div class="account-modal-header">
-        <h3>Switch account</h3>
-        <button class="account-modal-close" onclick="closeAccountSwitcherModal()">&times;</button>
-      </div>
-      <div class="account-modal-body">
-        <div class="switcher-accounts-list" id="switcher-accounts-list">
-          ${accounts.map(a => `
-            <button class="switcher-account-row ${a.userId === activeId ? 'active' : ''}" data-user-id="${a.userId}" onclick="handleSwitchAccount('${a.userId}')">
-              <div class="switcher-avatar">${a.avatarUrl ? `<img src="${a.avatarUrl}" alt="">` : `<span>${(a.displayName || a.email || '?')[0].toUpperCase()}</span>`}</div>
-              <div class="switcher-info">
-                <span class="switcher-name">${a.displayName || a.email}</span>
-                <span class="switcher-email">${a.email}</span>
-              </div>
-              ${a.userId === activeId ? '<span class="switcher-active-badge">Current</span>' : ''}
-              ${a.sessionStatus === 'expired' ? '<span class="switcher-expired-badge">Expired</span>' : ''}
-            </button>
-          `).join('')}
-        </div>
-        ${AccountManager.hasAvailableSlot() ? `
-          <button class="switcher-add-btn" onclick="closeAccountSwitcherModal(); addAnotherAccount();">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add another account
-          </button>
-        ` : `
-          <div class="switcher-limit-note">Maximum 3 accounts reached</div>
-        `}
-      </div>
-      <div class="account-modal-footer">
-        <button class="btn-settings btn-settings-danger" onclick="closeAccountSwitcherModal(); handleLogoutAllAccounts();">Log out all accounts</button>
-      </div>
-    </div>`;
-
-  modal.style.display = 'flex';
-}
-
-function closeAccountSwitcherModal() {
-  const modal = document.getElementById('account-switcher-modal');
-  if (modal) modal.style.display = 'none';
-}
-
-async function handleSwitchAccount(userId) {
-  closeAccountSwitcherModal();
-  await switchToAccount(userId);
-}
-
-async function handleLogoutAllAccounts() {
-  if (!confirm('Log out of all accounts? This will remove all saved accounts from this browser.')) return;
-  await logoutAllAccounts();
-}
+function addAnotherAccount() {}
+function logoutAllAccounts() { handleLogout(); }
+function showAccountSwitchOverlay() {}
+function hideAccountSwitchOverlay() {}
+function showAccountLimitModal() {}
+function closeAccountLimitModal() {}
+function showSessionExpiredModal() {}
+function reAuthAccount() {}
+function showAccountSwitcherModal() {}
+function closeAccountSwitcherModal() {}
+function handleSwitchAccount() {}
+function handleLogoutAllAccounts() {}
 
 /* =========================
    NAV & UI EFFECTS
@@ -925,6 +610,42 @@ function setupNav() {
   window.addEventListener('scroll', () => {
     header.classList.toggle('scrolled', window.scrollY > 50);
   }, { passive: true });
+
+  // Notes dropdown — click-persistent (hover still works, but stays open until outside click)
+  const navDrops = document.querySelectorAll('.nav-drop');
+  navDrops.forEach(drop => {
+    const trigger = drop.querySelector('a');
+    const menu = drop.querySelector('.nav-menu');
+    if (!trigger || !menu) return;
+    // Click on trigger toggles .open; prevent #features jump
+    trigger.addEventListener('click', (e) => {
+      if (trigger.getAttribute('href') === '#features' || trigger.getAttribute('href') === '#') {
+        e.preventDefault();
+      }
+      e.stopPropagation();
+      const isOpen = drop.classList.contains('open');
+      // close all others first
+      document.querySelectorAll('.nav-drop.open').forEach(d => { if (d !== drop) d.classList.remove('open'); });
+      if (isOpen) drop.classList.remove('open');
+      else drop.classList.add('open');
+    });
+    // keep open when hovering menu — no extra JS needed, CSS ::before bridges the 6px gap
+  });
+  // Close any open nav-drop on outside click / Esc / link click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-drop')) {
+      document.querySelectorAll('.nav-drop.open').forEach(d => d.classList.remove('open'));
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.querySelectorAll('.nav-drop.open').forEach(d => d.classList.remove('open'));
+  });
+  document.querySelectorAll('.nav-menu a').forEach(a => {
+    a.addEventListener('click', () => {
+      // close after navigation click
+      document.querySelectorAll('.nav-drop.open').forEach(d => d.classList.remove('open'));
+    });
+  });
 }
 
 function setupMobileMenu() {
@@ -999,8 +720,6 @@ function setupAuthPages() {
 function setupAddAccountBanner() {
   const urlParams = new URLSearchParams(window.location.search);
   const isAddMode = urlParams.get('mode') === 'add_account';
-  const isLoginPage = !!document.getElementById('login-form');
-  const isSignupPage = !!document.getElementById('signup-form');
 
   const banner = document.getElementById('add-account-banner');
 
@@ -1035,46 +754,8 @@ function setupAddAccountBanner() {
     return;
   }
 
-  // Normal login page (not add-account mode): show saved accounts for quick sign-in
-  if (isLoginPage && !isAddMode && banner) {
-    const accounts = AccountManager.getSavedAccounts();
-    if (accounts.length > 0) {
-      let html = '<div style="width:100%;">';
-      html += '<div style="margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Continue as</div>';
-      html += '<div style="display:flex;flex-direction:column;gap:6px;">';
-      accounts.forEach(acc => {
-    const initial = (acc.username || acc.displayName || acc.email || '?')[0].toUpperCase();
-        html += `
-          <button class="switcher-account-row" style="border:1px solid var(--border);background:var(--bg-card);" onclick="quickLogin('${acc.userId}')">
-            <div class="switcher-avatar">
-              ${acc.avatarUrl ? `<img src="${acc.avatarUrl}" alt="">` : `<span>${initial}</span>`}
-            </div>
-            <div class="switcher-info">
-              <span class="switcher-name">${acc.displayName || acc.email}</span>
-              <span class="switcher-email">${acc.email}</span>
-            </div>
-          </button>`;
-      });
-      html += '</div>';
-      html += '<div class="auth-divider" style="margin:14px 0;"><span>or sign in to another account</span></div>';
-      html += '</div>';
-      banner.innerHTML = html;
-      banner.style.display = 'block';
-    }
-  }
-}
-
-async function quickLogin(userId) {
-  // Already logged in as this account â€” just go home
-  if (currentUser && currentUser.id === userId) {
-    window.location.href = BASE + '/index.html';
-    return;
-  }
-  try {
-    await switchToAccount(userId, { silent: true });
-  } catch (e) {
-    window.location.href = BASE + '/pages/login.html';
-  }
+  // Single-account login: no "Continue as" quick-switch list. The banner
+  // stays hidden on normal login/signup pages.
 }
 
 /* ---- LOGIN ---- */
@@ -1231,6 +912,21 @@ function setupSignupForm() {
   form.addEventListener('submit', handleSignup);
 }
 
+const ALLOWED_EMAIL_DOMAINS = new Set([
+  'gmail.com', 'googlemail.com',
+  'icloud.com', 'me.com', 'mac.com',
+  'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
+  'yahoo.com', 'yahoo.co.uk', 'ymail.com',
+  'proton.me', 'protonmail.com',
+  'aol.com'
+]);
+
+function isAllowedEmailDomain(email) {
+  const domain = (email || '').trim().toLowerCase().split('@')[1] || '';
+  if (!domain || !domain.includes('.')) return false;
+  return ALLOWED_EMAIL_DOMAINS.has(domain);
+}
+
 async function handleSignup(e) {
   e.preventDefault();
   const form = e.currentTarget;
@@ -1249,6 +945,7 @@ async function handleSignup(e) {
   if (confirmError) confirmError.style.display = 'none';
 
   try {
+    if (!isAllowedEmailDomain(email)) throw new Error('Please use a valid email provider (e.g. Gmail, iCloud, Outlook, Yahoo).');
     if (!username || username.length < 3) throw new Error('Username must be at least 3 characters.');
     if (!/^[a-zA-Z0-9_]+$/.test(username)) throw new Error('Username can only contain letters, numbers, and underscores.');
 
@@ -1437,6 +1134,7 @@ function validatePassword(pw) {
   return { valid: true };
 }
 
+
 /* ---- FORGOT PASSWORD ---- */
 
 function setupForgotPasswordForm() {
@@ -1595,7 +1293,7 @@ async function getOnboardingStep() {
     if (!profile.date_of_birth || !profile.province_id) { console.log('[getOnboardingStep] missing dob/province â†’ 0', profile.date_of_birth, profile.province_id); return 0; }
     if (!profile.city_id) { console.log('[getOnboardingStep] missing city â†’ 1'); return 1; }
     const { data: acads, error: acadErr } = await db.from('student_academic_profiles')
-      .select('id, education_system_id, board_id, class_level_id, group_id, college_id, academic_session_id, exam_year')
+      .select('id, education_system_id, board_id, class_level_id, group_id')
       .eq('user_id', currentUser.id);
     if (acadErr) { console.error('[getOnboardingStep] SAP query error:', acadErr); return -1; }
     const acad = acads?.length ? acads[0] : null;
@@ -1604,25 +1302,13 @@ async function getOnboardingStep() {
     if (!acad.board_id) { console.log('[getOnboardingStep] no board â†’ 3'); return 3; }
     if (!acad.class_level_id) { console.log('[getOnboardingStep] no class_level â†’ 4'); return 4; }
 
-    // For ICS: skip group check, go straight to subjects
+    // For ICS: no group step — academic profile is complete after class
     const isIcsSystem = await db.from('education_systems').select('code').eq('id', acad.education_system_id).maybeSingle();
     const icsMode = isIcsSystem?.data?.code === 'ics';
 
-    if (!icsMode && !acad.group_id) { console.log('[getOnboardingStep] no group â†’ 5'); return 5; }
+    if (!icsMode && !acad.group_id) { console.log('[getOnboardingStep] no group → 5'); return 5; }
 
-    if (acad.id) {
-      const { count, error: countErr } = await db.from('student_subjects')
-        .select('id', { count: 'exact', head: true })
-        .eq('academic_profile_id', acad.id);
-      if (countErr) { console.error('[getOnboardingStep] subjects query error:', countErr); return -1; }
-      console.log('[getOnboardingStep] subject count:', count);
-      if (!count) return 5;
-    } else {
-      return 5;
-    }
-    if (!acad.college_id) { console.log('[getOnboardingStep] no college â†’ 6'); return 6; }
-    if (!acad.academic_session_id) { console.log('[getOnboardingStep] no session â†’ 7'); return 7; }
-    console.log('[getOnboardingStep] all complete â†’ -1');
+    console.log('[getOnboardingStep] all complete → -1');
     return -1;
   } catch (e) {
     console.error('[getOnboardingStep] error:', e);
@@ -1636,7 +1322,7 @@ async function getOnboardingStep() {
 
 const onboarding = {
   currentStep: 0,
-  totalSteps: 9,
+  totalSteps: 6,
   data: {
     dob: '',
     province_id: null,
@@ -1645,10 +1331,6 @@ const onboarding = {
     board_id: null,
     class_level_id: null,
     group_id: null,
-    exam_year: '',
-    college_id: null,
-    academic_session_id: null,
-    selected_subjects: [],
     selected_goals: [],
     primary_goal_id: null
   },
@@ -1659,9 +1341,6 @@ const onboarding = {
     boards: [],
     class_levels: [],
     groups: [],
-    subjects: [],
-    colleges: [],
-    academic_sessions: [],
     goal_categories: [],
     goals: []
   }
@@ -1674,16 +1353,14 @@ function setupOnboarding() {
 }
 
 async function loadOnboardingRefData() {
-  const [systemsRes, provincesRes, sessionsRes, goalsCatRes] = await Promise.all([
+  const [systemsRes, provincesRes, goalsCatRes] = await Promise.all([
     db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
     db.from('provinces').select('*').order('name'),
-    db.from('academic_sessions').select('*').order('start_year'),
     db.from('goal_categories').select('*').order('sort_order')
   ]);
 
   onboarding.ref.education_systems = systemsRes.data || [];
   onboarding.ref.provinces = provincesRes.data || [];
-  onboarding.ref.academic_sessions = sessionsRes.data || [];
 
   const cats = goalsCatRes.data || [];
   onboarding.ref.goal_categories = cats;
@@ -1719,98 +1396,6 @@ async function loadGroups(systemId) {
   onboarding.ref.groups = data || [];
 }
 
-async function loadSubjects(systemId, groupId) {
-  let query = db.from('subjects')
-    .select('*')
-    .eq('education_system_id', systemId);
-  if (groupId) {
-    query = query.or('group_id.is.null,group_id.eq.' + groupId);
-  } else {
-    query = query.is('group_id', null);
-  }
-  const { data } = await query.order('is_compulsory', { ascending: false }).order('name');
-  onboarding.ref.subjects = data || [];
-}
-
-function getClassYearValue() {
-  const cl = onboarding.ref.class_levels.find(c => c.id == onboarding.data.class_level_id);
-  return cl?.value || 0;
-}
-
-function isSecondYear() {
-  return getClassYearValue() === 12;
-}
-
-function isICS() {
-  const sys = onboarding.ref.education_systems.find(s => s.id == onboarding.data.education_system_id);
-  return sys?.code === 'ics';
-}
-
-const ICS_SUBJECTS = ['Computer Science', 'Mathematics', 'Physics', 'Economics', 'Statistics'];
-
-async function loadICSSubjects(systemId) {
-  const { data } = await db.from('subjects')
-    .select('*')
-    .eq('education_system_id', systemId)
-    .order('name');
-  const seen = new Set();
-  onboarding.ref.subjects = (data || []).filter(s => {
-    const key = s.name.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function getICSCompulsorySubjects() {
-  const secondYear = isSecondYear();
-  return onboarding.ref.subjects.filter(s => {
-    if (!s.is_compulsory) return false;
-    const name = (s.name || '').toLowerCase();
-    if (name.includes('pakistan studies')) return secondYear;
-    if (name.includes('islamiat') || name.includes('islamiyat')) return !secondYear;
-    return true;
-  });
-}
-
-function getICSAllSubjects(selectedIds) {
-  const compulsory = getICSCompulsorySubjects();
-  const numIds = selectedIds.map(Number);
-  const chosen = onboarding.ref.subjects.filter(s => numIds.includes(s.id));
-  const secondYear = isSecondYear();
-  const suffix = secondYear ? '-II' : '-I';
-  return [...compulsory, ...chosen].map(s => {
-    const name = (s.name || '').toLowerCase();
-    const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
-    return { ...s, displayName: noSuffix ? s.name : `${s.name} ${suffix}` };
-  });
-}
-
-function getOnboardingSubjects() {
-  const secondYear = isSecondYear();
-  const suffix = secondYear ? '-II' : '-I';
-  return onboarding.ref.subjects
-    .filter(s => {
-      const name = (s.name || '').toLowerCase();
-      if (name.includes('pakistan studies')) return secondYear;
-      if (name.includes('islamiat') || name.includes('islamiyat')) return !secondYear;
-      return true;
-    })
-    .map(s => {
-      const name = (s.name || '').toLowerCase();
-      const noSuffix = name.includes('pakistan studies') || name.includes('islamiat') || name.includes('islamiyat');
-      return { ...s, displayName: noSuffix ? s.name : `${s.name} ${suffix}` };
-    });
-}
-
-async function loadAllColleges() {
-  const { data } = await db.from('colleges')
-    .select('id,name,city_id')
-    .order('name')
-    .limit(500);
-  onboarding.ref.colleges = data || [];
-}
-
 async function loadCities(provinceId) {
   const { data } = await db.from('cities')
     .select('*')
@@ -1836,13 +1421,6 @@ async function loadOnboardingData() {
       onboarding.data.board_id = acad.board_id || null;
       onboarding.data.class_level_id = acad.class_level_id || null;
       onboarding.data.group_id = acad.group_id || null;
-      onboarding.data.college_id = acad.college_id || null;
-      onboarding.data.academic_session_id = acad.academic_session_id || null;
-      onboarding.data.exam_year = acad.exam_year || new Date().getFullYear().toString();
-      if (acad.id) {
-        const { data: subjects } = await db.from('student_subjects').select('subject_id').eq('academic_profile_id', acad.id);
-        onboarding.data.selected_subjects = subjects?.map(s => s.subject_id) || [];
-      }
     }
   } catch (e) {
     console.error('loadOnboardingData error:', e);
@@ -1878,29 +1456,8 @@ async function saveStepData(step) {
       break;
     }
     case 5: {
-      if (isICS()) {
-        const row = await sapExists();
-        if (row) {
-          await db.from('student_subjects').delete().eq('academic_profile_id', row.id);
-          const allIds = getICSAllSubjects(d.selected_subjects).map(s => s.id);
-          if (allIds.length) {
-            await db.from('student_subjects').insert(allIds.map(sid => ({ academic_profile_id: row.id, subject_id: sid })));
-          }
-        }
-      } else {
-        const row = await sapExists();
-        if (row) await db.from('student_academic_profiles').update({ group_id: d.group_id }).eq('user_id', currentUser.id);
-      }
-      break;
-    }
-    case 6: {
       const row = await sapExists();
-      if (row) await db.from('student_academic_profiles').update({ college_id: d.college_id }).eq('user_id', currentUser.id);
-      break;
-    }
-    case 7: {
-      const row = await sapExists();
-      if (row) await db.from('student_academic_profiles').update({ academic_session_id: d.academic_session_id, exam_year: parseInt(d.exam_year) || new Date().getFullYear() }).eq('user_id', currentUser.id);
+      if (row) await db.from('student_academic_profiles').update({ group_id: d.group_id }).eq('user_id', currentUser.id);
       break;
     }
   }
@@ -1988,36 +1545,7 @@ async function loadStepData(step) {
       if (d.education_system_id) await loadClassLevels(d.education_system_id);
       break;
     case 5:
-      if (d.education_system_id) {
-        if (isICS()) {
-          await loadICSSubjects(d.education_system_id);
-        } else {
-          await loadGroups(d.education_system_id);
-        }
-      }
-      break;
-    case 6:
-      await loadAllColleges();
-      break;
-    case 7:
-      break;
-    case 8:
-      if (!r.education_systems.length) await loadOnboardingRefData();
-      if (d.province_id && !r.cities.length) await loadCities(d.province_id);
-      if (d.education_system_id) {
-        if (!r.boards.length) {
-          const province = r.provinces.find(p => p.id == d.province_id);
-          await loadBoards(d.education_system_id, province?.name);
-        }
-        if (!r.class_levels.length) await loadClassLevels(d.education_system_id);
-        if (isICS()) {
-          if (!r.subjects.length) await loadICSSubjects(d.education_system_id);
-        } else {
-          if (!r.groups.length) await loadGroups(d.education_system_id);
-          if (!r.subjects.length) await loadSubjects(d.education_system_id, d.group_id);
-        }
-      }
-      if (!r.colleges.length) await loadAllColleges();
+      if (d.education_system_id) await loadGroups(d.education_system_id);
       break;
   }
 }
@@ -2055,19 +1583,7 @@ async function validateOnboardingStep(step) {
       if (!d.class_level_id) { showMessage(errorEl, 'Please select your class.'); return false; }
       return true;
     case 5:
-      if (isICS()) {
-        if (d.selected_subjects.length !== 3) { showMessage(errorEl, 'Please select exactly 3 subjects.'); return false; }
-      } else {
-        if (!d.group_id) { showMessage(errorEl, 'Please select your group.'); return false; }
-      }
-      return true;
-    case 6:
-      if (!d.college_id) { showMessage(errorEl, 'Please select your college.'); return false; }
-      return true;
-    case 7:
-      if (!d.academic_session_id) { showMessage(errorEl, 'Please select your academic session.'); return false; }
-      return true;
-    case 8:
+      if (!d.group_id) { showMessage(errorEl, 'Please select your group.'); return false; }
       return true;
     default:
       return true;
@@ -2104,7 +1620,7 @@ function renderOnboardingStep() {
           <label for="onb-province">Province</label>
           <select id="onb-province" class="form-input">
             <option value="">Select province</option>
-            ${r.provinces.map(p => `<option value="${p.id}" ${d.province_id === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+            ${r.provinces.filter(p => String(p.name).toLowerCase() === 'punjab').map(p => `<option value="${p.id}" ${d.province_id === p.id || !d.province_id ? 'selected' : ''}>${p.name}</option>`).join('')}
           </select>
         </div>
       `;
@@ -2150,7 +1666,6 @@ function renderOnboardingStep() {
           d.board_id = null;
           d.class_level_id = null;
           d.group_id = null;
-          d.selected_subjects = [];
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
           const province = r.provinces.find(p => p.id == d.province_id);
@@ -2199,7 +1714,6 @@ function renderOnboardingStep() {
         btn.addEventListener('click', async () => {
           d.class_level_id = btn.dataset.id;
           d.group_id = null;
-          d.selected_subjects = [];
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
           await loadGroups(d.education_system_id);
@@ -2208,146 +1722,28 @@ function renderOnboardingStep() {
       break;
 
     case 5:
-      if (isICS()) {
-        const optionalSubjects = r.subjects.filter(s => !s.is_compulsory);
-        container.innerHTML = `
-          <h2 class="onboarding-title">Choose Your Subjects</h2>
-          <p class="onboarding-subtitle">Select exactly 3 subjects.</p>
-          <div class="onboarding-options">
-            ${optionalSubjects.map(s => `
-              <button class="onboarding-option subject-option ${d.selected_subjects.includes(s.id) ? 'selected' : ''}" data-id="${s.id}">
-                <span class="option-name">${s.name}</span>
-              </button>
-            `).join('')}
-          </div>
-          <p class="subject-count" style="font-size:13px;color:var(--text-muted);margin-top:14px">${d.selected_subjects.length} of 3 selected</p>
-        `;
-        container.querySelectorAll('.subject-option').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            if (d.selected_subjects.includes(id)) {
-              d.selected_subjects = d.selected_subjects.filter(x => x !== id);
-              btn.classList.remove('selected');
-            } else {
-              if (d.selected_subjects.length >= 3) return;
-              d.selected_subjects.push(id);
-              btn.classList.add('selected');
-            }
-            const countEl = container.querySelector('.subject-count');
-            if (countEl) countEl.textContent = d.selected_subjects.length + ' of 3 selected';
-          });
-        });
-      } else {
-        container.innerHTML = `
-          <h2 class="onboarding-title">Group</h2>
-          <p class="onboarding-subtitle">What is your group / stream?</p>
-          <div class="onboarding-options">
-            ${r.groups.map(g => `
-              <button class="onboarding-option ${d.group_id === g.id ? 'selected' : ''}" data-id="${g.id}">
-                <span class="option-name">${g.name}</span>
-                ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
-              </button>
-            `).join('')}
-          </div>
-        `;
-        container.querySelectorAll('.onboarding-option').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            d.group_id = btn.dataset.id;
-            container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            await loadSubjects(d.education_system_id, d.group_id);
-            d.selected_subjects = getOnboardingSubjects().map(s => s.id);
-          });
-        });
-      }
-      break;
-
-    case 6:
       container.innerHTML = `
-        <h2 class="onboarding-title">College</h2>
-        <p class="onboarding-subtitle">Which college do you attend?</p>
-        <div class="form-group">
-          <label for="onb-college">College</label>
-          <select id="onb-college" class="form-input">
-            <option value="">Select college</option>
-            ${r.colleges.map(c => `<option value="${c.id}" ${d.college_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-          </select>
-        </div>
-      `;
-      document.getElementById('onb-college')?.addEventListener('change', e => { d.college_id = e.target.value || null; });
-      break;
-
-    case 7: {
-      const classLevel = r.class_levels.find(c => c.id == d.class_level_id);
-      const classValue = classLevel?.value || 0;
-      const isFirstYear = classValue === 11;
-      const filteredSessions = isFirstYear
-        ? r.academic_sessions.filter(s => s.end_year !== 2027)
-        : r.academic_sessions;
-      container.innerHTML = `
-        <h2 class="onboarding-title">Academic Session</h2>
-        <p class="onboarding-subtitle">Select your current academic session.</p>
+        <h2 class="onboarding-title">Group</h2>
+        <p class="onboarding-subtitle">What is your group / stream?</p>
         <div class="onboarding-options">
-          ${filteredSessions.map(s => `
-            <button class="onboarding-option ${d.academic_session_id == s.id ? 'selected' : ''}" data-id="${s.id}" data-start="${s.start_year}" data-end="${s.end_year}">
-              <span class="option-name">${s.label}</span>
-              <span class="option-desc">${s.start_year} â€” ${s.end_year}</span>
+          ${r.groups.map(g => `
+            <button class="onboarding-option ${d.group_id === g.id ? 'selected' : ''}" data-id="${g.id}">
+              <span class="option-name">${g.name}</span>
+              ${g.description ? `<span class="option-desc">${g.description}</span>` : ''}
             </button>
           `).join('')}
         </div>
-        <div id="exam-year-msg"></div>
       `;
-      function renderExamMsg() {
-        const wrap = document.getElementById('exam-year-msg');
-        if (!wrap) return;
-        if (d.academic_session_id) {
-          const sess = r.academic_sessions.find(s => s.id == d.academic_session_id);
-          if (sess) {
-            const examYear = isFirstYear ? Math.floor((sess.start_year + sess.end_year) / 2) : sess.end_year;
-            d.exam_year = examYear.toString();
-            wrap.innerHTML = `<div style="margin-top:20px;padding:16px;border-radius:var(--radius-md);background:var(--accent-soft);border:1px solid rgba(124,92,255,0.15);text-align:center"><span style="font-size:15px;font-weight:600;color:var(--accent)">So your exam year is ${examYear}. Good Luck!</span></div>`;
-            return;
-          }
-        }
-        d.exam_year = '';
-        wrap.innerHTML = '';
-      }
-      renderExamMsg();
       container.querySelectorAll('.onboarding-option').forEach(btn => {
         btn.addEventListener('click', () => {
-          d.academic_session_id = btn.dataset.id;
+          d.group_id = btn.dataset.id;
           container.querySelectorAll('.onboarding-option').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
-          renderExamMsg();
         });
       });
       break;
-    }
-
-    case 8:
-      container.innerHTML = `
-        <h2 class="onboarding-title">Review Your Profile</h2>
-        <p class="onboarding-subtitle">Check that everything looks correct.</p>
-        <div class="onboarding-review">
-          <div class="review-row"><span class="review-label">Date of Birth</span><span class="review-value">${d.dob || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Province</span><span class="review-value">${r.provinces.find(p => p.id == d.province_id)?.name || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">City</span><span class="review-value">${r.cities.find(c => c.id == d.city_id)?.name || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Education System</span><span class="review-value">${r.education_systems.find(s => s.id == d.education_system_id)?.name || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Board</span><span class="review-value">${r.boards.find(b => b.id == d.board_id)?.name || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Class</span><span class="review-value">${r.class_levels.find(c => c.id == d.class_level_id)?.label || 'â€”'}</span></div>
-          ${isICS() ? `<div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${getICSAllSubjects(d.selected_subjects).map(s => s.displayName).join(', ') || 'â€”'}</span></div>` : `
-          <div class="review-row"><span class="review-label">Group</span><span class="review-value">${r.groups.find(g => g.id == d.group_id)?.name || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Subjects</span><span class="review-value">${d.selected_subjects.map(id => { const s = r.subjects.find(s => s.id == id); return s ? getOnboardingSubjects().find(x => x.id === id)?.displayName || s.name : ''; }).filter(Boolean).join(', ') || 'â€”'}</span></div>`}
-          <div class="review-row"><span class="review-label">College</span><span class="review-value">${r.colleges.find(c => c.id == d.college_id)?.name || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Academic Session</span><span class="review-value">${r.academic_sessions.find(s => s.id == d.academic_session_id)?.label || 'â€”'}</span></div>
-          <div class="review-row"><span class="review-label">Exam Year</span><span class="review-value">${d.exam_year || 'â€”'}</span></div>
-        </div>
-      `;
-      break;
   }
 }
-
-/* ---- SAVE ONBOARDING ---- */
 
 async function saveOnboarding() {
   const nextBtn = document.getElementById('onboarding-next');
@@ -2360,18 +1756,12 @@ async function saveOnboarding() {
 
     const d = onboarding.data;
 
-    const examYearInt = parseInt(d.exam_year, 10);
-    const finalExamYear = Number.isFinite(examYearInt) ? examYearInt : new Date().getFullYear();
-
     const sapPayload = {
       user_id: currentUser.id,
       education_system_id: d.education_system_id ? Number(d.education_system_id) : null,
       board_id: d.board_id ? Number(d.board_id) : null,
       class_level_id: d.class_level_id ? Number(d.class_level_id) : null,
-      exam_year: finalExamYear,
-      group_id: d.group_id ? Number(d.group_id) : null,
-      college_id: d.college_id ? Number(d.college_id) : null,
-      academic_session_id: d.academic_session_id ? Number(d.academic_session_id) : null
+      group_id: d.group_id ? Number(d.group_id) : null
     };
 
     console.log('[saveOnboarding] SAP payload:', JSON.stringify(sapPayload));
@@ -2395,25 +1785,6 @@ async function saveOnboarding() {
       throw acadErr;
     }
     console.log('[saveOnboarding] SAP upsert result:', acadProfileRes);
-
-    const acadProfile = acadProfileRes?.length ? acadProfileRes[0] : null;
-
-    if (acadProfile?.id && d.selected_subjects.length) {
-      await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
-      const finalSubjectIds = isICS() ? getICSAllSubjects(d.selected_subjects).map(s => s.id) : d.selected_subjects.map(Number);
-      const subjectRows = finalSubjectIds.map(sid => ({
-        academic_profile_id: acadProfile.id,
-        subject_id: Number(sid)
-      }));
-      if (subjectRows.length) {
-        const { error: subErr } = await db.from('student_subjects').insert(subjectRows);
-        if (subErr) {
-          console.error('[saveOnboarding] Subjects insert error:', subErr);
-          throw subErr;
-        }
-        console.log('[saveOnboarding] Subjects saved:', subjectRows.length);
-      }
-    }
 
     await loadProfile();
     console.log('[saveOnboarding] All saved. Profile after reload:', JSON.stringify(currentProfile));
@@ -2472,7 +1843,7 @@ const DEFAULT_PREFS = {
   ai_response_style: 'balanced', ai_language: 'english',
   ai_voice_enabled: true, ai_voice_speed: 100,
   ai_study_recommendations: true, ai_autoplay_voice: false,
-  ai_memory_enabled: true, ai_personalization: '',
+  ai_memory_enabled: true, ai_personalization: '', ai_references: false,
   planner_daily_goal_minutes: 120, planner_default_session_min: 45,
   planner_week_starts_on: 1, planner_break_preference: 'short_breaks',
   planner_auto_schedule: true, planner_exam_prep_mode: 'balanced',

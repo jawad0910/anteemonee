@@ -1,6 +1,6 @@
 /**
  * Anteemonee Voice Chat — ChatGPT-style hands-free conversation
- * STT: Groq whisper-large-v3-turbo via Supabase Edge Function `voice-stt` (fallback to Web Speech API)
+ * STT: Groq whisper-large-v3-turbo via Supabase Edge Function `voice-stt`
  * TTS: Gemini 3.1 Flash via `voice-tts`
  *
  * Conversation mode: auto VAD — enter overlay → auto listen → silence auto-stop → send → TTS → auto listen again.
@@ -13,21 +13,20 @@
 
   // Overlay / phase state
   let isOverlayOpen = false;
-  let isListening = false;       // MediaRecorder is recording (or SpeechRecognition active)
+  let isListening = false;       // MediaRecorder is recording
   let isTranscribing = false;
   let isPaused = false;          // user tapped to pause conversation
+  let isMuted = false;           // user muted mic — tracks disabled
   let conversationActive = false;
   let voicePhase = 'idle';       // 'idle' | 'listening' | 'transcribing' | 'sending' | 'ai-speaking'
-
-  // SpeechRecognition fallback
-  let recognition = null;
-  let finalTranscript = '';
 
   // Whisper path
   let mediaStream = null;        // the raw mic stream shared between VAD + recorder
   let mediaRecorder = null;
   let audioChunks = [];
   let whisperMime = '';
+  let interimTimer = null;
+  let interimBusy = false;
 
   // VAD (Voice Activity Detection) — drives hands-free behavior
   let audioCtx = null;
@@ -35,16 +34,18 @@
   let vadRAF = null;
   let vadData = null;
   let hasSpeechSinceStart = false;
+  let speechFrames = 0;            // consecutive loud frames (debounce noise pops)
   let lastSpeechTime = 0;
   let recordingStartTime = 0;
   let bargeSpeechStart = 0;
-  // Tuning — works well on MacBook / phone mics with echoCancellation on
-  const VAD_SILENCE_MS = 1300;        // silence after speech → auto send
-  const VAD_MIN_SPEECH_MS = 350;      // must have at least this much speech before silence counts
-  const VAD_SPEECH_THRESHOLD = 14;    // RMS volume 0-100; ~12-18 is good
-  const VAD_BARGE_THRESHOLD = 18;     // slightly higher during TTS to avoid music triggering
-  const VAD_BARGE_HOLD_MS = 260;      // continuous speech for this long during TTS → barge-in
-  const VAD_MAX_RECORD_MS = 30000;    // safety cap: 30s per utterance
+  // Tuning — don't clip word edges (clipping = misheard words)
+  const VAD_SILENCE_MS = 850;            // stop 0.85s after you finish
+  const VAD_MIN_SPEECH_MS = 600;         // require real speech before silence counts
+  const VAD_SPEECH_THRESHOLD = 12;
+  const VAD_BARGE_THRESHOLD = 24;        // higher = background noise can't cut AI replies
+  const VAD_BARGE_HOLD_MS = 260;
+  const VAD_MAX_RECORD_MS = 12000;
+  const VAD_NO_SPEECH_TIMEOUT_MS = 4500;
   const VAD_IDLE_POLL_MS = 60;
 
   // TTS state
@@ -53,6 +54,8 @@
   let ttsController = null;
   let ttsVoice = 'Kore';
   const TTS_MAX_CHARS = 4000;
+  let noSpeechRestarts = 0;       // count consecutive no-speech restarts
+  const MAX_NO_SPEECH_RESTARTS = 3; // stop after 3 restarts
 
   // --- DOM ---
   let els = {};
@@ -84,7 +87,7 @@
         return { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY };
       }
     } catch (_) {}
-    return { url: 'https://zkuytvjeqkpexcbyoyhz.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjUwNjcyMTIsImV4cCI6MjA0MDY0MzIxMn0._VJbk4XQCnN0BxMbFQP5OqWKjAwXf8lGLgN4Lfxpmk0' };
+    return { url: 'https://zkuytvjeqkpexcbyoyhz.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44' };
   }
 
   async function getAuthHeader() {
@@ -100,12 +103,12 @@
   }
 
   function pickMime() {
+    // Safari: prefer mp4 (native, works best with Groq). Chrome: webm.
     const cand = [
+      'audio/mp4',
       'audio/webm;codecs=opus',
       'audio/webm',
-      'audio/mp4',
       'audio/aac',
-      'audio/ogg;codecs=opus',
     ];
     for (const m of cand) {
       try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; } catch (_) {}
@@ -116,48 +119,93 @@
   function hasMediaRecorder() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   }
-  function hasSpeechRecognition() {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  }
 
-  function createRecognition() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return null;
-    const r = new SR();
-    r.continuous = true; r.interimResults = true; r.lang = 'en-US';
-    try { r.maxAlternatives = 1; } catch (_) {}
-    return r;
+  function setStatus(text) {
+    const { status } = getEls(); if (!status) return;
+    // Only two states shown: Listening… / Speaking… (no error spam)
+    status.textContent = /speak/i.test(text || '') ? 'Speaking…' : 'Listening…';
   }
-
-  function setStatus(text) { const { status } = getEls(); if (status) status.textContent = text; }
   function setTranscript(text, isInterim) {
-    const { transcript } = getEls(); if (!transcript) return;
-    if (!text) { transcript.textContent = ''; transcript.classList.remove('has-text','interim'); return; }
-    transcript.textContent = text; transcript.classList.add('has-text'); transcript.classList.toggle('interim', !!isInterim);
+    const { transcript } = getEls();
+    // route captions into in-call chat bubbles (old box hidden in call UI)
+    if (!text) { clearPendingUser(); return; }
+    if (isInterim) { upsertPendingUser(text); return; }
+    clearPendingUser();
+    if (transcript) { transcript.textContent = ''; transcript.classList.remove('has-text', 'interim'); }
+  }
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function callMsgs() { return document.getElementById('call-messages'); }
+  function stickScroll(box) {
+    if (!box) return;
+    try { if (box.scrollHeight - box.scrollTop - box.clientHeight < 90) box.scrollTop = box.scrollHeight; } catch (_) {}
+  }
+  let pendingUserEl = null;
+  let aiBubbleEl = null;
+  function clearPendingUser() { if (pendingUserEl) { try { pendingUserEl.remove(); } catch (_) {} pendingUserEl = null; } }
+  function upsertPendingUser(text) {
+    const box = callMsgs(); if (!box) return;
+    if (!pendingUserEl) {
+      pendingUserEl = document.createElement('div');
+      pendingUserEl.className = 'call-msg user pending';
+      box.appendChild(pendingUserEl);
+    }
+    pendingUserEl.textContent = text;
+    stickScroll(box);
+  }
+  function appendUserBubble(text) {
+    const box = callMsgs(); if (!box) return;
+    clearPendingUser();
+    const d = document.createElement('div');
+    d.className = 'call-msg user';
+    d.textContent = String(text || '');
+    box.appendChild(d);
+    stickScroll(box);
+  }
+  function beginAiBubble() {
+    const box = callMsgs(); if (!box) return;
+    aiBubbleEl = document.createElement('div');
+    aiBubbleEl.className = 'call-msg ai pending';
+    box.appendChild(aiBubbleEl);
+    stickScroll(box);
+  }
+  function appendAiText(chunk) {
+    if (!aiBubbleEl) beginAiBubble();
+    if (!aiBubbleEl) return;
+    aiBubbleEl.textContent = (aiBubbleEl.textContent || '') + String(chunk || '');
+    stickScroll(callMsgs());
+  }
+  function finalizeAiBubble() {
+    if (aiBubbleEl) { aiBubbleEl.classList.remove('pending'); aiBubbleEl = null; }
+  }
+  function clearCallChat() {
+    const box = callMsgs(); if (box) box.innerHTML = '';
+    pendingUserEl = null; aiBubbleEl = null;
   }
 
   function updateMicUI() {
     const { micLabel, overlay, btnVoice, micBtn } = getEls();
     if (micLabel) {
-      if (isPaused) micLabel.textContent = 'Paused · tap to resume';
-      else if (voicePhase === 'ai-speaking') micLabel.textContent = 'Speaking… tap to interrupt';
+      if (isMuted) micLabel.textContent = 'Muted';
+      else if (isPaused) micLabel.textContent = 'Paused';
+      else if (voicePhase === 'ai-speaking') micLabel.textContent = 'AI speaking…';
       else if (voicePhase === 'sending') micLabel.textContent = 'Thinking…';
       else if (isTranscribing) micLabel.textContent = 'Transcribing…';
-      else if (isListening) micLabel.textContent = 'Listening… tap to pause';
-      else if (conversationActive) micLabel.textContent = 'Listening…';
-      else micLabel.textContent = 'Start conversation';
+      else micLabel.textContent = 'Listening…';
     }
     if (overlay) {
-      overlay.classList.toggle('listening', isListening && !isPaused);
+      overlay.classList.toggle('listening', isListening && !isPaused && !isMuted);
       overlay.classList.toggle('speaking', voicePhase === 'ai-speaking');
-      overlay.classList.toggle('paused', !!isPaused);
+      overlay.classList.toggle('paused', !!isPaused || !!isMuted);
     }
     if (btnVoice) btnVoice.classList.toggle('active', !!isOverlayOpen);
     if (micBtn) {
       const busy = voicePhase === 'sending' || voicePhase === 'transcribing';
       micBtn.classList.toggle('disabled', !!busy);
-      micBtn.setAttribute('aria-label', isPaused ? 'Resume conversation' : isListening ? 'Pause listening' : voicePhase === 'ai-speaking' ? 'Interrupt AI' : 'Start listening');
+      micBtn.classList.toggle('muted', !!isMuted);
+      micBtn.setAttribute('aria-label', isMuted ? 'Unmute mic' : 'Mute mic');
     }
+    const callMute = document.getElementById('call-mute-btn');
+    if (callMute) callMute.classList.toggle('muted', !!isMuted);
   }
 
   // --- VAD helpers ---
@@ -170,8 +218,8 @@
       sum += v * v;
     }
     const rms = Math.sqrt(sum / vadData.length);
-    // scale 0-128 → 0-100
-    return (rms / 128) * 100 * 1.6; // gain 1.6 makes threshold ~14 sensitive
+    // scale 0-128 → 0-100 (gain tuned so threshold 18 ≈ normal speaking voice)
+    return (rms / 128) * 100 * 1.2;
   }
 
   function ensureVADStream() {
@@ -183,7 +231,12 @@
     try {
       if (!mediaStream) {
         mediaStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: false,   // keep raw audio for better whisper accuracy
+            autoGainControl: true,
+            sampleRate: 48000,
+          },
         });
       }
     } catch (e) {
@@ -249,11 +302,21 @@
           return;
         }
 
+        // Debug: log volume every second
+        if (Math.floor(elapsed / 1000) > Math.floor((elapsed - VAD_IDLE_POLL_MS) / 1000)) {
+          console.log('[voice] vol:', vol.toFixed(1), 'threshold:', VAD_SPEECH_THRESHOLD, 'speech:', hasSpeechSinceStart, 'elapsed:', Math.round(elapsed / 1000) + 's');
+        }
+
         if (vol > VAD_SPEECH_THRESHOLD) {
-          if (!hasSpeechSinceStart) {
+          speechFrames++;
+          // Require ~120ms of CONTINUOUS loud audio before it counts as speech
+          // (single noise pops don't trigger, real voice passes easily)
+          if (!hasSpeechSinceStart && speechFrames >= 2) {
             hasSpeechSinceStart = true;
           }
           lastSpeechTime = now;
+        } else {
+          speechFrames = 0;
         }
 
         // Only auto-stop after we have heard some speech
@@ -265,9 +328,10 @@
             stopWhisperCapture();
           }
         } else {
-          // No speech yet — keep recording, don't timeout early.
-          // If user is silent for > 8s with no speech at all, we keep listening (don't auto-stop)
-          // This avoids "No speech — try again" churn.
+          // No speech yet — stop after timeout so we don't record forever
+          if (elapsed > VAD_NO_SPEECH_TIMEOUT_MS) {
+            stopWhisperCapture();
+          }
         }
       }
     };
@@ -279,6 +343,8 @@
   }
 
   function teardownMic() {
+    if (interimTimer) { clearInterval(interimTimer); interimTimer = null; }
+    interimBusy = false;
     stopVADLoop();
     bargeSpeechStart = 0;
     hasSpeechSinceStart = false;
@@ -299,18 +365,30 @@
   }
 
   // --- Overlay open / close (conversation lifecycle) ---
+  let voiceMark = 0;
+  function voiceEphemeralOn() {
+    try { window.__voiceEphemeral = true; } catch (_) {}
+    try { voiceMark = (window.AnteemoneeVoiceStore && window.AnteemoneeVoiceStore.mark()) || 0; } catch (_) { voiceMark = 0; }
+  }
+  function voiceEphemeralOff() {
+    try { window.__voiceEphemeral = false; } catch (_) {}
+    try { if (window.AnteemoneeVoiceStore) window.AnteemoneeVoiceStore.rewind(voiceMark); } catch (_) {}
+    voiceMark = 0;
+  }
   async function openVoice() {
     const { overlay, unsupported } = getEls(); if (!overlay) return;
     const canWhisper = hasMediaRecorder();
-    const canWebSpeech = hasSpeechRecognition();
-    if (!canWhisper && !canWebSpeech && unsupported) {
-      unsupported.style.display = 'block'; unsupported.textContent = 'Mic not supported in this browser. Use Chrome/Safari 16+ and allow microphone.';
+    if (!canWhisper && unsupported) {
+      unsupported.style.display = 'block'; unsupported.textContent = 'Mic not supported in this browser. Use Chrome or Safari 16+ and allow microphone.';
     } else if (unsupported) unsupported.style.display = 'none';
 
     overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
-    isOverlayOpen = true; conversationActive = true; isPaused = false;
+    voiceEphemeralOn(); // call chats stay out of history + database
+    isOverlayOpen = true; conversationActive = true; isPaused = false; isMuted = false;
     voicePhase = 'idle'; isListening = false; isTranscribing = false;
-    finalTranscript=''; setTranscript('', false);
+    noSpeechRestarts = 0;
+    try { clearCallChat(); } catch (_) {}
+    setTranscript('', false);
     setStatus('Starting…');
     updateMicUI();
 
@@ -333,9 +411,11 @@
       try { if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.onstop = null; mediaRecorder.stop(); } } catch (_) {}
     }
     isListening = false; isTranscribing = false;
-    try { if (recognition) recognition.abort(); } catch (_) {}
     stopSpeaking();
     teardownMic();
+    try { finalizeAiBubble(); clearPendingUser(); } catch (_) {}
+    voiceEphemeralOff(); // drop call turns, restore chat view
+    try { clearCallChat(); } catch (_) {}
     if (overlay) { overlay.classList.remove('show','listening','speaking','paused'); overlay.setAttribute('aria-hidden','true'); }
     document.body.style.overflow='';
     isOverlayOpen=false; voicePhase='idle'; updateMicUI();
@@ -343,7 +423,18 @@
   }
 
   // --- Whisper: MediaRecorder → Groq ---
-  async function getExtensionForMime(mime) {
+  // Known whisper noise-hallucinations: never send these to chat
+  const WHISPER_JUNK = [
+    'thank you', 'thanks for watching', 'thanks for listening', 'subscribe',
+    'subtitles by', 'transcription by', 'bye', 'hello?', '...', 'caption',
+    ' produced ', ' rev ', 'www.', '.com',
+  ];
+  function isWhisperHallucination(text) {
+    const t = String(text || '').trim().toLowerCase().replace(/[.!?…\s]+$/g, '');
+    if (!t || t.length < 3) return true;
+    return WHISPER_JUNK.some(j => t === j || (t.length < 24 && t.includes(j)));
+  }
+  function getExtensionForMime(mime) {
     if (!mime) return 'webm';
     if (mime.includes('mp4')) return 'mp4';
     if (mime.includes('aac')) return 'm4a';
@@ -355,13 +446,12 @@
   async function transcribeWithWhisper(blob) {
     const { url } = supabaseCfg();
     const auth = await getAuthHeader();
-    const ext = await getExtensionForMime(blob.type || whisperMime);
-    const file = new File([blob], `voice.${ext}`, { type: blob.type || 'audio/webm' });
+    const ext = getExtensionForMime(blob.type || whisperMime);
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('file', blob, `voice.${ext}`);
     fd.append('model', WHISPER_MODEL);
-    fd.append('language', 'en');
-    fd.append('prompt', 'Hello, how are you? Assalamu alaikum, Roman Urdu, English conversation.');
+    fd.append('language', 'auto'); // auto-detect: handles Roman Urdu + English mix
+    fd.append('prompt', 'Biology chemistry physics enzymes protein DNA cell photosynthesis exam homework study Anteemonee Pakistani student Urdu English');
     fd.append('response_format', 'json');
     fd.append('temperature', '0');
 
@@ -384,7 +474,7 @@
   function startAutoListening() {
     if (!isOverlayOpen || !conversationActive || isPaused) return;
     if (isListening || isTranscribing || voicePhase === 'sending' || voicePhase === 'ai-speaking') return;
-    if (!hasMediaRecorder()) { startWebSpeechContinuous(); return; }
+    if (!hasMediaRecorder()) { setStatus('Mic not supported'); return; }
     startWhisperCaptureAuto();
   }
 
@@ -397,10 +487,12 @@
     }
     whisperMime = pickMime();
     audioChunks = [];
-    hasSpeechSinceStart = false;
+    hasSpeechSinceStart = false; speechFrames = 0;
     lastSpeechTime = Date.now();
     recordingStartTime = Date.now();
     bargeSpeechStart = 0;
+
+    console.log('[voice] starting capture, mime:', whisperMime, 'stream tracks:', mediaStream.getTracks().map(t => t.kind + ':' + t.enabled).join(', '));
 
     // Reuse existing micStream; do not call getUserMedia again (keeps VAD alive)
     try {
@@ -409,15 +501,31 @@
     } catch (e) {
       try { mediaRecorder = new MediaRecorder(mediaStream); } catch (e2) {
         console.warn('[voice] MediaRecorder failed', e2);
-        startWebSpeechContinuous();
+        setStatus('Mic not supported');
         return;
       }
     }
-    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) { audioChunks.push(e.data); if (audioChunks.length <= 3) console.log('[voice] chunk:', e.data.size, 'total chunks:', audioChunks.length); } };
     mediaRecorder.onstart = () => {
-      isListening = true; voicePhase = 'listening'; finalTranscript=''; setTranscript('', false); setStatus('Listening…'); updateMicUI();
+      isListening = true; voicePhase = 'listening'; setTranscript('', false); setStatus('Listening…'); updateMicUI();
+      console.log('[voice] recorder started, tracks:', mediaStream.getTracks().map(t => t.kind + ':' + t.enabled + ':' + t.readyState).join(', '));
+      // Live interim: every 1.2s whisper a snapshot so text appears as you speak
+      if (interimTimer) clearInterval(interimTimer);
+      interimTimer = setInterval(async () => {
+        if (!isListening || isTranscribing || interimBusy || !hasSpeechSinceStart || audioChunks.length === 0) return;
+        // need at least ~1.5s of audio
+        const snapBlob = new Blob(audioChunks.slice(), { type: whisperMime || 'audio/webm' });
+        if (snapBlob.size < 5000) return;
+        interimBusy = true;
+        try {
+          const txt = await transcribeWithWhisper(snapBlob);
+          if (txt && isListening && !isTranscribing) setTranscript(txt, true);
+        } catch (_) {} finally { interimBusy = false; }
+      }, 1200);
     };
     mediaRecorder.onstop = async () => {
+      if (interimTimer) { clearInterval(interimTimer); interimTimer = null; }
+      interimBusy = false;
       isListening = false; updateMicUI();
       // If conversation was paused or closed while recording, discard
       if (!isOverlayOpen || !conversationActive || isPaused) {
@@ -430,22 +538,33 @@
       }
       const blob = new Blob(audioChunks, { type: whisperMime || 'audio/webm' });
       audioChunks = [];
-      if (!blob || blob.size < 900) {
-        // Too short / silence — just restart listening automatically (don't show error unless user clearly spoke)
+      console.log('[voice] blob size:', blob.size, 'hasSpeech:', hasSpeechSinceStart, 'mime:', whisperMime);
+      if (!blob || blob.size < 4000 || !hasSpeechSinceStart) {
+        // Too small or no real speech — discard, don't send to whisper (prevents hallucinations)
         voicePhase = 'idle'; updateMicUI();
-        if (hasSpeechSinceStart) {
-          setStatus('Didn’t catch that — listening…');
-          setTimeout(() => { if (conversationActive && !isPaused && isOverlayOpen) { setStatus('Listening…'); startAutoListening(); } }, 800);
+        if (!hasSpeechSinceStart) console.log('[voice] discarded blob — no speech detected');
+        noSpeechRestarts++;
+        if (noSpeechRestarts >= MAX_NO_SPEECH_RESTARTS) {
+          setStatus('No speech detected — speak louder or check mic');
+          noSpeechRestarts = 0;
         } else {
-          // No speech at all — silently keep listening (no flash of error)
-          setStatus('Listening…');
           setTimeout(() => { if (conversationActive && !isPaused && isOverlayOpen) startAutoListening(); }, 350);
         }
         return;
       }
+      // Got a real speech recording — transcribe
+      noSpeechRestarts = 0;
       isTranscribing = true; voicePhase = 'transcribing'; setStatus('Heard you — thinking…'); setTranscript('…', true); updateMicUI();
       try {
+        console.log('[voice] calling whisper, blob size:', blob.size, 'type:', blob.type);
         const text = await transcribeWithWhisper(blob);
+        console.log('[voice] whisper result:', JSON.stringify(text));
+        if (isWhisperHallucination(text)) {
+          console.log('[voice] discarded whisper hallucination');
+          isTranscribing = false; voicePhase = 'idle'; updateMicUI();
+          setTimeout(() => { if (conversationActive && !isPaused && isOverlayOpen) startAutoListening(); }, 350);
+          return;
+        }
         isTranscribing = false; setTranscript(text, false); setStatus('Got it — answering…'); updateMicUI();
         // Hand off to chat
         setTimeout(()=> sendTranscript(text), 160);
@@ -453,14 +572,8 @@
         isTranscribing = false; voicePhase = 'idle'; updateMicUI();
         const msg = (e && e.message) || 'transcription failed';
         console.warn('[voice] whisper failed:', msg);
-        if (/not deployed|404|Load failed|Failed to fetch|NetworkError/i.test(msg) && hasSpeechRecognition()) {
-          setStatus('Edge not deployed — using browser STT. Listening…');
-          setTimeout(() => startWebSpeechContinuous(), 600);
-        } else {
-          // Keep conversation going: show brief error then auto-listen again
-          setStatus(msg.slice(0, 90) + ' — listening again');
-          setTimeout(() => { if (conversationActive && !isPaused && isOverlayOpen) { setStatus('Listening…'); startAutoListening(); } }, 1400);
-        }
+        console.warn('[voice] whisper error:', msg);
+        setStatus('Transcription failed: ' + msg.slice(0, 60));
       }
     };
     try { mediaRecorder.start(100); } catch (e) {
@@ -470,76 +583,19 @@
   }
 
   function stopWhisperCapture() {
+    if (interimTimer) { clearInterval(interimTimer); interimTimer = null; }
     if (!mediaRecorder) return;
     if (mediaRecorder.state === 'recording') {
       try { mediaRecorder.stop(); } catch (_) {}
     }
   }
 
-  // --- Web Speech fallback (continuous) — also hands-free ---
-  function startWebSpeechContinuous() {
-    if (isListening || isTranscribing || voicePhase === 'sending' || voicePhase === 'ai-speaking' || isPaused) return;
-    if (!hasSpeechRecognition()) { setStatus('Speech not supported'); return; }
-    try { if (recognition) recognition.abort(); } catch (_) {}
-    recognition = createRecognition(); if (!recognition) return;
-    finalTranscript=''; setTranscript('', false);
-    let silenceTimer = null;
-    let lastResultTime = Date.now();
-
-    const resetSilenceTimer = () => {
-      if (silenceTimer) clearTimeout(silenceTimer);
-      silenceTimer = setTimeout(() => {
-        const text = (finalTranscript||'').trim() || (getEls().transcript && getEls().transcript.textContent.trim()) || '';
-        if (text) {
-          try { recognition.stop(); } catch (_) {}
-          setStatus('Got it — answering…'); setTranscript(text, false);
-          setTimeout(()=> sendTranscript(text), 160);
-        } else {
-          // no speech yet — keep listening (restart)
-          try { recognition.stop(); } catch (_) {}
-        }
-      }, VAD_SILENCE_MS + 200);
-    };
-
-    recognition.onstart = () => { isListening=true; voicePhase='listening'; setStatus('Listening… (browser)'); updateMicUI(); lastResultTime = Date.now(); resetSilenceTimer(); };
-    recognition.onresult = (event) => {
-      let interim=''; let f=''; for(let i=event.resultIndex;i<event.results.length;i++){const r=event.results[i];const t=r[0]&&r[0].transcript?r[0].transcript:''; if(r.isFinal) f+=t+' '; else interim+=t; }
-      if(f) finalTranscript+=f; const combined=(finalTranscript+interim).trim(); if(combined) { setTranscript(combined, !!interim); lastResultTime = Date.now(); resetSilenceTimer(); }
-    };
-    recognition.onerror = (e) => {
-      if (silenceTimer) clearTimeout(silenceTimer);
-      const err=(e&&e.error)||'unknown'; if(err==='not-allowed') setStatus('Mic permission denied'); else if(err==='no-speech') setStatus('Listening…'); else if(err!=='aborted') setStatus('Error: '+err);
-      isListening=false; updateMicUI();
-      // Auto-restart if conversation still active
-      if (conversationActive && !isPaused && isOverlayOpen && voicePhase !== 'sending' && voicePhase !== 'ai-speaking') {
-        setTimeout(() => startWebSpeechContinuous(), 700);
-      }
-    };
-    recognition.onend = () => {
-      if (silenceTimer) clearTimeout(silenceTimer);
-      isListening=false; updateMicUI();
-      const text=(finalTranscript||'').trim() || (getEls().transcript && getEls().transcript.textContent.trim()) || '';
-      if (text && voicePhase === 'listening') {
-        voicePhase='transcribing'; setStatus('Got it — answering…'); setTranscript(text,false); setTimeout(()=> sendTranscript(text), 160);
-      } else if (conversationActive && !isPaused && isOverlayOpen && voicePhase !== 'sending' && voicePhase !== 'ai-speaking') {
-        // Continuous loop: instantly restart listening (hands-free)
-        setTimeout(() => startWebSpeechContinuous(), 320);
-      }
-    };
-    try{ recognition.start(); }catch(e){ setStatus('Could not start mic'); isListening=false; updateMicUI(); }
-  }
-
-  function stopWebSpeech(){ if(!isListening&&!recognition) return; isListening=false; updateMicUI(); try{if(recognition) recognition.abort();}catch(_){} }
-
   // Unified stop (for pause / close)
   function stopListening() {
     if (isTranscribing) return;
     if (mediaRecorder && mediaRecorder.state === 'recording') {
-      // For pause/close we want to abort without sending — override onstop
       try { mediaRecorder.onstop = () => { isListening=false; audioChunks=[]; updateMicUI(); }; mediaRecorder.stop(); } catch (_) {}
       mediaRecorder = null;
-    } else if (recognition && isListening) {
-      stopWebSpeech();
     }
     isListening = false; updateMicUI();
   }
@@ -553,7 +609,6 @@
       try { mediaRecorder.onstop = () => { isListening=false; audioChunks=[]; updateMicUI(); }; mediaRecorder.stop(); } catch (_) {}
       mediaRecorder = null; isListening = false;
     }
-    try { if (recognition) recognition.abort(); } catch (_) {}
     isListening = false; isTranscribing = false;
     // Keep voicePhase idle but show paused state
     if (voicePhase !== 'ai-speaking') voicePhase = 'idle';
@@ -583,24 +638,49 @@
     }
   }
 
+  function toggleMute() {
+    isMuted = !isMuted;
+    if (mediaStream) {
+      mediaStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
+    }
+    if (isMuted) {
+      setStatus('Muted');
+    } else {
+      setStatus(isListening ? 'Listening…' : 'Listening… just speak');
+    }
+    updateMicUI();
+  }
+
   // --- TTS: Gemini 3.1 Flash TTS via Edge Function ---
+  const TTS_VOICES = ['Kore', 'Zephyr', 'Puck', 'Charon', 'Fenrir', 'Leda', 'Aoede', 'Callirrhoe', 'Autonoe', 'Umbriel'];
+  function ttsVoiceUid() { try { if (typeof currentUser !== 'undefined' && currentUser?.id) return currentUser.id; } catch (_) {} return 'anon'; }
+  function getTtsVoice() {
+    try { const v = localStorage.getItem('Anteemonee_tts_voice_' + ttsVoiceUid()); if (v && TTS_VOICES.includes(v)) return v; } catch (_) {}
+    return ttsVoice;
+  }
   function stripForTTS(text) {
     let t = String(text || '');
-    t = t.replace(/```[\s\S]*?```/g, '');
+    t = t.replace(/```[\s\S]*?```/g, ' code omitted. ');
     t = t.replace(/`([^`]+)`/g, '$1');
     t = t.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
     t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    t = t.replace(/https?:\/\/\S+/g, '');
+    // speak symbols as words (study content clarity)
+    const symMap = { '→': ' gives ', '←': ' comes from ', '↔': ' is in equilibrium with ', '×': ' times ', '÷': ' divided by ', '±': ' plus or minus ', '√': ' square root of ', 'π': ' pi ', '°': ' degrees ', '²': ' squared ', '³': ' cubed ', '≈': ' is approximately ', '≠': ' is not equal to ', '≤': ' is less than or equal to ', '≥': ' is greater than or equal to ', '∞': ' infinity ', 'Δ': ' delta ', 'µ': ' micro ', 'Ω': ' ohm ', '&': ' and ', '%': ' percent ', '@': ' at ', '#': ' number ', 'H2O': 'H two O', 'CO2': 'C O two ' };
+    for (const k in symMap) t = t.split(k).join(symMap[k]);
     t = t.replace(/^#{1,6}\s+/gm, '');
     t = t.replace(/(\*\*|__)(.*?)\1/g, '$2');
     t = t.replace(/(\*|_)(.*?)\1/g, '$2');
-    t = t.replace(/^[-*+]\s+/gm, '• ');
+    t = t.replace(/^[-*+]\s+/gm, '');
     t = t.replace(/^\|.*\|$/gm, '');
     t = t.replace(/^---$/gm, '');
     t = t.replace(/^>\s+/gm, '');
     t = t.replace(/\n---[\s\S]*$/i, '');
     t = t.replace(/\n\*\*References?:\*\*[\s\S]*$/i, '');
     t = t.replace(/\nReferences:[\s\S]*$/i, '');
+    t = t.replace(/[😀-🙏🇦-🇿]/gu, '');
     t = t.replace(/\n{3,}/g, '\n\n').trim();
+    t = t.replace(/([.!?])\s*(?=[A-Z])/g, '$1. '); // force pauses between sentences
     if (t.length > TTS_MAX_CHARS) t = t.slice(0, TTS_MAX_CHARS) + '…';
     return t;
   }
@@ -609,6 +689,7 @@
     const clean = stripForTTS(text);
     if (!clean) return;
     stopSpeaking();
+    const useVoice = voice || getTtsVoice();
 
     const { url } = supabaseCfg();
     const auth = await getAuthHeader();
@@ -628,7 +709,7 @@
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: clean, voice: voice || ttsVoice }),
+        body: JSON.stringify({ text: clean, voice: useVoice }),
         signal: ttsController.signal,
       });
 
@@ -712,6 +793,11 @@
       try { ttsAudio.pause(); ttsAudio.src = ''; } catch (_) {}
       ttsAudio = null;
     }
+    if (progAudio) {
+      try { progAudio.pause(); progAudio.src = ''; } catch (_) {}
+      progAudio = null;
+    }
+    progPlaying = false; progQueue = [];
     if (ttsController) {
       try { ttsController.abort(); } catch (_) {}
       ttsController = null;
@@ -732,12 +818,146 @@
     return !!(ttsAudio && !ttsAudio.paused);
   }
 
+  // --- Progressive speech: speak sentences WHILE the brain streams (low latency) ---
+  let progBuf = '';
+  let progQueue = [];
+  let progPlaying = false;
+  let progStreamDone = false;
+  let progTurn = false;      // true once this turn spoke progressively
+  let progPlayed = false;    // true once any progressive audio actually started
+  let progFails = 0;
+  let progAudio = null;
+  let speakerOff = false;    // call UI speaker toggle — read captions, no audio
+  let streamWrapped = false;
+
+  function pullSentences() {
+    const out = [];
+    const re = /[\s\S]+?[.!?…](?=\s|$)/g;
+    let m;
+    while ((m = re.exec(progBuf))) { const s = (m[0] || '').trim(); if (s.length > 1) out.push(s); }
+    if (out.length) progBuf = progBuf.slice(re.lastIndex);
+    return out;
+  }
+  function tapChunk(c) {
+    if (typeof c !== 'string' || !c) return;
+    const t = c.trim();
+    if (t.startsWith('{') || t.startsWith('data:')) {
+      try { const j = JSON.parse(t.startsWith('data:') ? t.slice(5).trim() : t); if (j && (j.type === 'streak' || j.error)) return; }
+      catch (_) { /* not JSON — treat as content */ }
+    }
+    try { appendAiText(c); } catch (_) {}
+    progBuf += c;
+    if (progBuf.length > 3000) progBuf = progBuf.slice(-3000);
+    pullSentences().forEach(enqueueSentence);
+  }
+  function beginProgTurn() {
+    try { finalizeAiBubble(); beginAiBubble(); } catch (_) {}
+    progBuf = ''; progQueue = []; progPlaying = false; progStreamDone = false; progTurn = false; progPlayed = false; progFails = 0;
+    if (progAudio) { try { progAudio.pause(); progAudio.src = ''; } catch (_) {} progAudio = null; }
+  }
+  function endProgTurn() {
+    try { finalizeAiBubble(); } catch (_) {}
+    pullSentences().forEach(enqueueSentence);
+    const rest = progBuf.trim();
+    progBuf = '';
+    if (rest.length > 1) enqueueSentence(rest);
+    progStreamDone = true;
+    pumpProg();
+  }
+  async function ttsFetchSrc(clean) {
+    const { url } = supabaseCfg();
+    const auth = await getAuthHeader();
+    const endpoint = url.replace(/\/$/, '') + '/functions/v1/voice-tts';
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean, voice: getTtsVoice() }),
+    });
+    if (!res.ok) throw new Error('TTS ' + res.status);
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('audio/')) {
+      const blob = await res.blob();
+      const u = URL.createObjectURL(blob);
+      return { src: u, cleanup: () => { try { URL.revokeObjectURL(u); } catch (_) {} } };
+    }
+    const data = await res.json();
+    if (data.error || !data.audio) throw new Error(data.error || 'No audio');
+    return { src: 'data:audio/wav;base64,' + data.audio, cleanup: () => {} };
+  }
+  function enqueueSentence(s) {
+    const clean = stripForTTS(s);
+    if (!clean) return;
+    progTurn = true;
+    progQueue.push(clean);
+    if (voicePhase !== 'ai-speaking') { voicePhase = 'ai-speaking'; setStatus('Speaking…'); updateMicUI(); }
+    if (isListening) stopListening();
+    pumpProg();
+  }
+  function pumpProg() {
+    if (progPlaying) return;
+    const next = progQueue.shift();
+    if (!next) {
+      if (progStreamDone && progTurn) {
+        progTurn = false;
+        voicePhase = 'idle'; setStatus('Listening…'); updateMicUI();
+        if (conversationActive && !isPaused && isOverlayOpen) setTimeout(startAutoListening, 350);
+      }
+      return;
+    }
+    if (speakerOff || !isOverlayOpen || !conversationActive || isPaused) { pumpProg(); return; }
+    progPlaying = true;
+    ttsFetchSrc(next).then(({ src, cleanup }) => {
+      if (!progPlaying || !isOverlayOpen || !conversationActive || isPaused) { cleanup(); progPlaying = false; return; }
+      const a = new Audio(src);
+      progAudio = a;
+      progFails = 0;
+      a.onended = () => { cleanup(); progAudio = null; progPlaying = false; pumpProg(); };
+      a.onerror = () => { cleanup(); progAudio = null; progPlaying = false; pumpProg(); };
+      a.play().then(() => { progPlayed = true; }).catch(() => { cleanup(); progAudio = null; progPlaying = false; pumpProg(); });
+    }).catch((e) => {
+      progPlaying = false;
+      progFails++;
+      if (progFails === 2) { setStatus('Voice reply failing — speaking at end'); console.warn('[voice] prog TTS failing:', e && e.message); }
+      pumpProg();
+    });
+  }
+  function wrapStream() {
+    if (streamWrapped) return; streamWrapped = true;
+    try {
+      if (typeof AiApiService === 'undefined' || !AiApiService.prototype.streamChat) return;
+      const orig = AiApiService.prototype.streamChat;
+      AiApiService.prototype.streamChat = function (messages, providerIndex, images) {
+        const self = this;
+        let live = false;
+        try { live = isOverlayOpen && conversationActive && !isPaused; } catch (_) { live = false; }
+        if (!live) return orig.call(self, messages, providerIndex, images);
+        try { beginProgTurn(); } catch (_) {}
+        let gen;
+        try { gen = orig.call(self, messages, providerIndex, images); }
+        catch (e) { throw e; }
+        return (async function *() {
+          try { for await (const ch of gen) { try { tapChunk(ch); } catch (_) {} yield ch; } }
+          finally { try { endProgTurn(); } catch (_) {} }
+        })();
+      };
+    } catch (_) {}
+  }
+  function micAction() {
+    if (voicePhase === 'ai-speaking') { stopSpeaking(); if (conversationActive && !isPaused) setTimeout(startAutoListening, 260); return; }
+    if (voicePhase === 'sending' || voicePhase === 'transcribing') return;
+    if (isMuted) { toggleMute(); return; }
+    if (!isListening && !isPaused) { noSpeechRestarts = 0; startAutoListening(); return; }
+    toggleMute();
+  }
+
   /** Call from ai-chatbot.js after AI response finishes streaming */
   function onAiResponseComplete(text) {
     const elapsed = Date.now() - lastVoiceSend;
     if (elapsed < 30000 && elapsed >= 0) {
       lastVoiceSend = 0;
-      speakText(text);
+      if ((progTurn || progQueue.length || progPlaying) && progPlayed) { pumpProg(); return; } // already speaking progressively
+      progTurn = false; progQueue = []; progPlaying = false; progStreamDone = true;
+      speakText(text); // full fallback (also covers broken progressive path)
     } else if (conversationActive && isOverlayOpen && !isPaused) {
       // Edge case: AI responded but voice flag expired — still resume listening for conversation mode
       voicePhase = 'idle';
@@ -760,6 +980,7 @@
     const t = String(text || '').trim();
     if (!t) return;
     voicePhase = 'sending';
+    try { appendUserBubble(t); } catch (_) {}
     setTranscript(t, false);
     setStatus('Thinking…');
     updateMicUI();
@@ -796,14 +1017,19 @@
     if(elsNow.btnClose) elsNow.btnClose.addEventListener('click', closeVoice);
     if(elsNow.btnExit) elsNow.btnExit.addEventListener('click', closeVoice);
     if(elsNow.overlay) elsNow.overlay.addEventListener('click', (e)=>{ if(e.target===elsNow.overlay || e.target.classList.contains('voice-overlay-bg')) closeVoice(); });
-    if(elsNow.micBtn) elsNow.micBtn.addEventListener('click', ()=>{
-      if (voicePhase === 'ai-speaking') { stopSpeaking(); if (conversationActive && !isPaused) setTimeout(startAutoListening, 260); return; }
-      if (voicePhase === 'sending' || voicePhase === 'transcribing') return;
-      if (isPaused) { resumeConversation(); return; }
-      if (isListening) { pauseConversation(); return; }
-      // idle → start listening
-      resumeConversation();
-    });
+    if(elsNow.micBtn) elsNow.micBtn.addEventListener('click', micAction);
+    // Call UI buttons (phone layout) drive the same whisper engine
+    const callMute = document.getElementById('call-mute-btn');
+    if (callMute && !callMute.dataset.whisperBound) { callMute.dataset.whisperBound = '1'; callMute.addEventListener('click', micAction); }
+    const callSpeaker = document.getElementById('call-speaker-btn');
+    if (callSpeaker && !callSpeaker.dataset.whisperBound) {
+      callSpeaker.dataset.whisperBound = '1';
+      callSpeaker.addEventListener('click', () => {
+        speakerOff = !speakerOff;
+        callSpeaker.classList.toggle('active', !speakerOff);
+        if (speakerOff) stopSpeaking();
+      });
+    }
     document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && isOverlayOpen) closeVoice(); });
   }
 
@@ -816,7 +1042,7 @@
     btn.style.display = hasContent ? 'none' : '';
   }
 
-  function initVoice(){ bindEvents(); setTimeout(bindEvents,800);
+  function initVoice(){ bindEvents(); wrapStream(); setTimeout(()=>{ bindEvents(); wrapStream(); },800);
     const input = document.getElementById('chat-input');
     if (input && !input.dataset.voiceVisBound) {
       input.dataset.voiceVisBound = '1';
@@ -840,5 +1066,5 @@
     }
   });
 
-  window.AnteemoneeVoice={ open: openVoice, close: closeVoice, start: startAutoListening, stop: stopListening, speak: speakText, stopSpeaking, toggleSpeak, isSpeaking, onAiResponseComplete, pause: pauseConversation, resume: resumeConversation, get isPaused(){return isPaused;}, get isConversationActive(){return conversationActive;}, get model(){return WHISPER_MODEL;} };
+  window.AnteemoneeVoice={ open: openVoice, close: closeVoice, start: startAutoListening, stop: stopListening, speak: speakText, stopSpeaking, toggleSpeak, isSpeaking, onAiResponseComplete, pause: pauseConversation, resume: resumeConversation, toggleMute, get isPaused(){return isPaused;}, get isMuted(){return isMuted;}, get isConversationActive(){return conversationActive;}, get voiceMode(){return isOverlayOpen;}, get model(){return WHISPER_MODEL;} };
 })();
