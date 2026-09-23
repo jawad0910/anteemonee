@@ -81,14 +81,6 @@ async function getOnboardingStep(userId) {
     if (!acad.board_id) return 3;
     if (!acad.class_level_id) return 4;
     if (!acad.group_id) return 5;
-    if (acad.id) {
-      const { count } = await db.from('student_subjects').select('id', { count: 'exact', head: true }).eq('academic_profile_id', acad.id);
-      if (!count) return 6;
-    } else {
-      return 6;
-    }
-    if (!acad.college_id) return 7;
-    if (!acad.academic_session_id) return 8;
     if (!profile.goals_completed) {
       const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', userId);
       if (!count) return 10;
@@ -224,7 +216,8 @@ async function handleUser(user) {
       return;
     }
 
-    if (avatarUrl && profile.profile_image_url !== avatarUrl) {
+    // Only seed Google avatar when user never set one. Never overwrite custom upload or explicit removal ('').
+    if (avatarUrl && profile.profile_image_url == null) {
       await db.from('profiles').update({ profile_image_url: avatarUrl }).eq('id', user.id);
     }
 
