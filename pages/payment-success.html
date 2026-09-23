@@ -210,27 +210,27 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=19"></script>
+  <script src="../js/app.js?v=20"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
-      const tracker = params.get('tracker');
+      const paymentId = params.get('payment_id') || params.get('tracker') || params.get('id');
 
       const sProcessing = document.getElementById('state-processing');
       const sSuccess = document.getElementById('state-success');
       const sPending = document.getElementById('state-pending');
       const sFailed = document.getElementById('state-failed');
 
-      if (!tracker) {
+      if (!paymentId) {
         sProcessing.style.display = 'none';
         sFailed.style.display = 'block';
         return;
       }
 
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 1500));
 
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 15;
 
       async function checkPayment() {
         attempts++;
@@ -238,7 +238,7 @@
         try {
           const { data, error } = await db.functions.invoke('safepay-verify', {
             method: 'POST',
-            body: { tracker },
+            body: { payment_id: paymentId, tracker: paymentId },
           });
 
           if (error) throw error;

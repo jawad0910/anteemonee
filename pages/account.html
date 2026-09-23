@@ -832,7 +832,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=19"></script>
+  <script src="../js/app.js?v=20"></script>
   <script>
     let acctData = {
       profile: null,
@@ -1660,11 +1660,7 @@
   </script>
   <script>
     (function () {
-      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
-      if (mt && mm) {
-        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
-        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
-      }
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
       function renderLandingAuth() {
         try {
           var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;

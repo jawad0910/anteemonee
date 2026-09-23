@@ -285,7 +285,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=10"></script>
-  <script src="../js/app.js?v=19"></script>
+  <script src="../js/app.js?v=20"></script>
   <script>
     (function () {
       'use strict';
@@ -393,13 +393,8 @@
     })();
   </script>
   <script>
-    // Landing auth + mobile menu
+    // Landing auth (mobile menu handled by setupMobileMenu() in app.js)
     (function () {
-      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
-      if (mt && mm) {
-        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
-        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
-      }
       function renderLandingAuth() {
         try {
           var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
