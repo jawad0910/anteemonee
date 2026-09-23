@@ -649,31 +649,43 @@ function setupNav() {
 }
 
 function setupMobileMenu() {
-  const toggle = document.querySelector('.mobile-menu-toggle');
-  const panel = document.querySelector('.mobile-menu');
-  if (!toggle || !panel) return;
+  // Pair every hamburger button with its menu panel (pages may ship more
+  // than one header). Guard makes this idempotent: app.js can be included
+  // more than once, and pages used to add a second inline toggle listener
+  // which immediately undid this one (menu never opened).
+  const toggles = Array.from(document.querySelectorAll('.mobile-menu-toggle'));
+  const panels = Array.from(document.querySelectorAll('.mobile-menu'));
+  const count = Math.min(toggles.length, panels.length);
 
-  function openMenu() {
-    panel.classList.add('open');
-    toggle.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeMenu() {
-    panel.classList.remove('open');
-    toggle.classList.remove('active');
-    document.body.style.overflow = '';
-  }
+  for (let i = 0; i < count; i++) {
+    const toggle = toggles[i];
+    const panel = panels[i];
+    if (toggle.dataset.menuBound === '1') continue;
+    toggle.dataset.menuBound = '1';
+    panel.dataset.menuBound = '1';
 
-  toggle.addEventListener('click', () => {
-    panel.classList.contains('open') ? closeMenu() : openMenu();
-  });
+    function openMenu() {
+      panel.classList.add('open');
+      toggle.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      panel.classList.remove('open');
+      toggle.classList.remove('active');
+      document.body.style.overflow = '';
+    }
 
-  panel.querySelectorAll('a, button').forEach(link => {
-    link.addEventListener('click', (e) => {
-      if (e.target.closest('.mobile-acc-toggle')) return;
-      closeMenu();
+    toggle.addEventListener('click', () => {
+      panel.classList.contains('open') ? closeMenu() : openMenu();
     });
-  });
+
+    panel.querySelectorAll('a, button').forEach(link => {
+      link.addEventListener('click', (e) => {
+        if (e.target.closest('.mobile-acc-toggle')) return;
+        closeMenu();
+      });
+    });
+  }
 }
 
 function setupIntersectionObserver() {}
