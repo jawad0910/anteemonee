@@ -310,7 +310,7 @@
             <a href="pages/signup.html" class="btn-secondary" style="width:100%">Start free trial</a>
           </div>
           <div class="price-card hot">
-            <div class="flag">MOST POPULAR</div>
+            <div class="flag">RECOMMENDED</div>
             <h3>Lifetime Access</h3>
             <div class="amt">Rs 2,499</div><div class="per">one-time · yours forever</div>
             <ul>
@@ -382,15 +382,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="js/account-manager.js?v=11"></script>
-  <script src="js/app.js?v=19"></script>
+  <script src="js/app.js?v=20"></script>
   <script>
     // Landing: mobile menu, auth buttons, FAQ. Theme handled by app.js via .theme-toggle class.
     (function () {
-      var mt = document.getElementById('menu-toggle'), mm = document.getElementById('mobile-menu');
-      if (mt && mm) {
-        mt.addEventListener('click', function () { mt.classList.toggle('active'); mm.classList.toggle('open'); });
-        mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mt.classList.remove('active'); mm.classList.remove('open'); }); });
-      }
+      // Mobile menu is handled by setupMobileMenu() in app.js — a second
+      // toggle listener here would immediately undo its open/close state.
       // Auth-aware header buttons - wait for app.js to set currentUser
       var heroLastChatDone = false;
       function escHtml(s) {
@@ -554,8 +551,10 @@
                   if (dashBtn) dashBtn.style.display = '';
                   if (trustEl) trustEl.style.display = 'none';
                 } else {
+                  // Signed in but not premium: only the Dashboard CTA
+                  // ("Start free" is meaningless for an existing account).
                   if (pricingEl) pricingEl.style.display = '';
-                  if (startBtn) startBtn.style.display = '';
+                  if (startBtn) startBtn.style.display = 'none';
                   if (dashBtn) dashBtn.style.display = '';
                   if (trustEl) trustEl.style.display = '';
                 }
