@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Classroom - Anteemonee</title>
+  <meta name="description" content="AI Classroom: live interactive classes with AI tutors for FSc and matric students in Pakistan.">
+  <meta name="keywords" content="FSc preparation, matric past papers, intermediate notes, BISE past papers, AI tutor Pakistan, AI classroom, live classes, Anteemonee">
+  <meta name="theme-color" content="#0B0F19">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://anteemonee.com/pages/ai-classroom.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AI Classroom - Anteemonee">
+  <meta property="og:description" content="AI Classroom: live interactive classes with AI tutors for FSc and matric students in Pakistan.">
+  <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
+  <meta property="og:url" content="https://anteemonee.com/pages/ai-classroom.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=26">
+  <style>
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
+    .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    .section { padding: 70px 24px; }
+    .section-inner { max-width: 1280px; margin: 0 auto; }
+
+    .cs-hero { max-width: 860px; margin: 0 auto; padding: 120px 24px 40px; text-align: center; }
+    .cs-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); color: var(--accent); font-size: 12.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+    .cs-title { font-family: 'Fraunces', Georgia, serif; font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.12; margin: 22px 0 14px; }
+    .cs-sub { color: var(--text-secondary); font-size: clamp(15px, 2vw, 17px); line-height: 1.65; max-width: 640px; margin: 0 auto; }
+    .cs-count { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 620px; margin: 44px auto 0; }
+    .cs-unit { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 22px 10px 18px; box-shadow: var(--neo-shadow); }
+    .cs-num { font-family: 'Fraunces', Georgia, serif; font-size: clamp(2rem, 6vw, 3rem); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: var(--text); }
+    .cs-lab { margin-top: 10px; font-size: 11.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+    .cs-note { margin-top: 26px; font-size: 13px; color: var(--text-muted); }
+    .cs-cta { margin-top: 34px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .cs-cta a { display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 999px; font-size: 14.5px; font-weight: 600; text-decoration: none; }
+    .cs-primary { background: var(--accent); color: #fff; }
+    .cs-secondary { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); color: var(--text); }
+    .cs-list { max-width: 860px; margin: 72px auto 0; padding: 0 24px 100px; }
+    .cs-list h2 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.3rem, 3vw, 1.75rem); margin: 0 0 8px; }
+    .cs-list > p { color: var(--text-secondary); font-size: 14.5px; margin: 0 0 26px; }
+    .cs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+    .cs-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .cs-card h3 { margin: 0 0 7px; font-size: 15px; font-weight: 650; }
+    .cs-card p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--text-secondary); }
+    .cs-done { display: none; }
+    @media (max-width: 520px) { .cs-count { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+    /* Loading screen: covers the page until the launch date is read from the DB. */
+    .cs-loader {
+      position: fixed; inset: 0; z-index: 999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      background: var(--bg);
+    }
+    .cs-loader[hidden] { display: none; }
+    .cs-loader-ring {
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      animation: cs-spin .8s linear infinite;
+    }
+    @keyframes cs-spin { to { transform: rotate(360deg); } }
+    .cs-loader-text { font-size: 14px; font-weight: 600; color: var(--text-secondary); letter-spacing: .02em; }
+    .cs-loader-sub { font-size: 12.5px; color: var(--text-muted); }
+    @media (prefers-reduced-motion: reduce) {
+      .cs-loader-ring { animation-duration: 2.4s; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header" id="site-header" id="header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+  <a href="dashboard.html">Dashboard</a>
+  <div class="nav-drop">
+    <a href="#">Library <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="ebooks.html">eBooks</a>
+      <a href="flashcards.html">Flashcards</a>
+      <a href="past-papers.html">Past Papers</a>
+    </div>
+  </div>
+  <a href="ai-chat.html">AI Assistant</a>
+</nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
+          <a href="signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="../index.html" class="mobile-nav-link">Home</a>
+    <a href="board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="ebooks.html" class="mobile-nav-link">eBooks</a>
+        <a href="flashcards.html" class="mobile-nav-link">Flashcards</a>
+        <a href="past-papers.html" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="ai-chat.html" class="mobile-nav-link">AI Assistant</a>
+    <div class="mobile-cta">
+      <a href="login.html" class="btn-login">Log in</a>
+      <a href="signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <div class="cs-loader" id="cs-loader" role="status" aria-live="polite">
+    <div class="cs-loader-ring" aria-hidden="true"></div>
+    <div class="cs-loader-text">Loading AI Classroom</div>
+    <div class="cs-loader-sub">Fetching the launch date</div>
+  </div>
+
+  <main>
+    <section class="cs-hero">
+      <span class="cs-badge">Under Construction</span>
+      <h1 class="cs-title">AI Classroom</h1>
+      <p class="cs-sub">Live, interactive classes where you learn alongside other students, with an AI tutor guiding every topic from your Punjab board textbook. Attendance, quizzes and notes included.</p>
+
+      <div class="cs-count" id="cs-count" role="timer" aria-live="polite" aria-label="Time until AI Classroom launches">
+        <div class="cs-unit"><div class="cs-num" id="cs-days">--</div><div class="cs-lab">Days</div></div>
+        <div class="cs-unit"><div class="cs-num" id="cs-hours">--</div><div class="cs-lab">Hours</div></div>
+        <div class="cs-unit"><div class="cs-num" id="cs-mins">--</div><div class="cs-lab">Minutes</div></div>
+        <div class="cs-unit"><div class="cs-num" id="cs-secs">--</div><div class="cs-lab">Seconds</div></div>
+      </div>
+      <p class="cs-note" id="cs-note">AI Classroom is under construction.</p>
+
+      <div class="cs-cta">
+        <a class="cs-primary" href="ai-chat.html">Try the AI Tutor meanwhile</a>
+        <a class="cs-secondary" href="flashcards.html">Revise with Flashcards</a>
+      </div>
+    </section>
+
+    <section class="cs-list">
+      <h2>What to expect</h2>
+      <p>Everything is built around the same Punjab board books you already use.</p>
+      <div class="cs-grid">
+        <div class="cs-card"><h3>Live classes</h3><p>Scheduled sessions per subject with a real teacher and an AI assistant in the room.</p></div>
+        <div class="cs-card"><h3>Board-accurate answers</h3><p>Every explanation is grounded in your textbook chapters, with page references you can verify.</p></div>
+        <div class="cs-card"><h3>Attendance tracking</h3><p>Keep a record of the classes you attend and the topics you have covered.</p></div>
+        <div class="cs-card"><h3>In-class quizzes</h3><p>Short checks after each topic, generated from the chapter you just studied.</p></div>
+        <div class="cs-card"><h3>Notes and revision</h3><p>Class notes saved automatically and merged with your flashcard revision.</p></div>
+        <div class="cs-card"><h3>Replay anytime</h3><p>Missed a session? Catch up on the recording and the AI-generated summary.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric & intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="ai-chat.html">AI Assistant</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="ai-chat.html">AI Tutor</a>
+            <a href="ai-classroom.html">AI Classroom</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="payment.html">Lifetime Access</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="login.html">Log in</a>
+            <a href="signup.html">Sign Up</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=24"></script>
+  <script>
+    (function () {
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="account.html" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+
+        var hideTimer = null;
+        function scheduleHide() {
+          hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150);
+        }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
+        window._landingDropdownClickHandler = true;
+      }
+
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') {
+            handleLogout();
+          } else {
+            localStorage.removeItem('Anteemonee_theme_mode');
+            window.location.href = '../index.html';
+          }
+        } catch (_) {
+          window.location.href = '../index.html';
+        }
+      }
+
+      window.handleLandingLogout = handleLandingLogout;
+
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+
+      var hdr = document.getElementById('header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+    })();
+  </script>
+  <script>
+    (function () {
+      var FEATURE = 'ai_classroom';
+      var CACHE_KEY = 'Anteemonee_countdown_' + FEATURE;
+      var CACHE_TTL = 5 * 60 * 1000;
+      var TIMEOUT = 8000;            // never leave the visitor on the loader
+      var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+
+      var daysEl = document.getElementById('cs-days');
+      var hoursEl = document.getElementById('cs-hours');
+      var minsEl = document.getElementById('cs-mins');
+      var secsEl = document.getElementById('cs-secs');
+      var noteEl = document.getElementById('cs-note');
+      var countEl = document.getElementById('cs-count');
+      var loader = document.getElementById('cs-loader');
+      if (!daysEl) return;
+
+      var launch = null;
+      var finish = false;
+      var settled = false;
+
+      function hideLoader() {
+        if (settled) return;
+        settled = true;
+        // If no launch date could be read, drop the timer rather than leave
+        // empty placeholder boxes on screen.
+        if (launch === null) countEl.style.display = 'none';
+        if (loader) loader.hidden = true;
+      }
+
+      function render() {
+        if (launch === null) return;
+        var left = launch - Date.now();
+        if (left <= 0) {
+          if (!finish) {
+            finish = true;
+            countEl.style.display = 'none';
+            noteEl.textContent = 'AI Classroom is live. Your first class is waiting.';
+          }
+          return;
+        }
+        var s = Math.floor(left / 1000);
+        var d = Math.floor(s / 86400);
+        var h = Math.floor((s % 86400) / 3600);
+        var m = Math.floor((s % 3600) / 60);
+        daysEl.textContent = String(d);
+        hoursEl.textContent = pad(h);
+        minsEl.textContent = pad(m);
+        secsEl.textContent = pad(s % 60);
+      }
+
+      function setLaunch(ts) {
+        if (isNaN(ts)) return false;
+        if (launch === null || Math.abs(ts - launch) > 1000) { launch = ts; render(); }
+        return true;
+      }
+
+      // A cached value is real data from a previous visit, so it may be shown
+      // straight away. Nothing is ever invented as a fallback.
+      try {
+        var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && cached.at && Date.now() - cached.at < CACHE_TTL && setLaunch(cached.launch)) hideLoader();
+      } catch (_) {}
+
+      if (launch !== null) setInterval(render, 1000);
+
+      function fetchLaunch() {
+        if (typeof db === 'undefined' || !db) { hideLoader(); return; }
+        db.from('feature_countdowns')
+          .select('launch_at')
+          .eq('feature', FEATURE)
+          .limit(1)
+          .then(function (res) {
+            var row = res && res.data && res.data[0];
+            if (!row || !row.launch_at) { hideLoader(); return; }
+            var ts = new Date(row.launch_at).getTime();
+            if (setLaunch(ts)) {
+              try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ launch: ts, at: Date.now() }));
+              } catch (_) {}
+            }
+            hideLoader();
+          })
+          .catch(function () { hideLoader(); });
+      }
+
+      fetchLaunch();
+      setTimeout(fetchLaunch, 2500);
+      setTimeout(hideLoader, TIMEOUT);
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) fetchLaunch();
+      });
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=6"></script>
+</body>
+</html>
