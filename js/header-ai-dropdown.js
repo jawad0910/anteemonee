@@ -5,6 +5,7 @@
     bookOpen: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
     chat: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
     clipboard: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13l2 2 4-4"/></svg>',
+    classroom: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M21 13v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M12 14v5"/></svg>',
     file: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
   };
 
@@ -16,16 +17,19 @@
     document.head.appendChild(st);
   }
   function fixPrefixes() {
-    var file = 'ai-test-builder.html';
-    // Resolve against document.baseURI so pages with a <base> tag (or nested
-    // paths) still get a link that lands in /pages/.
     function resolvesUnderPages(rel) {
       try {
         return /\/pages\/[^/]+$/.test(new URL(rel, document.baseURI).pathname);
       } catch (_) { return false; }
     }
-    if (resolvesUnderPages(file)) return { ai: 'ai-chat.html', test: file };
-    return { ai: 'pages/ai-chat.html', test: 'pages/' + file };
+    if (resolvesUnderPages('ai-classroom.html')) {
+      return { ai: 'ai-chat.html', test: 'ai-test-builder.html', classroom: 'ai-classroom.html' };
+    }
+    return {
+      ai: 'pages/ai-chat.html',
+      test: 'pages/ai-test-builder.html',
+      classroom: 'pages/ai-classroom.html'
+    };
   }
 
   function dropdownHtml(p, label) {
@@ -35,6 +39,7 @@
       '<div class="nav-menu">' +
       '<a href="' + p.ai + '">' + ICONS.chat + 'AI Tutor</a>' +
       '<a href="' + p.test + '">' + ICONS.clipboard + 'AI Test Builder</a>' +
+      '<a href="' + p.classroom + '">' + ICONS.classroom + 'AI Classroom</a>' +
       '</div></div>'
     );
   }
@@ -65,11 +70,10 @@
   function markCurrent() {
     try {
       var path = location.pathname;
-      document.querySelectorAll('.nav-menu a').forEach(function (a) {
+      document.querySelectorAll('.nav-menu a, .mobile-acc-list a').forEach(function (a) {
         var href = a.getAttribute('href') || '';
-        var isTest = href.indexOf('ai-test-builder') !== -1 && path.indexOf('ai-test-builder') !== -1;
-        var isTutor = (href.indexOf('ai-chat') !== -1) && path.indexOf('ai-chat') !== -1 && path.indexOf('ai-test') === -1;
-        if (isTest || isTutor) {
+        var on = function (slug) { return href.indexOf(slug) !== -1 && path.indexOf(slug) !== -1; };
+        if (on('ai-test-builder') || on('ai-classroom') || (on('ai-chat') && path.indexOf('ai-test') === -1)) {
           a.style.color = 'var(--accent)';
           a.style.fontWeight = '650';
         }
@@ -79,6 +83,7 @@
 
   function iconForLibrary(href) {
     href = href || '';
+    if (href.indexOf('ai-classroom') !== -1) return ICONS.classroom;
     if (href.indexOf('ebooks') !== -1) return ICONS.book;
     if (href.indexOf('flashcards') !== -1) return ICONS.layers;
     if (href.indexOf('definitions') !== -1) return ICONS.bookOpen;
@@ -141,6 +146,7 @@
         '<div class="mobile-acc-list">' +
           '<a href="' + p.ai + '" class="' + cls + '">' + ICONS.chat + 'AI Tutor</a>' +
           '<a href="' + p.test + '" class="' + cls + '">' + ICONS.clipboard + 'AI Test Builder</a>' +
+          '<a href="' + p.classroom + '" class="' + cls + '">' + ICONS.classroom + 'AI Classroom</a>' +
         '</div>';
       a.setAttribute('data-ai-mobile', '1');
       a.replaceWith(wrap);

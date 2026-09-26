@@ -15,6 +15,7 @@
   const pendingImages = []; // Array of base64 data URLs, max 3
   let thinkMode = false;
   let researchMode = false;
+  let pendingQuizTopic = false;
 
   // â”€â”€ Per-user localStorage keys â”€â”€
   function chatStorageKey() {
@@ -719,6 +720,97 @@
     return PERSONAS[activePersonaIndex];
   }
 
+  function isQuizRequest(text) {
+    if (!text || isCodingTask(text)) return false;
+    var t = String(text).toLowerCase();
+    if (/\b(?:quiz|test)\s+(?:me|us)\b/.test(t)) return true;
+    if (/\b(?:mcq|multiple[ -]choice|self[ -]?test|question[ -]?paper|past[ -]paper)\b/.test(t)) return true;
+    if (/\b(?:create|make|generate|give|prepare|practice|build|need|start)\b/.test(t) && /\b(?:questions?|quiz|test|exam)\b/.test(t)) return true;
+    if (/\b(?:quiz|test)\s+(?:on|about|for|in)\b/.test(t)) return true;
+    if (/^\s*(?:quiz|test|questions?)(?:\s+please)?\s*[?.!]*$/.test(t)) return true;
+    if (/\b\d+\s+questions?\b/.test(t) && /\b(on|about|for|from|regarding|covering)\b/.test(t)) return true;
+    return false;
+  }
+
+  function hasQuizTopic(text) {
+    if (!text) return false;
+    var t = String(text).trim();
+    var colonMatch = t.match(/\b(?:quiz|test|mcq|questions?)\b\s*[:\-]\s*(.+)/i) || t.match(/\b(?:on|about|for|in|regarding|covering)\b\s*[:\-]\s*(.+)/i);
+    if (colonMatch && colonMatch[1].trim().length > 1) return true;
+    var match = t.match(/\b(?:quiz|test|mcq|questions?)\b[^.?!]{0,25}\b(?:on|about|for|in|regarding|covering)\b\s+(.+)/i);
+    if (match && match[1].trim().length > 1) return true;
+    return t.length > 42;
+  }
+
+  function shouldCreateQuiz(text) {
+    if (isQuizRequest(text)) return true;
+    return !!(pendingQuizTopic && text && !isInstantGreeting(text));
+  }
+
+  function quizProtocolPrompt() {
+    return `
+
+INTERACTIVE QUIZ CARD MODE:
+The student is asking for a quiz, test, MCQ set, or question practice. Return exactly one valid JSON object in one fenced block tagged "quiz". Do not put the word quiz outside the block and do not add a preamble, closing message, references, or study suggestions.
+
+Use this exact shape:
+{
+  "title": "Short title",
+  "subject": "${typeof selectedSubject !== 'undefined' ? selectedSubject : 'General'}",
+  "description": "One short sentence",
+  "difficulty": "Easy|Medium|Hard",
+  "questions": [
+    {
+      "question": "Question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": 0,
+      "explanation": "A concise explanation of why the answer is correct and why the tempting alternatives are not.",
+      "hint": "A short optional hint"
+    }
+  ]
+}
+
+Rules:
+- Use 5 to 10 questions unless the student explicitly requests another count. Use 2 to 6 options per question.
+- "answer" is a zero-based index into "options". Exactly one answer must be correct.
+- Keep questions accurate, independent, and appropriate for the selected subject and the student's level. Respect the requested topic, difficulty, and language.
+- If the student did not provide a topic, use the selected subject as the topic and create a balanced foundational quiz. Only ask a clarifying question when the request is genuinely ambiguous.
+- Escape quotes correctly. Do not use comments, trailing commas, HTML, or Markdown outside the JSON block.`;
+  }
+
+  function quizForModel(quiz) {
+    var normalized = normalizeQuizData(quiz);
+    if (!normalized) return '';
+    var index = Math.min(normalized.currentIndex, normalized.questions.length - 1);
+    var current = normalized.questions[index];
+    if (!current) return '';
+    var selected = normalized.answers[index];
+    return JSON.stringify({
+      title: normalized.title,
+      currentQuestion: index + 1,
+      totalQuestions: normalized.questions.length,
+      question: current.question,
+      options: current.options,
+      correctAnswerIndex: current.answer,
+      selectedAnswerIndex: selected === null || selected === undefined ? null : selected,
+      explanation: current.explanation
+    });
+  }
+
+  function recentQuizContextPrompt() {
+    for (var i = messages.length - 1; i >= 0; i--) {
+      var message = messages[i];
+      if (!message || message.role !== 'assistant' || !message.quiz) continue;
+      var context = quizForModel(message.quiz);
+      if (!context) continue;
+      return `
+
+RECENT INTERACTIVE QUIZ CONTEXT:
+${context}
+Use this context if the student refers to the quiz, an answer, or a question number. Do not output a new quiz block unless the student explicitly asks for another quiz.`;
+    }
+    return '';
+  }
 
   // â”€â”€ DOM â”€â”€
   const chatContent = document.getElementById('chat-content');
@@ -1282,28 +1374,25 @@ if (idx >= 0 && idx < PERSONAS.length) {
     if (searchQuery.length < 3) return [];
 
     try {
-      const { data, error } = await db.rpc('search_textbook_pages', {
+      const searchParams = {
         p_query: searchQuery,
         p_book_id: null,
         p_limit: 8,
         p_class_level_id: studentContext?.classLevelId || null,
-      });
-
-      if (error) {
-        console.warn('[AI] Textbook RPC error:', error.message);
-        // Fallback: try without class_level_id if column doesn't exist
-        if (error.message?.includes('p_class_level_id') || error.message?.includes('does not exist')) {
-          const { data: retryData } = await db.rpc('search_textbook_pages', {
-            p_query: searchQuery,
-            p_book_id: null,
-            p_limit: 8,
-          });
-          return prioritizeSubjectPages(retryData || [], subj);
-        }
-        return [];
+      };
+      let result = await db.rpc('search_textbook_pages_with_chapters', searchParams);
+      if (result.error) {
+        result = await db.rpc('search_textbook_pages', searchParams);
       }
-      if (!data || data.length === 0) return [];
-      return prioritizeSubjectPages(data, subj);
+      if (result.error) {
+        console.warn('[AI] Textbook RPC error:', result.error.message);
+        const legacyParams = { p_query: searchQuery, p_book_id: null, p_limit: 8 };
+        const retry = await db.rpc('search_textbook_pages_with_chapters', legacyParams);
+        const legacyRetry = retry.error ? await db.rpc('search_textbook_pages', legacyParams) : retry;
+        return prioritizeSubjectPages(legacyRetry.data || [], subj);
+      }
+      if (!result.data || result.data.length === 0) return [];
+      return prioritizeSubjectPages(result.data, subj);
     } catch (e) {
       console.warn('[AI] Textbook search failed:', e);
       return [];
@@ -1329,11 +1418,17 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     const sections = pages.slice(0, 3).map(p => {
       const title = p.book_title || 'Unknown Book';
-      const page = p.printed_page_number || p.page_number;
-      const chapter = p.chapter_name ? `, Chapter: ${p.chapter_name}` : '';
+      const chapterNumber = p.chapter_number !== null && p.chapter_number !== undefined && p.chapter_number !== '' ? Number(p.chapter_number) : null;
+      const chapterName = p.chapter_name ? String(p.chapter_name) : '';
+      const chapter = chapterNumber && chapterName ? `, Chapter ${chapterNumber}: ${chapterName}` : chapterName ? `, Chapter: ${chapterName}` : chapterNumber ? `, Chapter ${chapterNumber}` : '';
       const topic = p.topic_name ? `, Topic: ${p.topic_name}` : '';
+      const printedPage = p.printed_page_number !== null && p.printed_page_number !== undefined ? p.printed_page_number : null;
+      const pdfPage = p.page_number !== null && p.page_number !== undefined ? p.page_number : null;
+      const pageInfo = printedPage !== null && pdfPage !== null && String(printedPage) !== String(pdfPage)
+        ? `, PRINTED PAGE: ${printedPage}, PDF PAGE: ${pdfPage}`
+        : printedPage !== null ? `, PAGE: ${printedPage}` : pdfPage !== null ? `, PDF PAGE: ${pdfPage}` : '';
       const fullText = (p.full_text || p.snippet || '').slice(0, 1500);
-      return `[BOOK: "${title}"${chapter}${topic}, PAGE: ${page}]\n${fullText}`;
+      return `[BOOK: "${title}"${chapter}${topic}${pageInfo}]\n${fullText}`;
     });
 
     var refBlock = aiPrefs.references
@@ -1341,10 +1436,10 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
 ---
 **References:**
-- [Book Name], p. [page number]
+- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])
 ---
 
-List ALL books and pages you referenced from the block above. Do NOT invent references. Do NOT skip this step. MUST means MUST.`
+Use the chapter number and name exactly as shown in the source block. If a source has no chapter metadata, cite it as Book, p. [page]. List ALL books, chapters, and pages you actually used. Do NOT invent references. If no usable book, page, or website source is available, omit the References heading and both separator lines entirely.`
       : `4. REFERENCES OFF: Do NOT include any References section. Just end your answer normally.`;
     return `\n\n===== TEXTBOOK REFERENCE — READ FIRST =====
 You were given the student's EXACT Punjab board textbook excerpts below (from 11th/12th Biology, Chemistry, Physics, Computer Science, English 2025 editions now ingested). You MUST read and comprehend these excerpts BEFORE writing your answer. Do NOT answer from general memory alone. Your explanation must be GROUNDED in these excerpts.
@@ -1396,10 +1491,10 @@ ${refBlock}`;
 
 ---
 **References:**
-- [Book Name], p. [page number]  (for every textbook excerpt above that you used — list ALL of them, never invent a book or page)
+- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])  (for every textbook excerpt above that you used — list ALL of them, never invent a book, chapter, or page)
 - [Website URL]  (for every website/online source you relied on — if you searched the internet or used web knowledge beyond the textbooks, list each site/URL; if you used no websites, omit website lines)
 
-Rules: textbook lines cite the exact book + page from the excerpts block above. Website lines cite the site/URL where you saw the information. NEVER skip this section. NEVER place anything after it.`
+Rules: cite the exact book, chapter number/name, and page values from the excerpts block. If a source has no chapter metadata, cite the book and page without a chapter. If no usable source is available, omit the References heading and both separator lines entirely. NEVER place anything after a real References section.`
       : 'REFERENCES — OFF: NEVER include a References section in any response. Just answer and stop (plus study-suggestion closing lines only if those are enabled). Do not cite books, pages, or websites.';
 
     return [styleRule, levelRule, langRule, suggestRule, emojiRule, referencesRule, personalRule].filter(Boolean).join('\n\n');
@@ -1409,11 +1504,15 @@ Rules: textbook lines cite the exact book + page from the excerpts block above. 
   function buildSystemPrompt() {
     const persona = getActivePersona();
 
-    // Coder is coding-only â€” different system prompt
+    // Coder handles code plus Computer Science theory â€” different system prompt
     if (persona.codingOnly) {
+      var coderSubjMeta = getSubjectMeta(selectedSubject);
+      var coderSubjName = coderSubjMeta ? coderSubjMeta.name : (selectedSubject || 'Physics');
       let ctx = `You are Coder, Anteemonee's dedicated Coding Agent. You are an expert software engineer, full-stack developer, and programming tutor. You write production-quality code and help students build real projects.
 
 IDENTITY: Your name is "Coder". ONLY mention it when directly asked "what is your name?". NEVER start responses with your name. NEVER reveal AI model names. If asked who created you, say "Coder is trained by Anteemonee Pakistan."
+
+SELECTED SUBJECT: The student has "${coderSubjName}" selected. When that subject is Computer Science, you are also that student's Computer Science tutor and every answer must stay within Computer Science. If the subject is anything else, answer the question directly and accurately.
 
 STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler â€” go straight to the content.
 
@@ -1436,11 +1535,10 @@ WHAT YOU DO:
 - Convert designs/mockups to code
 - Optimize code for speed and efficiency
 
-NON-CODING RULES:
-- For Physics, Chemistry, Biology, Math theory, FSc subjects, or any non-coding question: reply with "I'm Coder, the coding expert. Switch to Chipa Sahab for academic questions â€” they handle Physics, Chemistry, Biology, and Math theory better."
-- NEVER answer non-coding academic questions, even if you know the answer
-- When declining study questions, output the marker [SWITCH_TO_STUDY] alone on its own line at the very end so the app can show a switch button
-- You CAN help with: computational math, data science, scientific computing, numerical methods, simulations, and anything that involves writing code
+ACADEMIC SUBJECTS — CRITICAL: You handle Computer Science theory as well as code. Never refuse a question and never tell the student to switch to another model, tutor, or persona. There is only one assistant.
+- If the selected subject is Computer Science, answer BOTH the theory and the coding parts fully: programming language fundamentals, algorithms, data structures, OOP, databases, networks, software engineering, operating systems, and computer organisation.
+- For Physics, Chemistry, Biology, Mathematics, or English, answer any theory question directly and correctly. If it is not a coding question, just answer it well. NEVER reply with a "switch to" message.
+- NEVER output a refusal, and NEVER emit any switch marker or instruction telling the student to use a different model or assistant.
 
 RESPONSE FORMAT:
 - For code: Use markdown code blocks with language tag. Include file name as comment at top if relevant.
@@ -1495,7 +1593,7 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
 SELECTED SUBJECT — CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are now a dedicated ${subjName} tutor for this entire response.
 - Answer ONLY within ${subjName}: all explanations, examples, formulas, diagrams (text), and exam tips must be for ${subjName}.
 - If the question is from another subject, briefly note it belongs to another subject but still try to help within ${subjName} context where possible; do not switch subjects on your own.
-- Prefer ${subjName} textbook excerpts provided below over general knowledge. Cite the ${subjName} book in References.
+- Prefer ${subjName} textbook excerpts provided below over general knowledge. Cite the exact ${subjName} book, chapter number/name, and page in References when references are enabled.
 - Use ${subjName} terminology, syllabus order, and board-exam style (Pakistan FSc/Matric).
 
 ${aiPrefsPrompt()}
@@ -1526,7 +1624,7 @@ BEHAVIOR:
   - The extension determines the file type: .txt for plain text, .md for markdown, .pdf for PDF, .docx for Word, .html for HTML, .csv for CSV, .json for JSON
   - After the block, add a short line: "Your beautifully designed file is ready! Click Download below."
   - The app will automatically convert the markdown inside the block to a beautifully designed downloadable file with colors, headers, footers, and styling. NEVER mention manual steps.
-- REFERENCES TOGGLE (student setting, default OFF): ${aiPrefs.references ? 'ON — You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], p. [page number]\n- [Website URL]\n---\n\nList ALL textbook books+pages you used from the excerpts block (never invent), PLUS every website/URL you relied on if you searched the internet or used web knowledge beyond the textbooks (omit website lines if none). Place it at the very end, after everything else. MUST means MUST, no exceptions.' : 'OFF — NEVER include a References section in any response. Just answer and stop.'}
+- REFERENCES TOGGLE (student setting, default OFF): ${aiPrefs.references ? 'ON — You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])\n- [Website URL]\n---\n\nUse the exact book, chapter number/name, and page values shown in the retrieved source excerpts. If a source has no chapter metadata, cite the book and page without a chapter. List ALL sources you actually used, never invent citations, and place the section at the very end. If no usable source exists, omit the heading and separators.' : 'OFF — NEVER include a References section in any response. Just answer and stop.'}
 - For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly.${aiPrefs.references ? ' Do NOT include references for plain greetings/small talk (no source to cite).' : ' Do NOT include references for casual chat.'}
 - NEVER fabricate book references. Only cite books that are actually provided in the textbook content block. NEVER fabricate website URLs; only list sites you actually used.`;
 
@@ -1557,8 +1655,9 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
     ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches of any word count). Always write the maximum you can in this response with full quality. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
 
-SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writing code, debugging, building apps or websites, GitHub, or programming questions.
-- If the student asks for coding or programming work: decline in ONE short line, say coding work is done by Coder (the coding agent) and you are only for studies. Then output the marker [SWITCH_TO_ZARDARI] alone on its own line at the very end so the app can show a switch button.`;
+SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the student selects, including Computer Science theory.
+- NEVER refuse a question and NEVER tell the student to switch to another model, tutor, or persona. There is only one assistant. If a question needs code, just answer it.
+- NEVER output a refusal or any switch marker.`;
 
     // Voice mode — short spoken responses, no filler words
     if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.voiceMode) {
@@ -1573,6 +1672,73 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     }
 
     return ctx;
+  }
+
+  function isReferenceHeading(line) {
+    var normalized = String(line || '').trim().replace(/^#+\s*/, '').replace(/[*_`]/g, '').trim();
+    return /^references?\s*:?$/i.test(normalized);
+  }
+
+  function isHorizontalRule(line) {
+    return /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(String(line || ''));
+  }
+
+  function isReferenceCitationLine(line) {
+    var value = String(line || '').trim();
+    if (!value || isReferencePlaceholder(value)) return false;
+    if (/^(?:[-*+]\s+|\d+[.)]\s+)/.test(value)) return true;
+    if (/^(?:book|source|website|reference)\s*:/i.test(value)) return true;
+    if (/https?:\/\//i.test(value)) return true;
+    if (/^\[[^\]]+\]\([^)]*\)/.test(value)) return true;
+    return /\b(?:p{1,2}\.|pages?\s*\d+|chapter\s+\d+)\b/i.test(value);
+  }
+
+  function isReferencePlaceholder(line) {
+    return /\[(?:book\s*name|page\s*number|website\s*url|source\s*title)\]/i.test(String(line || ''));
+  }
+
+  function isEmptyReferenceNotice(line) {
+    var value = String(line || '').trim().replace(/^[*_#]+\s*/, '').replace(/\s*[*_]+$/, '').trim();
+    return /^(?:[-*+]\s*)$/.test(value) || /^(?:none|n\/a)$/i.test(value) || /^(?:no|none|n\/a|not available|unavailable)\s+(?:references?|sources?)\b|^no\s+reference\s+available$/i.test(value) || isReferencePlaceholder(value);
+  }
+
+  function stripReferenceSeparator(text) {
+    var source = String(text || '').replace(/\r\n?/g, '\n');
+    var lines = source.split('\n');
+    var output = [];
+    for (var i = 0; i < lines.length; i++) {
+      if (isHorizontalRule(lines[i])) {
+        var next = i + 1;
+        while (next < lines.length && !lines[next].trim()) next++;
+        if (next < lines.length && isReferenceHeading(lines[next])) continue;
+      }
+      output.push(lines[i]);
+    }
+    return output.join('\n');
+  }
+
+  function stripEmptyReferences(text) {
+    if (!text) return text;
+    var source = stripReferenceSeparator(String(text).replace(/\r\n?/g, '\n'));
+    var lines = source.split('\n');
+    var end = lines.length;
+    while (end > 0 && !lines[end - 1].trim()) end--;
+    while (end > 0 && isHorizontalRule(lines[end - 1])) end--;
+    var headingIndex = -1;
+    for (var index = end - 1; index >= 0; index--) {
+      if (isReferenceHeading(lines[index])) {
+        headingIndex = index;
+        break;
+      }
+    }
+    if (headingIndex < 0) return source;
+    var sectionLines = lines.slice(headingIndex + 1, end).map(function(line) { return line.trim(); }).filter(function(line) { return line && !isHorizontalRule(line); });
+    var hasCitation = sectionLines.some(isReferenceCitationLine);
+    if (hasCitation || sectionLines.some(function(line) { return !isEmptyReferenceNotice(line); })) return lines.slice(0, end).join('\n').replace(/\s+$/g, '');
+    var start = headingIndex;
+    while (start > 0 && !lines[start - 1].trim()) start--;
+    if (start > 0 && isHorizontalRule(lines[start - 1])) start--;
+    return lines.slice(0, start).join('\n').replace(/\s+$/g, '');
   }
 
   // â”€â”€ Markdown + LaTeX Renderer â”€â”€
@@ -1699,6 +1865,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     revealChatView();
     activeConversationId = null;
     messages = [];
+    pendingQuizTopic = false;
     messagesList.innerHTML = '';
     welcome.style.display = 'flex';
     messagesList.style.display = 'none';
@@ -1771,11 +1938,17 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     if (!conv) return;
     revealChatView();
     activeConversationId = id;
-    messages = [...conv.messages];
+    pendingQuizTopic = false;
+    messages = conv.messages.map(function(message) {
+      if (message && message.role === 'assistant' && typeof message.content === 'string') {
+        message.content = stripEmptyReferences(message.content);
+      }
+      return message;
+    });
     messagesList.innerHTML = '';
     welcome.style.display = 'none';
     messagesList.style.display = 'flex';
-    messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null }));
+    messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, quiz: m.quiz || null }));
     scrollToBottom();
     renderHistory();
     closeMobileSidebar();
@@ -1841,6 +2014,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     if (activeConversationId === id) {
       activeConversationId = null;
       messages = [];
+      pendingQuizTopic = false;
       messagesList.innerHTML = '';
       messagesList.style.display = 'none';
       welcome.style.display = 'flex';
@@ -1886,13 +2060,12 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
 
   // â”€â”€ Message Rendering â”€â”€
   function getUserAvatarUrl() {
-    if (typeof currentProfile !== 'undefined' && currentProfile?.profile_image_url) {
-      return currentProfile.profile_image_url;
-    }
+    var profileImageUrl = typeof currentProfile !== 'undefined' ? currentProfile?.profile_image_url : undefined;
+    if (profileImageUrl !== null && profileImageUrl !== undefined) return profileImageUrl;
     if (typeof currentUser !== 'undefined' && currentUser) {
       return currentUser.user_metadata?.avatar_url
-        || currentUser.user_metadata?.picture
-        || null;
+        ?? currentUser.user_metadata?.picture
+        ?? null;
     }
     return null;
   }
@@ -1901,11 +2074,19 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     if (typeof currentProfile !== 'undefined' && currentProfile?.username) {
       return currentProfile.username[0].toUpperCase();
     }
+    if (typeof currentUser !== 'undefined' && currentUser?.user_metadata?.username) {
+      return currentUser.user_metadata.username[0].toUpperCase();
+    }
     if (typeof currentProfile !== 'undefined' && currentProfile?.full_name) {
       return currentProfile.full_name[0].toUpperCase();
     }
-    return (typeof currentUser !== 'undefined' && currentUser?.user_metadata?.full_name?.[0]?.toUpperCase())
-      || 'U';
+    if (typeof currentUser !== 'undefined' && currentUser?.user_metadata?.full_name) {
+      return currentUser.user_metadata.full_name[0].toUpperCase();
+    }
+    if (typeof currentUser !== 'undefined' && currentUser?.email) {
+      return currentUser.email[0].toUpperCase();
+    }
+    return 'U';
   }
 
   async function ensureProfileLoaded() {
@@ -1931,26 +2112,40 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     }
 
     if (role === 'assistant') {
+      var quiz = null;
+      if (opts.quiz) {
+        try { quiz = normalizeQuizData(opts.quiz); } catch (_) {}
+      }
+      if (!quiz) {
+        try { quiz = parseQuizBlock(content, false); } catch (_) {}
+      }
       var displayContent = content;
-      try { displayContent = stripFileBlocks(content); } catch (_) {}
+      try {
+        displayContent = quiz ? stripQuizBlock(content, true) : content;
+        displayContent = stripFileBlocks(displayContent);
+        displayContent = stripEmptyReferences(displayContent);
+      } catch (_) {}
       div.innerHTML = `
         <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
-        <div class="msg-body">${quoteHtml}<div class="msg-content">${renderMarkdown(displayContent)}</div></div>
+        <div class="msg-body">${quoteHtml}<div class="msg-content${displayContent ? '' : ' is-empty'}">${displayContent ? renderMarkdown(displayContent) : ''}</div></div>
       `;
     } else {
       const imgUrl = getUserAvatarUrl();
       const initial = getUserInitial();
       const avatarHtml = imgUrl
-        ? `<img src="${imgUrl}" alt="You" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-msg" style="display:none">${initial}</div>`
-        : `<div class="avatar-fallback-msg">${initial}</div>`;
+        ? `<img src="${escapeHtml(imgUrl)}" alt="You" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-msg" style="display:none">${escapeHtml(initial)}</div>`
+        : `<div class="avatar-fallback-msg">${escapeHtml(initial)}</div>`;
       div.innerHTML = `
         <div class="msg-avatar user-avatar">${avatarHtml}</div>
         <div class="msg-body">${quoteHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
     }
     if (role === 'assistant') {
-      attachFeedbackButtons(div);
       try { handleFileBlocks(div, content); } catch (_) {}
+      if (quiz) {
+        try { renderQuizCard(div, quiz); } catch (_) {}
+      }
+      attachFeedbackButtons(div);
     }
     if (!animate) div.style.animation = 'none';
     messagesList.appendChild(div);
@@ -2018,7 +2213,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
 
   function updateStreamingMessageImmediate(div, text) {
     const content = div.querySelector('.msg-content');
-    content.innerHTML = '<div class="streaming-text">' + renderStreamingMarkdown(text) + '</div><span class="streaming-caret"></span>';
+    var displayText = stripQuizStreamBlock(text);
+    var renderedText = displayText ? renderStreamingMarkdown(displayText) : '<span class="quiz-stream-placeholder">Preparing your interactive quiz…</span>';
+    content.innerHTML = '<div class="streaming-text">' + renderedText + '<span class="streaming-caret"></span></div>';
   }
 
   function stripSwitchMarkers(text) {
@@ -2031,23 +2228,6 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
     activePersonaIndex = idx;
     // auto mode: do not persist manual selection
     updatePersonaUI();
-  }
-
-  function appendSwitchCard(div, target) {
-    var host = div.querySelector('.msg-body') || div;
-    if (host.querySelector('.gh-switch-card')) return;
-    var toZardari = target === 'zardari';
-    var card = document.createElement('div');
-    card.className = 'gh-apply-card gh-switch-card';
-    card.innerHTML = '<div class="gh-apply-status">' + (toZardari ? 'Coding work is done by Zardari, the coding agent.' : 'Study work is done by the study models.') + '</div>' +
-      '<div class="gh-apply-actions"><button class="gh-apply-btn" type="button">' + (toZardari ? 'Switch to Zardari' : 'Switch to Shehbaz Sharif') + '</button></div>';
-    var btn = card.querySelector('.gh-apply-btn');
-    btn.addEventListener('click', function () {
-      switchPersona(toZardari ? 1 : 0);
-      btn.textContent = 'Switched ✓';
-      btn.disabled = true;
-    });
-    host.appendChild(card);
   }
 
   var FB_LIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
@@ -2156,7 +2336,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
   function onCopyMessage(wrap, idx) {
     try {
       var i = parseInt(idx, 10);
-      var raw = (messages[i] && messages[i].content) || '';
+      var raw = stripEmptyReferences((messages[i] && messages[i].content) || '');
       if (!raw) return;
       var plain = markdownToPlain(raw);
       var html = markdownToHtml(raw);
@@ -2230,7 +2410,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       wrap.innerHTML = '<button class="fb-btn fb-like" type="button" title="Good response" aria-label="Like">' + FB_LIKE_SVG + '</button>' +
         '<button class="fb-btn fb-dislike" type="button" title="Bad response" aria-label="Dislike">' + FB_DISLIKE_SVG + '</button>' +
         '<button class="fb-btn fb-copy" type="button" title="Copy response" aria-label="Copy">' + FB_COPY_SVG + '</button>' +
-        '<button class="fb-btn fb-tts tts-btn" type="button" title="Listen to response" aria-label="Read aloud">' + FB_SPEAKER_SVG + '</button>';
+        '<button class="fb-btn fb-tts tts-btn" type="button" title="Listen to response" aria-label="Read aloud" aria-pressed="false">' + FB_SPEAKER_SVG + '</button>';
       body.appendChild(wrap);
       var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
       wrap.dataset.voteKey = key;
@@ -2242,9 +2422,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You do NOT do coding work: no writ
       var ttsBtn = wrap.querySelector('.fb-tts');
       if (ttsBtn) {
         ttsBtn.addEventListener('click', function () {
-          var raw = (messages[idx] && messages[idx].content) || '';
+          var raw = stripEmptyReferences((messages[idx] && messages[idx].content) || '');
           if (raw && typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.toggleSpeak) {
-            window.AnteemoneeVoice.toggleSpeak(raw);
+            window.AnteemoneeVoice.toggleSpeak(raw, ttsBtn);
           }
         });
       }
@@ -2307,6 +2487,579 @@ function stripFileBlocks(text) {
   if (!text) return text;
   return text.replace(/```\s*file-create\s*:[^\n]*\n[\s\S]*?```/g, "").trim();
 }
+
+var QUIZ_ICON_CHEVRON_LEFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+var QUIZ_ICON_CHEVRON_RIGHT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+var QUIZ_ICON_BULB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.1 14.5A6 6 0 1 0 8.9 14.5C9.7 15.2 10 16 10 17h4c0-1 .3-1.8 1.1-2.5Z"></path></svg>';
+var QUIZ_ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+var QUIZ_ICON_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"></line><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line></svg>';
+var QUIZ_ICON_RESET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"></path></svg>';
+var QUIZ_ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+var QUIZ_ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>';
+var QUIZ_ICON_TROPHY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"></path><path d="M7 6H4v2a4 4 0 0 0 4 4"></path><path d="M17 6h3v2a4 4 0 0 1-4 4"></path></svg>';
+
+function quizElement(tag, className, text) {
+  var element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined && text !== null) element.textContent = text;
+  return element;
+}
+
+function quizIconButton(className, label, icon, disabled) {
+  var button = quizElement('button', className);
+  button.type = 'button';
+  button.setAttribute('aria-label', label);
+  button.title = label;
+  button.innerHTML = icon;
+  button.disabled = !!disabled;
+  return button;
+}
+
+function cleanQuizText(value, maxLength) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/\s+/g, ' ').trim().slice(0, maxLength || 500);
+}
+
+function quizOptionText(value) {
+  var text = value && typeof value === 'object'
+    ? cleanQuizText(value.text !== undefined ? value.text : (value.label !== undefined ? value.label : value.value), 500)
+    : cleanQuizText(value, 500);
+  return text.replace(/^\s*[A-F][.)]\s+/i, '').trim();
+}
+
+function quizAnswerIndex(question, options, sourceOptions, sourceIndexes) {
+  var candidates = [question.correctIndex, question.answerIndex, question.correctAnswer, question.correct_answer, question.correctOption, question.correct_option, question.answer, question.correct];
+  for (var i = 0; i < candidates.length; i++) {
+    var candidate = candidates[i];
+    if (candidate && typeof candidate === 'object' && Number.isInteger(candidate.index)) {
+      if (candidate.index >= 0 && candidate.index < options.length) return candidate.index;
+    }
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      if (Number.isInteger(candidate) && candidate >= 0 && candidate < options.length) return candidate;
+      if (Number.isInteger(candidate) && candidate >= 1 && candidate <= options.length && (candidate === options.length || question.answerBase === 'one' || question.answerFormat === '1-based')) return candidate - 1;
+    }
+    if (typeof candidate === 'string') {
+      var value = candidate.trim();
+      if (/^\d+$/.test(value)) {
+        var numericAnswer = parseInt(value, 10);
+        if (numericAnswer >= 0 && numericAnswer < options.length) return numericAnswer;
+        if (numericAnswer >= 1 && numericAnswer <= options.length) return numericAnswer - 1;
+      }
+      var letter = value.toUpperCase();
+      if (/^[A-F]$/.test(letter)) {
+        var letterIndex = letter.charCodeAt(0) - 65;
+        if (letterIndex < options.length) return letterIndex;
+      }
+      var textIndex = options.findIndex(function(option) { return option.toLowerCase() === value.toLowerCase(); });
+      if (textIndex >= 0) return textIndex;
+    }
+  }
+  for (var optionIndex = 0; optionIndex < sourceOptions.length; optionIndex++) {
+    var option = sourceOptions[optionIndex];
+    if (option && typeof option === 'object' && (option.correct === true || option.isCorrect === true)) {
+      return sourceIndexes.indexOf(optionIndex);
+    }
+  }
+  return -1;
+}
+
+function normalizeQuizData(raw) {
+  var source = raw;
+  if (source && source.quiz && !source.questions) source = source.quiz;
+  if (source && source.data && !source.questions) source = source.data;
+  if (!source || !Array.isArray(source.questions)) return null;
+  var questions = [];
+  source.questions.slice(0, 20).forEach(function(rawQuestion) {
+    if (!rawQuestion || typeof rawQuestion !== 'object') return;
+    var sourceOptions = Array.isArray(rawQuestion.options) ? rawQuestion.options : [];
+    var options = [];
+    var sourceIndexes = [];
+    sourceOptions.forEach(function(option, index) {
+      var text = quizOptionText(option);
+      if (text) {
+        options.push(text);
+        sourceIndexes.push(index);
+      }
+    });
+    if (options.length < 2) return;
+    var questionText = cleanQuizText(rawQuestion.question || rawQuestion.prompt || rawQuestion.text, 1800).replace(/^\s*(?:Q\s*)?\d+[.)]\s*/i, '').trim();
+    if (!questionText) return;
+    var answer = quizAnswerIndex(rawQuestion, options, sourceOptions, sourceIndexes);
+    if (answer < 0 || answer >= options.length) return;
+    questions.push({
+      question: questionText,
+      options: options,
+      answer: answer,
+      explanation: cleanQuizText(rawQuestion.explanation || rawQuestion.reason || rawQuestion.why, 2400),
+      hint: cleanQuizText(rawQuestion.hint || rawQuestion.clue, 700)
+    });
+  });
+  if (!questions.length) return null;
+  var difficulty = ['Easy', 'Medium', 'Hard'].indexOf(String(source.difficulty || '').trim()) >= 0 ? String(source.difficulty).trim() : 'Medium';
+  var quiz = {
+    title: cleanQuizText(source.title || source.name || 'Knowledge check', 140) || 'Knowledge check',
+    subject: cleanQuizText(source.subject || (typeof selectedSubject !== 'undefined' ? selectedSubject : 'General') || 'General', 80) || 'General',
+    description: cleanQuizText(source.description || source.instructions || 'Test your understanding one question at a time.', 500),
+    difficulty: difficulty,
+    questions: questions,
+    answers: questions.map(function() { return null; }),
+    currentIndex: 0,
+    completed: false,
+    hintOpen: false,
+    startedAt: Date.now()
+  };
+  if (raw && Array.isArray(raw.answers)) {
+    quiz.answers = quiz.questions.map(function(question, index) {
+      var answer = raw.answers[index];
+      return Number.isInteger(answer) && answer >= 0 && answer < question.options.length ? answer : null;
+    });
+  }
+  if (raw && Number.isInteger(raw.currentIndex)) quiz.currentIndex = Math.max(0, Math.min(raw.currentIndex, quiz.questions.length - 1));
+  if (raw && raw.completed === true) quiz.completed = true;
+  if (raw && raw.hintOpen === true) quiz.hintOpen = true;
+  if (raw && Number.isFinite(raw.startedAt)) quiz.startedAt = raw.startedAt;
+  return quiz;
+}
+
+function parseQuizJson(value) {
+  try {
+    var cleaned = String(value || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+    if (!cleaned) return null;
+    return normalizeQuizData(JSON.parse(cleaned));
+  } catch (_) { return null; }
+}
+
+function extractQuizJsonObject(value) {
+  var source = String(value || '');
+  var start = source.indexOf('{');
+  if (start < 0) return '';
+  var depth = 0;
+  var inString = false;
+  var escaped = false;
+  for (var i = start; i < source.length; i++) {
+    var character = source[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === '\\') escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') inString = true;
+    else if (character === '{') depth++;
+    else if (character === '}') {
+      depth--;
+      if (depth === 0) return source.slice(start, i + 1);
+    }
+  }
+  return '';
+}
+
+function parseQuizBlock(text, allowFallback) {
+  if (!text) return null;
+  var candidates = [];
+  var blockPattern = /```\s*quiz(?:\s+[^\n`]*)?\s*\n([\s\S]*?)```/gi;
+  var match;
+  while ((match = blockPattern.exec(String(text))) !== null) candidates.push(match[1]);
+  var tagPattern = /<quiz\b[^>]*>([\s\S]*?)<\/quiz>/gi;
+  while ((match = tagPattern.exec(String(text))) !== null) candidates.push(match[1]);
+  if (allowFallback) {
+    var jsonPattern = /```\s*(?:json)?\s*\n([\s\S]*?)```/gi;
+    while ((match = jsonPattern.exec(String(text))) !== null) {
+      if (/["']questions["']\s*:/.test(match[1])) candidates.push(match[1]);
+    }
+    if (/["']questions["']\s*:/.test(String(text))) {
+      var extracted = extractQuizJsonObject(String(text));
+      if (extracted) candidates.push(extracted);
+    }
+  }
+  for (var i = 0; i < candidates.length; i++) {
+    var quiz = parseQuizJson(candidates[i]);
+    if (quiz) return quiz;
+  }
+  return null;
+}
+
+function stripQuizBlock(text, includeFallback) {
+  if (!text) return text;
+  var result = String(text).replace(/```\s*quiz(?:\s+[^\n`]*)?\s*\n[\s\S]*?```/gi, '').replace(/<quiz\b[^>]*>[\s\S]*?<\/quiz>/gi, '').replace(/```\s*quiz[\s\S]*$/i, '').trim();
+  if (includeFallback && /["']questions["']\s*:/.test(result)) {
+    var jsonPattern = /```\s*(?:json)?\s*\n([\s\S]*?)```/gi;
+    result = result.replace(jsonPattern, function(_, json) { return parseQuizJson(json) ? '' : json; }).trim();
+    var extracted = extractQuizJsonObject(result);
+    if (extracted && parseQuizJson(extracted)) {
+      result = result.replace(extracted, '').trim();
+    }
+    if (parseQuizJson(result)) result = '';
+  }
+  return result;
+}
+
+function stripQuizStreamBlock(text) {
+  if (!text) return '';
+  var marker = String(text).search(/```\s*quiz\b|<quiz\b/i);
+  if (marker < 0) return String(text);
+  return String(text).slice(0, marker).trim();
+}
+
+function getQuizForDiv(div) {
+  if (div && div.__quiz) return div.__quiz;
+  if (!div || div.dataset.idx === undefined || div.dataset.idx === '') return null;
+  var index = parseInt(div.dataset.idx, 10);
+  return messages[index] && messages[index].quiz ? messages[index].quiz : null;
+}
+
+function assignQuizForDiv(div, quiz) {
+  if (!div) return;
+  div.__quiz = quiz;
+  if (div.dataset.idx === undefined || div.dataset.idx === '') return;
+  var index = parseInt(div.dataset.idx, 10);
+  if (messages[index] && messages[index].role === 'assistant') messages[index].quiz = quiz;
+}
+
+function saveQuizState(div) {
+  var quiz = getQuizForDiv(div);
+  if (!quiz || !activeConversationId) return;
+  var conversation = conversations.find(function(item) { return item.id === activeConversationId; });
+  if (!conversation) return;
+  conversation.messages = messages.slice();
+  conversation.updatedAt = Date.now();
+  persistConversation();
+}
+
+function quizScore(quiz) {
+  if (!quiz || !Array.isArray(quiz.questions)) return 0;
+  return quiz.questions.reduce(function(score, question, index) {
+    return score + (quiz.answers[index] === question.answer ? 1 : 0);
+  }, 0);
+}
+
+function quizPlainText(quiz, includeAnswers) {
+  var normalized = normalizeQuizData(quiz);
+  if (!normalized) return '';
+  var lines = [normalized.title, normalized.subject + ' | ' + normalized.difficulty, ''];
+  normalized.questions.forEach(function(question, index) {
+    lines.push((index + 1) + '. ' + question.question);
+    question.options.forEach(function(option, optionIndex) {
+      lines.push(String.fromCharCode(65 + optionIndex) + '. ' + option);
+    });
+    if (includeAnswers !== false) {
+      lines.push('Correct answer: ' + String.fromCharCode(65 + question.answer));
+      if (question.explanation) lines.push('Explanation: ' + question.explanation);
+    }
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function copyQuizText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(function() { return true; }).catch(function() { fallbackCopy(text); return true; });
+  }
+  fallbackCopy(text);
+  return Promise.resolve(true);
+}
+
+function shareQuiz(quiz) {
+  var text = quizPlainText(quiz, false);
+  if (!text) return;
+  if (navigator.share) {
+    navigator.share({ title: (quiz && quiz.title) || 'Quiz', text: text }).catch(function(error) {
+      if (!error || error.name !== 'AbortError') copyQuizText(text).then(function() { showChatToast('Quiz copied'); });
+    });
+  } else {
+    copyQuizText(text).then(function() { showChatToast('Quiz copied to clipboard'); });
+  }
+}
+
+function focusQuizElement(div, selector) {
+  requestAnimationFrame(function() {
+    var element = div.querySelector(selector);
+    if (element && typeof element.focus === 'function') element.focus();
+  });
+}
+
+function updateQuizCard(div, updater) {
+  var quiz = getQuizForDiv(div);
+  if (!quiz) return;
+  updater(quiz);
+  var normalized = normalizeQuizData(quiz);
+  assignQuizForDiv(div, normalized);
+  renderQuizCard(div, normalized);
+  saveQuizState(div);
+  if (userNearBottom) scrollToBottom();
+}
+
+function selectQuizAnswer(div, optionIndex) {
+  var quiz = getQuizForDiv(div);
+  if (!quiz || quiz.completed) return;
+  var question = quiz.questions[quiz.currentIndex];
+  if (!question || optionIndex < 0 || optionIndex >= question.options.length) return;
+  updateQuizCard(div, function(currentQuiz) { currentQuiz.answers[currentQuiz.currentIndex] = optionIndex; });
+  focusQuizElement(div, '.quiz-option[data-option-index="' + optionIndex + '"]');
+}
+
+function moveQuiz(div, direction) {
+  var quiz = getQuizForDiv(div);
+  if (!quiz || quiz.completed) return;
+  var total = quiz.questions.length;
+  var currentAnswer = quiz.answers[quiz.currentIndex];
+  if (direction > 0) {
+    if (currentAnswer === null || currentAnswer === undefined) return;
+    if (quiz.currentIndex >= total - 1) {
+      updateQuizCard(div, function(currentQuiz) { currentQuiz.completed = true; });
+      return;
+    }
+    updateQuizCard(div, function(currentQuiz) { currentQuiz.currentIndex += 1; currentQuiz.hintOpen = false; });
+  } else if (quiz.currentIndex > 0) {
+    updateQuizCard(div, function(currentQuiz) { currentQuiz.currentIndex -= 1; currentQuiz.hintOpen = false; });
+  }
+  focusQuizElement(div, direction > 0 ? '.quiz-next-btn:not(:disabled)' : '.quiz-nav-back');
+}
+
+function resetQuiz(div) {
+  if (!getQuizForDiv(div)) return;
+  updateQuizCard(div, function(quiz) {
+    quiz.answers = quiz.questions.map(function() { return null; });
+    quiz.currentIndex = 0;
+    quiz.completed = false;
+    quiz.hintOpen = false;
+  });
+  focusQuizElement(div, '.quiz-option');
+}
+
+function reviewQuiz(div) {
+  updateQuizCard(div, function(quiz) { quiz.completed = false; quiz.currentIndex = 0; quiz.hintOpen = false; });
+  focusQuizElement(div, '.quiz-option');
+}
+
+function askQuizReview(quiz) {
+  var questionIndex = Math.min((quiz && quiz.currentIndex) || 0, (quiz && quiz.questions.length || 1) - 1);
+  chatInput.value = 'Please review my quiz answer for question ' + (questionIndex + 1) + ' and explain what I should remember.';
+  autoResize();
+  btnSend.disabled = false;
+  chatInput.focus();
+}
+
+function renderQuizCard(div, rawQuiz) {
+  var quiz = normalizeQuizData(rawQuiz);
+  if (!quiz) return null;
+  var host = div.querySelector('.msg-body') || div;
+  var existing = host.querySelector('.quiz-card');
+  if (existing) existing.remove();
+  assignQuizForDiv(div, quiz);
+  var card = quizElement('section', 'quiz-card' + (quiz.completed ? ' is-complete' : ''));
+  card.tabIndex = 0;
+  card.setAttribute('aria-label', quiz.title + ' interactive quiz');
+  var head = quizElement('div', 'quiz-card-head');
+  var top = quizElement('div', 'quiz-card-top');
+  var navigation = quizElement('div', 'quiz-card-navigation');
+  var back = quizIconButton('quiz-icon-btn quiz-nav-back', 'Previous question', QUIZ_ICON_CHEVRON_LEFT, quiz.completed || quiz.currentIndex <= 0);
+  var progressText = quizElement('span', 'quiz-progress-text');
+  progressText.textContent = quiz.completed ? 'Complete' : (quiz.currentIndex + 1) + ' of ' + quiz.questions.length;
+  var forward = quizIconButton('quiz-icon-btn quiz-nav-forward', 'Next question', QUIZ_ICON_CHEVRON_RIGHT, quiz.completed || quiz.currentIndex >= quiz.questions.length - 1);
+  navigation.appendChild(back);
+  navigation.appendChild(progressText);
+  navigation.appendChild(forward);
+  top.appendChild(navigation);
+  var spacer = quizElement('div', 'quiz-card-spacer');
+  top.appendChild(spacer);
+  var utilities = quizElement('div', 'quiz-card-utilities');
+  var currentQuestion = quiz.questions[quiz.currentIndex];
+  var hintButton = quizIconButton('quiz-icon-btn', currentQuestion && currentQuestion.hint ? (quiz.hintOpen ? 'Hide hint' : 'Show hint') : 'Hint unavailable', QUIZ_ICON_BULB, quiz.completed || !currentQuestion || !currentQuestion.hint);
+  hintButton.classList.add('quiz-hint-btn');
+  var copyButton = quizIconButton('quiz-icon-btn', 'Copy quiz', QUIZ_ICON_COPY, false);
+  copyButton.classList.add('quiz-copy-btn');
+  var shareButton = quizIconButton('quiz-icon-btn', 'Share quiz', QUIZ_ICON_SHARE, false);
+  shareButton.classList.add('quiz-share-btn');
+  var resetButton = quizIconButton('quiz-icon-btn', 'Restart quiz', QUIZ_ICON_RESET, false);
+  resetButton.classList.add('quiz-reset-btn');
+  utilities.appendChild(hintButton);
+  utilities.appendChild(copyButton);
+  utilities.appendChild(shareButton);
+  utilities.appendChild(resetButton);
+  top.appendChild(utilities);
+  head.appendChild(top);
+  var progressTrack = quizElement('div', 'quiz-progress-track');
+  var progressFill = quizElement('div', 'quiz-progress-fill');
+  progressFill.style.width = (quiz.completed ? 100 : ((quiz.currentIndex + 1) / quiz.questions.length) * 100) + '%';
+  progressTrack.appendChild(progressFill);
+  head.appendChild(progressTrack);
+  var body = quizElement('div', 'quiz-card-body');
+  card.appendChild(head);
+  card.appendChild(body);
+  if (quiz.completed) {
+    var score = quizScore(quiz);
+    var total = quiz.questions.length;
+    var percentage = total ? Math.round((score / total) * 100) : 0;
+    var resultEyebrow = quizElement('div', 'quiz-result-eyebrow');
+    resultEyebrow.textContent = percentage >= 80 ? 'Excellent work' : percentage >= 60 ? 'Strong effort' : 'Keep practicing';
+    var resultIcon = quizElement('div', 'quiz-result-icon');
+    resultIcon.innerHTML = QUIZ_ICON_TROPHY;
+    var resultTitle = quizElement('h3', 'quiz-result-title', 'Quiz complete');
+    var resultCopy = quizElement('p', 'quiz-result-copy');
+    resultCopy.textContent = percentage >= 80 ? 'You have a strong grasp of this topic. Review the explanations below to lock it in.' : percentage >= 60 ? 'You are close. A quick review will make the important ideas stick.' : 'Every mistake is progress. Review the explanations and try the quiz again.';
+    var scoreWrap = quizElement('div', 'quiz-score-wrap');
+    var scoreValue = quizElement('div', 'quiz-score-value', percentage + '%');
+    var scoreLabel = quizElement('div', 'quiz-score-label', 'accuracy');
+    scoreWrap.appendChild(scoreValue);
+    scoreWrap.appendChild(scoreLabel);
+    var stats = quizElement('div', 'quiz-stats');
+    [['Correct', score], ['Answered', quiz.answers.filter(function(answer) { return answer !== null && answer !== undefined; }).length], ['Total', total]].forEach(function(stat) {
+      var item = quizElement('div', 'quiz-stat');
+      var value = quizElement('strong', 'quiz-stat-value', String(stat[1]));
+      var label = quizElement('span', 'quiz-stat-label', stat[0]);
+      item.appendChild(value);
+      item.appendChild(label);
+      stats.appendChild(item);
+    });
+    var answerMap = quizElement('div', 'quiz-answer-map');
+    answerMap.setAttribute('aria-label', 'Question results');
+    quiz.questions.forEach(function(question, index) {
+      var answered = quiz.answers[index] !== null && quiz.answers[index] !== undefined;
+      var correct = answered && quiz.answers[index] === question.answer;
+      var dot = quizElement('span', 'quiz-answer-dot ' + (!answered ? 'is-unanswered' : correct ? 'is-correct' : 'is-incorrect'));
+      dot.title = 'Question ' + (index + 1) + ': ' + (!answered ? 'unanswered' : correct ? 'correct' : 'incorrect');
+      answerMap.appendChild(dot);
+    });
+    var resultActions = quizElement('div', 'quiz-result-actions');
+    var reviewButton = quizElement('button', 'quiz-secondary-btn', 'Review answers');
+    reviewButton.type = 'button';
+    reviewButton.addEventListener('click', function() { reviewQuiz(div); });
+    var retryButton = quizElement('button', 'quiz-primary-btn', 'Try again');
+    retryButton.type = 'button';
+    retryButton.addEventListener('click', function() { resetQuiz(div); });
+    var askButton = quizElement('button', 'quiz-text-btn', 'Ask AI to explain');
+    askButton.type = 'button';
+    askButton.addEventListener('click', function() { askQuizReview(quiz); });
+    resultActions.appendChild(reviewButton);
+    resultActions.appendChild(retryButton);
+    resultActions.appendChild(askButton);
+    var resultIntro = quizElement('div', 'quiz-result-intro');
+    resultIntro.appendChild(resultIcon);
+    var resultCopyWrap = quizElement('div', 'quiz-result-copy-wrap');
+    resultCopyWrap.appendChild(resultEyebrow);
+    resultCopyWrap.appendChild(resultTitle);
+    resultCopyWrap.appendChild(resultCopy);
+    resultIntro.appendChild(resultCopyWrap);
+    body.appendChild(resultIntro);
+    var summary = quizElement('div', 'quiz-result-summary');
+    summary.appendChild(scoreWrap);
+    summary.appendChild(stats);
+    body.appendChild(summary);
+    body.appendChild(answerMap);
+    body.appendChild(resultActions);
+  } else {
+    var eyebrow = quizElement('div', 'quiz-eyebrow');
+    var eyebrowLabel = quizElement('span', 'quiz-eyebrow-label', 'KNOWLEDGE CHECK');
+    var subjectBadge = quizElement('span', 'quiz-subject-badge', quiz.subject);
+    var difficultyBadge = quizElement('span', 'quiz-difficulty-badge', quiz.difficulty);
+    eyebrow.appendChild(eyebrowLabel);
+    eyebrow.appendChild(subjectBadge);
+    eyebrow.appendChild(difficultyBadge);
+    var title = quizElement('h3', 'quiz-title', quiz.title);
+    var description = quizElement('p', 'quiz-description', quiz.description);
+    var questionMeta = quizElement('div', 'quiz-question-meta');
+    var questionNumber = quizElement('span', 'quiz-question-number', 'Question ' + (quiz.currentIndex + 1));
+    var questionHint = quizElement('span', 'quiz-question-hint', 'Choose one answer');
+    questionMeta.appendChild(questionNumber);
+    questionMeta.appendChild(questionHint);
+    var question = quizElement('h4', 'quiz-question', currentQuestion.question);
+    var options = quizElement('div', 'quiz-options');
+    options.setAttribute('role', 'radiogroup');
+    options.setAttribute('aria-label', 'Answer choices');
+    var selected = quiz.answers[quiz.currentIndex];
+    var answered = selected !== null && selected !== undefined;
+    currentQuestion.options.forEach(function(option, optionIndex) {
+      var optionButton = quizElement('button', 'quiz-option');
+      optionButton.type = 'button';
+      optionButton.dataset.optionIndex = String(optionIndex);
+      optionButton.setAttribute('role', 'radio');
+      optionButton.setAttribute('aria-checked', selected === optionIndex ? 'true' : 'false');
+      var letter = quizElement('span', 'quiz-option-letter', String.fromCharCode(65 + optionIndex));
+      var optionText = quizElement('span', 'quiz-option-text', option);
+      optionButton.appendChild(letter);
+      optionButton.appendChild(optionText);
+      if (answered && optionIndex === currentQuestion.answer) {
+        optionButton.classList.add('is-correct');
+        var correctMark = quizElement('span', 'quiz-option-mark');
+        correctMark.innerHTML = QUIZ_ICON_CHECK;
+        optionButton.appendChild(correctMark);
+      } else if (answered && optionIndex === selected) {
+        optionButton.classList.add('is-incorrect');
+        var wrongMark = quizElement('span', 'quiz-option-mark');
+        wrongMark.innerHTML = QUIZ_ICON_X;
+        optionButton.appendChild(wrongMark);
+      }
+      optionButton.addEventListener('click', function() { selectQuizAnswer(div, optionIndex); });
+      options.appendChild(optionButton);
+    });
+    body.appendChild(eyebrow);
+    body.appendChild(title);
+    body.appendChild(description);
+    body.appendChild(questionMeta);
+    body.appendChild(question);
+    body.appendChild(options);
+    if (quiz.hintOpen && currentQuestion.hint) {
+      var hint = quizElement('div', 'quiz-hint-box');
+      var hintLabel = quizElement('span', 'quiz-hint-label', 'Hint');
+      var hintText = quizElement('span', 'quiz-hint-text', currentQuestion.hint);
+      hint.appendChild(hintLabel);
+      hint.appendChild(hintText);
+      body.appendChild(hint);
+    }
+    if (answered) {
+      var feedback = quizElement('div', 'quiz-feedback ' + (selected === currentQuestion.answer ? 'is-correct' : 'is-incorrect'));
+      feedback.setAttribute('role', 'status');
+      var feedbackMark = quizElement('span', 'quiz-feedback-mark');
+      feedbackMark.innerHTML = selected === currentQuestion.answer ? QUIZ_ICON_CHECK : QUIZ_ICON_X;
+      var feedbackCopy = quizElement('div', 'quiz-feedback-copy');
+      var feedbackTitle = quizElement('strong', 'quiz-feedback-title', selected === currentQuestion.answer ? 'Correct' : 'Not quite');
+      var feedbackText = quizElement('span', 'quiz-feedback-text');
+      feedbackText.textContent = currentQuestion.explanation || ('The correct answer is ' + currentQuestion.options[currentQuestion.answer] + '.');
+      feedbackCopy.appendChild(feedbackTitle);
+      feedbackCopy.appendChild(feedbackText);
+      feedback.appendChild(feedbackMark);
+      feedback.appendChild(feedbackCopy);
+      body.appendChild(feedback);
+    }
+    var footer = quizElement('div', 'quiz-card-footer');
+    var scoreStatus = quizElement('div', 'quiz-score-status', quizScore(quiz) + ' / ' + quiz.questions.length + ' correct');
+    var next = quizElement('button', 'quiz-next-btn', quiz.currentIndex === quiz.questions.length - 1 ? 'Finish quiz' : 'Next');
+    next.type = 'button';
+    next.disabled = !answered;
+    next.addEventListener('click', function() { moveQuiz(div, 1); });
+    footer.appendChild(scoreStatus);
+    footer.appendChild(next);
+    body.appendChild(footer);
+  }
+  back.addEventListener('click', function() { moveQuiz(div, -1); });
+  forward.addEventListener('click', function() { moveQuiz(div, 1); });
+  hintButton.addEventListener('click', function() { updateQuizCard(div, function(currentQuiz) { currentQuiz.hintOpen = !currentQuiz.hintOpen; }); });
+  copyButton.addEventListener('click', function() { copyQuizText(quizPlainText(quiz)).then(function() { showChatToast('Quiz copied to clipboard'); }); });
+  shareButton.addEventListener('click', function() { shareQuiz(quiz); });
+  resetButton.addEventListener('click', function() { resetQuiz(div); });
+  card.addEventListener('keydown', function(event) {
+    if (event.target && event.target.closest && event.target.closest('input, textarea')) return;
+    if (/^[1-6]$/.test(event.key)) {
+      var optionIndex = parseInt(event.key, 10) - 1;
+      if (currentQuestion && optionIndex < currentQuestion.options.length) {
+        event.preventDefault();
+        selectQuizAnswer(div, optionIndex);
+      }
+    } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
+      if (event.target && event.target.closest && event.target.closest('button')) return;
+      event.preventDefault();
+      moveQuiz(div, 1);
+    } else if (event.key === 'ArrowLeft') {
+      if (event.target && event.target.closest && event.target.closest('button')) return;
+      event.preventDefault();
+      moveQuiz(div, -1);
+    }
+  });
+  host.appendChild(card);
+  return card;
+}
+
 function getFileIcon(ext) {
   ext = (ext||"").toLowerCase();
   if (ext==="pdf") return "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg>";
@@ -2749,18 +3502,38 @@ function handleFileBlocks(div, text) {
     } catch (_) {}
     try { _streamRenderTimer = null; _pendingStreamDiv = null; _pendingStreamText = ''; } catch (_) {}
     const content = div.querySelector('.msg-content');
-    var switchTo = null;
-    if (text && text.indexOf('[SWITCH_TO_ZARDARI]') !== -1) switchTo = 'zardari';
-    else if (text && text.indexOf('[SWITCH_TO_STUDY]') !== -1) switchTo = 'study';
-    var displayText = stripFileBlocks(stripSwitchMarkers(text));
-    content.innerHTML = renderMarkdown(displayText);
+    var quiz = null;
+    try {
+      quiz = parseQuizBlock(text, !!div.__quizRequested) || div.__quiz || null;
+    } catch (_) {}
+    var displayText = stripEmptyReferences(stripFileBlocks(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested)));
+    content.innerHTML = displayText ? renderMarkdown(displayText) : '';
+    content.classList.toggle('is-empty', !displayText);
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
     try { handleFileBlocks(div, text); } catch (_) {}
-    if (switchTo) {
-      try { appendSwitchCard(div, switchTo); } catch (_) {}
+    if (quiz) {
+      div.__quiz = quiz;
+      try { renderQuizCard(div, quiz); } catch (_) {}
+    } else {
+      div.__quiz = null;
+      var oldCard = div.querySelector('.quiz-card');
+      if (oldCard) oldCard.remove();
     }
+  }
+
+  function createAssistantMessage(text, div) {
+    var quiz = div && div.__quiz ? div.__quiz : null;
+    if (!quiz) {
+      try { quiz = parseQuizBlock(text, !!(div && div.__quizRequested)); } catch (_) {}
+    }
+    var message = { role: 'assistant', content: stripEmptyReferences(stripQuizBlock(stripSwitchMarkers(text || ''), !!(div && div.__quizRequested))) };
+    if (quiz) {
+      try { message.quiz = normalizeQuizData(quiz) || quiz; } catch (_) { message.quiz = quiz; }
+      if (div) div.__quiz = message.quiz;
+    }
+    return message;
   }
 
   // â”€â”€ Text Selection: Reply + Flashcard â”€â”€
@@ -3300,6 +4073,7 @@ function handleFileBlocks(div, text) {
   async function maybeAutoContinue(streamDiv, userText) {
     try {
       if (!streamDiv || !document.body.contains(streamDiv)) return;
+      if (streamDiv.__quizRequested) return;
       if (!activeSession) return;
       if (!lastApiMessages || !lastApiMessages.length) return;
       let asst = null;
@@ -3505,6 +4279,8 @@ function handleFileBlocks(div, text) {
   async function handleSend() {
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
+    const quizRequested = !hasImages && shouldCreateQuiz(text);
+    if (!hasImages && isQuizRequest(text) && !hasQuizTopic(text)) pendingQuizTopic = true;
     if ((!text && !hasImages) || isStreaming) return;
     if (!isAuthed()) { refreshAuthGate(); return; }
     try { if (typeof Access !== 'undefined' && Access.state.ready && !Access.state.access) { refreshAuthGate(); return; } } catch (_) {}
@@ -3569,6 +4345,7 @@ function handleFileBlocks(div, text) {
     btnStop.style.display = 'flex';
 
     const streamDiv = createStreamingMessage(thinkMode ? 'think' : researchMode ? 'research' : null);
+    streamDiv.__quizRequested = quizRequested;
     const statusCycle = startStatusCycle(streamDiv, thinkMode ? 'think' : researchMode ? 'research' : null);
     scrollToBottom();
 
@@ -3609,7 +4386,7 @@ function handleFileBlocks(div, text) {
     // Greetings get a tiny prompt: no system brick, no RAG, no history.
     const systemPrompt = isGreetingMsg
       ? ('You are ' + getActivePersona().name + ', a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
-      : buildSystemPrompt() + textbookContext;
+      : buildSystemPrompt() + textbookContext + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
 
     const apiMessages = isGreetingMsg
       ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }]
@@ -3617,9 +4394,9 @@ function handleFileBlocks(div, text) {
       { role: 'system', content: systemPrompt },
       ...messages.slice(-6).map(m => ({
         role: m.role,
-        content: m.quote
+        content: (m.quote
           ? `[Replying to ${m.quote.role === 'assistant' ? 'AI' : 'you'}: "${m.quote.text}"]\n${m.content}`
-          : m.content,
+          : m.content) + (m.quiz ? '\n[Interactive quiz context: ' + quizForModel(m.quiz) + ']' : ''),
       })),
     ];
     // Snapshot what this request actually bills (system + textbook + history).
@@ -3662,12 +4439,14 @@ function handleFileBlocks(div, text) {
       finalizeStreamingMessage(streamDiv, fullResponse);
       autoCreateFlashcardFromReply(text, fullResponse);
       stopStatusCycle(statusCycle);
-      messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
+            const assistantMessage = createAssistantMessage(fullResponse, streamDiv);
+            messages.push(assistantMessage);
+            if (assistantMessage.quiz) pendingQuizTopic = false;
       attachFeedbackButtons(streamDiv);
       bumpCounters(['total_messages', 'ai_messages']);
       updateTokensAfterResponse(text, fullResponse);
       // Auto-play TTS if the message was sent via voice (within last 30s)
-      try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(fullResponse); } catch (_) {}
+      try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(messages[messages.length - 1].content); } catch (_) {}
       userNearBottom = true;
       if (scrollDownBtn) {
         scrollDownBtn.classList.remove('generating');
@@ -3731,11 +4510,13 @@ function handleFileBlocks(div, text) {
           if (continued) {
             finalizeStreamingMessage(streamDiv, fullResponse);
             autoCreateFlashcardFromReply(text, fullResponse);
-            messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
+      const assistantMessage = createAssistantMessage(fullResponse, streamDiv);
+      messages.push(assistantMessage);
+      if (assistantMessage.quiz) pendingQuizTopic = false;
             attachFeedbackButtons(streamDiv);
             bumpCounters(['total_messages', 'ai_messages']);
             updateTokensAfterResponse(text, fullResponse);
-            try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(fullResponse); } catch (_) {}
+            try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(messages[messages.length - 1].content); } catch (_) {}
             isStreaming = false;
             if (scrollDownBtn) { scrollDownBtn.classList.remove('generating'); scrollDownBtn.classList.remove('show'); }
             btnStop.style.display = 'none';
@@ -3822,11 +4603,13 @@ function handleFileBlocks(div, text) {
 
         finalizeStreamingMessage(streamDiv, fullResponse);
         autoCreateFlashcardFromReply(text, fullResponse);
-        messages.push({ role: 'assistant', content: stripSwitchMarkers(fullResponse) });
+              const assistantMessage = createAssistantMessage(fullResponse, streamDiv);
+            messages.push(assistantMessage);
+            if (assistantMessage.quiz) pendingQuizTopic = false;
         attachFeedbackButtons(streamDiv);
         bumpCounters(['total_messages', 'ai_messages']);
         updateTokensAfterResponse(text, fullResponse);
-        try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(fullResponse); } catch (_) {}
+        try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(messages[messages.length - 1].content); } catch (_) {}
       } else if (error && (error.name === 'AbortError' || /aborted|abort/i.test(error.message || ''))) {
         // User tapped Stop: keep whatever streamed so far, no error text.
         stopStatusCycle(statusCycle);
@@ -3834,13 +4617,17 @@ function handleFileBlocks(div, text) {
           ? fullResponse + '\n\n*[Stopped]*'
           : '*[Stopped]*';
         finalizeStreamingMessage(streamDiv, stoppedText);
-        messages.push({ role: 'assistant', content: stripSwitchMarkers(stoppedText) });
+        const stoppedMessage = createAssistantMessage(stoppedText, streamDiv);
+        messages.push(stoppedMessage);
+        if (stoppedMessage.quiz) pendingQuizTopic = false;
         attachFeedbackButtons(streamDiv);
         updateTokensAfterResponse(text, stoppedText);
       } else {
         const errText = `Sorry, something went wrong. ${error.message}`;
         finalizeStreamingMessage(streamDiv, errText);
-        messages.push({ role: 'assistant', content: errText });
+        const errorMessage = createAssistantMessage(errText, streamDiv);
+        messages.push(errorMessage);
+        if (errorMessage.quiz) pendingQuizTopic = false;
         updateTokensAfterResponse(text, errText);
       }
     }
@@ -3966,7 +4753,7 @@ function handleFileBlocks(div, text) {
         if (!messages.length) { welcome.style.display = 'flex'; messagesList.style.display = 'none'; }
         else {
           welcome.style.display = 'none'; messagesList.style.display = 'flex';
-          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null }));
+          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, quiz: m.quiz || null }));
         }
         try { renderHistory(); } catch (_) {}
         try { scrollToBottom(); } catch (_) {}
