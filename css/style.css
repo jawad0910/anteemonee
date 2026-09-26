@@ -1304,3 +1304,39 @@ body { overflow-x: hidden; }
 
 /* site avatar also neutral */
 .site-avatar-circle, .site-dd-avatar { background: #23232A !important; color: #fff !important; }
+
+/* Header profile picture: force a true circle on every page.
+   Each page repeats an inline `.avatar-btn` / `.landing-profile-dropdown .avatar-btn`
+   rule with a 14px radius and uneven padding, so scope these selectors deeper
+   to win on specificity rather than relying on source order. */
+.header .avatar-btn,
+.header .landing-profile-dropdown .avatar-btn,
+.site-mobile-menu .avatar-btn,
+.site-mobile-menu .landing-profile-dropdown .avatar-btn {
+  border-radius: 999px;
+  padding: 3px;
+  gap: 0;
+  overflow: hidden;
+}
+.header .avatar-btn .avatar-wrapper,
+.header .landing-profile-dropdown .avatar-btn .avatar-wrapper,
+.site-mobile-menu .avatar-btn .avatar-wrapper,
+.site-mobile-menu .landing-profile-dropdown .avatar-btn .avatar-wrapper {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.header .avatar-btn .avatar-wrapper img,
+.header .landing-profile-dropdown .avatar-btn .avatar-wrapper img,
+.header .avatar-btn .avatar-fallback,
+.header .landing-profile-dropdown .avatar-btn .avatar-fallback,
+.header .avatar-btn .av-circle {
+  border-radius: 50%;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
