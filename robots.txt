@@ -4,7 +4,6 @@ Allow: /
 Disallow: /pages/login.html
 Disallow: /pages/signup.html
 Disallow: /pages/account.html
-Disallow: /pages/settings.html
 Disallow: /pages/payment.html
 Disallow: /pages/payment-success.html
 Disallow: /pages/payment-cancel.html
