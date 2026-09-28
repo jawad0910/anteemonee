@@ -37,6 +37,69 @@ class AiApiService {
   }
 
   /**
+   * Exchange the stored token for a fresh one.
+   *
+   * The chat path reads the access token straight out of localStorage, which
+   * never triggers Supabase's automatic refresh. Once that token expires the
+   * edge functions reject every call with a 401, so we refresh on demand rather
+   * than making the student sign in again.
+   */
+  async _refreshAccessToken() {
+    try {
+      if (typeof db !== 'undefined' && db && db.auth && typeof db.auth.getSession === 'function') {
+        const { data } = await db.auth.getSession();
+        const t = data && data.session && data.session.access_token;
+        if (t) {
+          this._accessToken = t;
+          return t;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /**
+   * POST, and on a 401 refresh the session and replay once.
+   * Bodies here are plain strings, so the request is safe to rebuild.
+   */
+  async _postWithAuthRetry(url, init) {
+    const res = await fetch(url, init);
+    if (res.status !== 401) return res;
+    const fresh = await this._refreshAccessToken();
+    if (!fresh) return res;
+    return fetch(url, { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${fresh}` } });
+  }
+
+  /**
+   * Read attached images and return a written description of each.
+   *
+   * The chat model (gpt-oss-120b) is text-only, so image bytes sent to it are
+   * wasted. A vision model describes the images instead and that text is fed
+   * back in as context.
+   */
+  async describeImages({ images, question = '', subject = '' } = {}) {
+    const authHeader = this._accessToken
+      ? `Bearer ${this._accessToken}`
+      : `Bearer ${this.supabaseKey}`;
+
+    const res = await fetch(`${this.supabaseUrl}/functions/v1/ai-vision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+      body: JSON.stringify({ images, question, subject }),
+    });
+
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) {}
+    if (!res.ok) {
+      throw new Error(String((data && data.error) || text || 'Vision request failed').slice(0, 300));
+    }
+    if (!data || !data.description) throw new Error('Vision returned no description');
+    return data;
+  }
+
+
+  /**
    * Stream chat with auto-failover.
    * If the primary provider's stream cuts off mid-response (no [DONE]),
    * it throws an IncompleteStreamError so the caller can retry with fallback.
