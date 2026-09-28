@@ -13,8 +13,6 @@
   let isStreaming = false;
   let studentContext = null;
   const pendingImages = []; // Array of base64 data URLs, max 3
-  let thinkMode = false;
-  let researchMode = false;
   let pendingQuizTopic = false;
 
   // â”€â”€ Per-user localStorage keys â”€â”€
@@ -447,11 +445,11 @@
   // â”€â”€ Model / Persona State â”€â”€
   const PERSONAS = [
     {
-      name: 'Chipa Sahab', providerIndex: 0,
+      name: 'AI', providerIndex: 0,
       background: 'Your name is Chipa Sahab. You run a welfare organization in Karachi, Pakistan, helping people in need. If a student asks about your welfare work, answer warmly and factually — mention that you are dedicated to helping the community in Karachi. If asked about politics or politicians, redirect gently back to studies. Keep it brief and offer to return to academics.',
     },
     {
-      name: 'Coder', providerIndex: 1,
+      name: 'AI', providerIndex: 1,
       background: 'Your name is Coder. You are the founder of Anteemonee. If a student asks about you, share only what is relevant: you are 18 years old, your birthday is August 26, 2008, you are based in Rahim Yar Khan, you are Punjabi, and you are currently in A Levels. Do not volunteer all of this at once — only share details when the student asks specific questions about you. Keep answers brief and redirect back to the task.',
       codingOnly: true,
     },
@@ -688,7 +686,7 @@
     } catch (_) {}
   }
 
-  // Auto model routing: coding -> Coder, everything else -> Chipa Sahab
+  // Auto model routing: coding tasks use the coding persona, everything else the tutor persona
   function isCodingTask(text) {
     if (!text) return false;
     var t = String(text).toLowerCase();
@@ -823,13 +821,10 @@ Use this context if the student refers to the quiz, an answer, or a question num
   const sidebarHistoryMobile = document.getElementById('sidebar-history-mobile');
   const modelSelectedName = document.getElementById('model-selected-name');
   const modelDot = document.getElementById('model-dot');
-  const modelDropdown = document.getElementById('model-dropdown');
-  const modelTrigger = document.getElementById('model-selector-trigger');
   const scrollDownBtn = document.getElementById('scroll-down-btn');
   const imagePreviewBar = document.getElementById('image-preview-bar');
   const btnPlus = document.getElementById('btn-plus');
   const plusWrapper = document.getElementById('plus-wrapper');
-  const plusDropdown = document.getElementById('plus-dropdown');
   const modesBar = document.getElementById('modes-bar');
   const imageFileInput = document.getElementById('image-file-input');
   // True when the user is reading near the newest message. Streaming only
@@ -1006,6 +1001,9 @@ if (idx >= 0 && idx < PERSONAS.length) {
     try { setupSubjectDropdown(); } catch (e) { console.warn('[Subject] setup failed', e); }
     try { updateSubjectUI(); renderSubjectList(); } catch (_) {}
     updatePersonaUI();
+    // Renders the modes bar. The GitHub repo chip is currently the only thing
+    // that goes in it.
+    try { renderModeChips(); } catch (_) {}
     try { hideChatsLoading(); } catch (_) {}
     chatInput.focus();
     // Periodic streak check (every 5 min)
@@ -1134,35 +1132,12 @@ if (idx >= 0 && idx < PERSONAS.length) {
     });
 
     // â”€â”€ Image attachment â”€â”€
+    // Plus opens the photo picker directly \u2014 no menu.
     btnPlus.addEventListener('click', (e) => {
       e.stopPropagation();
-      plusWrapper.classList.toggle('open');
+      if (pendingImages.length < 3) imageFileInput.click();
     });
 
-    plusDropdown.querySelectorAll('.plus-dropdown-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const action = item.dataset.action;
-        if (action === 'photo') {
-          if (pendingImages.length < 3) imageFileInput.click();
-        } else if (action === 'think') {
-          thinkMode = !thinkMode;
-          renderModeChips();
-          updatePlusDropdownActive();
-        } else if (action === 'research') {
-          researchMode = !researchMode;
-          renderModeChips();
-          updatePlusDropdownActive();
-        } else if (action === 'github') {
-          if (typeof GitHub !== 'undefined') GitHub.openPanel();
-        }
-        plusWrapper.classList.remove('open');
-      });
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!plusWrapper.contains(e.target)) plusWrapper.classList.remove('open');
-    });
 
     imageFileInput.addEventListener('change', (e) => {
       handleImageFiles(e.target.files);
@@ -1257,55 +1232,15 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     // Model selector removed — auto routing handles persona per message.
 
-    // â”€â”€ Modes dropdown (Think / Research) â”€â”€
-    // Close plus dropdown on outside click
-    document.addEventListener('click', (e) => {
-      if (!plusWrapper.contains(e.target)) {
-        plusWrapper.classList.remove('open');
-      }
-    });
   }
 
-  // â”€â”€ Modes UI (Think / Research dropdown) â”€â”€
+  // ── Modes UI ──
+  // The modes bar still hosts the GitHub repo chip, so this stays.
   function renderModeChips() {
     modesBar.innerHTML = '';
-    var removeSvg = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    if (thinkMode) {
-      var chip = document.createElement('span');
-      chip.className = 'mode-chip';
-      chip.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>Think<button class="mode-chip-remove" data-mode="think">' + removeSvg + '</button>';
-      chip.querySelector('.mode-chip-remove').addEventListener('click', function(e) {
-        e.stopPropagation();
-        thinkMode = false;
-        renderModeChips();
-        updatePlusDropdownActive();
-      });
-      modesBar.appendChild(chip);
-    }
-    if (researchMode) {
-      var chip2 = document.createElement('span');
-      chip2.className = 'mode-chip';
-      chip2.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Research<button class="mode-chip-remove" data-mode="research">' + removeSvg + '</button>';
-      chip2.querySelector('.mode-chip-remove').addEventListener('click', function(e) {
-        e.stopPropagation();
-        researchMode = false;
-        renderModeChips();
-        updatePlusDropdownActive();
-      });
-      modesBar.appendChild(chip2);
-    }
     if (typeof GitHub !== 'undefined') {
       try { GitHub.syncRepoChip(); } catch (_) {}
     }
-  }
-
-  function updatePlusDropdownActive() {
-    plusDropdown.querySelectorAll('.plus-dropdown-item').forEach(function(item) {
-      var action = item.dataset.action;
-      var isActive = (action === 'think' && thinkMode) || (action === 'research' && researchMode)
-        || (action === 'github' && typeof GitHub !== 'undefined' && GitHub.isConnectedCached());
-      item.classList.toggle('active', isActive);
-    });
   }
 
   // â”€â”€ Model / Persona â”€â”€
@@ -1317,10 +1252,6 @@ if (idx >= 0 && idx < PERSONAS.length) {
     } catch (_) {}
     try {
       document.querySelectorAll('.quick-btn').forEach(function (btn) { btn.style.display = ''; });
-    } catch (_) {}
-    try {
-      var ghItem = document.getElementById('plus-github-item');
-      if (ghItem) ghItem.style.display = '';
     } catch (_) {}
     // Keep hidden model elements in sync (no visible effect)
     try {
@@ -1563,9 +1494,6 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
         mixed: 'Match the user language for explanations, code comments always in English.',
       }[aiPrefs.language] || 'Match the user language for explanations, code comments always in English.';
       ctx += `\n\n${zardariLangRule}`;
-      if (thinkMode) {
-        ctx += `\n\nTHINK MODE ACTIVE: Deep thinking mode. Reason step by step. Consider edge cases. Give a thorough, well-thought-out coding solution.`;
-      }
       if (typeof GitHub !== 'undefined') {
         try {
           var ghCtx = GitHub.buildContext();
@@ -1645,13 +1573,7 @@ When asked about their own subjects, class, board or goals, answer directly from
 ${aiMemories.map(m => `- ${m}`).join('\n')}`;
     }
 
-    if (thinkMode) {
-      ctx += `\n\nTHINK MODE ACTIVE: The student has activated deep thinking mode. Take your time. Think step by step like a thoughtful human would. Reason through the problem thoroughly before answering. Consider multiple angles, potential pitfalls, and edge cases. Use more of your reasoning capacity. Do NOT give a rushed or surface-level answer. If the question is complex, break it down and work through each part carefully. This is not a simple Q&A â€” the student wants a genuinely thoughtful, thorough response.`;
-    }
 
-    if (researchMode) {
-      ctx += `\n\nRESEARCH MODE ACTIVE: The student has activated research mode. Search your knowledge thoroughly for the most accurate, up-to-date, and well-sourced information. Draw from multiple perspectives and sources. If you're not certain about something, say so honestly rather than guessing. Cite where information comes from when possible. Prioritize accuracy and depth over speed.`;
-    }
 
     ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches of any word count). Always write the maximum you can in this response with full quality. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
 
@@ -2158,9 +2080,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     // Index of the assistant message about to be pushed (user msg already in).
     div.dataset.idx = messages.length;
     const statusLabel = '';
-    const statusClass = mode === 'research' ? 'researching'
-                      : mode === 'think' ? 'thinking'
-                      : '';
+    const statusClass = mode === 'think' ? 'thinking' : '';
     div.innerHTML = `
       <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
       <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span class="thinking-status ${statusClass}" id="streaming-status">${statusLabel}</span></div></div></div>
@@ -2183,7 +2103,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     const interval = setInterval(() => {
       idx = (idx + 1) % 3;
       const dots = '.'.repeat(idx + 1);
-      updateStreamingStatus(div, dots, mode === 'research' ? 'researching' : mode === 'think' ? 'thinking' : 'analyzing');
+      updateStreamingStatus(div, dots, mode === 'think' ? 'thinking' : 'analyzing');
     }, 1500);
     return interval;
   }
@@ -4313,11 +4233,6 @@ function handleFileBlocks(div, text) {
     btnSend.disabled = true;
     chatInput.disabled = true;
     clearPendingImages();
-    // Reset think/research toggles after sending
-    thinkMode = false;
-    researchMode = false;
-    renderModeChips();
-    updatePlusDropdownActive();
     // Repo attachments belong to Coder only: study messages auto-disconnect the repo
     try {
       if (typeof GitHub !== 'undefined' && !isCodingTask(text)) GitHub.disconnectRepo();
@@ -4344,9 +4259,9 @@ function handleFileBlocks(div, text) {
     btnSend.style.display = 'none';
     btnStop.style.display = 'flex';
 
-    const streamDiv = createStreamingMessage(thinkMode ? 'think' : researchMode ? 'research' : null);
+    const streamDiv = createStreamingMessage(null);
     streamDiv.__quizRequested = quizRequested;
-    const statusCycle = startStatusCycle(streamDiv, thinkMode ? 'think' : researchMode ? 'research' : null);
+    const statusCycle = startStatusCycle(streamDiv, null);
     scrollToBottom();
 
     // Auto model routing: pick persona per message (no manual selector)
@@ -4385,13 +4300,62 @@ function handleFileBlocks(div, text) {
     // Fresh memory reload â€” picks up extractions from OTHER chats too.
     // Greetings get a tiny prompt: no system brick, no RAG, no history.
     const systemPrompt = isGreetingMsg
-      ? ('You are ' + getActivePersona().name + ', a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
+      ? ('You are a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
       : buildSystemPrompt() + textbookContext + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
 
+    // Auth must be set before the vision call below: it hits an edge function
+    // that rejects anonymous callers, and the token used to be applied further
+    // down, after the messages were built.
+    api.setSessionId(activeSession?.id || null);
+    api.setAccessToken(getAccessToken());
+
+    // ── Image reading pass, before any answer tokens are streamed ──
+    // The chat model is text-only, so a vision model describes the images and
+    // that description is injected as context. A failed read is NOT fatal: we
+    // answer without the image rather than showing an error, but we tell the
+    // student the image was not read so a confident answer cannot pretend
+    // otherwise.
+    let visionContext = '';
+    let visionFailed = false;
+    if (hasImages) {
+      try {
+        updateStreamingStatus(streamDiv, 'Reading the image' + (imagesToSend.length > 1 ? 's' : '') + '\u2026', 'analyzing');
+        const vision = await api.describeImages({
+          images: imagesToSend,
+          question: text,
+          subject: selectedSubject,
+        });
+        if (vision && vision.description) {
+          visionContext =
+            'The student attached ' +
+            (vision.count > 1 ? vision.count + ' images' : 'an image') +
+            '. A vision model read them and reported the following. Treat this as an ' +
+            'accurate description of what is in the image(s), and answer the student from it. ' +
+            'Never claim you cannot see the image: you are reading a description of it, and you ' +
+            'should respond as though you have seen it. Never invent detail beyond this report.\n\n' +
+            vision.description;
+        }
+      } catch (e) {
+        visionFailed = true;
+        console.warn('[Vision] image read failed:', e && (e.message || e));
+        try {
+          updateStreamingStatus(streamDiv, 'Could not read the image', 'analyzing');
+        } catch (_) {}
+      }
+    }
+
+    const imageAwarePrompt = visionContext
+      ? systemPrompt + '\n\nIMAGE DESCRIPTION (from a vision model, treat as ground truth):\n' + visionContext
+      : systemPrompt;
+    if (visionFailed) {
+      // Be explicit in the reply that the image was not read.
+      try { updateStreamingStatus(streamDiv, 'Answering without the image', 'analyzing'); } catch (_) {}
+    }
+
     const apiMessages = isGreetingMsg
-      ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }]
+      ? [{ role: 'system', content: imageAwarePrompt }, { role: 'user', content: text }]
       : [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: imageAwarePrompt },
       ...messages.slice(-6).map(m => ({
         role: m.role,
         content: (m.quote
@@ -4407,12 +4371,11 @@ function handleFileBlocks(div, text) {
     let firstChunk = true;
     const selectedProviderIndex = getActivePersona().providerIndex;
 
-    // Pass session ID and auth token to API
-    api.setSessionId(activeSession?.id || null);
-    api.setAccessToken(getAccessToken());
-
     try {
-    for await (const chunk of api.streamChat(apiMessages, selectedProviderIndex, hasImages ? imagesToSend : null)) {
+    // Images are deliberately NOT forwarded: the chat model is text-only, so
+    // the bytes would cost upload time and prompt tokens and be ignored. The
+    // vision pass above already turned them into text context.
+    for await (const chunk of api.streamChat(apiMessages, selectedProviderIndex, null)) {
         // Check for streak event from Edge Function
         if (chunk && chunk.includes('"type":"streak"')) {
           try {
