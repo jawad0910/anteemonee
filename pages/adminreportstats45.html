@@ -44,8 +44,54 @@
   .card h2 { font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
   .big { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .metric-sub { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 6px; }
-  .spark { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: 14px; }
-  .spark i { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; }
+  .chart-wrap { position: relative; }
+  .chart-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .grid-line { stroke: var(--border); stroke-width: 1; }
+  .axis-text { fill: var(--muted); font-size: 10px; font-weight: 500; }
+  .area { fill: url(#grad); }
+  .line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .pt { fill: var(--card); stroke: var(--accent); stroke-width: 2.5; }
+  .pt-hit { fill: transparent; cursor: pointer; }
+  .tip {
+    position: absolute; pointer-events: none; opacity: 0; transition: opacity .12s ease;
+    background: #05060A; border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 9px; font-size: 11.5px; white-space: nowrap;
+    transform: translate(-50%, -120%); z-index: 5;
+  }
+  .tip.show { opacity: 1; }
+  .tip b { font-variant-numeric: tabular-nums; }
+
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .card-head h2 { margin-bottom: 0; }
+  .picker { display: flex; align-items: center; gap: 8px; }
+  .picker select {
+    appearance: none; -webkit-appearance: none;
+    padding: 8px 32px 8px 12px; border-radius: 10px;
+    background: var(--card-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A93A3' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1px solid var(--border); color: var(--text);
+    font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: border-color .15s ease;
+  }
+  .picker select:hover { border-color: #3A3F4B; }
+  .picker select:focus { outline: none; border-color: var(--accent); }
+  .picker-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .users { display: flex; flex-direction: column; }
+  .user { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .user:last-child { border-bottom: none; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: var(--accent-soft, rgba(99,102,241,0.16)); color: var(--accent, #6366F1);
+    font-size: 13px; font-weight: 700; border: 1px solid var(--border);
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .user-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .user-name { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+  .user-email { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-stats { text-align: right; flex-shrink: 0; }
+  .user-msgs { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .user-sub { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
   .tag { font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border); color: var(--muted); }
   .empty { color: var(--muted); font-size: 12.5px; padding: 10px 0; }
@@ -68,7 +114,21 @@
 
   <div class="card" style="margin-top:14px">
     <h2>Messages per day &mdash; last 7 days</h2>
-    <div class="spark" id="spark"></div>
+    <div id="chart"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-head">
+      <h2 id="students-heading">Students</h2>
+      <div class="picker">
+        <select id="student-filter" aria-label="Filter students">
+          <option value="all">All students</option>
+          <option value="active">Sent messages</option>
+        </select>
+        <span class="picker-count" id="student-count">&mdash;</span>
+      </div>
+    </div>
+    <div class="users" id="users"><div class="empty">Loading…</div></div>
   </div>
 
   <div class="foot" id="foot"></div>
@@ -93,6 +153,26 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  /** Wipe every result surface, used before bouncing away. */
+  function clearAll() {
+    try {
+      document.getElementById('windows').innerHTML = '';
+      document.getElementById('chart').innerHTML = '';
+      document.getElementById('users').innerHTML = '';
+      document.getElementById('sub').textContent = 'Checking access…';
+    } catch (_) {}
+  }
+
+  /**
+   * Send an unauthorised visitor to the home page.
+   * `replace` so the back button cannot return them to a stats view, and a
+   * direct navigation so there is no visible stats page to go back to.
+   */
+  function leave() {
+    try { window.stop && window.stop(); } catch (_) {}
+    try { location.replace('../index.html'); } catch (_) { location.href = '../index.html'; }
+  }
+
   function banner(msg, kind) {
     var el = document.getElementById('banner');
     if (!msg) { el.className = 'banner'; el.innerHTML = ''; return; }
@@ -112,13 +192,117 @@
     }).join('');
   }
 
-  function renderSpark(byDay) {
-    var el = document.getElementById('spark');
-    if (!byDay || !byDay.length) { el.innerHTML = '<span class="empty">No activity.</span>'; return; }
-    var max = Math.max.apply(null, byDay.map(function (d) { return d.messages; }).concat([1]));
-    el.innerHTML = byDay.map(function (d) {
-      var h = Math.max(2, Math.round((d.messages / max) * 60));
-      return '<i style="height:' + h + 'px" title="' + d.day + ' — ' + n(d.messages) + ' messages"></i>';
+  /**
+   * Line/area chart of messages per day.
+   *
+   * Drawn as inline SVG rather than a canvas or a chart library: it keeps the
+   * page dependency-free like everything else here, scales cleanly to any
+   * width, and gives real axis labels and hover values.
+   */
+  function renderChart(byDay) {
+    var host = document.getElementById('chart');
+    var days = (byDay || []).slice();
+    if (!days.length) { host.innerHTML = '<div class="empty">No activity.</div>'; return; }
+
+    var W = 720, H = 220;
+    var padL = 34, padR = 14, padT = 14, padB = 26;
+    var iw = W - padL - padR, ih = H - padT - padB;
+    var max = Math.max.apply(null, days.map(function (d) { return d.messages; }).concat([1]));
+
+    // Round the top of the scale up to a clean number so the axis reads well.
+    var step = Math.max(1, Math.ceil(max / 4));
+    var top = step * 4;
+    var x = function (i) { return padL + (days.length === 1 ? iw / 2 : (i / (days.length - 1)) * iw); };
+    var y = function (v) { return padT + ih - (v / top) * ih; };
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Messages per day, last 7 days">'
+      + '<defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35"/>'
+      + '<stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>'
+      + '</linearGradient></defs>';
+
+    // horizontal gridlines + y labels
+    for (var g = 0; g <= 4; g++) {
+      var gv = g * step;
+      var gy = y(gv);
+      svg += '<line class="grid-line" x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '"/>';
+      svg += '<text class="axis-text" x="' + (padL - 8) + '" y="' + (gy + 3.5) + '" text-anchor="end">' + n(gv) + '</text>';
+    }
+
+    // area + line
+    var pts = days.map(function (d, i) { return x(i) + ',' + y(d.messages); });
+    svg += '<polygon class="area" points="' + padL + ',' + y(0) + ' ' + pts.join(' ') + ' ' + x(days.length - 1) + ',' + y(0) + '"/>';
+    svg += '<polyline class="line" points="' + pts.join(' ') + '"/>';
+
+    // x labels + dots with hover targets
+    days.forEach(function (d, i) {
+      var px = x(i), py = y(d.messages);
+      var label = d.day.slice(5);
+      svg += '<text class="axis-text" x="' + px + '" y="' + (H - 8) + '" text-anchor="middle">' + label + '</text>';
+      svg += '<circle class="pt" cx="' + px + '" cy="' + py + '" r="3.5"/>';
+      svg += '<circle class="pt-hit" cx="' + px + '" cy="' + py + '" r="14" '
+           + 'data-label="' + d.day + ' messages" data-v="' + n(d.messages) + '" data-x="' + px + '" data-y="' + py + '"/>';
+    });
+
+    svg += '</svg>';
+    host.innerHTML = '<div class="chart-wrap" id="chart-wrap">' + svg + '<div class="tip" id="tip"></div></div>';
+
+    // Tooltip positioned in viewBox units, which map to rendered pixels because
+    // the svg scales with width and no height is locked.
+    var wrap = document.getElementById('chart-wrap');
+    var tip = document.getElementById('tip');
+    wrap.querySelectorAll('.pt-hit').forEach(function (hit) {
+      hit.addEventListener('mouseenter', function () {
+        var r = wrap.getBoundingClientRect();
+        var scale = r.width / W;
+        tip.innerHTML = esc(hit.getAttribute('data-label')) + ': <b>' + hit.getAttribute('data-v') + '</b>';
+        tip.style.left = (Number(hit.getAttribute('data-x')) * scale) + 'px';
+        tip.style.top = (Number(hit.getAttribute('data-y')) * scale) + 'px';
+        tip.classList.add('show');
+      });
+      hit.addEventListener('mouseleave', function () { tip.classList.remove('show'); });
+    });
+  }
+
+  var studentMode = 'all';
+
+  function renderStudents(all) {
+    var host = document.getElementById('users');
+    var list = (all || []).slice();
+    var active = list.filter(function (s) { return s.messages > 0; });
+    var shown = studentMode === 'active' ? active : list;
+
+    document.getElementById('students-heading').textContent =
+      studentMode === 'active' ? 'Students who sent messages' : 'All students';
+    document.getElementById('student-count').textContent =
+      shown.length + (shown.length === 1 ? ' student' : ' students');
+
+    if (!shown.length) {
+      host.innerHTML = '<div class="empty">' +
+        (studentMode === 'active' ? 'Nobody has sent a message in this window.' : 'No students found.') +
+        '</div>';
+      return;
+    }
+
+    host.innerHTML = shown.map(function (u) {
+      var initial = (u.name || '?').trim().charAt(0).toUpperCase();
+      var avatar = u.avatar
+        ? '<img src="' + esc(u.avatar) + '" alt="" loading="lazy" onerror="this.parentNode.textContent=\'' + initial + '\'">'
+        : esc(initial);
+      var sub = u.messages > 0
+        ? n(u.messages) + ' msgs \u00b7 ' + n(u.conversations) + (u.conversations === 1 ? ' chat' : ' chats')
+        : 'no messages yet';
+      return '<div class="user">'
+        + '<span class="avatar">' + avatar + '</span>'
+        + '<span class="user-body">'
+        + '<span class="user-name">' + esc(u.name) + '</span>'
+        + '<span class="user-email">' + esc(u.email || u.username || 'no email') + '</span>'
+        + '</span>'
+        + '<span class="user-stats">'
+        + '<span class="user-msgs">' + n(u.messages) + '</span><br>'
+        + '<span class="user-sub">' + sub + '</span>'
+        + '</span>'
+        + '</div>';
     }).join('');
   }
 
@@ -130,15 +314,19 @@
     try {
       var res = await fetch(URL_BASE, { headers: { 'Content-Type': 'application/json', 'Authorization': authHeader() } });
       var data = await res.json().catch(function () { return {}; });
-      if (res.status === 401) { banner('Sign in to view stats.', 'err'); return; }
-      if (res.status === 403) {
-        banner('Your account is not authorised. Add your email to the <code>AI_STATS_ADMIN_EMAILS</code> secret in Supabase.', 'err');
+      // Not signed in, or signed in but not on the admin allowlist: leave.
+      // Nothing is rendered before this check, so no stats are ever painted.
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
+        clearAll();
+        leave();
         return;
       }
       if (!res.ok || !data.ok) { banner('Could not load stats: ' + esc(data.error || res.status), 'err'); return; }
 
       renderWindows(data);
-      renderSpark(data.byDay);
+      renderChart(data.byDay);
+      lastStudents = data.students || [];
+      renderStudents(lastStudents);
 
       var w = data.windows || {};
       document.getElementById('sub').textContent =
@@ -156,8 +344,27 @@
   }
 
   document.getElementById('btn-refresh').addEventListener('click', load);
-  load();
-  setInterval(load, 60000);
+
+  // Dropdown switches the list without refetching: both views come from the
+  // same payload, since every student is returned with their counts.
+  var lastStudents = [];
+  document.getElementById('student-filter').addEventListener('change', function (e) {
+    studentMode = e.target.value;
+    renderStudents(lastStudents);
+  });
+
+  // Gate before the first request: no session in storage means there is no way
+  // to be authorised, so go straight to the home page.
+  (function gate() {
+    var token = null;
+    try {
+      var raw = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
+      if (raw) token = (JSON.parse(raw) || {}).access_token || null;
+    } catch (_) {}
+    if (!token) { clearAll(); leave(); return; }
+    load();
+    setInterval(load, 60000);
+  })();
 })();
 </script>
 </body>
