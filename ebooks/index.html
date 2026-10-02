@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eBooks - Anteemonee</title>
+  <meta name="description" content="Full Punjab board textbooks for 11th and 12th class. Read and download eBooks inside Anteemonee.">
+  <link rel="canonical" href="https://anteemonee.com/ebooks/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=33">
+  <style>
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .nav-drop{position:relative}
+    .nav-drop::before{content:'';position:absolute;left:0;right:0;top:100%;height:12px;display:none}
+    .nav-drop:hover::before,.nav-drop.open::before{display:block}
+    .nav-menu{display:none;position:absolute;top:calc(100% + 10px);left:0;min-width:210px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:6px;box-shadow:var(--neo-shadow-float);z-index:50}
+    .nav-drop:hover .nav-menu,.nav-drop:focus-within .nav-menu,.nav-drop.open .nav-menu{display:block}
+    .nav-menu a{display:flex;width:100%;box-sizing:border-box;font-size:13.5px;padding:9px 12px;color:var(--text);border-radius:8px}
+    .nav-menu a:hover{background:var(--surface)}
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .section { padding: 70px 24px; }
+    .section-inner { max-width: 1280px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+  <a href="../dashboard/">Dashboard</a>
+  <div class="nav-drop">
+    <a href="#">Library <span style="font-size:10px;opacity:.6">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ebooks/">eBooks</a>
+      <a href="../flashcards/">Flashcards</a>
+      <a href="../past-papers/">Past Papers</a>
+    </div>
+  </div>
+  <a href="../ai-chat/">AI Assistant</a>
+</nav>
+      <div class="header-actions">
+        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="../index.html" class="mobile-nav-link">Home</a>
+    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+        <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+    <div class="mobile-cta">
+      <a href="../pages/login.html" class="btn-login">Log in</a>
+      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <style>
+    .eb-wrap{max-width:1280px;margin:0 auto;padding:110px 24px 80px}
+    .eb-head h1{font-family:'Fraunces',Georgia,serif;font-size:clamp(1.9rem,3.4vw,2.6rem);margin:0 0 6px;letter-spacing:-.02em}
+    .eb-head p{color:var(--text-secondary);font-size:14px;margin:0 0 14px}
+    .eb-filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 22px;align-items:center}
+    .eb-filters input{flex:1;min-width:220px;padding:12px 16px;border-radius:14px;border:1px solid var(--liquid-border-soft);background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);font:inherit;font-size:13.5px;outline:none}
+    .eb-filters input::placeholder{color:var(--text-muted)}
+    .eb-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0 22px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(10px)}
+    .eb-board-chips{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+    .eb-chip{padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:600;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:var(--text-secondary);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .eb-chip:hover{border-color:rgba(255,255,255,.18);color:var(--text);transform:translateY(-1px)}
+    .eb-chip.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:0 4px 14px var(--accent-soft)}
+    .eb-class-seg{display:flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:3px;gap:3px}
+    .eb-seg-btn{padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:600;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;transition:all .15s}
+    .eb-seg-btn.active{background:#fff;color:#000000;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .eb-count-mini{font-size:12.5px;color:var(--text-secondary);white-space:nowrap}
+    .eb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media(max-width:900px){.eb-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.eb-grid{grid-template-columns:1fr}}
+    .eb-card{position:relative;background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;overflow:hidden;transition:transform .18s, border-color .18s, box-shadow .18s;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+    .eb-card::before{content:'';position:absolute;inset:0;border-radius:20px;background:radial-gradient(600px 220px at 0% 0%, var(--accent-soft), transparent 55%);pointer-events:none;opacity:.9}
+    .eb-card:hover{transform:translateY(-4px);border-color:var(--accent-soft);box-shadow:0 12px 40px rgba(0,0,0,.35), 0 0 0 1px var(--accent-soft) inset}
+    .eb-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative}
+    .eb-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#000000,#333333);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;box-shadow:0 8px 20px var(--accent-soft);flex-shrink:0}
+    .eb-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .eb-badge{font-size:11px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:999px;background:var(--accent-soft);color:var(--text);border:1px solid var(--border)}
+    .eb-badge.pages{background:rgba(255,255,255,.07);color:var(--text-secondary);border-color:rgba(255,255,255,.12)}
+    .eb-title{font-weight:750;font-size:15.5px;line-height:1.35;position:relative;letter-spacing:-.01em}
+    .eb-sub{font-size:12.5px;color:var(--text-secondary);display:flex;gap:6px;flex-wrap:wrap;align-items:center;position:relative}
+    .eb-sub span{display:inline-flex;align-items:center;gap:4px}
+    .eb-sub i{width:3px;height:3px;border-radius:50%;background:var(--text-muted);display:inline-block;opacity:.6}
+    .eb-actions{display:flex;gap:8px;margin-top:4px;position:relative}
+    .eb-btn{flex:1;padding:10px 14px;border-radius:999px;font-size:13.5px;font-weight:650;border:1px solid transparent;background:var(--accent);color:var(--on-accent);text-align:center;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .12s, opacity .12s}
+    .eb-btn:hover{transform:translateY(-1px)}
+    .eb-btn:active{transform:translateY(0)}
+    .eb-btn.ghost{background:rgba(255,255,255,.08);color:var(--text);border-color:rgba(255,255,255,.12);backdrop-filter:blur(8px)}
+    .eb-btn.ghost:hover{background:rgba(255,255,255,.12)}
+    .eb-empty{padding:56px 20px;text-align:center;color:var(--text-secondary);border:1px dashed var(--border);border-radius:20px;background:rgba(255,255,255,.03)}
+    .eb-empty b{color:var(--text);font-size:16px}
+    .eb-gate{padding:56px 20px;text-align:center;color:var(--text-secondary);border:1px dashed var(--border);border-radius:20px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;gap:10px}
+    .eb-gate-icon{display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+    .eb-gate b{color:var(--text);font-size:16px}
+    .eb-gate p{font-size:13.5px;max-width:420px;margin:0;line-height:1.6}
+    .eb-gate-actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center}
+    .eb-skel{height:168px;border-radius:20px;background:linear-gradient(90deg,var(--surface)25%,var(--bg-card)50%,var(--surface)75%);background-size:200% 100%;animation:sk 1.2s infinite}
+    @keyframes sk{to{background-position:-200% 0}}
+    /* PDF shower */
+    #pdf-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(3,7,18,.72);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);align-items:center;justify-content:center;padding:18px}
+    .pdf-shell{position:relative;width:min(1100px,100%);height:min(88vh,900px);background:var(--bg-elevated);border:1px solid rgba(255,255,255,.12);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+    .pdf-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent)}
+    .pdf-bar-left{display:flex;align-items:center;gap:10px;min-width:0}
+    .pdf-bar-title{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-bar-sub{font-size:11px;color:var(--text-muted)}
+    .pdf-bar-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .pdf-icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .pdf-icon-btn:hover{background:rgba(255,255,255,.10)}
+    .pdf-icon-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+    .pdf-stage{flex:1;display:flex;position:relative;background:#000000;overflow:hidden;justify-content:center}
+    .pdf-canvas-wrap{position:relative;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:18px;background:radial-gradient(900px 500px at 50% 0%, var(--accent-soft), transparent 60%), #000000}
+    #pdf-canvas{max-width:100%;background:#fff;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+    .pdf-loader{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(0,0,0,.92);color:var(--text);z-index:2}
+    .pdf-loader.show{display:flex}
+    .pdf-spinner{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.16);border-top-color:var(--accent);animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .pdf-pagebar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);justify-content:center;flex-wrap:wrap}
+    .pdf-pagebar input{width:64px;text-align:center;padding:7px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--text);font:inherit;font-size:13px;outline:none}
+    .pdf-shell:fullscreen{width:100vw;height:100vh;max-width:100vw;max-height:100vh;border-radius:0;border:none}
+    .pdf-shell:fullscreen .pdf-canvas-wrap{padding:0;background:#000}
+    .pdf-shell:fullscreen #pdf-canvas{border-radius:0}
+  </style>
+  <main>
+    <div class="eb-wrap">
+      <div class="eb-head">
+        <h1>eBooks</h1>
+        <p id="eb-count">Loading PDFs…</p>
+        <div class="eb-tools">
+          <div id="eb-board-chips" class="eb-board-chips"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+            <div id="eb-class-seg" class="eb-class-seg">
+              <button class="eb-seg-btn active" data-v="11">11th</button>
+              <button class="eb-seg-btn" data-v="12">12th</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="eb-loading" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"><div class="eb-skel"></div><div class="eb-skel"></div><div class="eb-skel"></div></div>
+      <div id="eb-grid" class="eb-grid" style="display:none"></div>
+      <div id="eb-empty" class="eb-empty" style="display:none"><b>No eBooks yet</b><div style="margin-top:8px">We're working hard to add eBooks for you, sorry for the wait! Please check back soon.</div></div>
+      <div id="eb-gate" class="eb-gate" style="display:none">
+        <div class="eb-gate-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <b>Sign in to view eBooks</b>
+        <p>eBooks are available to signed-in students. Log in or create a free account to continue reading.</p>
+        <div class="eb-gate-actions">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="pdf-modal">
+    <div class="pdf-shell" role="dialog" aria-modal="true" aria-label="PDF viewer">
+      <div class="pdf-bar">
+        <div class="pdf-bar-left" style="min-width:0">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">◐</div>
+          <div style="min-width:0">
+            <div id="pdf-title" class="pdf-bar-title">eBook</div>
+            <div id="pdf-subtitle" class="pdf-bar-sub">PDF • ebooks-pdf</div>
+          </div>
+        </div>
+        <div class="pdf-bar-actions">
+          <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">−</button>
+          <span id="pdf-zoom-label" style="font-size:12px;color:var(--text-secondary);min-width:44px;text-align:center">100%</span>
+          <button class="pdf-icon-btn" id="pdf-zoom-in" title="Zoom in">+</button>
+          <button class="pdf-icon-btn" id="pdf-fs" title="Fullscreen" aria-label="Fullscreen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+          <button class="pdf-icon-btn" onclick="closePdf()" title="Close">✕</button>
+        </div>
+      </div>
+      <div id="pdf-stage" class="pdf-stage">
+        <div class="pdf-canvas-wrap" id="pdf-scroll">
+          <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF…</div></div>
+          <canvas id="pdf-canvas"></canvas>
+        </div>
+      </div>
+      <div class="pdf-pagebar">
+        <button class="pdf-icon-btn" id="pdf-prev" title="Previous page">‹</button>
+        <span style="font-size:12px;color:var(--text-secondary)">Page</span>
+        <input id="pdf-page-input" type="number" min="1" value="1">
+        <span id="pdf-page-count" style="font-size:12px;color:var(--text-secondary)">/ —</span>
+        <button class="pdf-icon-btn" id="pdf-next" title="Next page">›</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="../ai-chat/">AI Assistant</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../pages/download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../pages/payment-plan.html?plan=lifetime">Lifetime Access</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="../pages/privacy.html">Privacy Policy</a>
+            <a href="../pages/terms.html">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }</script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=30"></script>
+<script src="../js/login-modal.js?v=5"></script>
+<script src="../js/forgot-modal.js?v=2"></script>
+<script src="../js/signup-modal.js?v=3"></script>
+  <script>
+    (function () {
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">Account</a>' +
+                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">Settings</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Logout</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        var hideTimer = null;
+        function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      function toggleLandingProfileDropdown() { var d=document.getElementById('landing-profile-dropdown-menu'); if(d) d.classList.toggle('open'); }
+      function closeLandingProfileDropdown() { var d=document.getElementById('landing-profile-dropdown-menu'); if(d) d.classList.remove('open'); }
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      function handleLandingLogout() { try{ if(typeof handleLogout==='function') handleLogout(); else window.location.href='../index.html'; }catch(_){ window.location.href='../index.html'; } }
+      window.handleLandingLogout = handleLandingLogout;
+      renderLandingAuth();
+      var tries=0; var timer=setInterval(function(){ tries++; renderLandingAuth(); if(tries>40) clearInterval(timer); if(window.__authReady===true) clearInterval(timer); },300);
+      var hdr=document.getElementById('site-header');
+      window.addEventListener('scroll', function(){ if(hdr) hdr.classList.toggle('scrolled', window.scrollY>10); }, {passive:true});
+    })();
+  </script>
+  <script>
+  (function(){
+    const SUPA_URL='https://zkuytvjeqkpexcbyoyhz.supabase.co';
+    const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+    let sdb=null;
+    function getDb(){ if(window.db) return window.db; if(sdb) return sdb; try{ sdb=supabase.createClient(SUPA_URL,SUPA_ANON); return sdb; }catch(e){ return null; } }
+    let all=[], boards=[], subjects=[], classes=[];
+    function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function boardName(id){ let b=boards.find(x=>String(x.id)===String(id)); return b?b.name:'—'; }
+    function subjectName(id){ let s=subjects.find(x=>String(x.id)===String(id)); return s?s.name:'—'; }
+    function className(id){ let c=classes.find(x=>String(x.id)===String(id)); if(!c) return '—'; if(c.value===11) return '11th'; if(c.value===12) return '12th'; return c.label||'—'; }
+    async function init(){
+      let db=getDb(); if(!db){ document.getElementById('eb-count').textContent='Database not ready'; document.getElementById('eb-loading').style.display='none'; return; }
+      for(let i=0;i<10 && !db;i++){ await new Promise(r=>setTimeout(r,200)); db=getDb(); }
+      // eBooks are for signed-in users only — guests get a sign-in gate.
+      try{
+        let { data: { user } } = await db.auth.getUser();
+        if(!user){ showGate(); return; }
+      }catch(_){ /* auth check failed — fall through to normal load */ }
+      try{
+        let [bR,sR,cR,bkR,stR]=await Promise.all([
+          db.from('boards').select('id,name,region').order('name'),
+          db.from('subjects').select('id,name').order('name'),
+          db.from('class_levels').select('id,label,value').order('id'),
+          db.from('books').select('*').order('title').limit(100),
+          db.storage.from('ebooks-pdf').list('',{limit:100, sortBy:{column:'created_at', order:'desc'}})
+        ]);
+        if(!bR.error) boards=bR.data||[];
+        if(!sR.error) subjects=sR.data||[];
+        if(!cR.error) classes=cR.data||[];
+        if(bkR.error) console.warn('books fetch',bkR.error);
+        let booksData=bkR.data||[];
+        let files=(!stR.error && Array.isArray(stR.data))? stR.data : [];
+        // Primary source: storage bucket ebooks-pdf — this is where uploads go
+        if(files.length){
+          let pdfFiles=files.filter(f=>f.name && /\.pdf$/i.test(f.name));
+          all=pdfFiles.map(f=>{
+            let pub=db.storage.from('ebooks-pdf').getPublicUrl(f.name);
+            let url=pub.data.publicUrl;
+            let book=booksData.find(b=> (b.source_url||'').includes(f.name) );
+            if(book) return {...book, source_url:url};
+            return {id:'file-'+f.name, title:f.name.replace(/\.pdf$/i,'').replace(/[-_]+/g,' '), subject_id:null, board_id:null, class_level_id:null, edition:'', total_pages:null, source_url:url, is_verified:true};
+          });
+        } else {
+          // fallback to books table filtered to pdf bucket
+          all=booksData.filter(b=> (b.source_url||'').toLowerCase().includes('ebooks-pdf'));
+        }
+        // random order, not newest first
+        for(let i=all.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+        fillFilters();
+        await applyUserPrefs();
+        // reflect prefs in UI
+        let chipRow=document.getElementById('eb-board-chips');
+        if(chipRow){ chipRow.querySelectorAll('.eb-chip').forEach(c=> c.classList.toggle('active', String(c.dataset.id)===String(activeBoard||''))); }
+        let seg=document.getElementById('eb-class-seg');
+        if(seg){ seg.querySelectorAll('.eb-seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.v===activeClass)); }
+        render();
+      }catch(e){
+        document.getElementById('eb-count').textContent='Failed to load: '+(e.message||'error');
+        document.getElementById('eb-loading').style.display='none';
+        console.error(e);
+      }
+    }
+    function showGate(){
+      document.getElementById('eb-count').textContent='Sign in to view eBooks';
+      document.getElementById('eb-loading').style.display='none';
+      document.getElementById('eb-grid').style.display='none';
+      document.getElementById('eb-empty').style.display='none';
+      let tools=document.querySelector('.eb-tools'); if(tools) tools.style.display='none';
+      document.getElementById('eb-gate').style.display='flex';
+    }
+    async function applyUserPrefs(){
+      try{
+        let db=getDb(); if(!db) return;
+        let {data:{user}}=await db.auth.getUser();
+        if(!user) return;
+        // class -> 11th / 12th
+        try{
+          let r=await db.from('student_academic_profiles').select('class_level_id').eq('user_id', user.id).maybeSingle();
+          if(r && !r.error && r.data && r.data.class_level_id){
+            let cl=classes.find(c=> String(c.id)===String(r.data.class_level_id));
+            if(cl && (cl.value===11 || cl.value===12)) activeClass=String(cl.value);
+            else if(cl && cl.label) activeClass= cl.label==='12th' ? '12' : '11';
+          }
+        }catch(_){}
+        // board via province
+        try{
+          let p=await db.from('profiles').select('province_id').eq('id', user.id).maybeSingle();
+          let provName=null;
+          if(p && !p.error && p.data && p.data.province_id){
+            let pr=await db.from('provinces').select('name').eq('id', p.data.province_id).maybeSingle();
+            provName=pr && pr.data && pr.data.name ? pr.data.name : null;
+          }
+          if(provName){
+            let low=provName.toLowerCase();
+            let label=null;
+            if(low.includes('punjab')) label='Punjab Board';
+            else if(low.includes('sindh')) label='Sindh Board';
+            else if(low.includes('khyber')||low.includes('kpk')||low.includes('paktunkhwa')) label='KPK Board';
+            else if(low.includes('baloch')) label='Balochistan Board';
+            else if(low.includes('kashmir')||low.includes('azad')||low.includes('ajk')) label='Kashmir Board';
+            else if(low.includes('gilgit')||low.includes('baltistan')) label='Gilgit Baltistan Board';
+            if(label){
+              let id=findBoardIdByLabel(label);
+              if(id) activeBoard=id;
+              else activeBoard=null; // All
+            } else {
+              activeBoard=null; // All for other locations
+            }
+          } else {
+            activeBoard=null;
+          }
+        }catch(_){}
+      }catch(_){}
+    }
+    let activeBoard=null, activeClass='11';
+    function findBoardIdByLabel(label){
+      let l=label.toLowerCase();
+      let exact=boards.find(b=> (b.name||'').toLowerCase()===l);
+      if(exact) return String(exact.id);
+      // fuzzy for Kashmir / Gilgit variants
+      if(l.includes('kashmir')) return String((boards.find(b=> (b.name||'').toLowerCase().includes('kashmir') || (b.name||'').toLowerCase().includes('mirpur') || (b.region||'').toLowerCase().includes('kashmir'))||{}).id||'')||'';
+      if(l.includes('gilgit')) return String((boards.find(b=> (b.name||'').toLowerCase().includes('gilgit') || (b.region||'').toLowerCase().includes('gilgit'))||{}).id||'')||'';
+      if(l.includes('kpk')) return String((boards.find(b=> (b.name||'').toLowerCase()==='kpk board' || (b.name||'').toLowerCase().includes('kpk') || (b.region||'').toLowerCase().includes('kpk') || (b.region||'').toLowerCase().includes('khyber'))||{}).id||'')||'';
+      let hit=boards.find(b=> (b.name||'').toLowerCase().includes(l.split(' ')[0]) || (b.region||'').toLowerCase()===l.split(' ')[0]);
+      return hit? String(hit.id) : '';
+    }
+    function fillFilters(){
+      let chipRow=document.getElementById('eb-board-chips');
+      let seg=document.getElementById('eb-class-seg');
+      let wantedBoards=['Punjab Board','Sindh Board','KPK Board','Balochistan Board','Kashmir Board','Gilgit Baltistan Board'];
+      if(chipRow){
+        chipRow.innerHTML='';
+        let mkChip=(label, id)=>{
+          let b=document.createElement('button'); b.className='eb-chip'+(String(activeBoard)===String(id)?' active':'');
+          b.textContent=label; b.dataset.id=id||'';
+          b.addEventListener('click',()=>{ activeBoard=b.dataset.id||null; chipRow.querySelectorAll('.eb-chip').forEach(c=>c.classList.toggle('active', c===b)); render(); });
+          return b;
+        };
+        chipRow.appendChild(mkChip('All',''));
+        wantedBoards.forEach(label=>{
+          let id=findBoardIdByLabel(label);
+          if(id) chipRow.appendChild(mkChip(label, id));
+          else chipRow.appendChild(mkChip(label, '')); // still show, filters to none until data appears
+        });
+      }
+      if(seg){
+        // ensure only 11th/12th — remove All if present from older HTML
+        seg.querySelectorAll('.eb-seg-btn').forEach(btn=>{
+          if(btn.dataset.v==='') btn.remove();
+        });
+        seg.querySelectorAll('.eb-seg-btn').forEach(btn=>{
+          btn.classList.toggle('active', btn.dataset.v===activeClass);
+          btn.addEventListener('click',()=>{
+            seg.querySelectorAll('.eb-seg-btn').forEach(x=>x.classList.remove('active'));
+            btn.classList.add('active');
+            activeClass=btn.dataset.v||'11';
+            render();
+          });
+        });
+      }
+    }
+    function subjectColor(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%360; return 'hsl('+h+' 72% 58%)'; }
+    function render(){
+      let cF=activeClass;
+      let bF=activeBoard;
+      let filtered=all.filter(x=>{
+        if(cF){ let cl=classes.find(c=>String(c.id)===String(x.class_level_id)); let val=cl?String(cl.value):''; if(val!==String(cF) && String(x.class_level_id)!==String(cF)) return false; }
+        if(bF && String(x.board_id)!==String(bF)) return false;
+        return true;
+      });
+      document.getElementById('eb-count').textContent=filtered.length+' PDFs • '+all.length+' total';
+      document.getElementById('eb-loading').style.display='none';
+      let grid=document.getElementById('eb-grid');
+      let empty=document.getElementById('eb-empty');
+      if(!filtered.length){ grid.style.display='none'; empty.style.display='block'; return; }
+      empty.style.display='none'; grid.style.display='grid';
+      grid.innerHTML=filtered.map(x=>{
+        let bN=boardName(x.board_id), sN=subjectName(x.subject_id), cN=className(x.class_level_id);
+        let href=(x.source_url||'').trim();
+        let letter=esc((sN||'B').charAt(0));
+        let col=subjectColor(sN||'book');
+        return '<div class="eb-card">'
+          +'<div class="eb-top"><div class="eb-icon" style="background:'+col+'">'+letter+'</div><div class="eb-badges"><span class="eb-badge">'+esc(x.edition||cN)+'</span>'+(x.total_pages?'<span class="eb-badge pages">'+esc(x.total_pages)+' pages</span>':'')+'</div></div>'
+          +'<div class="eb-title">'+esc(sN!=='—'?sN:(x.title||'eBook').replace(/\s*Class\s*\d+.*$/i,''))+'</div>'
+          +'<div class="eb-sub"><span>'+esc(bN)+'</span><i></i><span>'+esc(sN)+'</span><i></i><span>'+esc(cN)+'</span></div>'
+          +'<div class="eb-actions">'
+          +'<button class="eb-btn" style="width:100%" onclick="openPdf(\''+esc(href).replace(/'/g, "\\'")+'\',\''+esc(x.title||'').replace(/'/g, "\\'")+'\')">◐ View PDF</button>'
+          +'</div></div>';
+      }).join('');
+    }
+    // old search/filter removed — board chips + class segment drive filtering
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+    else setTimeout(init,400);
+    let tries=0; let t=setInterval(()=>{ tries++; if(window.db){ clearInterval(t); init(); } if(tries>20) clearInterval(t); },500);
+
+    // --- pdf.js shower ---
+    let pdfDoc=null, pdfPageNum=1, pdfScale=1.0, pdfUrl='', pdfTitle='';
+    const canvas=document.getElementById('pdf-canvas');
+    const ctx=canvas?canvas.getContext('2d'):null;
+    const loader=document.getElementById('pdf-loader');
+    function showLoader(v){ if(loader) loader.classList.toggle('show', !!v); }
+    async function renderPage(num){
+      if(!pdfDoc || !ctx) return;
+      pdfPageNum=Math.max(1, Math.min(num, pdfDoc.numPages));
+      let page=await pdfDoc.getPage(pdfPageNum);
+      let viewport=page.getViewport({scale: pdfScale});
+      let dpr=window.devicePixelRatio||1;
+      canvas.width=Math.floor(viewport.width*dpr);
+      canvas.height=Math.floor(viewport.height*dpr);
+      canvas.style.width=viewport.width+'px';
+      canvas.style.height=viewport.height+'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      await page.render({canvasContext:ctx, viewport}).promise;
+      let inp=document.getElementById('pdf-page-input'); if(inp) inp.value=pdfPageNum;
+      let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ '+pdfDoc.numPages;
+    }
+    window.openPdf=async function(url,title){
+      let m=document.getElementById('pdf-modal'), tt=document.getElementById('pdf-title'), sub=document.getElementById('pdf-subtitle');
+      if(!m) return;
+      pdfUrl=url||''; pdfTitle=title||'eBook';
+      if(tt) tt.textContent=pdfTitle;
+      if(sub) sub.textContent=(pdfUrl.includes('ebooks-pdf')?'PDF • ebooks-pdf':'PDF');
+      if(!pdfUrl || !pdfUrl.startsWith('http')){ m.style.display='flex'; document.body.style.overflow='hidden'; return; }
+      m.style.display='flex'; document.body.style.overflow='hidden';
+      showLoader(true);
+      try{
+        if(!window.pdfjsLib) throw new Error('PDF engine not loaded');
+        pdfDoc=await pdfjsLib.getDocument({url: pdfUrl}).promise;
+        pdfPageNum=1; pdfScale=1.0;
+        let lbl=document.getElementById('pdf-zoom-label'); if(lbl) lbl.textContent=Math.round(pdfScale*100)+'%';
+        await renderPage(1);
+      }catch(e){
+        console.error(e);
+        let c=document.getElementById('pdf-canvas'); if(c && ctx){ ctx.clearRect(0,0,c.width,c.height); }
+      }finally{ showLoader(false); }
+    };
+    window.closePdf=function(){
+      let m=document.getElementById('pdf-modal'); if(m) m.style.display='none';
+      document.body.style.overflow=''; pdfDoc=null; showLoader(false);
+    };
+    let pm=document.getElementById('pdf-modal'); if(pm) pm.addEventListener('click',e=>{ if(e.target===pm) closePdf(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePdf(); if(e.key==='ArrowRight') renderPage(pdfPageNum+1); if(e.key==='ArrowLeft') renderPage(pdfPageNum-1); });
+    ['pdf-prev','pdf-next','pdf-zoom-in','pdf-zoom-out'].forEach(id=>{
+      let el=document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('click', ()=>{
+        if(!pdfDoc) return;
+        if(id==='pdf-prev') renderPage(pdfPageNum-1);
+        if(id==='pdf-next') renderPage(pdfPageNum+1);
+        if(id==='pdf-zoom-in'){ pdfScale=Math.min(2.4, pdfScale+0.15); let l=document.getElementById('pdf-zoom-label'); if(l) l.textContent=Math.round(pdfScale*100)+'%'; renderPage(pdfPageNum); }
+        if(id==='pdf-zoom-out'){ pdfScale=Math.max(0.55, pdfScale-0.15); let l=document.getElementById('pdf-zoom-label'); if(l) l.textContent=Math.round(pdfScale*100)+'%'; renderPage(pdfPageNum); }
+      });
+    });
+    let pageIn=document.getElementById('pdf-page-input'); if(pageIn) pageIn.addEventListener('change', ()=>{ let v=parseInt(pageIn.value,10); if(Number.isFinite(v)) renderPage(v); });
+    let fsBtn=document.getElementById('pdf-fs'); if(fsBtn) fsBtn.addEventListener('click', ()=>{
+      let shell=document.querySelector('.pdf-shell');
+      if(!shell) return;
+      if(!document.fullscreenElement){ shell.requestFullscreen().catch(()=>{}); }
+      else document.exitFullscreen().catch(()=>{});
+    });
+    document.addEventListener('fullscreenchange', ()=>{
+      let shell=document.querySelector('.pdf-shell');
+      if(document.fullscreenElement===shell){ shell.style.borderRadius='0'; document.body.style.overflow='hidden'; }
+      else { if(shell) shell.style.borderRadius=''; }
+    });
+  })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
+</body>
+</html>

@@ -1,0 +1,1802 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <title>Account - Anteemonee</title>
+  <meta name="description" content="Manage your Anteemonee account. Update your profile, subscription and study preferences.">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link rel="stylesheet" href="../css/style.css?v=33">
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0" as="script">
+  <style>
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    /* Embed mode: chromeless when shown inside the chatbot profile popup. */
+    body.embed .header, body.embed .site-mobile-menu, body.embed .header, body.embed .mobile-menu { display: none !important; }
+    body.embed .account-page { padding: 20px 16px 60px; }
+    @media (max-width: 768px) {
+      body.embed .account-page { padding: 14px 12px 48px; }
+    }
+    /* ── Site header (matches index / dashboard / ai-chat) ── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    @media (max-width: 900px) { .landing-nav { display: none; } }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    .account-page {
+      min-height: 100vh;
+      padding: 120px 24px 80px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .account-page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .account-page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.8px;
+      margin-bottom: 8px;
+    }
+    .account-page-header p {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    .account-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--neo-shadow-raised);
+      padding: 32px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+    .edit-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .edit-btn:hover {
+      background: var(--accent-soft);
+      box-shadow: var(--neo-shadow-raised);
+      color: var(--accent);
+    }
+    .edit-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+    .profile-hero {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .profile-avatar-wrap {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .profile-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2.5px solid var(--glass-border);
+    }
+    .avatar-fallback-lg {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--green), var(--accent));
+      color: #fff;
+      font-size: 32px;
+      font-weight: 700;
+      border-radius: 50%;
+      border: 2.5px solid var(--glass-border);
+    }
+    .profile-info h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 4px;
+    }
+    .profile-info p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .field-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+    .field-row:hover {
+      background: var(--tag-bg);
+    }
+    .field-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .field-value {
+      font-size: 14px;
+      font-weight: 600;
+      text-align: right;
+      max-width: 55%;
+      word-break: break-word;
+      color: var(--text);
+    }
+    .field-value.empty {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .field-row-edit {
+      display: none;
+      padding: 12px 0;
+    }
+    .field-row-edit.active {
+      display: block;
+    }
+    .field-row-display {
+      display: flex;
+    }
+    .field-row-display.hidden {
+      display: none;
+    }
+    .edit-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .edit-actions button {
+      flex: 1;
+    }
+    .btn-save {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      background: var(--accent);
+      color: var(--on-accent);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 48px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 16px var(--accent-soft), var(--neo-shadow-raised-sm);
+    }
+    .btn-save:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 6px 24px var(--accent-soft), var(--neo-shadow-raised);
+    }
+    .btn-save:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-cancel {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 48px;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-cancel:hover {
+      background: var(--bg-card-hover);
+      box-shadow: var(--neo-shadow-raised);
+      color: var(--text);
+    }
+    .btn-verify {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-verify:hover { opacity: 0.9; }
+    .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
+    .phone-verified { color: var(--success); font-weight: 600; }
+    .phone-unverified { color: var(--warning); }
+    .edit-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .edit-form-group:last-of-type {
+      margin-bottom: 0;
+    }
+    .edit-form-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .edit-form-group select,
+    .edit-form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--surface-recessed);
+      box-shadow: var(--neo-shadow-recessed-sm);
+      color: var(--text);
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .edit-form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7079' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    .edit-form-group select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .edit-form-group input:focus,
+    .edit-form-group select:focus {
+      box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft);
+    }
+    .edit-form-group input::placeholder {
+      color: var(--text-muted);
+    }
+    .multi-select-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .multi-select-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      box-shadow: var(--neo-shadow-raised-sm);
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .multi-select-chip:hover {
+      background: var(--bg-card-hover);
+      box-shadow: var(--neo-shadow-raised);
+    }
+    .multi-select-chip.selected {
+      background: var(--accent-soft);
+      box-shadow: var(--neo-shadow-recessed-sm);
+      color: var(--accent);
+    }
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      background: var(--success);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 10001;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+      box-shadow: var(--neo-shadow-float);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error {
+      background: var(--error);
+      box-shadow: 0 8px 32px rgba(255, 102, 117, 0.3);
+    }
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+    .not-logged-in {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .not-logged-in h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .not-logged-in p {
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+    .onboarding-prompt {
+      text-align: center;
+      padding: 20px;
+      margin-top: 4px;
+      background: var(--accent-soft);
+      box-shadow: var(--neo-shadow-recessed-sm);
+      border: none;
+      border-radius: var(--radius-md);
+    }
+    .onboarding-prompt p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+    .btn-danger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 32px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 102, 117, 0.08);
+      border: none;
+      box-shadow: var(--neo-shadow-raised-sm);
+      color: var(--error);
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.2s;
+      cursor: pointer;
+      min-height: 56px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-danger:hover {
+      background: rgba(255, 102, 117, 0.14);
+      border-color: rgba(255, 102, 117, 0.25);
+    }
+    .account-bottom-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .account-bottom-actions .btn-secondary {
+      flex: 1;
+    }
+    .account-bottom-actions .btn-danger {
+      flex: 1;
+    }
+    .edit-profile-avatar-wrap {
+      width: 96px; height: 96px; border-radius: 50%; position: relative; flex-shrink: 0; cursor: pointer;
+    }
+    .edit-profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 2.5px solid var(--glass-border); }
+    .edit-profile-avatar-overlay {
+      position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+    .edit-profile-avatar-wrap:hover .edit-profile-avatar-overlay { opacity: 1; }
+    .edit-profile-avatar-overlay svg { width: 24px; height: 24px; color: #fff; }
+    .edit-form-group textarea {
+      width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: none;
+      background: var(--surface-recessed); box-shadow: var(--neo-shadow-recessed-sm); color: var(--text); font-size: 16px; font-family: 'Inter', sans-serif;
+      outline: none; transition: all 0.2s; resize: vertical; min-height: 80px;
+    }
+    .edit-form-group textarea:focus { box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--accent-soft); }
+    .edit-form-group textarea::placeholder { color: var(--text-muted); }
+    .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; }
+    .username-status { font-size: 12px; margin-top: 4px; }
+    .username-status.checking { color: var(--text-muted); }
+    .username-status.available { color: var(--success); }
+    .username-status.taken { color: var(--error); }
+    .edit-profile-avatar-fallback {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--green), var(--accent));
+      color: #fff; font-size: 36px; font-weight: 700; border-radius: 50%; border: 2.5px solid var(--glass-border);
+    }
+    .img-upload-input { display: none; }
+    .auth-field-note { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .edit-profile-modal {
+      position: fixed; inset: 0; z-index: 10000; display: flex; align-items: flex-end; justify-content: center;
+    }
+    .ep-modal-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .ep-modal-sheet {
+      position: relative; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      background: var(--bg-card); border: none; box-shadow: var(--neo-shadow-float); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .ep-modal-header {
+      display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0;
+    }
+    .ep-modal-header h3 { font-size: 18px; font-weight: 700; }
+    .ep-close-btn {
+      display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+      border-radius: var(--radius-sm); background: var(--surface); border: none; box-shadow: var(--neo-shadow-raised-sm);
+      color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+    }
+    .ep-close-btn:hover { background: var(--bg-card-hover); color: var(--text); }
+    .ep-modal-body { padding: 20px 24px; }
+    .ep-avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; }
+    .ep-avatar-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ep-remove-photo-btn {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border: none; border-radius: var(--radius-sm);
+      background: rgba(255, 102, 117, 0.1); color: var(--error); font-size: 12px; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .ep-remove-photo-btn:hover { background: rgba(255, 102, 117, 0.2); }
+    .ep-modal-footer { display: flex; gap: 12px; padding: 16px 24px 24px; }
+    .ep-modal-footer button { flex: 1; }
+    .ep-notice {
+      display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-top: 8px;
+      border-radius: var(--radius-sm); background: rgba(255, 199, 0, 0.06); border: 1px solid rgba(255, 199, 0, 0.12);
+      font-size: 12px; color: var(--warning); line-height: 1.5;
+    }
+    .ep-notice svg { flex-shrink: 0; margin-top: 1px; }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (min-width: 600px) {
+      .ep-modal-sheet { border-radius: var(--radius-xl); margin-bottom: 24px; }
+    }
+    @media (max-width: 480px) {
+      .account-page { padding: 100px 16px 60px; }
+      .account-card { padding: 24px 18px; }
+      .profile-hero { flex-direction: column; text-align: center; gap: 16px; }
+      .edit-actions { flex-direction: column; }
+      .account-bottom-actions { flex-direction: column; }
+    }
+    .card-shimmer {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--neo-shadow-raised);
+      padding: 32px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .shimmer-line {
+      height: 14px;
+      border-radius: 7px;
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+      margin-bottom: 16px;
+    }
+    .shimmer-line:last-child { margin-bottom: 0; }
+    .shimmer-line.w60 { width: 60%; }
+    .shimmer-line.w40 { width: 40%; }
+    .shimmer-line.w80 { width: 80%; }
+    .shimmer-line.w50 { width: 50%; }
+    .shimmer-circle {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+      margin-bottom: 16px;
+    }
+    .shimmer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .shimmer-row:last-child { border-bottom: none; }
+    .shimmer-label {
+      height: 12px; width: 90px; border-radius: 6px;
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+    }
+    .shimmer-value {
+      height: 12px; width: 120px; border-radius: 6px;
+      background: linear-gradient(90deg, var(--border) 25%, var(--tag-bg) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer-slide 1.5s infinite;
+    }
+    @keyframes shimmer-slide {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <a href="../dashboard/">Dashboard</a>
+        <div class="nav-drop">
+          <a href="#">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ebooks/">eBooks</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../past-papers/">Past Papers</a>
+          </div>
+        </div>
+        <a href="../ai-chat/">AI Assistant</a>
+      </nav>
+      <div class="header-actions">
+        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="../dashboard/" class="mobile-nav-link">Dashboard</a>
+    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+        <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+    <div class="mobile-cta">
+      <a href="../pages/login.html" class="btn-login">Log in</a>
+      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <div class="account-page" id="account-content">
+    <div class="not-logged-in" id="not-logged-in" style="display:none">
+      <h2>You're not signed in</h2>
+      <p>Sign in to view your account.</p>
+      <a href="../pages/login.html" class="btn-primary">Sign In</a>
+    </div>
+
+    <div id="account-view" style="display:none">
+      <div class="account-page-header">
+        <h1>Your Account</h1>
+        <p>Manage your Anteemonee Profile</p>
+      </div>
+
+      <div id="account-cards"></div>
+
+      <div id="account-loading">
+        <div class="card-shimmer">
+          <div class="shimmer-circle"></div>
+          <div class="shimmer-line w60"></div>
+          <div class="shimmer-line w40"></div>
+        </div>
+        <div class="card-shimmer">
+          <div style="margin-bottom:20px"><div class="shimmer-line w50" style="height:10px"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+        </div>
+        <div class="card-shimmer">
+          <div style="margin-bottom:20px"><div class="shimmer-line w50" style="height:10px"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+          <div class="shimmer-row"><div class="shimmer-label"></div><div class="shimmer-value"></div></div>
+        </div>
+      </div>
+
+      <div id="onboarding-prompt-container"></div>
+
+      <div class="account-bottom-actions">
+        <a href="../index.html" class="btn-secondary">Back to Home</a>
+        <a href="../settings/" class="btn-secondary">Settings</a>
+        <button class="btn-danger" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="ep-avatar-input" accept="image/*" class="img-upload-input">
+
+  <div class="edit-profile-modal" id="edit-profile-modal" style="display:none">
+    <div class="ep-modal-backdrop" onclick="closeEditProfile()"></div>
+    <div class="ep-modal-sheet">
+      <div class="ep-modal-header">
+        <h3>Edit Profile</h3>
+        <button class="ep-close-btn" onclick="closeEditProfile()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="ep-modal-body">
+        <div class="ep-avatar-section">
+          <div class="edit-profile-avatar-wrap" id="ep-avatar-wrap" onclick="document.getElementById('ep-avatar-input').click()">
+            <img id="ep-avatar-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="display:none">
+            <div class="edit-profile-avatar-fallback" id="ep-avatar-fallback"></div>
+            <div class="edit-profile-avatar-overlay">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+          </div>
+          <div class="ep-avatar-actions">
+            <p class="auth-field-note" style="text-align:center">Tap to change photo</p>
+            <button type="button" class="ep-remove-photo-btn" id="ep-remove-photo-btn" onclick="removeProfilePhoto()" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Remove Photo
+            </button>
+          </div>
+        </div>
+
+        <div class="edit-form-group">
+          <label>Full Name</label>
+          <input type="text" id="ep-name" placeholder="Your full name" maxlength="100">
+        </div>
+        <div class="edit-form-group">
+          <label>Username</label>
+          <input type="text" id="ep-username" placeholder="Choose a username" maxlength="30" pattern="[a-zA-Z0-9_]+">
+          <div class="auth-field-note">Letters, numbers, and underscores only</div>
+          <div class="username-status" id="ep-username-status"></div>
+        </div>
+        <div class="edit-form-group">
+          <label>Email</label>
+          <input type="email" id="ep-email" placeholder="your@email.com">
+          <div class="auth-field-note">A verification link will be sent to the new email</div>
+        </div>
+        <div class="edit-form-group">
+          <label>Phone</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="tel" id="ep-phone" placeholder="0300 1234567" style="flex:1">
+            <button type="button" id="ep-phone-verify-btn" class="btn-verify" onclick="sendPhoneOtp()" style="display:none;white-space:nowrap">Verify</button>
+          </div>
+          <div id="ep-phone-status" class="auth-field-note" style="display:none"></div>
+          <div id="ep-otp-row" style="display:none;margin-top:8px;display:none;flex-direction:column;gap:6px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="ep-otp-input" placeholder="Enter 6-digit code" maxlength="6" style="flex:1;letter-spacing:4px;text-align:center;font-size:1.1rem">
+              <button type="button" class="btn-verify" onclick="verifyPhoneOtp()">Confirm</button>
+            </div>
+            <div class="auth-field-note" id="ep-otp-status"></div>
+          </div>
+        </div>
+        <div class="edit-form-group">
+          <label>Bio</label>
+          <textarea id="ep-bio" placeholder="Tell us about yourself..." maxlength="200" rows="3"></textarea>
+          <div class="char-counter"><span id="ep-bio-count">0</span>/200</div>
+        </div>
+
+        <div id="ep-email-notice" class="ep-notice" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <span>A verification link will be sent to your new email. You must verify it to keep access.</span>
+        </div>
+      </div>
+      <div class="ep-modal-footer">
+        <button class="btn-cancel" onclick="closeEditProfile()">Cancel</button>
+        <button class="btn-save" id="ep-save-btn" onclick="saveEditProfile()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="../ai-chat/">AI Assistant</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../pages/download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../pages/payment-plan.html?plan=lifetime">Lifetime Access</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="../pages/privacy.html">Privacy Policy</a>
+            <a href="../pages/terms.html">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=30"></script>
+<script src="../js/login-modal.js?v=5"></script>
+<script src="../js/forgot-modal.js?v=2"></script>
+<script src="../js/signup-modal.js?v=3"></script>
+  <script>
+    let acctData = {
+      profile: null,
+      acad: null,
+      subjects: [],
+      subjectDetails: [],
+      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], subjects_list: [] }
+    };
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      requestAnimationFrame(() => t.classList.add('show'));
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    async function loadAllRefData() {
+      try {
+        const [sysRes, provRes] = await Promise.all([
+          db.from('education_systems').select('*').eq('is_active', true).order('sort_order'),
+          db.from('provinces').select('*').order('name')
+        ]);
+        acctData.ref.education_systems = sysRes.data || [];
+        acctData.ref.provinces = provRes.data || [];
+      } catch (e) {
+        console.error('loadAllRefData error:', e);
+      }
+    }
+
+    async function loadBoards(systemId) {
+      const { data } = await db.from('education_system_boards').select('board_id, boards(*)').eq('education_system_id', systemId);
+      acctData.ref.boards = (data || []).map(r => r.boards).filter(Boolean);
+    }
+
+    async function loadClassLevels(systemId) {
+      const { data } = await db.from('class_levels').select('*').eq('education_system_id', systemId).order('sort_order');
+      acctData.ref.class_levels = data || [];
+    }
+
+    async function loadGroups(systemId) {
+      const { data } = await db.from('groups').select('*').eq('education_system_id', systemId).order('name');
+      acctData.ref.groups = data || [];
+    }
+
+    async function loadSubjectsList(systemId, groupId) {
+      const { data } = await db.from('subjects').select('*')
+        .eq('education_system_id', systemId)
+        .order('is_compulsory', { ascending: false })
+        .order('name');
+      const seen = new Set();
+      acctData.ref.subjects_list = (data || []).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    async function loadAllSubjects(systemId) {
+      const { data } = await db.from('subjects').select('*')
+        .eq('education_system_id', systemId)
+        .order('is_compulsory', { ascending: false })
+        .order('name');
+      const seen = new Set();
+      acctData.ref.subjects_list = (data || []).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    async function loadICSSubjectsList(systemId) {
+      const { data } = await db.from('subjects').select('*')
+        .eq('education_system_id', systemId)
+        .eq('is_compulsory', false)
+        .order('name');
+      const seen = new Set();
+      acctData.ref.subjects_list = (data || []).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    async function loadAllColleges() {
+      try {
+        const { data } = await db.from('colleges').select('*').order('name');
+        acctData.ref.colleges = data || [];
+      } catch (e) {
+        acctData.ref.colleges = [];
+      }
+    }
+
+    async function getCompulsorySubjects() {
+      return (acctData.ref.subjects_list || []).filter(s => s.is_compulsory);
+    }
+
+    async function loadCities(provinceId) {
+      const { data } = await db.from('cities').select('*').eq('province_id', provinceId).order('name');
+      acctData.ref.cities = data || [];
+    }
+
+    async function loadAcademicData(userId) {
+      try {
+        const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', userId);
+        const acad = acads?.length ? acads[0] : null;
+        acctData.acad = acad;
+      } catch (e) {
+        console.error('loadAcademicData error:', e);
+        acctData.acad = null;
+      }
+    }
+
+    function resolveName(list, id, key) {
+      const item = list.find(i => i.id == id);
+      return item ? (item[key || 'name']) : 'â€”';
+    }
+
+    function renderCards() {
+      try {
+      document.getElementById('account-loading').style.display = 'none';
+      const p = acctData.profile;
+      const a = acctData.acad;
+      const r = acctData.ref;
+      const user = currentUser;
+      const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+      const email = user?.email || 'â€”';
+      const imgUrl = p?.profile_image_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? '';
+
+      const provOptions = r.provinces.filter(pr => String(pr.name).toLowerCase() === 'punjab').map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id || !p?.province_id ? 'selected' : ''}>${pr.name}</option>`).join('');
+      const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const sysOptions = r.education_systems.map(s => `<option value="${s.id}" ${a?.education_system_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+      const boardOptions = r.boards.map(b => `<option value="${b.id}" ${a?.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+      const classOptions = r.class_levels.map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+      document.getElementById('account-cards').innerHTML = `
+        <div class="account-card">
+          <div class="profile-hero">
+            <div class="profile-avatar-wrap" id="acct-avatar">
+              ${imgUrl ? `<img src="${imgUrl}" alt="${username}" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar-fallback-lg" style="display:none">${username.charAt(0).toUpperCase()}</div>` : `<div class="avatar-fallback-lg">${username.charAt(0).toUpperCase()}</div>`}
+            </div>
+            <div class="profile-info">
+              <h2 id="acct-display-name">${p?.full_name || username}</h2>
+              <p id="acct-display-username" style="font-size:13px;color:var(--text-muted);margin-bottom:2px">@${username}</p>
+              <p id="acct-email">${email}</p>
+            </div>
+          </div>
+          <div style="padding-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="edit-btn" onclick="openEditProfile()" style="flex:1;justify-content:center;padding:10px 16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Profile
+            </button>
+          </div>
+        </div>
+
+        <div class="account-card">
+          <div class="card-header">
+            <span class="card-title">Personal Info</span>
+            <button class="edit-btn" onclick="toggleSection('personal')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </div>
+          <div class="field-rows" id="personal-display">
+            <div class="field-row"><span class="field-label">Date of Birth</span><span class="field-value ${p?.date_of_birth ? '' : 'empty'}">${p?.date_of_birth || 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Province</span><span class="field-value ${p?.province_id ? '' : 'empty'}">${p?.province_id ? resolveName(r.provinces, p.province_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">City</span><span class="field-value ${p?.city_id ? '' : 'empty'}">${p?.city_id ? resolveName(r.cities, p.city_id) : 'Not set'}</span></div>
+          </div>
+          <div class="field-row-edit" id="personal-edit">
+            <div class="edit-form-group">
+              <label>Date of Birth</label>
+              <input type="date" id="edit-dob" value="${p?.date_of_birth || ''}" max="${new Date().toISOString().split('T')[0]}" lang="en-GB">
+            </div>
+            <div class="edit-form-group">
+              <label>Province</label>
+              <select id="edit-province" onchange="onProvinceChange()">
+                <option value="">Select province</option>
+                ${provOptions}
+              </select>
+            </div>
+            <div class="edit-form-group">
+              <label>City</label>
+              <select id="edit-city">
+                <option value="">Select city</option>
+                ${cityOptions}
+              </select>
+            </div>
+            <div class="edit-actions">
+              <button class="btn-cancel" onclick="toggleSection('personal')">Cancel</button>
+              <button class="btn-save" onclick="savePersonal()">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-card">
+          <div class="card-header">
+            <span class="card-title">Academic Profile</span>
+            <button class="edit-btn" onclick="toggleSection('academic')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </div>
+          <div class="field-rows" id="academic-display">
+            <div class="field-row"><span class="field-label">Education System</span><span class="field-value ${a?.education_system_id ? '' : 'empty'}">${a?.education_system_id ? resolveName(r.education_systems, a.education_system_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
+          </div>
+          <div class="field-row-edit" id="academic-edit">
+            <div class="edit-form-group">
+              <label>Education System</label>
+              <select id="edit-edu-system" onchange="onEduSystemChange()">
+                <option value="">Select system</option>
+                ${sysOptions}
+              </select>
+            </div>
+            <div class="edit-form-group">
+              <label>Board</label>
+              <select id="edit-board"><option value="">Select board</option>${boardOptions}</select>
+            </div>
+            <div class="edit-form-group">
+              <label>Class</label>
+              <select id="edit-class" onchange="onClassChange()"><option value="">Select class</option>${classOptions}</select>
+            </div>
+            <div class="edit-actions">
+              <button class="btn-cancel" onclick="toggleSection('academic')">Cancel</button>
+              <button class="btn-save" onclick="saveAcademic()">Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+      } catch (e) { console.error('[ACC] renderCards error:', e); }
+    }
+
+    function toggleSection(section) {
+      const display = document.getElementById(section + '-display');
+      const edit = document.getElementById(section + '-edit');
+      const isEditing = edit.classList.contains('active');
+      if (isEditing) {
+        display.classList.remove('hidden');
+        edit.classList.remove('active');
+      } else {
+        display.classList.add('hidden');
+        edit.classList.add('active');
+        if (section === 'academic') preloadAcademicDependent();
+      }
+    }
+
+    async function onProvinceChange() {
+      const pid = document.getElementById('edit-province').value;
+      if (pid) {
+        await loadCities(pid);
+        const citySelect = document.getElementById('edit-city');
+        const currentCity = acctData.profile?.city_id;
+        citySelect.innerHTML = '<option value="">Select city</option>' + acctData.ref.cities.map(c => `<option value="${c.id}" ${currentCity == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      }
+    }
+
+    function renderICSChips() {
+      return acctData.ref.subjects_list.filter(s => !s.is_compulsory).map(s => {
+        const isSelected = acctData.subjects.includes(s.id);
+        return `<div class="multi-select-chip ${isSelected ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`;
+      }).join('');
+    }
+
+    async function onEduSystemChange() {
+      const sid = document.getElementById('edit-edu-system').value;
+      if (!sid) return;
+      const prevBoard = document.getElementById('edit-board').value;
+      const prevClassLabel = document.getElementById('edit-class').selectedOptions[0]?.text || '';
+      await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
+      document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${prevBoard == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+      const matchedClass = acctData.ref.class_levels.find(c => c.label === prevClassLabel);
+      document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${matchedClass && matchedClass.id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+    }
+
+    async function onClassChange() {
+    }
+
+    async function onBoardChange() {
+      await loadAllColleges();
+      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    async function preloadAcademicDependent() {
+      const a = acctData.acad;
+      if (!a) return;
+      if (a.education_system_id) {
+        await Promise.all([loadBoards(a.education_system_id), loadClassLevels(a.education_system_id)]);
+        document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${a.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
+        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+      }
+    }
+
+    function toggleSubjectChip(el) {
+      if (el.classList.contains('disabled')) return;
+      el.classList.toggle('selected');
+    }
+
+    async function savePersonal() {
+      const btn = document.querySelector('#personal-edit .btn-save');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const dob = document.getElementById('edit-dob').value;
+        const provinceId = document.getElementById('edit-province').value || null;
+        const cityId = document.getElementById('edit-city').value || null;
+        const { error } = await db.from('profiles').update({
+          date_of_birth: dob || null,
+          province_id: provinceId,
+          city_id: cityId
+        }).eq('id', currentUser.id);
+        if (error) throw error;
+        acctData.profile.date_of_birth = dob || null;
+        acctData.profile.province_id = provinceId;
+        acctData.profile.city_id = cityId;
+        renderCards();
+        showToast('Personal info updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    }
+
+    async function saveAcademic() {
+      const btn = document.querySelector('#academic-edit .btn-save');
+      const eduSystem = document.getElementById('edit-edu-system').value;
+      const board = document.getElementById('edit-board').value;
+      const cls = document.getElementById('edit-class').value;
+
+      if (!eduSystem) { showToast('Please select an education system', true); return; }
+      if (!board) { showToast('Please select a board', true); return; }
+      if (!cls) { showToast('Please select a class', true); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
+          user_id: currentUser.id,
+          education_system_id: eduSystem,
+          board_id: board,
+          class_level_id: cls,
+          group_id: null,
+          exam_year: acctData.acad?.exam_year || new Date().getFullYear()
+        }, { onConflict: 'user_id' }).select('id').single();
+        if (acadErr) throw acadErr;
+
+        if (acadProfile?.id) {
+          await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
+          const { data: subjects } = await db.from('subjects').select('id').eq('education_system_id', eduSystem);
+          const subjectIds = (subjects || []).map(s => s.id);
+          if (subjectIds.length) {
+            await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
+          }
+          acctData.subjects = subjectIds;
+        }
+
+        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: null };
+
+        renderCards();
+        showToast('Academic profile updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    }
+
+    document.addEventListener('change', function(e) {
+      if (e.target.id === 'edit-board') onBoardChange();
+    });
+
+    let epUsernameTimer = null;
+    let epSelectedImage = null;
+    let epPhotoRemoved = false;
+
+    function openEditProfile() {
+      const p = acctData.profile;
+      const user = currentUser;
+      const modal = document.getElementById('edit-profile-modal');
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+      const imgUrl = p?.profile_image_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? '';
+      const username = p?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || '';
+      const fullName = p?.full_name || '';
+      const email = user?.email || '';
+      const phone = p?.phone || '';
+      const bio = p?.bio || '';
+
+      const avatarImg = document.getElementById('ep-avatar-img');
+      const avatarFallback = document.getElementById('ep-avatar-fallback');
+      const removeBtn = document.getElementById('ep-remove-photo-btn');
+      if (imgUrl) {
+        avatarImg.src = imgUrl;
+        avatarImg.style.display = 'block';
+        avatarFallback.style.display = 'none';
+        removeBtn.style.display = 'inline-flex';
+      } else {
+        avatarImg.style.display = 'none';
+        avatarFallback.textContent = (fullName || username || 'U').charAt(0).toUpperCase();
+        avatarFallback.style.display = 'flex';
+        removeBtn.style.display = 'none';
+      }
+
+      document.getElementById('ep-name').value = fullName;
+      document.getElementById('ep-username').value = username;
+      document.getElementById('ep-email').value = email;
+      document.getElementById('ep-phone').value = phone;
+      document.getElementById('ep-bio').value = bio;
+      document.getElementById('ep-bio-count').textContent = bio.length;
+      document.getElementById('ep-username-status').textContent = '';
+      document.getElementById('ep-email-notice').style.display = 'none';
+      epSelectedImage = null;
+
+      // Phone verification status
+      const verifyBtn = document.getElementById('ep-phone-verify-btn');
+      const phoneStatus = document.getElementById('ep-phone-status');
+      const otpRow = document.getElementById('ep-otp-row');
+      otpRow.style.display = 'none';
+      if (p?.phone_verified) {
+        verifyBtn.style.display = 'none';
+        phoneStatus.style.display = 'block';
+        phoneStatus.className = 'auth-field-note phone-verified';
+        phoneStatus.textContent = 'Phone verified';
+      } else if (phone) {
+        verifyBtn.style.display = 'inline-flex';
+        phoneStatus.style.display = 'none';
+      } else {
+        verifyBtn.style.display = 'none';
+        phoneStatus.style.display = 'none';
+      }
+    }
+
+    function closeEditProfile() {
+      document.getElementById('edit-profile-modal').style.display = 'none';
+      document.body.style.overflow = '';
+      epSelectedImage = null;
+      epPhotoRemoved = false;
+    }
+
+    let phoneOtpSending = false;
+    async function sendPhoneOtp() {
+      if (phoneOtpSending) return;
+      const phone = document.getElementById('ep-phone').value.trim();
+      if (!phone) return alert('Enter a phone number first');
+      const btn = document.getElementById('ep-phone-verify-btn');
+      const status = document.getElementById('ep-phone-status');
+      const otpRow = document.getElementById('ep-otp-row');
+      phoneOtpSending = true;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      status.style.display = 'none';
+      try {
+        const raw = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
+        const parsed = raw ? JSON.parse(raw) : null;
+        const token = parsed?.access_token;
+        if (!token) throw new Error('Not logged in');
+        const res = await fetch(SUPABASE_URL + '/functions/v1/send-phone-otp', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone }),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          if (json.error === 'rate_limited') {
+            const secs = json.retry_after_seconds || 600;
+            throw new Error(`Too many OTP requests. Try again in about ${Math.ceil(secs / 60)} minute(s).`);
+          }
+          throw new Error(json.error || 'Failed to send OTP');
+        }
+        otpRow.style.display = 'flex';
+        status.style.display = 'block';
+        status.className = 'auth-field-note';
+        status.textContent = `OTP sent to ${json.phone}`;
+        document.getElementById('ep-otp-input').focus();
+        window._phoneOtpRequestId = json.request_id;
+      } catch (e) {
+        status.style.display = 'block';
+        status.className = 'auth-field-note phone-unverified';
+        status.textContent = e.message || 'Failed to send OTP';
+      } finally {
+        phoneOtpSending = false;
+        btn.disabled = false;
+        btn.textContent = 'Verify';
+      }
+    }
+
+    let phoneOtpVerifying = false;
+    async function verifyPhoneOtp() {
+      if (phoneOtpVerifying) return;
+      const phone = document.getElementById('ep-phone').value.trim();
+      const code = document.getElementById('ep-otp-input').value.trim();
+      if (!code || code.length < 4) return alert('Enter the OTP code');
+      const otpStatus = document.getElementById('ep-otp-status');
+      const btn = event.target;
+      phoneOtpVerifying = true;
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      try {
+        const raw = localStorage.getItem('sb-zkuytvjeqkpexcbyoyhz-auth-token');
+        const parsed = raw ? JSON.parse(raw) : null;
+        const token = parsed?.access_token;
+        if (!token) throw new Error('Not logged in');
+        const res = await fetch(SUPABASE_URL + '/functions/v1/verify-phone-otp', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone, code, request_id: window._phoneOtpRequestId }),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          if (json.error === 'rate_limited') {
+            const secs = json.retry_after_seconds || 600;
+            throw new Error(`Too many attempts. Try again in about ${Math.ceil(secs / 60)} minute(s).`);
+          }
+          throw new Error(json.error || 'Invalid OTP');
+        }
+        // Success
+        document.getElementById('ep-otp-row').style.display = 'none';
+        const phoneStatus = document.getElementById('ep-phone-status');
+        phoneStatus.style.display = 'block';
+        phoneStatus.className = 'auth-field-note phone-verified';
+        phoneStatus.textContent = 'Phone verified';
+        document.getElementById('ep-phone-verify-btn').style.display = 'none';
+        if (acctData.profile) acctData.profile.phone_verified = true;
+        if (currentProfile) currentProfile.phone_verified = true;
+        otpStatus.textContent = '';
+      } catch (e) {
+        otpStatus.textContent = e.message || 'Invalid code';
+        otpStatus.className = 'auth-field-note phone-unverified';
+      } finally {
+        phoneOtpVerifying = false;
+        btn.disabled = false;
+        btn.textContent = 'Confirm';
+      }
+    }
+
+    function removeProfilePhoto() {
+      epPhotoRemoved = true;
+      epSelectedImage = null;
+      const avatarImg = document.getElementById('ep-avatar-img');
+      const avatarFallback = document.getElementById('ep-avatar-fallback');
+      const removeBtn = document.getElementById('ep-remove-photo-btn');
+      avatarImg.style.display = 'none';
+      avatarFallback.textContent = (acctData.profile?.full_name || acctData.profile?.username || 'U').charAt(0).toUpperCase();
+      avatarFallback.style.display = 'flex';
+      removeBtn.style.display = 'none';
+    }
+
+    function epHandleImageSelect(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', true); return; }
+      if (!file.type.startsWith('image/')) { showToast('Please select an image', true); return; }
+
+      epSelectedImage = file;
+      epPhotoRemoved = false;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const avatarImg = document.getElementById('ep-avatar-img');
+        const avatarFallback = document.getElementById('ep-avatar-fallback');
+        const removeBtn = document.getElementById('ep-remove-photo-btn');
+        avatarImg.src = ev.target.result;
+        avatarImg.style.display = 'block';
+        avatarFallback.style.display = 'none';
+        removeBtn.style.display = 'inline-flex';
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    document.getElementById('ep-avatar-input').addEventListener('change', epHandleImageSelect);
+
+    function epHandleUsernameCheck() {
+      clearTimeout(epUsernameTimer);
+      const val = document.getElementById('ep-username').value.trim().toLowerCase();
+      const status = document.getElementById('ep-username-status');
+      const currentUsername = (acctData.profile?.username || currentUser?.user_metadata?.username || '').toLowerCase();
+
+      if (!val) { status.textContent = ''; status.className = 'username-status'; return; }
+      if (!/^[a-zA-Z0-9_]+$/.test(val)) { status.textContent = 'Invalid characters'; status.className = 'username-status taken'; return; }
+      if (val.length < 3) { status.textContent = 'At least 3 characters'; status.className = 'username-status taken'; return; }
+      if (val === currentUsername) { status.textContent = 'Current username'; status.className = 'username-status available'; return; }
+
+      status.textContent = 'Checking...';
+      status.className = 'username-status checking';
+      epUsernameTimer = setTimeout(async () => {
+        try {
+          const { data, error } = await db.rpc('is_username_available', { p_username: val });
+          if (error) { status.textContent = ''; status.className = 'username-status'; return; }
+          if (data === true) { status.textContent = 'Username available'; status.className = 'username-status available'; }
+          else { status.textContent = 'Username taken'; status.className = 'username-status taken'; }
+        } catch { status.textContent = ''; status.className = 'username-status'; }
+      }, 400);
+    }
+
+    document.getElementById('ep-username').addEventListener('input', epHandleUsernameCheck);
+
+    function epHandleBioCount() {
+      document.getElementById('ep-bio-count').textContent = document.getElementById('ep-bio').value.length;
+    }
+
+    document.getElementById('ep-bio').addEventListener('input', epHandleBioCount);
+
+    function epHandleEmailChange() {
+      const newEmail = document.getElementById('ep-email').value.trim();
+      const oldEmail = currentUser?.email || '';
+      const notice = document.getElementById('ep-email-notice');
+      notice.style.display = (newEmail && newEmail !== oldEmail) ? 'flex' : 'none';
+    }
+
+    document.getElementById('ep-email').addEventListener('input', epHandleEmailChange);
+
+    async function uploadToCloudinary(file) {
+      let supaUrl='https://zkuytvjeqkpexcbyoyhz.supabase.co';
+      let anonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+      let ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+      if(!['jpg','jpeg','png','webp','gif'].includes(ext)) ext='jpg';
+      let path=(currentUser&&currentUser.id?currentUser.id:'anon')+'-'+Date.now()+'.'+ext;
+      // try supabase-js client first
+      try{
+        if(db && db.storage){
+          let { error, data } = await db.storage.from('avatars').upload(path, file, {contentType: file.type||'image/jpeg', upsert:true});
+          if(!error){
+            let pub=db.storage.from('avatars').getPublicUrl(path);
+            if(pub && pub.data && pub.data.publicUrl) return pub.data.publicUrl;
+          } else {
+            console.warn('supabase-js upload failed, falling back to fetch', error);
+          }
+        }
+      }catch(e){ console.warn('supabase-js upload exception', e); }
+      // fallback: direct fetch with anon key (bucket is public, anon allowed)
+      // NOTE: no encodeURIComponent — paths use [A-Za-z0-9._-] only and must match getPublicUrl format
+      let fetchUrl=supaUrl+'/storage/v1/object/avatars/'+path;
+      let resp=await fetch(fetchUrl, {method:'POST', headers:{apikey: anonKey, Authorization:'Bearer '+anonKey, 'x-upsert':'true', 'Content-Type': file.type||'image/jpeg'}, body: file});
+      if(!resp.ok){
+        let txt=await resp.text().catch(()=> '');
+        console.error('fetch upload failed', resp.status, txt);
+        throw new Error('Image upload failed: '+(txt||resp.status));
+      }
+      return supaUrl+'/storage/v1/object/public/avatars/'+path;
+    }
+
+    async function saveEditProfile() {
+      const btn = document.getElementById('ep-save-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+      try {
+        const fullName = document.getElementById('ep-name').value.trim();
+        const username = document.getElementById('ep-username').value.trim().toLowerCase();
+        const newEmail = document.getElementById('ep-email').value.trim();
+        const phone = document.getElementById('ep-phone').value.trim();
+        const bio = document.getElementById('ep-bio').value.trim();
+
+        if (!username || username.length < 3) {
+          throw new Error('Username is required and must be at least 3 characters');
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          throw new Error('Username can only contain letters, numbers, and underscores');
+        }
+
+        const statusEl = document.getElementById('ep-username-status');
+        if (statusEl.className.includes('taken')) {
+          throw new Error('Username is already taken');
+        }
+
+        let profileImageUrl = acctData.profile?.profile_image_url ?? currentUser?.user_metadata?.avatar_url ?? '';
+        if (epSelectedImage) {
+          btn.innerHTML = '<span class="spinner"></span> Uploading image...';
+          profileImageUrl = await uploadToCloudinary(epSelectedImage);
+        } else if (epPhotoRemoved) {
+          profileImageUrl = '';
+        }
+
+        const profileFields = {};
+        if (fullName !== (acctData.profile?.full_name || '')) profileFields.full_name = fullName;
+        if (username !== (acctData.profile?.username || '')) profileFields.username = username;
+        if (bio !== (acctData.profile?.bio || '')) profileFields.bio = bio;
+        if (phone !== (acctData.profile?.phone || '')) profileFields.phone = phone;
+        if (epPhotoRemoved || profileImageUrl !== (acctData.profile?.profile_image_url ?? '')) profileFields.profile_image_url = profileImageUrl;
+
+        if (profileFields.username) {
+          const { data: existing } = await db.from('profiles')
+            .select('id')
+            .eq('username', profileFields.username.toLowerCase())
+            .neq('id', currentUser.id)
+            .maybeSingle();
+          if (existing) {
+            throw new Error('This username is already taken. Please choose another.');
+          }
+          profileFields.username = profileFields.username.toLowerCase();
+        }
+
+        if (Object.keys(profileFields).length > 0) {
+          console.log('updating profiles with', profileFields);
+          const { data: updData, error: profileErr } = await db.from('profiles').update(profileFields).eq('id', currentUser.id).select();
+          console.log('profiles update result', {profileErr, updData});
+          if (profileErr) {
+            console.error('profiles update error', profileErr);
+            throw profileErr;
+          }
+          if(!updData || updData.length===0){
+            // RLS may have blocked - try direct REST with anon (RLS disabled should not happen)
+            console.warn('no rows updated - retrying via direct fetch');
+            let anonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+            let resp=await fetch('https://zkuytvjeqkpexcbyoyhz.supabase.co/rest/v1/profiles?id=eq.'+currentUser.id, {method:'PATCH', headers:{apikey: anonKey, Authorization:'Bearer '+anonKey, 'Content-Type':'application/json', Prefer:'return=representation'}, body: JSON.stringify(profileFields)});
+            let j=await resp.json().catch(()=>null);
+            console.log('direct fetch update', resp.status, j);
+            if(!resp.ok) throw new Error(j && j.message ? j.message : 'Profile update failed');
+          }
+        }
+
+        btn.innerHTML = '<span class="spinner"></span> Updating auth...';
+
+        const authFields = {};
+        const currentEmail = currentUser?.email || '';
+        if (newEmail && newEmail !== currentEmail) {
+          const { data: emailCheck } = await db.rpc('check_email_available', { p_email: newEmail.toLowerCase() }).catch(() => ({ data: null }));
+          if (emailCheck === false) {
+            throw new Error('This email is already registered to another account.');
+          }
+          authFields.email = newEmail;
+        }
+        if (Object.keys(authFields).length > 0) {
+          const { error: authErr } = await db.auth.updateUser(authFields);
+          if (authErr) throw authErr;
+        }
+
+        Object.assign(acctData.profile, profileFields);
+        if (currentProfile) Object.assign(currentProfile, profileFields);
+        if (username) currentUser.user_metadata = { ...currentUser.user_metadata, username };
+
+        renderProfileAvatar();
+        renderCards();
+        try{ if(typeof window.refreshLandingAuth==='function') window.refreshLandingAuth(); }catch(_){}
+        try{ if(typeof updateAuthUI==='function') updateAuthUI(); }catch(_){}
+        closeEditProfile();
+        showToast('Profile updated!');
+      } catch (e) {
+        showToast(e.message || 'Failed to save profile', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    }
+
+    async function loadDependentRefData() {
+      const a = acctData.acad;
+      const p = acctData.profile;
+      const tasks = [];
+      if (a?.education_system_id) {
+        tasks.push(loadBoards(a.education_system_id));
+        tasks.push(loadClassLevels(a.education_system_id));
+        tasks.push(loadAllSubjects(a.education_system_id));
+      }
+      if (p?.province_id) tasks.push(loadCities(p.province_id));
+      await Promise.all(tasks);
+    }
+
+    (async function() {
+      try {
+        await checkAuth();
+        if (!currentUser) {
+          document.getElementById('not-logged-in').style.display = 'block';
+          return;
+        }
+        await ensureProfile();
+
+        const step = await getOnboardingStep();
+        if (step >= 0) {
+          window.location.href = ONBOARDING_URL;
+          return;
+        }
+
+        document.getElementById('account-view').style.display = 'block';
+        acctData.profile = currentProfile;
+
+        await loadAllRefData();
+        await loadAcademicData(currentUser.id);
+        await loadDependentRefData();
+        renderCards();
+      } catch (e) {
+        console.error('Account init error:', e);
+        document.getElementById('account-view').style.display = 'block';
+        acctData.profile = currentProfile;
+        try { renderCards(); } catch (e2) { console.error('renderCards error:', e2); }
+      }
+    })();
+  </script>
+  <script>
+    // Embed mode: hide site chrome, force ALL navigation to break out of iframe.
+    (function () {
+      try {
+        if (window.top === window.self) return; // not in an iframe
+        document.body.classList.add('embed');
+        // Delegated handler — catches every <a> click, even dynamically added ones.
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest ? e.target.closest('a[href]') : null;
+          if (!a) return;
+          e.preventDefault();
+          window.top.location.href = a.href;
+        });
+        // Override window.location setters so JS-driven navigations also break out.
+        var _loc = window.location;
+        var _top = window.top.location;
+        Object.defineProperty(window, 'location', {
+          configurable: true,
+          enumerable: true,
+          get: function () { return _loc; },
+          set: function (v) { _top.href = v; }
+        });
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    (function () {
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+
+        var hideTimer = null;
+        function scheduleHide() {
+          hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150);
+        }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
+        window._landingDropdownClickHandler = true;
+      }
+
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      window.refreshLandingAuth = renderLandingAuth;
+
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') {
+            handleLogout();
+          } else {
+            window.location.href = '../index.html';
+          }
+        } catch (_) {
+          window.location.href = '../index.html';
+        }
+      }
+
+      window.handleLandingLogout = handleLandingLogout;
+
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
+</body>
+</html>
