@@ -7,13 +7,13 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/pages/flashcards.html</loc>
+    <loc>https://anteemonee.com/flashcards/</loc>
     <lastmod>2026-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/pages/ebooks.html</loc>
+    <loc>https://anteemonee.com/ebooks/</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -23,12 +23,6 @@
     <lastmod>2026-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://anteemonee.com/pages/ai-classroom.html</loc>
-    <lastmod>2026-09-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://anteemonee.com/pages/terms.html</loc>

@@ -17,7 +17,7 @@
   <title>Anteemonee - FSc, Matric & Intermediate Past Papers, Notes & AI Tutor</title>
   <meta name="description" content="Anteemonee is Pakistan's Student OS for FSc, matric and intermediate: board notes, topical & yearly past papers with solutions, AI tutor, flashcards, test builder and live voice calls.">
   <meta name="keywords" content="FSc preparation, matric past papers, intermediate notes, BISE past papers, AI tutor Pakistan, flashcards FSc, Anteemonee">
-  <meta name="theme-color" content="#0B0F19">
+  <meta name="theme-color" content="#000000">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/">
   <meta property="og:type" content="website">
@@ -27,9 +27,9 @@
   <meta property="og:url" content="https://anteemonee.com/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/anteemonee.png">
-  <link rel="stylesheet" href="css/style.css?v=26">
+  <link rel="stylesheet" href="css/style.css?v=33">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -80,15 +80,15 @@
     .mock-bubble { border-radius: 14px; padding: 10px 14px; font-size: 13px; line-height: 1.55; margin-bottom: 8px; max-width: 92%; }
     .mock-bubble.user { background: var(--accent); color: var(--on-accent); margin-left: auto; border-bottom-right-radius: 4px; }
     .mock-bubble.ai { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-bottom-left-radius: 4px; }
-    .mock-voice { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 14px; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--liquid-border-soft); font-size: 12.5px; font-weight: 600; color: var(--accent-primary); }
-    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pdot 1.2s infinite; }
+    .mock-voice { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 14px; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--liquid-border-soft); font-size: 12.5px; font-weight: 600; color: var(--text); }
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); animation: pdot 1.2s infinite; }
     @keyframes pdot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
     .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 30px; }
     .step { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 20px 16px; position: relative; }
     .step .n { font-family: 'Fraunces', Georgia, serif; font-size: 26px; font-weight: 700; color: var(--accent); }
     .step h3 { font-size: 14.5px; margin: 8px 0 6px; }
     .step p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
-    .step.star { background: linear-gradient(135deg, var(--accent) 0%, #A855F7 100%); border: none; color: #fff; }
+    .step.star { background: linear-gradient(135deg, #000000 0%, #333333 100%); border: none; color: #fff; }
     .step.star p { color: rgba(255,255,255,0.85); }
     .step.star .n { color: #fff; }
     @media (max-width: 900px) { .steps { grid-template-columns: repeat(2, 1fr); } }
@@ -96,29 +96,31 @@
     .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 26px; }
     .tool { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 18px 16px; transition: all .2s; }
     .tool:hover { transform: translateY(-3px); border-color: var(--liquid-border); }
-    .tool .ti { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-primary); margin-bottom: 12px; font-size: 18px; }
+    .tool .ti { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--text); margin-bottom: 12px; font-size: 18px; }
     .tool h3 { font-size: 14px; margin-bottom: 4px; }
-    .tool h3 .soon { font-size: 10px; font-weight: 700; background: var(--accent-soft); color: var(--accent-primary); border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
+    .tool h3 .soon { font-size: 10px; font-weight: 700; background: var(--accent-soft); color: var(--text); border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
     .tool p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
     @media (max-width: 900px) { .tools-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 520px) { .tools-grid { grid-template-columns: 1fr; } }
     .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 26px; max-width: 860px; }
+    .pricing-grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 1100px; }
+    @media (max-width: 1000px) { .pricing-grid-3 { grid-template-columns: 1fr; max-width: 520px; } }
     .price-card { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 28px 26px; position: relative; }
-    .price-card.hot { border: 2px solid var(--accent); box-shadow: 0 12px 40px rgba(99,102,241,0.25); }
-    .price-card .flag { position: absolute; top: -12px; left: 24px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
+    .price-card.hot { border: 2px solid var(--accent); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .price-card .flag { position: absolute; top: -12px; left: 24px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
     .price-card h3 { font-size: 16px; margin-bottom: 4px; }
     .price-card .amt { font-family: 'Fraunces', Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
     .price-card .per { font-size: 13px; color: var(--text-muted); }
     .price-card ul { list-style: none; margin: 18px 0 22px; }
     .price-card li { font-size: 13.5px; padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; color: var(--text-secondary); }
-    .price-card li i { color: var(--accent-primary); font-style: normal; font-weight: 700; }
+    .price-card li i { color: var(--text); font-style: normal; font-weight: 700; }
     @media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
     .unified-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 28px; }
     .unified-col { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 24px; }
-    .unified-col-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--accent-primary); letter-spacing: -0.01em; }
+    .unified-col-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--text); letter-spacing: -0.01em; }
     .unified-steps { display: flex; flex-direction: column; gap: 14px; }
     .u-step { display: flex; gap: 12px; align-items: flex-start; }
-    .u-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+    .u-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--text); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
     .u-step b { display: block; font-size: 13.5px; margin-bottom: 2px; }
     .u-step p { font-size: 12px; color: var(--text-secondary); line-height: 1.55; margin: 0; }
     .unified-tools { display: flex; flex-direction: column; gap: 10px; }
@@ -131,7 +133,7 @@
     @media (max-width: 760px) { .unified-grid { grid-template-columns: 1fr; } }
     .faq-item { border-bottom: 1px solid var(--border); }
     .faq-q { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 4px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; background: none; border: none; font-family: inherit; }
-    .faq-q span:last-child { color: var(--accent-primary); font-size: 20px; flex-shrink: 0; }
+    .faq-q span:last-child { color: var(--text); font-size: 20px; flex-shrink: 0; }
     .faq-a { display: none; padding: 0 4px 18px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 720px; }
     .faq-item.open .faq-a { display: block; }
     
@@ -155,10 +157,45 @@
     .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
     .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
     .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
-    .cta-band { background: linear-gradient(135deg, #4338CA 0%, #312E81 100%); border-radius: var(--radius-xl); padding: 56px 32px; text-align: center; color: #fff; margin-top: 70px; }
+    .cta-band { background: linear-gradient(135deg, #000000 0%, #333333 100%); border-radius: var(--radius-xl); padding: 56px 32px; text-align: center; color: #fff; margin-top: 70px; }
     .cta-band h2 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 10px; }
     .cta-band p { opacity: 0.85; margin-bottom: 24px; }
     .btn-white { display: inline-block; background: #fff; color: #111; font-weight: 700; padding: 14px 34px; border-radius: 999px; font-size: 15px; }
+    /* Hero primary CTA — modern smooth button */
+    #hero-primary-cta {
+      min-height: 52px; padding: 0 34px; font-size: 15.5px;
+      background: var(--accent); color: var(--on-accent);
+      border: 1px solid transparent; border-radius: 999px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.25s ease, filter 0.2s ease;
+      will-change: transform;
+    }
+    #hero-primary-cta::before { display: none; }
+    #hero-primary-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      filter: brightness(1.07);
+    }
+    #hero-primary-cta:active { transform: translateY(0) scale(0.97); filter: none; }
+    #hero-primary-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+    /* Hero secondary CTA — modern smooth ghost */
+    .hero-actions .btn-secondary {
+      min-height: 52px; padding: 0 30px; font-size: 15px;
+      background: transparent; color: var(--text);
+      border: 1px solid var(--liquid-border); border-radius: 999px;
+      box-shadow: none;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+      will-change: transform;
+    }
+    .hero-actions .btn-secondary::before { display: none; }
+    .hero-actions .btn-secondary:hover {
+      transform: translateY(-2px); background: var(--accent-soft);
+      border-color: var(--text); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    }
+    .hero-actions .btn-secondary:active { transform: translateY(0) scale(0.97); }
+    .hero-actions .btn-secondary:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
     .section { padding: 70px 24px; }
     .section-inner { max-width: 1280px; margin: 0 auto; }
   </style>
@@ -171,24 +208,27 @@
         <span class="logo-text">Anteemonee</span>
       </a>
 <nav class="landing-nav" aria-label="Primary">
-  <a href="pages/dashboard.html">Dashboard</a>
+  <a href="dashboard/">Dashboard</a>
   <div class="nav-drop">
     <a href="#features">Library <span class="caret">▾</span></a>
     <div class="nav-menu">
-      <a href="pages/ebooks.html">eBooks</a>
-      <a href="pages/flashcards.html">Flashcards</a>
-      <a href="pages/past-papers.html">Past Papers</a>
+      <a href="ebooks/">eBooks</a>
+      <a href="flashcards/">Flashcards</a>
+      <a href="past-papers/">Past Papers</a>
     </div>
   </div>
-  <a href="pages/ai-chat.html">AI Assistant</a>
+  <a href="ai-chat/">AI Assistant</a>
 </nav>
       <div class="header-actions">
+        <a href="messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login" style="font-size:14px;font-weight:500;padding:8px 14px">Log in</a>
-          <a href="pages/signup.html" class="btn-signup" style="padding:8px 20px">Sign Up</a>
+          <a href="pages/login.html" class="btn-login">Log in</a>
+          <a href="pages/signup.html" class="btn-signup">Sign Up</a>
         </div>
         <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
         <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
@@ -196,17 +236,18 @@
     </div>
   </header>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="pages/dashboard.html" class="mobile-nav-link">Dashboard</a>
+    <a href="dashboard/" class="mobile-nav-link">Dashboard</a>
     <a href="pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
     <div class="mobile-acc-dropdown">
       <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
       <div class="mobile-acc-list">
-        <a href="pages/ebooks.html" class="mobile-nav-link">eBooks</a>
-        <a href="pages/flashcards.html" class="mobile-nav-link">Flashcards</a>
-        <a href="pages/past-papers.html" class="mobile-nav-link">Past Papers</a>
+        <a href="ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="past-papers/" class="mobile-nav-link">Past Papers</a>
       </div>
     </div>
-    <a href="pages/ai-chat.html" class="mobile-nav-link">AI Assistant</a>
+    <a href="ai-chat/" class="mobile-nav-link">AI Assistant</a>
+        <a href="messenger/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
       <a href="pages/login.html" class="btn-login">Log in</a>
       <a href="pages/signup.html" class="btn-signup">Sign Up</a>
@@ -224,10 +265,8 @@
           <h1>Your board prep, finally sorted.</h1>
           <p class="hero-desc">Notes, past papers, AI tutor, flashcards & test builder. Everything you need in one place.</p>
           <div class="hero-actions">
-            <span id="hero-cta-loading" class="auth-shimmer" style="width:150px;height:50px;border-radius:999px"></span>
-            <a href="pages/signup.html" class="btn-primary" id="hero-start-free" style="display:none">Start free →</a>
-            <a href="pages/dashboard.html" class="btn-primary" id="hero-dashboard" style="display:none">Dashboard →</a>
-            <a href="pages/ai-chat.html" class="btn-secondary">Open AI Assistant</a>
+            <a href="pages/signup.html" class="btn-primary" id="hero-primary-cta">Start free →</a>
+            <a href="ai-chat/" class="btn-secondary">Open AI Assistant</a>
           </div>
           <div class="hero-chips">
             <div class="hero-chip">📖<span>Notes</span></div>
@@ -238,7 +277,7 @@
             <div class="hero-chip">📊<span>Test Builder</span></div>
           </div>
           <div class="hero-trust" id="hero-trust">
-            <div class="trust-text">Free 3-day trial · No card needed · One-time payment</div>
+            <div class="trust-text">Free forever plan · 7-day trial of everything · One-time payments</div>
           </div>
         </div>
         <div class="landing-hero-visual">
@@ -291,7 +330,7 @@
           </div>
         </div>
         
-        <div style="text-align:center;margin-top:32px"><a href="pages/ai-chat.html" class="btn-primary">Try the AI Tutor now</a></div>
+        <div style="text-align:center;margin-top:32px"><a href="ai-chat/" class="btn-primary">Try the AI Tutor now</a></div>
       </div>
     </section>
 
@@ -299,31 +338,44 @@
     <section class="section" id="pricing" style="padding-top:10px">
       <div class="section-inner">
         <div class="section-label">Pricing</div>
-        <h2 class="section-title">One payment. Yours forever.</h2>
-        <p class="section-desc">No subscriptions. No monthly tension. Start with a free 3-day trial.</p>
-        <div class="pricing-grid">
+        <h2 class="section-title">Free forever. Exam plan. Lifetime.</h2>
+        <p class="section-desc">Start free with a 7-day trial of everything. Pay per exam period, or once for lifetime.</p>
+        <div class="pricing-grid pricing-grid-3">
           <div class="price-card">
-            <h3>Free Trial</h3>
-            <div class="amt">Rs 0</div><div class="per">3 days · full access</div>
+            <h3>Free</h3>
+            <div class="amt">Rs 0</div><div class="per">forever</div>
             <ul>
-              <li><i>✓</i> Full AI Tutor for 3 days</li>
-              <li><i>✓</i> Flashcards & notes</li>
-              <li><i>✓</i> Live voice call</li>
+              <li><i>✓</i> eBooks, past papers & flashcards forever</li>
+              <li><i>✓</i> 7-day trial of everything paid</li>
+              <li><i>✓</i> Auto switches to free after trial</li>
               <li><i>✓</i> No card required</li>
             </ul>
-            <a href="pages/signup.html" class="btn-secondary" style="width:100%">Start free trial</a>
+            <a href="pages/signup.html" class="btn-secondary" style="width:100%">Start free</a>
           </div>
           <div class="price-card hot">
             <div class="flag">RECOMMENDED</div>
-            <h3>Lifetime Access</h3>
-            <div class="amt">Rs 2,499</div><div class="per">one-time · yours forever</div>
+            <h3>Exam Plan</h3>
+            <div class="amt" id="exam-price">Rs 999</div><div class="per" id="exam-per">per selected period</div>
+            <label for="exam-period" style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin:14px 0 6px">Select your exam period</label>
+            <select id="exam-period" class="form-input" style="width:100%;font-size:13.5px"></select>
             <ul>
-              <li><i>✓</i> Everything in trial, forever</li>
-              <li><i>✓</i> All future features included</li>
-              <li><i>✓</i> Past papers & eBooks</li>
+              <li><i>✓</i> Everything: AI tutor, test builder</li>
+              <li><i>✓</i> Messenger + all future features</li>
+              <li><i>✓</i> Valid until your exams end</li>
               <li><i>✓</i> 7-day money-back guarantee</li>
             </ul>
-            <a href="pages/payment.html" class="btn-primary" style="width:100%">Get lifetime access</a>
+            <a href="pages/payment-plan.html?plan=exam&period=may-jun-2027" class="btn-primary" id="exam-cta" style="width:100%">Continue →</a>
+          </div>
+          <div class="price-card">
+            <h3>Lifetime Access</h3>
+            <div class="amt">Rs 4,999</div><div class="per">one-time · yours forever</div>
+            <ul>
+              <li><i>✓</i> Everything in exam plan, forever</li>
+              <li><i>✓</i> Messenger + all future features</li>
+              <li><i>✓</i> Never pay again</li>
+              <li><i>✓</i> 7-day money-back guarantee</li>
+            </ul>
+            <a href="pages/payment-plan.html?plan=lifetime" class="btn-secondary" style="width:100%">Get lifetime access</a>
           </div>
         </div>
       </div>
@@ -336,7 +388,7 @@
         <h2 class="section-title">Everything you need to know</h2>
         <div id="faq-list">
           <div class="faq-item"><button class="faq-q">Which boards and classes are covered?<span>+</span></button><div class="faq-a">Currently, only 11th and 12th class of the Punjab Board are covered. But we are working hard to bring 9th, 10th class and all other boards too.</div></div>
-          <div class="faq-item"><button class="faq-q">Is there really no monthly fee?<span>+</span></button><div class="faq-a">Correct. Rs 2,499 once, lifetime access. No subscriptions, no renewals, with a 7-day money-back guarantee.</div></div>
+          <div class="faq-item"><button class="faq-q">Is there really no monthly fee?<span>+</span></button><div class="faq-a">Correct. The exam plan is pay-per-exam-period and lifetime is Rs 4,999 once. No subscriptions, no renewals, with a 7-day money-back guarantee. The free plan is free forever.</div></div>
           <div class="faq-item"><button class="faq-q">Can I study in Urdu or Roman Urdu?<span>+</span></button><div class="faq-a">Yes. The tutor replies in English, Urdu script or Roman Urdu. Set your preference in Settings, or just write how you speak.</div></div>
           <div class="faq-item"><button class="faq-q">Does it work on mobile?<span>+</span></button><div class="faq-a">Fully. Anteemonee is a web app that works on any phone browser, plus a downloadable app on the Download page.</div></div>
           <div class="faq-item"><button class="faq-q">How accurate are the AI answers?<span>+</span></button><div class="faq-a">Answers are grounded in your course textbooks with page references, and every response can be verified. Always cross-check critical exam answers with your book.</div></div>
@@ -361,22 +413,20 @@
           <div class="footer-col">
             <h4>Explore</h4>
             <a href="index.html">Home</a>
-            <a href="pages/ai-chat.html">AI Assistant</a>
-            <a href="pages/flashcards.html">Flashcards</a>
+            <a href="ai-chat/">AI Assistant</a>
+            <a href="flashcards/">Flashcards</a>
             <a href="pages/download.html">Download App</a>
           </div>
           <div class="footer-col">
             <h4>Features</h4>
-            <a href="pages/ai-chat.html">AI Tutor</a>
-            <a href="pages/flashcards.html">Flashcards</a>
-            <a href="pages/payment.html">Lifetime Access</a>
+            <a href="ai-chat/">AI Tutor</a>
+            <a href="flashcards/">Flashcards</a>
+            <a href="pages/payment-plan.html?plan=lifetime">Lifetime Access</a>
         </div>
           <div class="footer-col">
             <h4>Legal</h4>
             <a href="pages/privacy.html">Privacy Policy</a>
             <a href="pages/terms.html">Terms of Service</a>
-            <a href="pages/login.html">Log in</a>
-            <a href="pages/signup.html">Sign Up</a>
           </div>
         </div>
       </div>
@@ -385,8 +435,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="js/plans.js?v=1"></script>
   <script src="js/account-manager.js?v=11"></script>
-  <script src="js/app.js?v=24"></script>
+  <script src="js/app.js?v=30"></script>
+<script src="js/login-modal.js?v=5"></script>
+<script src="js/forgot-modal.js?v=2"></script>
+<script src="js/signup-modal.js?v=3"></script>
   <script>
     // Landing: mobile menu, auth buttons, FAQ. Theme handled by app.js via .theme-toggle class.
     (function () {
@@ -519,11 +573,11 @@
                     '</div>' +
                   '</div>' +
                   '<div class="dropdown-divider"></div>' +
-'<a href="pages/account.html" class="dropdown-item">' +
+'<a href="account/" class="dropdown-item">' +
                     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
                     'Account' +
                   '</a>' +
-                  '<a href="pages/settings.html" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                  '<a href="settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
                     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
                     'Settings' +
                   '</a>' +
@@ -535,55 +589,74 @@
                 '</div>' +
               '</div>';
             
-            loggedIn.innerHTML = dropdownHtml;
             loggedIn.style.display = 'flex';
-            setupLandingProfileDropdown();
+            // Render the avatar dropdown ONCE per identity — rebuilding the
+            // <img> every poll makes the photo flicker/reload constantly.
+            // Same user + new photo URL (session metadata first, profile
+            // photo right after): preload, then swap src in place. No flash.
+            var avatarKey = (user.id || '') + '|' + (imgUrl || '') + '|' + (fullName || username);
+            if (window._landingAvatarKey !== avatarKey) {
+              var prevParts = (window._landingAvatarKey || '').split('|');
+              var sameUser = prevParts[0] && prevParts[0] === String(user.id || '');
+              var existingImgs = sameUser ? loggedIn.querySelectorAll('img.avatar-img, img.dropdown-avatar-img') : [];
+              if (sameUser && existingImgs.length && imgUrl) {
+                window._landingAvatarKey = avatarKey;
+                try {
+                  var pre = new Image();
+                  pre.referrerPolicy = 'no-referrer';
+                  pre.onload = function () {
+                    try {
+                      var fresh = loggedIn.querySelectorAll('img.avatar-img, img.dropdown-avatar-img');
+                      for (var fi = 0; fi < fresh.length; fi++) {
+                        fresh[fi].src = imgUrl;
+                        fresh[fi].style.display = '';
+                        var fb = fresh[fi].nextElementSibling;
+                        if (fb) fb.style.display = 'none';
+                      }
+                    } catch (_) {}
+                  };
+                  pre.src = imgUrl;
+                } catch (_) {}
+              } else {
+                window._landingAvatarKey = avatarKey;
+                loggedIn.innerHTML = dropdownHtml;
+                setupLandingProfileDropdown();
+              }
+            }
 
-            // Hero buttons: resolve only after entitlement is known (no flicker).
-            // Both CTAs stay hidden behind a shimmer until then.
+            // Single hero CTA: signed in (free OR premium) -> Dashboard.
+            // Runs instantly, no loader — just swaps text + href in place.
             try {
-              var startBtn = document.getElementById('hero-start-free');
-              var dashBtn = document.getElementById('hero-dashboard');
-              var ctaLoader = document.getElementById('hero-cta-loading');
+              var heroCta = document.getElementById('hero-primary-cta');
+              if (heroCta) {
+                if (heroCta.textContent !== 'Dashboard →') heroCta.textContent = 'Dashboard →';
+                if (heroCta.getAttribute('href') !== 'dashboard/') heroCta.setAttribute('href', 'dashboard/');
+              }
+              // Pricing visibility runs in the background and never blocks the CTA.
               var pricingEl = document.getElementById('pricing');
               var trustEl = document.getElementById('hero-trust');
-              function resolveHeroCtas(isPaid) {
-                if (ctaLoader) ctaLoader.style.display = 'none';
-                if (isPaid) {
-                  if (pricingEl) pricingEl.style.display = 'none';
-                  if (startBtn) startBtn.style.display = 'none';
-                  if (dashBtn) dashBtn.style.display = '';
-                  if (trustEl) trustEl.style.display = 'none';
-                } else {
-                  // Signed in but not premium: only the Dashboard CTA
-                  // ("Start free" is meaningless for an existing account).
-                  if (pricingEl) pricingEl.style.display = '';
-                  if (startBtn) startBtn.style.display = 'none';
-                  if (dashBtn) dashBtn.style.display = '';
-                  if (trustEl) trustEl.style.display = '';
-                }
-              }
-              // Premium check runs once (renderLandingAuth polls until auth is ready)
               if (!window._heroEntitlementChecked && typeof db !== 'undefined' && db) {
                 window._heroEntitlementChecked = true;
-                var settled = false;
-                function settlePaid(v) {
-                  if (settled) return;
-                  settled = true;
-                  resolveHeroCtas(v);
-                }
-                // Safety: never trap the user behind the loader
-                setTimeout(function() { settlePaid(false); }, 4000);
                 db.rpc('get_entitlement_snapshot').then(function(res) {
                   var ent = (res && res.data) || null;
+                  var examOk = false;
+                  try {
+                    examOk = !!(ent && ent.plan_type === 'exam' && ent.subscription_status === 'active' &&
+                      (!ent.exam_ends_at || new Date(ent.exam_ends_at).getTime() > Date.now()));
+                  } catch (_) { examOk = !!(ent && ent.plan_type === 'exam'); }
                   var isPaid = !!(ent && (
                     (ent.plan_type === 'lifetime' && ent.subscription_status !== 'refunded') ||
-                    ((ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active')
+                    ((ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active') ||
+                    examOk
                   ));
-                  settlePaid(isPaid);
-                }).catch(function() { settlePaid(false); });
-              } else if (!window._heroEntitlementChecked) {
-                resolveHeroCtas(false);
+                  if (isPaid) {
+                    if (pricingEl) pricingEl.style.display = 'none';
+                    if (trustEl) trustEl.style.display = 'none';
+                  } else {
+                    if (pricingEl) pricingEl.style.display = '';
+                    if (trustEl) trustEl.style.display = '';
+                  }
+                }).catch(function() {});
               }
             } catch (_) {}
             // Show last AI chat in hero preview (keep fake data if none)
@@ -591,21 +664,19 @@
           } else {
             loggedIn.style.display = 'none';
             loggedOut.style.display = 'flex';
-            var pricingEl = document.getElementById('pricing');
-            if (pricingEl) pricingEl.style.display = '';
-            // Resolve logged-out CTAs only after the auth check finishes,
-            // otherwise logged-in users see a flash of "Start free" first.
-            // Falls back after ~12s if app.js never reports readiness.
-            if (window.__authReady === true || window._heroAuthTries > 40) {
-              var startBtn = document.getElementById('hero-start-free');
-              var dashBtn = document.getElementById('hero-dashboard');
-              var ctaLoader = document.getElementById('hero-cta-loading');
-              if (ctaLoader) ctaLoader.style.display = 'none';
-              if (startBtn) startBtn.style.display = '';
-              if (dashBtn) dashBtn.style.display = 'none';
-              var trustEl = document.getElementById('hero-trust');
-              if (trustEl) trustEl.style.display = '';
-            }
+            window._landingAvatarKey = '';
+            // Signed out -> Start free. Instant swap, no waiting for __authReady.
+            try {
+              var heroCtaOut = document.getElementById('hero-primary-cta');
+              if (heroCtaOut) {
+                if (heroCtaOut.textContent !== 'Start free →') heroCtaOut.textContent = 'Start free →';
+                if (heroCtaOut.getAttribute('href') !== 'pages/signup.html') heroCtaOut.setAttribute('href', 'pages/signup.html');
+              }
+              var pricingElOut = document.getElementById('pricing');
+              if (pricingElOut) pricingElOut.style.display = '';
+              var trustElOut = document.getElementById('hero-trust');
+              if (trustElOut) trustElOut.style.display = '';
+            } catch (_) {}
           }
         } catch (_) {}
       }
@@ -690,11 +761,38 @@
           if (!open) { it.classList.add('open'); it.querySelector('.faq-q span').textContent = '–'; }
         });
       });
+      // Exam-plan period select -> price + checkout link (from js/plans.js)
+      try {
+        var periods = (window.ANTEEM_PLANS && window.ANTEEM_PLANS.examPeriods) || [];
+        var sel = document.getElementById('exam-period');
+        var priceEl = document.getElementById('exam-price');
+        var cta = document.getElementById('exam-cta');
+        function fmtRs(n) {
+          try { return 'Rs ' + Number(n).toLocaleString('en-PK'); } catch (_) { return 'Rs ' + n; }
+        }
+        if (sel && periods.length) {
+          sel.innerHTML = periods.map(function (p) {
+            return '<option value="' + p.id + '">' + p.label + ' — ' + fmtRs(p.price) + '</option>';
+          }).join('');
+          var perEl = document.getElementById('exam-per');
+          sel.addEventListener('change', function () {
+            var chosen = null;
+            for (var i = 0; i < periods.length; i++) {
+              if (periods[i].id === sel.value) { chosen = periods[i]; break; }
+            }
+            if (!chosen) chosen = periods[0];
+            if (priceEl) priceEl.textContent = fmtRs(chosen.price);
+            if (perEl) perEl.textContent = 'until ' + chosen.short;
+            if (cta) cta.setAttribute('href', 'pages/payment-plan.html?plan=exam&period=' + encodeURIComponent(chosen.id));
+          });
+          sel.dispatchEvent(new Event('change'));
+        }
+      } catch (_) {}
       // Header shadow on scroll
       var hdr = document.getElementById('header');
       window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
   </script>
-  <script src="js/header-ai-dropdown.js?v=6"></script>
+  <script src="js/header-ai-dropdown.js?v=7"></script>
 </body>
 </html>
