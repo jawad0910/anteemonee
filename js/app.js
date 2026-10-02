@@ -104,7 +104,7 @@ async function loadHomepageData() {
         const avatarsEl = document.getElementById('trust-avatars');
         const avatars = Array.isArray(data.avatars) ? data.avatars.filter(a => a && a.profile_image_url) : [];
         if (avatarsEl && avatars.length) {
-          const colors = ['#312E81', '#1E3A5F', '#6D28D9'];
+          const colors = ['#000000', '#333333', '#333333'];
           avatarsEl.innerHTML = avatars.slice(0, 3).map((a, i) => {
             const initial = ((a.username || 'W').charAt(0) || 'W').toUpperCase();
             return `<span style="background:${colors[i % colors.length]};overflow:hidden"><img src="${a.profile_image_url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${initial}'"></span>`;
@@ -387,6 +387,41 @@ function generateUsername(fullName, email) {
   return (email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
 }
 
+// OAuth providers never return a username, and the auth.users trigger that creates the
+// profiles row leaves `username` NULL. Backfill it on first load so the account page
+// never has to be saved by hand — this also repairs accounts created before the fix.
+async function ensureUsername(user, profile) {
+  const existing = profile?.username == null ? '' : String(profile.username).trim();
+  if (existing) return existing;
+
+  const meta = user?.user_metadata || {};
+  const base = generateUsername(meta.full_name || meta.name || '', user?.email);
+
+  const seed = String(user?.id || '');
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 9000;
+  const candidates = [
+    base,
+    base.slice(0, 16) + (1000 + h),
+    base.slice(0, 14) + Math.floor(Math.random() * 9000 + 1000),
+  ];
+
+  for (const cand of candidates) {
+    if (!cand || cand.length < 3) continue;
+    const { error, data } = await db.from('profiles')
+      .update({ username: cand })
+      .eq('id', user.id)
+      .select('username')
+      .maybeSingle();
+    if (!error && data?.username) {
+      if (profile) profile.username = data.username;
+      return data.username;
+    }
+  }
+  console.warn('Could not auto-assign a username; user will set it on the account page.');
+  return '';
+}
+
 async function ensureProfile() {
   if (!currentUser) return null;
   if (!currentProfile) await loadProfile();
@@ -398,6 +433,7 @@ async function ensureProfile() {
       await db.from('profiles').update({ profile_image_url: avatarUrl }).eq('id', currentUser.id);
       currentProfile.profile_image_url = avatarUrl;
     }
+    await ensureUsername(currentUser, currentProfile);
     return currentProfile;
   }
   const fullName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
@@ -446,7 +482,7 @@ function updateAuthUI() {
     renderHamburgerAccount();
 
     const footerLink = document.getElementById('footer-signup-link');
-    if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = 'pages/account.html'; }
+    if (footerLink) { footerLink.textContent = 'Account'; footerLink.href = '/account/'; }
     // Hide footer login/signup links when logged in
     document.querySelectorAll('.footer a[href*="login.html"], .footer a[href*="signup.html"]').forEach(function(a) {
       a.style.display = 'none';
@@ -486,6 +522,11 @@ function renderProfileAvatar() {
   const container = document.getElementById('profile-avatar-container');
   if (!container) return;
   const { fullName, username, imgUrl } = getDisplayUser();
+  // Same guard as the landing header: never rebuild (and reload the photo)
+  // when nothing changed.
+  const key = (currentUser?.id || '') + '|' + (imgUrl || '') + '|' + (fullName || username);
+  if (container.dataset.avatarKey === key) return;
+  container.dataset.avatarKey = key;
 
   container.innerHTML = `
     <button class="profile-btn" onclick="toggleProfileDropdown()" aria-label="Profile menu">
@@ -508,7 +549,7 @@ function renderProfileAvatar() {
         </div>
       </div>
       <div class="dropdown-divider"></div>
-      <a href="${BASE}/pages/account.html" class="dropdown-item">
+      <a href="${BASE}/account/" class="dropdown-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Account
       </a>
@@ -531,7 +572,11 @@ function renderProfileAvatar() {
 
 function renderMobileProfile() {
   if (!currentUser) return;
+  const { fullName, username, imgUrl } = getDisplayUser();
+  const key = (currentUser?.id || '') + '|' + (imgUrl || '') + '|' + (fullName || username);
   document.querySelectorAll('#mobile-profile-section').forEach(container => {
+    if (container.dataset.avatarKey === key) return;
+    container.dataset.avatarKey = key;
     container.innerHTML = hamburgerAccountHtml('mobile-nav-link');
   });
 }
@@ -553,6 +598,10 @@ function renderHamburgerAccount() {
       panel.prepend(block);
     }
     const linkCls = panel.classList.contains('site-mobile-menu') ? 'site-mobile-link' : 'mobile-nav-link';
+    const { fullName: _fn, username: _un, imgUrl: _img } = getDisplayUser();
+    const _key = (currentUser?.id || '') + '|' + (_img || '') + '|' + (_fn || _un);
+    if (block.dataset.avatarKey === _key) return;
+    block.dataset.avatarKey = _key;
     block.innerHTML = hamburgerAccountHtml(linkCls);
   });
 }
@@ -577,11 +626,11 @@ function hamburgerAccountHtml(linkCls) {
         <span class="mobile-acc-chevron">▾</span>
       </button>
       <div class="mobile-acc-list">
-        <a href="${BASE}/pages/account.html" class="${linkCls} ha-item">
+        <a href="${BASE}/account/" class="${linkCls} ha-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Account
         </a>
-        <a href="${BASE}/pages/settings.html" class="${linkCls} ha-item">
+        <a href="${BASE}/settings/" class="${linkCls} ha-item">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           Settings
         </a>
@@ -785,8 +834,10 @@ async function getStarted() {
     await ensureProfile();
     const step = await getOnboardingStep();
     window.location.href = step >= 0 ? ONBOARDING_URL : REDIRECT_URL;
+  } else if (typeof window.openSignupModal === 'function') {
+    window.openSignupModal();
   } else {
-    window.location.href = BASE + '/pages/signup.html';
+    window.location.href = BASE + '/';
   }
 }
 
@@ -921,10 +972,13 @@ async function friendlyEmailError(err, email) {
 async function handleLogin(e) {
   e.preventDefault();
   const form = e.currentTarget;
-  const identifier = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
+  // Works for the login page form (IDs) and the header login popup (data attrs).
+  const identifierEl = form.querySelector('[data-login-identifier]') || document.getElementById('login-email');
+  const passwordEl = form.querySelector('[data-login-password]') || document.getElementById('login-password');
+  const errorEl = form.querySelector('[data-login-error]') || document.getElementById('login-error');
+  const identifier = (identifierEl ? identifierEl.value : '').trim();
+  const password = passwordEl ? passwordEl.value : '';
   const btn = form.querySelector('button[type="submit"]');
-  const errorEl = document.getElementById('login-error');
 
   setLoading(btn, true);
   hideMessage(errorEl);
@@ -996,7 +1050,8 @@ async function handleLogin(e) {
 
 function setupSignupForm() {
   const form = document.getElementById('signup-form');
-  if (!form) return;
+  if (!form || form.dataset.bound) return;
+  form.dataset.bound = '1';
   form.addEventListener('submit', handleSignup);
 }
 
@@ -1083,7 +1138,14 @@ async function handleSignup(e) {
     }
 
     showMessage(successEl, 'Account created! Check your email for a verification link.');
-    setTimeout(() => { window.location.href = BASE + '/pages/login.html'; }, 2500);
+    setTimeout(() => {
+      try { if (typeof window.closeSignupModal === 'function') window.closeSignupModal(); } catch (_) {}
+      if (typeof window.openLoginModal === 'function') {
+        window.openLoginModal();
+      } else {
+        window.location.href = BASE + '/';
+      }
+    }, 2500);
   } catch (err) {
     showMessage(errorEl, err.message || 'Signup failed. Please try again.');
   } finally {
@@ -1095,7 +1157,8 @@ async function handleSignup(e) {
 
 function setupUsernameAvailability() {
   const input = document.getElementById('signup-username');
-  if (!input) return;
+  if (!input || input.dataset.unBound) return;
+  input.dataset.unBound = '1';
 
   let debounceTimer = null;
   let indicator = input.parentElement.querySelector('.username-status');
@@ -1150,46 +1213,34 @@ function togglePassword(inputId, btn) {
   if (eyeClosed) eyeClosed.style.display = isPassword ? '' : 'none';
 }
 
-/* ---- PASSWORD REQUIREMENTS ---- */
+/* ---- PASSWORD LENGTH (single rule: 6–50 chars) ---- */
 
 function setupPasswordRequirements() {
   const input = document.getElementById('signup-password');
-  if (!input) return;
+  if (!input || input.dataset.pwBound) return;
+  input.dataset.pwBound = '1';
 
-  let container = input.parentElement.parentElement.querySelector('.password-requirements');
-  if (!container) {
-    container = document.createElement('div');
-    container.className = 'password-requirements';
-    container.innerHTML = `
-      <div class="pw-req" data-req="length">
-        <span class="pw-check"><svg viewBox="0 0 16 16" fill="none"><polyline points="3 8 7 12 13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span>At least 8 characters</span>
-      </div>
-      <div class="pw-req" data-req="upper">
-        <span class="pw-check"><svg viewBox="0 0 16 16" fill="none"><polyline points="3 8 7 12 13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span>One uppercase letter</span>
-      </div>
-      <div class="pw-req" data-req="number">
-        <span class="pw-check"><svg viewBox="0 0 16 16" fill="none"><polyline points="3 8 7 12 13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span>One number</span>
-      </div>
-    `;
-    input.parentElement.parentElement.appendChild(container);
+  // No static checklist — a warning appears only when the rule is violated.
+  let warn = input.parentElement.parentElement.querySelector('.pw-length-warn');
+  if (!warn) {
+    warn = document.createElement('span');
+    warn.className = 'pw-length-warn';
+    warn.style.display = 'none';
+    input.parentElement.parentElement.appendChild(warn);
   }
-
-  const reqs = container.querySelectorAll('.pw-req');
 
   function checkPassword() {
     const val = input.value;
-    const checks = {
-      length: val.length >= 8,
-      upper: /[A-Z]/.test(val),
-      number: /[0-9]/.test(val)
-    };
-    reqs.forEach(el => {
-      const key = el.dataset.req;
-      el.classList.toggle('met', checks[key]);
-    });
+    if (val.length > 0 && val.length < 6) {
+      warn.textContent = 'Password must be at least 6 characters.';
+      warn.style.display = 'block';
+    } else if (val.length > 50) {
+      warn.textContent = 'Password must be no more than 50 characters.';
+      warn.style.display = 'block';
+    } else {
+      warn.textContent = '';
+      warn.style.display = 'none';
+    }
     checkConfirmMatch();
   }
 
@@ -1216,9 +1267,8 @@ function setupPasswordRequirements() {
 }
 
 function validatePassword(pw) {
-  if (pw.length < 8) return { valid: false, message: 'Password must be at least 8 characters.' };
-  if (!/[A-Z]/.test(pw)) return { valid: false, message: 'Password must contain at least one uppercase letter.' };
-  if (!/[0-9]/.test(pw)) return { valid: false, message: 'Password must contain at least one number.' };
+  if (pw.length < 6) return { valid: false, message: 'Password must be at least 6 characters.' };
+  if (pw.length > 50) return { valid: false, message: 'Password must be no more than 50 characters.' };
   return { valid: true };
 }
 
@@ -1227,7 +1277,8 @@ function validatePassword(pw) {
 
 function setupForgotPasswordForm() {
   const form = document.getElementById('forgot-password-form');
-  if (!form) return;
+  if (!form || form.dataset.bound) return;
+  form.dataset.bound = '1';
   form.addEventListener('submit', handleForgotPassword);
 }
 
@@ -1295,7 +1346,7 @@ async function handleResetPassword(e) {
     if (error) throw error;
 
     showMessage(successEl, 'Password updated! Redirecting to login...');
-    setTimeout(() => { window.location.href = BASE + '/pages/login.html'; }, 2000);
+    setTimeout(() => { window.location.href = BASE + '/?auth=login'; }, 2000);
   } catch (err) {
     showMessage(errorEl, err.message || 'Failed to reset password.');
   } finally {
@@ -1997,8 +2048,8 @@ async function recordSecurityEvent(kind, detail) {
 }
 
 /* =========================================================
-   LIFETIME ACCESS — 3-day trial, device lock, single session
-   Model: Rs 2,499 one-time lifetime. 3-day free trial (one per
+   LIFETIME ACCESS — 7-day trial, device lock, single session
+   Model: Rs 4,999 one-time lifetime + exam-period plans. 7-day free trial (one per
    device). One active session per account (second login kicks
    the first with notice). Hard paywall after trial expiry.
 
@@ -2008,8 +2059,8 @@ async function recordSecurityEvent(kind, detail) {
      active_devices(user_id PK, device_id, last_seen)
    ========================================================= */
 
-const TRIAL_DAYS = 3;
-const LIFETIME_PRICE = 'Rs 2,499';
+const TRIAL_DAYS = 7;
+const LIFETIME_PRICE = 'Rs 4,999';
 
 const Access = {
   state: { ready: false, paid: false, trial: 'unknown', trialEndsAt: null, daysLeft: 0, access: false, reason: 'guest' },
@@ -2017,11 +2068,15 @@ const Access = {
   _heartbeat: null,
   _inited: false,
 
-  // Paid = lifetime plan (new model) or legacy active premium/pro.
+  // Paid = lifetime, exam (until its period ends), or legacy active premium/pro.
   isPaidEntitlement(ent) {
     if (!ent) return false;
     if (ent.plan_type === 'lifetime' && ent.subscription_status !== 'refunded') return true;
     if ((ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active') return true;
+    if (ent.plan_type === 'exam' && ent.subscription_status === 'active') {
+      if (!ent.exam_ends_at) return true; // exam columns not migrated yet
+      try { return new Date(ent.exam_ends_at).getTime() > Date.now(); } catch (_) { return true; }
+    }
     return false;
   },
 
@@ -2111,7 +2166,7 @@ const Access = {
     }
   },
 
-  // 3-day trial with one-per-device lock. Auto-claims on first use.
+  // 7-day trial with one-per-device lock. Auto-claims on first use.
   async ensureTrial() {
     const out = { status: 'none', endsAt: null, daysLeft: 0 };
     try {
@@ -2221,15 +2276,20 @@ const Access = {
       modal.id = 'access-kicked-modal';
       modal.innerHTML = `
         <div style="position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:20px">
-          <div style="width:100%;max-width:380px;background:var(--bg-secondary,#14181d);border:1px solid var(--border-glass,rgba(255,255,255,0.12));border-radius:16px;padding:32px 28px;text-align:center">
+          <div style="width:100%;max-width:380px;background:var(--bg-secondary);border:1px solid var(--border-glass);border-radius:16px;padding:32px 28px;text-align:center">
             <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 8px">Signed in on another device</h3>
             <p style="font-size:0.85rem;opacity:0.75;line-height:1.5;margin:0 0 24px">Your account was signed in elsewhere. Lifetime accounts allow one active session at a time — this device has been signed out.</p>
-            <button id="access-kicked-ok" style="width:100%;padding:12px 20px;border:none;border-radius:12px;background:var(--accent,#6366F1);color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer">Sign In Again</button>
+            <button id="access-kicked-ok" style="width:100%;padding:12px 20px;border:none;border-radius:12px;background:var(--accent);color:var(--on-accent);font-size:0.9rem;font-weight:700;cursor:pointer">Sign In Again</button>
           </div>
         </div>`;
       document.body.appendChild(modal);
       document.getElementById('access-kicked-ok')?.addEventListener('click', () => {
-        window.location.href = (typeof BASE !== 'undefined' ? BASE : '') + '/pages/login.html';
+        modal.style.display = 'none';
+        if (typeof window.openLoginModal === 'function') {
+          window.openLoginModal();
+        } else {
+          window.location.href = (typeof BASE !== 'undefined' ? BASE : '') + '/?auth=login';
+        }
       });
     }
     modal.style.display = 'block';
@@ -2256,15 +2316,15 @@ const Access = {
           bar.id = 'access-paywall';
           area.prepend(bar);
         }
-        const payHref = (typeof BASE !== 'undefined' ? BASE : '') + '/pages/payment.html';
-        const title = st.reason === 'blocked' ? 'Free trial already used on this device' : 'Your 3-day free trial has ended';
+        const payHref = (typeof BASE !== 'undefined' ? BASE : '') + '/pages/payment-plan.html?plan=lifetime';
+        const title = st.reason === 'blocked' ? 'Free trial already used on this device' : 'Your 7-day free trial has ended';
         bar.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;border-radius:14px;background:var(--accent-soft,rgba(99,102,241,0.12));border:1px solid var(--accent,rgba(99,102,241,0.4))">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--accent)">
             <div style="flex:1;min-width:0">
               <div style="font-size:13.5px;font-weight:700">${title}</div>
-              <div style="font-size:12px;opacity:0.75">Get lifetime access for ${typeof LIFETIME_PRICE !== 'undefined' ? LIFETIME_PRICE : 'Rs 2,499'} — pay once, yours forever.</div>
+              <div style="font-size:12px;opacity:0.75">Get lifetime access for ${typeof LIFETIME_PRICE !== 'undefined' ? LIFETIME_PRICE : 'Rs 4,999'} — pay once, yours forever.</div>
             </div>
-            <a href="${payHref}" style="flex-shrink:0;padding:10px 18px;border-radius:10px;background:var(--accent,#6366F1);color:#fff;font-size:13px;font-weight:700;text-decoration:none">Get Access</a>
+            <a href="${payHref}" style="flex-shrink:0;padding:10px 18px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;text-decoration:none">Get Access</a>
           </div>`;
         bar.style.display = '';
       } else if (bar) {

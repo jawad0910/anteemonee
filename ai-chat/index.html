@@ -38,7 +38,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=34">
-  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=63">
+  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=64">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
     [data-theme="dark"] {
@@ -299,20 +299,59 @@
     <!-- Version info dialog -->
     <div class="ver-info-ov" id="ver-info-ov" hidden>
       <div class="ver-info-card" role="dialog" aria-modal="true" aria-labelledby="ver-info-title">
-        <button type="button" class="ver-info-x" id="ver-info-x" aria-label="Close">×</button>
-        <h3 id="ver-info-title">Final vs Redox</h3>
-        <p class="ver-info-sub">Pick the experience that suits the answer you need.</p>
+        <div class="ver-info-glow" aria-hidden="true"></div>
+        <button type="button" class="ver-info-x" id="ver-info-x" aria-label="Close">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+        </button>
 
-        <div class="ver-info-item">
-          <div class="ver-info-tag ver-info-tag-final">Final</div>
-          <p>The standard AI chat built and maintained by the Anteemonee team. Fast, stable answers in plain text — what you see is exactly what we ship and support.</p>
+        <div class="ver-info-head">
+          <span class="ver-info-badge" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.9L19 9.8l-4.3 3.3L16.2 18 12 15.3 7.8 18l1.5-4.9L5 9.8l5.1-1.9z"/></svg>
+          </span>
+          <div>
+            <h3 id="ver-info-title">Choose an assistant</h3>
+            <p class="ver-info-sub">Two ways to get an answer. Switch whenever you like, your conversation carries over.</p>
+          </div>
         </div>
 
-        <div class="ver-info-item">
-          <div class="ver-info-tag ver-info-tag-redox">Redox</div>
-          <p>The experimental assistant. Redox can build <b>graphs</b>, write <b>custom tables</b>, generate <b>presentations</b>, and even adjust the <b>CSS / HTML / JS</b> of what it renders — by writing the code for those UI elements itself.</p>
-          <p class="ver-info-note">Its changes are temporary: they live only in this tab's session and are <b>never</b> written to the actual source files or GitHub. Reload, and the view returns to the Final version.</p>
+        <div class="ver-info-choices" role="group" aria-label="AI version">
+          <button type="button" class="ver-choice" data-ver="final" aria-pressed="true">
+            <span class="ver-choice-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            </span>
+            <span class="ver-choice-body">
+              <span class="ver-choice-top">
+                <span class="ver-choice-name">Final</span>
+                <span class="ver-choice-state">Active</span>
+              </span>
+              <span class="ver-choice-text">The everyday tutor. Quick, steady answers in clean text, identical on every device. This is the version we support.</span>
+            </span>
+          </button>
+
+          <button type="button" class="ver-choice" data-ver="redox" aria-pressed="false">
+            <span class="ver-choice-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>
+            </span>
+            <span class="ver-choice-body">
+              <span class="ver-choice-top">
+                <span class="ver-choice-name">Redox</span>
+                <span class="ver-choice-state">Active</span>
+              </span>
+              <span class="ver-choice-text">The experimental one. It writes the code for its own interface, so an answer can arrive as a live visual instead of plain text.</span>
+              <span class="ver-chips">
+                <span class="ver-chip">Graphs</span>
+                <span class="ver-chip">Tables</span>
+                <span class="ver-chip">Slides</span>
+                <span class="ver-chip">Live CSS</span>
+              </span>
+            </span>
+          </button>
         </div>
+
+        <p class="ver-info-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/></svg>
+          <span>Redox lives in this tab only. Nothing is ever written to the site files or to GitHub, so a reload always brings you back to Final.</span>
+        </p>
       </div>
     </div>
   </div>
@@ -432,7 +471,7 @@
   <script src="code/js/ai-api-service.js?v=22"></script>
   <script src="../js/mistral-key-modal.js?v=1"></script>
   <script src="code/js/image-limit-card.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=78"></script>
+  <script src="code/js/ai-chatbot.js?v=79"></script>
   <script src="code/js/voice-chat.js?v=21"></script>
   <script src="code/js/realtime-call.js?v=6"></script>
   <script src="code/js/gemini-live-call.js?v=6"></script>

@@ -56,6 +56,7 @@ async function refreshInlineSettings() {
     renderPrivacy();
     await renderSubscription();
     await renderCoupons();
+    renderApi();
     renderConnected();
     renderVoiceCall();
     renderHelp();
@@ -92,6 +93,7 @@ async function initSettings() {
   await renderCoupons();
   renderConnected();
   renderAccounts();
+  renderApi();
   renderVoiceCall();
   renderHelp();
   renderDangerZone();
@@ -104,6 +106,18 @@ async function initSettings() {
    SHARED COMPONENTS
    ========================= */
 
+function togglePwCard() {
+  const body = document.getElementById('sec-pw-body');
+  const chev = document.getElementById('sec-pw-chev-icon');
+  const btn = document.getElementById('sec-pw-chevron');
+  if (!body) return;
+  const willShow = body.hasAttribute('hidden');
+  if (willShow) body.removeAttribute('hidden');
+  else body.setAttribute('hidden', '');
+  if (chev) chev.style.transform = willShow ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (btn) btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+}
+
 function togglePwVis(inputId, btn) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -112,6 +126,20 @@ function togglePwVis(inputId, btn) {
   btn.innerHTML = isPassword
     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
     : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
+/* Collapsible card body (API key box). Open by default, same chevron
+   behaviour as the change-password box. */
+function toggleCollapseCard(prefix) {
+  const body = document.getElementById(prefix + '-body');
+  const chev = document.getElementById(prefix + '-chev-icon');
+  const btn = document.getElementById(prefix + '-chevron');
+  if (!body) return;
+  const willShow = body.hasAttribute('hidden');
+  if (willShow) body.removeAttribute('hidden');
+  else body.setAttribute('hidden', '');
+  if (chev) chev.style.transform = willShow ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (btn) btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
 }
 
 function buildToggle(id, checked, onChange) {
@@ -271,12 +299,17 @@ function renderSecurity() {
   const pwCard = document.createElement('div');
   pwCard.className = 'settings-card';
   pwCard.innerHTML = `
-    <div class="settings-card-header">CHANGE PASSWORD</div>
-    <div style="padding:16px 20px 20px">
+    <div class="settings-card-header" style="display:flex;align-items:center;justify-content:space-between">
+      CHANGE PASSWORD
+      <button type="button" id="sec-pw-chevron" onclick="togglePwCard()" aria-label="Expand or collapse password form" aria-expanded="false" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:2px;display:flex;transition:transform .2s">
+        <svg id="sec-pw-chev-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="sec-pw-body" id="sec-pw-body" hidden style="padding:16px 20px 20px">
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Current Password</label>
         <div style="position:relative">
-          <input type="password" class="setting-input" id="sec-current-pw" placeholder="Enter current password" style="max-width:100%;padding-right:40px">
+          <input type="password" class="setting-input" id="sec-current-pw" placeholder="Enter current password" style="max-width:340px;padding-right:40px">
           <button type="button" class="pw-toggle" onclick="togglePwVis('sec-current-pw', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px" aria-label="Toggle password visibility">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -285,7 +318,7 @@ function renderSecurity() {
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">New Password</label>
         <div style="position:relative">
-          <input type="password" class="setting-input" id="sec-new-pw" placeholder="Min 8 chars, 1 uppercase, 1 number" style="max-width:100%;padding-right:40px">
+          <input type="password" class="setting-input" id="sec-new-pw" placeholder="Min 8 chars, 1 uppercase, 1 number" style="max-width:340px;padding-right:40px">
           <button type="button" class="pw-toggle" onclick="togglePwVis('sec-new-pw', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px" aria-label="Toggle password visibility">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -294,7 +327,7 @@ function renderSecurity() {
       <div style="margin-bottom:16px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Confirm New Password</label>
         <div style="position:relative">
-          <input type="password" class="setting-input" id="sec-confirm-pw" placeholder="Re-enter new password" style="max-width:100%;padding-right:40px">
+          <input type="password" class="setting-input" id="sec-confirm-pw" placeholder="Re-enter new password" style="max-width:340px;padding-right:40px">
           <button type="button" class="pw-toggle" onclick="togglePwVis('sec-confirm-pw', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px" aria-label="Toggle password visibility">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -687,7 +720,7 @@ function renderAI() {
       padding:7px 16px;border-radius:8px;border:none;
       background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:600;
       cursor:pointer;transition:all .2s;white-space:nowrap;
-      box-shadow:0 2px 8px rgba(99,102,241,.3);
+      box-shadow:0 2px 8px var(--accent-soft);
     ">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -702,11 +735,11 @@ function renderAI() {
   });
   knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseenter', (e) => {
     e.currentTarget.style.transform = 'translateY(-1px)';
-    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,.4)';
+    e.currentTarget.style.boxShadow = '0 4px 12px var(--accent-soft)';
   });
   knowRow.querySelector('#btn-download-ai-profile').addEventListener('mouseleave', (e) => {
     e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,.3)';
+    e.currentTarget.style.boxShadow = '0 2px 8px var(--accent-soft)';
   });
   memRows.push(knowRow);
 
@@ -954,10 +987,10 @@ async function renderSubscription() {
   }
   try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
 
-  renderSubscriptionContent(c, planCard);
+  await renderSubscriptionContent(c, planCard);
 }
 
-function renderSubscriptionContent(container, planCard) {
+async function renderSubscriptionContent(container, planCard) {
   container.removeChild(planCard);
   const ent = settingsEntitlements;
   const paid = (typeof Access !== 'undefined' && Access.isPaidEntitlement(ent))
@@ -1000,7 +1033,7 @@ function renderSubscriptionContent(container, planCard) {
         <div class="plan-icon free">&#128218;</div>
         <div class="plan-info">
           <h4>Trial Expired</h4>
-          <p>Your 3-day free trial has ended. Get lifetime access to continue.</p>
+          <p>Your 7-day free trial has ended. Get an exam plan or lifetime access to continue.</p>
         </div>
       </div>`;
   }
@@ -1016,7 +1049,7 @@ function renderSubscriptionContent(container, planCard) {
       </div>
       <div style="padding:0 20px 20px">
         <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:20px">
-          <span style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">Rs 2,499</span>
+          <span style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">Rs 4,999</span>
           <span style="font-size:14px;color:var(--text-secondary)">one-time</span>
         </div>
         <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:14px">
@@ -1026,19 +1059,70 @@ function renderSubscriptionContent(container, planCard) {
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>One active session per account</span></li>
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>7-day money-back guarantee</span></li>
         </ul>
-        <a href="payment.html" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Lifetime Access - Rs 2,499</a>
+        <a href="/pages/payment-plan.html?plan=lifetime" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Lifetime Access - Rs 4,999</a>
       </div>`;
     container.appendChild(upgradeCard);
   }
 
+  // Method of applying the subscription (how the plan was activated).
+  const premiumSource = (ent && ent.premium_source) || '';
+  const methodLabel = premiumSource === 'coupon' ? 'Coupon code'
+    : (premiumSource === 'payment' || premiumSource === 'safepay' ? 'Paid via Safepay'
+    : (premiumSource ? premiumSource : '—'));
+
+  // Fetch the applied coupon (if any) and account stats in parallel.
+  let couponCode = null;
+  let couponExpiry = null;
+  let stats = { messages: 0, images: 0, tests: 0, minutes: 0 };
+  try {
+    const uid = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null;
+    if (uid && typeof db !== 'undefined') {
+      const msgR = db.from('ai_messages').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('role', 'user');
+      const imgR = db.from('ai_generated_images').select('id', { count: 'exact', head: true }).eq('user_id', uid);
+      const testR = db.from('ai_test_history').select('id', { count: 'exact', head: true }).eq('user_id', uid);
+      const profR = db.from('profiles').select('study_time_seconds').eq('id', uid).maybeSingle();
+      const couponR = db.from('coupon_redemptions').select('coupon_id, premium_expiry_at').eq('user_id', uid).order('redeemed_at', { ascending: false }).limit(1).maybeSingle();
+      const [mr, ir, tr, pr, cr] = await Promise.all([msgR, imgR, testR, profR, couponR]);
+      stats.messages = (mr && mr.count) || 0;
+      stats.images = (ir && ir.count) || 0;
+      stats.tests = (tr && tr.count) || 0;
+      stats.minutes = Math.floor(((pr && pr.data && pr.data.study_time_seconds) || 0) / 60);
+      const red = cr && cr.data;
+      if (red) {
+        couponExpiry = red.premium_expiry_at;
+        const { data: cpn } = await db.from('coupons').select('code, premium_duration_months').eq('id', red.coupon_id).maybeSingle();
+        if (cpn) couponCode = cpn.code;
+      }
+    }
+  } catch (_) {}
+
   const planLabel = paid ? 'Lifetime' : trial.reason === 'trial' ? 'Free Trial' : trial.reason === 'blocked' ? 'Trial Unavailable' : 'Expired';
   const statusLabel = paid ? 'active' : trial.reason === 'trial' ? 'trial' : 'expired';
 
-  const usageRows = [
-    buildRow('Plan Type', planLabel, paid ? badge('premium', 'Lifetime') : trial.reason === 'trial' ? badge('active', 'Trial') : badge('inactive', 'Expired')),
-    buildRow('Status', statusLabel, badge(paid ? 'active' : trial.reason === 'trial' ? 'active' : 'inactive', statusLabel)),
+  // ── SUBSCRIPTION CARD ──
+  const subRows = [
+    buildRow('Current plan', paid ? 'Lifetime access' : (trial.reason === 'trial' ? 'Free trial' : 'No active plan'), badge(paid ? 'premium' : trial.reason === 'trial' ? 'active' : 'inactive', planLabel)),
+    buildRow('Status', statusLabel, badge(paid || trial.reason === 'trial' ? 'active' : 'inactive', statusLabel)),
+    buildRow('Applied via', methodLabel, methodLabel !== '—' ? `<span class="settings-method">${methodLabel}</span>` : null),
   ];
-  container.appendChild(buildCard('USAGE', usageRows));
+  if (couponCode) {
+    const expStr = couponExpiry ? new Date(couponExpiry).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+    subRows.push(buildRow('Coupon', 'Applied at signup', `<span class="coupon-chip">${couponCode}${expStr ? ' · until ' + expStr : ''}</span>`));
+  }
+  container.appendChild(buildCard('SUBSCRIPTION', subRows));
+
+  // ── ACCOUNT STATS CARD ──
+  const statsCard = document.createElement('div');
+  statsCard.className = 'settings-card';
+  statsCard.innerHTML = `
+    <div class="settings-card-header">ACCOUNT STATS</div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="stat-num">${stats.messages}</div><div class="stat-label">AI messages</div></div>
+      <div class="stat-tile"><div class="stat-num">${stats.images}</div><div class="stat-label">Images generated</div></div>
+      <div class="stat-tile"><div class="stat-num">${stats.tests}</div><div class="stat-label">Tests built</div></div>
+      <div class="stat-tile"><div class="stat-num">${stats.minutes}</div><div class="stat-label">Min on Anteemonee</div></div>
+    </div>`;
+  container.appendChild(statsCard);
 }
 
 /* =========================
@@ -1163,7 +1247,230 @@ async function redeemCoupon() {
 }
 
 /* =========================
-   9. CONNECTED ACCOUNTS
+   9. AI KEYS (bring your own Mistral key)
+   ========================= */
+
+let apiStatsTimer = null;
+
+function stopApiStatsTimer() {
+  if (apiStatsTimer) { clearInterval(apiStatsTimer); apiStatsTimer = null; }
+}
+
+function apiDefaultStats() {
+  return {
+    has_key: false, key_hint: null, used_today: 0, total_images: 0,
+    limit: 4, remaining: 4, base_limit: 4, boosted_limit: 400, resets_at: null,
+  };
+}
+
+function escApi(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function apiResetAt(stats) {
+  var d = null;
+  try { if (stats && stats.resets_at) d = new Date(stats.resets_at); } catch (_) {}
+  if (!d || isNaN(d.getTime()) || d.getTime() <= Date.now()) d = nextUtcMidnight();
+  return d;
+}
+
+/* The quota always rolls over at midnight UTC, so never print a bare "12:00".
+   Show the reader's own clock time first, with UTC as the fallback reference. */
+function nextUtcMidnight() {
+  var now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+}
+
+function apiCountdownText(ms) {
+  var t = Math.max(0, Math.floor(ms / 1000));
+  var h = Math.floor(t / 3600);
+  var m = Math.floor((t % 3600) / 60);
+  var s = t % 60;
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  if (h > 0) return pad(h) + 'h ' + pad(m) + 'm ' + pad(s) + 's';
+  if (m > 0) return pad(m) + 'm ' + pad(s) + 's';
+  return pad(s) + 's';
+}
+
+function apiResetLabel(d) {
+  try {
+    // Reader's local clock first (e.g. "5:00 AM PKT"), then the UTC rollover.
+    var local = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+    var offset = d.getTimezoneOffset();
+    if (offset === 0) return local + ' UTC';
+    var utcH = d.getUTCHours();
+    var utcM = d.getUTCMinutes();
+    var utc = (utcH % 12 === 0 ? 12 : utcH % 12) + ':' + (utcM < 10 ? '0' : '') + utcM + (utcH >= 12 ? ' PM' : ' AM');
+    return local + ' (' + utc + ' UTC)';
+  } catch (_) {
+    return 'midnight UTC';
+  }
+}
+
+async function renderApi() {
+  const c = document.getElementById('settings-api-content');
+  if (!c) return;
+  stopApiStatsTimer();
+  c.innerHTML = '<div class="skeleton" style="height:150px;margin:16px 0"></div><div class="skeleton" style="height:110px;margin:16px 0"></div>';
+
+  let stats = apiDefaultStats();
+  try {
+    if (window.MistralKeyUI && typeof MistralKeyUI.stats === 'function') stats = await MistralKeyUI.stats();
+  } catch (e) {
+    console.warn('[settings] api stats failed:', e);
+  }
+
+  const used = stats.used_today || 0;
+  const limit = stats.limit || (stats.has_key ? stats.boosted_limit : stats.base_limit);
+  const remaining = Math.max(0, limit - used);
+  const pct = Math.min(100, Math.round((used / Math.max(1, limit)) * 100));
+  let resetsAt = apiResetAt(stats);
+  const hint = stats.key_hint || '••••••••';
+
+  c.innerHTML = '';
+
+  /* ── Key status card (collapsible, open by default) ── */
+  const keyCard = document.createElement('div');
+  keyCard.className = 'settings-card';
+  keyCard.innerHTML = `
+    <div class="settings-card-header" style="display:flex;align-items:center;justify-content:space-between">
+      MISTRAL API KEY
+      <button type="button" id="api-key-chevron" aria-label="Expand or collapse API key box" aria-expanded="true" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:2px;display:flex;transition:transform .2s">
+        <svg id="api-key-chev-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="settings-card-body" id="api-key-body" style="padding:16px 20px 20px">
+      <div class="setting-row" style="border:none;padding:0 0 12px">
+        <div class="setting-info">
+          <div class="setting-title" style="color:${stats.has_key ? 'var(--success)' : 'var(--text)'}">
+            ${stats.has_key ? '&#9679; Key connected' : 'No key connected'}
+          </div>
+          <div class="setting-desc" data-api-key-desc>${stats.has_key
+            ? escApi(hint) + ' &middot; saved to your account'
+            : 'Add your key to generate ' + stats.boosted_limit + ' images a day instead of ' + stats.base_limit + '.'}</div>
+        </div>
+        ${stats.has_key ? badge('active', 'Active') : badge('inactive', 'Not set')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <button class="btn-settings btn-settings-primary" data-action="add-mistral-key">
+          ${stats.has_key ? 'Replace key' : 'Add your Mistral API key'}
+        </button>
+        <button class="btn-settings btn-settings-secondary" data-api-remove ${stats.has_key ? '' : 'disabled style="display:none"'}>Remove</button>
+      </div>
+      <div class="api-key-note">Your key is saved to your account only and is used for every image you generate.</div>
+    </div>`;
+  c.appendChild(keyCard);
+
+  /* ── Usage card (collapsible, hidden by default) ── */
+  const pctBar = Math.min(100, Math.round((used / Math.max(1, stats.boosted_limit)) * 100));
+  const usageCard = document.createElement('div');
+  usageCard.className = 'settings-card';
+  usageCard.innerHTML = `
+    <div class="settings-card-header" style="display:flex;align-items:center;justify-content:space-between">
+      IMAGE GENERATION
+      <button type="button" id="img-usage-chevron" aria-label="Expand or collapse image generation stats" aria-expanded="false" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:2px;display:flex;transition:transform .2s">
+        <svg id="img-usage-chev-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="settings-card-body" id="img-usage-body" hidden>
+      <div class="api-usage">
+        <div class="api-usage-top">
+          <div>
+            <div class="api-usage-num"><span data-api-used>${used}</span><i>/ ${limit}</i></div>
+            <div class="api-usage-label">images used today</div>
+          </div>
+          <span class="status-badge ${remaining > 0 ? 'active' : 'inactive'}">${remaining} left</span>
+        </div>
+        <div class="api-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" data-api-progress>
+          <div class="api-progress-fill${pct >= 100 ? ' is-full' : ''}" style="width:${pct}%"></div>
+        </div>
+        <div class="api-progress-foot">
+          <span data-api-countdown>${escApi(apiCountdownText(resetsAt.getTime() - Date.now()))} left</span>
+          <span>renews at ${escApi(apiResetLabel(resetsAt))}</span>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="stat-num" data-api-total>${stats.total_images || 0}</div><div class="stat-label">Images generated</div></div>
+        <div class="stat-tile"><div class="stat-num">${limit}</div><div class="stat-label">Daily limit</div></div>
+      </div>
+      <div style="padding:0 20px 18px">
+        <div class="setting-desc" style="line-height:1.6">
+          ${stats.has_key
+            ? 'Generating with <strong>your Mistral key</strong> &mdash; ' + stats.boosted_limit + ' images per day.'
+            : 'Generating with Anteemonee\'s shared key &mdash; ' + stats.base_limit + ' images per day. Add your own key for ' + stats.boosted_limit + '.'}
+          ${pctBar < 20 && stats.has_key ? ' (' + (stats.boosted_limit - used) + ' of ' + stats.boosted_limit + ' left)' : ''}
+        </div>
+      </div>
+    </div>`;
+  c.appendChild(usageCard);
+
+  /* Chevron buttons (bound here rather than via inline onclick). */
+  const keyChev = c.querySelector('#api-key-chevron');
+  if (keyChev) keyChev.addEventListener('click', () => toggleCollapseCard('api-key'));
+  const usageChev = c.querySelector('#img-usage-chevron');
+  if (usageChev) usageChev.addEventListener('click', () => toggleCollapseCard('img-usage'));
+
+  /* Live countdown to the renewal moment. Rolls over on its own when the
+     quota resets, so it never sticks on "renewing…". */
+  const tick = c.querySelector('[data-api-countdown]');
+  if (tick) {
+    apiStatsTimer = setInterval(function () {
+      var left = resetsAt.getTime() - Date.now();
+      if (left <= 0) {
+        resetsAt = nextUtcMidnight();
+        left = resetsAt.getTime() - Date.now();
+      }
+      tick.textContent = apiCountdownText(left) + ' left';
+    }, 1000);
+  }
+
+  /* Remove key: two-step confirm, then refresh. */
+  const removeBtn = c.querySelector('[data-api-remove]');
+  if (removeBtn) {
+    let armed = false;
+    let armTimer = null;
+    removeBtn.addEventListener('click', async function () {
+      if (!armed) {
+        armed = true;
+        removeBtn.textContent = 'Tap again to remove';
+        removeBtn.classList.add('is-armed');
+        armTimer = setTimeout(function () {
+          armed = false;
+          removeBtn.textContent = 'Remove';
+          removeBtn.classList.remove('is-armed');
+        }, 4000);
+        return;
+      }
+      if (armTimer) clearTimeout(armTimer);
+      if (!window.MistralKeyUI) { showToastSettings('API key manager unavailable', true); return; }
+      removeBtn.disabled = true;
+      removeBtn.textContent = 'Removing…';
+      const res = await MistralKeyUI.remove();
+      removeBtn.disabled = false;
+      if (res && res.ok) {
+        showToastSettings('Key removed, back to ' + apiDefaultStats().base_limit + ' images/day');
+        await renderApi();
+      } else {
+        removeBtn.textContent = 'Remove';
+        showToastSettings((res && res.error) || 'Could not remove key', true);
+      }
+    });
+  }
+
+  /* The popup can be opened from anywhere on this page: stay in sync. */
+  if (window.MistralKeyUI && typeof MistralKeyUI.onChange === 'function' && !renderApi._bound) {
+    renderApi._bound = true;
+    MistralKeyUI.onChange(function (next) {
+      if (next && next.has_key) showToastSettings('Key saved: ' + next.limit + ' images/day');
+      try { renderApi(); } catch (_) {}
+    });
+  }
+}
+
+/* =========================
+   10. CONNECTED ACCOUNTS
    ========================= */
 
 function renderConnected() {
@@ -1426,7 +1733,7 @@ function renderAccounts() {
   const avatar = currentUser.photoURL;
   container.innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
-      <div style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;overflow:hidden;flex-shrink:0;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:18px;overflow:hidden;flex-shrink:0;">
         ${avatar ? `<img src="${avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : initial}
       </div>
       <div>
@@ -1605,8 +1912,8 @@ function renderAbout() {
   c.appendChild(buildCard('APP INFORMATION', infoRows));
 
   const legalRows = [
-    buildClickableRow('Privacy Policy', 'How we handle your data', () => { window.location.href = 'privacy.html'; }),
-    buildClickableRow('Terms of Service', 'Terms of use', () => { window.location.href = 'terms.html'; }),
+    buildClickableRow('Privacy Policy', 'How we handle your data', () => { window.location.href = '/pages/privacy.html'; }),
+    buildClickableRow('Terms of Service', 'Terms of use', () => { window.location.href = '/pages/terms.html'; }),
   ];
   c.appendChild(buildCard('LEGAL', legalRows));
 }
@@ -1699,9 +2006,9 @@ async function renderReports() {
   if (!c) return;
 
   const STATUS_META = {
-    sent:    { label: 'Sent',              color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.3)'  },
-    fixed:   { label: 'Fixed',             color: 'var(--success)', bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)'  },
-    replied: { label: 'Admin replied',     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
+    sent:    { label: 'Sent',              color: 'var(--text)', bg: 'var(--accent-soft)',  border: 'var(--border)'  },
+    fixed:   { label: 'Fixed',             color: 'var(--success)', bg: 'var(--accent-soft)',  border: 'var(--accent-soft)'  },
+    replied: { label: 'Admin replied',     color: 'var(--text)', bg: 'var(--accent-soft)', border: 'var(--border)' },
   };
 
   // Loading state
@@ -1718,7 +2025,7 @@ async function renderReports() {
     reports = data || [];
   } catch (err) {
     console.error("Error loading reports:", err);
-    c.innerHTML = '<div class="setting-row"><span style="color:var(--error,#f87171);font-size:13px">Could not load reports. Try again later.</span></div>';
+    c.innerHTML = '<div class="setting-row"><span style="color:var(--error);font-size:13px">Could not load reports. Try again later.</span></div>';
     return;
   }
 
@@ -1743,7 +2050,7 @@ async function renderReports() {
     const itemId = 'report-item-' + i;
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'border-bottom:1px solid var(--border,#1e231d);padding:16px 0;';
+    wrap.style.cssText = 'border-bottom:1px solid var(--border);padding:16px 0;';
     if (i === reports.length - 1) wrap.style.borderBottom = 'none';
 
     // Header row: status pill + date
@@ -1771,8 +2078,8 @@ async function renderReports() {
     if (r.user_prompt) {
       const pBlock = document.createElement('div');
       pBlock.style.cssText = 'margin-bottom:10px;';
-      pBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#6f7971);margin-bottom:4px;">Your prompt</div>
-        <div style="font-size:13px;color:var(--text-secondary);background:var(--surface,#10130f);border:1px solid var(--border,#1e231d);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto;">${escapeHtmlSettings(r.user_prompt)}</div>`;
+      pBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:4px;">Your prompt</div>
+        <div style="font-size:13px;color:var(--text-secondary);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto;">${escapeHtmlSettings(r.user_prompt)}</div>`;
       expandedBody.appendChild(pBlock);
     }
 
@@ -1780,24 +2087,24 @@ async function renderReports() {
     if (r.ai_message) {
       const aiBlock = document.createElement('div');
       aiBlock.style.cssText = 'margin-bottom:10px;';
-      aiBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#6f7971);margin-bottom:4px;">AI message you disliked</div>
-        <div style="font-size:13px;color:var(--text-secondary);background:var(--surface,#10130f);border:1px solid var(--border,#1e231d);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto;">${escapeHtmlSettings(r.ai_message)}</div>`;
+      aiBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:4px;">AI message you disliked</div>
+        <div style="font-size:13px;color:var(--text-secondary);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto;">${escapeHtmlSettings(r.ai_message)}</div>`;
       expandedBody.appendChild(aiBlock);
     }
 
     // Description
     const descBlock = document.createElement('div');
     descBlock.style.cssText = 'margin-bottom:10px;';
-    descBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted,#6f7971);margin-bottom:4px;">Your description</div>
-      <div style="font-size:13px;color:var(--text);background:var(--surface,#10130f);border:1px solid var(--border,#1e231d);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlSettings(r.description || '')}</div>`;
+    descBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:4px;">Your description</div>
+      <div style="font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlSettings(r.description || '')}</div>`;
     expandedBody.appendChild(descBlock);
 
     // Admin message (only if status is 'replied' and admin_message exists)
     if (r.status === 'replied' && r.admin_message) {
       const adminBlock = document.createElement('div');
       adminBlock.style.cssText = 'margin-bottom:4px;';
-      adminBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#a78bfa;margin-bottom:4px;">Message from admin</div>
-        <div style="font-size:13px;color:var(--text);background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlSettings(r.admin_message)}</div>`;
+      adminBlock.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text);margin-bottom:4px;">Message from admin</div>
+        <div style="font-size:13px;color:var(--text);background:var(--accent-soft);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlSettings(r.admin_message)}</div>`;
       expandedBody.appendChild(adminBlock);
     }
 

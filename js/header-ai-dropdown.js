@@ -17,19 +17,9 @@
     document.head.appendChild(st);
   }
   function fixPrefixes() {
-    function resolvesUnderPages(rel) {
-      try {
-        return /\/pages\/[^/]+$/.test(new URL(rel, document.baseURI).pathname);
-      } catch (_) { return false; }
-    }
-    if (resolvesUnderPages('ai-classroom.html')) {
-      return { ai: 'ai-chat.html', test: 'ai-test-builder.html', classroom: 'ai-classroom.html' };
-    }
-    return {
-      ai: 'pages/ai-chat.html',
-      test: 'pages/ai-test-builder.html',
-      classroom: 'pages/ai-classroom.html'
-    };
+    // AI Tutor / AI Test Builder live at the site root as folder pages, so a
+    // root-absolute URL works from every page depth (root, /pages/*, /ai-chat/).
+    return { ai: '/ai-chat/', test: '/ai-test-builder/' };
   }
 
   function dropdownHtml(p, label) {
@@ -39,7 +29,6 @@
       '<div class="nav-menu">' +
       '<a href="' + p.ai + '">' + ICONS.chat + 'AI Tutor</a>' +
       '<a href="' + p.test + '">' + ICONS.clipboard + 'AI Test Builder</a>' +
-      '<a href="' + p.classroom + '">' + ICONS.classroom + 'AI Classroom</a>' +
       '</div></div>'
     );
   }
@@ -73,7 +62,7 @@
       document.querySelectorAll('.nav-menu a, .mobile-acc-list a').forEach(function (a) {
         var href = a.getAttribute('href') || '';
         var on = function (slug) { return href.indexOf(slug) !== -1 && path.indexOf(slug) !== -1; };
-        if (on('ai-test-builder') || on('ai-classroom') || (on('ai-chat') && path.indexOf('ai-test') === -1)) {
+        if (on('ai-test-builder') || (on('ai-chat') && path.indexOf('ai-test') === -1)) {
           a.style.color = 'var(--accent)';
           a.style.fontWeight = '650';
         }
@@ -83,7 +72,6 @@
 
   function iconForLibrary(href) {
     href = href || '';
-    if (href.indexOf('ai-classroom') !== -1) return ICONS.classroom;
     if (href.indexOf('ebooks') !== -1) return ICONS.book;
     if (href.indexOf('flashcards') !== -1) return ICONS.layers;
     if (href.indexOf('definitions') !== -1) return ICONS.bookOpen;
@@ -146,7 +134,6 @@
         '<div class="mobile-acc-list">' +
           '<a href="' + p.ai + '" class="' + cls + '">' + ICONS.chat + 'AI Tutor</a>' +
           '<a href="' + p.test + '" class="' + cls + '">' + ICONS.clipboard + 'AI Test Builder</a>' +
-          '<a href="' + p.classroom + '" class="' + cls + '">' + ICONS.classroom + 'AI Classroom</a>' +
         '</div>';
       a.setAttribute('data-ai-mobile', '1');
       a.replaceWith(wrap);
