@@ -1,0 +1,439 @@
+﻿/* =========================================================
+   Anteemonee DOWNLOAD - Neomorphic Design System
+   ========================================================= */
+
+.download-page {
+  min-height: 100vh;
+  padding-top: 64px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* â”€â”€â”€ Hero â€” neomorphic â”€â”€â”€ */
+.download-hero {
+  text-align: center;
+  padding: 80px 24px 60px;
+  position: relative;
+  overflow: hidden;
+}
+.download-hero h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.download-hero p {
+  color: var(--text-secondary);
+  font-size: 18px;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+.download-hero-glow {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 300px;
+  background: radial-gradient(ellipse, var(--glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* â”€â”€â”€ Platforms Grid â”€â”€â”€ */
+.platforms-section {
+  padding: 0 24px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* â”€â”€â”€ Platform Card â€” neomorphic â”€â”€â”€ */
+.platform-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--neo-shadow-raised);
+}
+.platform-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--neo-shadow-raised-lg);
+}
+
+/* â”€â”€â”€ Platform Icon â€” neomorphic â”€â”€â”€ */
+.platform-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.platform-icon svg { width: 32px; height: 32px; }
+.platform-icon.android { background: rgba(61, 220, 132, 0.1); color: #3DDC84; }
+.platform-icon.ios { background: var(--surface); color: var(--text); }
+.platform-icon.windows { background: rgba(2, 132, 199, 0.1); color: var(--cyan); }
+.platform-icon.macos { background: var(--surface); color: var(--text); }
+
+/* â”€â”€â”€ Card Content â”€â”€â”€ */
+.platform-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.platform-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+
+/* â”€â”€â”€ Status Badge â€” neomorphic â”€â”€â”€ */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.status-badge.available { background: var(--accent-soft); color: var(--success); }
+.status-badge.coming-soon { background: var(--surface); color: var(--text-secondary); box-shadow: var(--neo-shadow-recessed-sm); }
+
+/* â”€â”€â”€ Download Button â€” neomorphic â”€â”€â”€ */
+.btn-download {
+  width: 100%;
+  padding: 12px 24px;
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: var(--neo-shadow-raised-sm);
+  transition: all 0.2s;
+}
+.btn-download:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), var(--neo-shadow-raised);
+  transform: translateY(-1px);
+}
+.btn-download:active { box-shadow: 0 2px 8px rgba(0,0,0,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-download:disabled:hover { background: var(--surface); color: var(--text); box-shadow: var(--neo-shadow-raised-sm); transform: none; }
+
+/* â”€â”€â”€ Beta Badge & Button â€” neomorphic â”€â”€â”€ */
+.beta-badge { background: var(--accent-soft) !important; color: var(--success) !important; }
+.btn-beta {
+  background: var(--accent) !important;
+  color: var(--on-accent) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), var(--neo-shadow-raised-sm) !important;
+}
+.btn-beta:hover {
+  background: var(--accent-hover) !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3), var(--neo-shadow-raised) !important;
+  transform: translateY(-1px);
+}
+.rejected-badge { background: rgba(255, 102, 117, 0.1) !important; color: var(--error) !important; }
+.btn-reapply {
+  background: rgba(255, 102, 117, 0.1) !important;
+  color: var(--error) !important;
+  box-shadow: var(--neo-shadow-raised-sm) !important;
+}
+.btn-reapply:hover { background: rgba(255, 102, 117, 0.2) !important; box-shadow: var(--neo-shadow-raised) !important; }
+
+/* â”€â”€â”€ Beta Modal â€” neomorphic â”€â”€â”€ */
+.beta-modal { text-align: center; max-width: 420px; }
+.beta-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.modal-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+.beta-form { text-align: left; }
+.beta-input-group { margin-bottom: 16px; }
+.beta-input-group input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--surface-recessed);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow: var(--neo-shadow-recessed);
+  transition: box-shadow 0.2s;
+}
+.beta-input-group input:focus { box-shadow: var(--neo-shadow-recessed), 0 0 0 2px var(--accent-soft); }
+.beta-input-group input::placeholder { color: var(--text-muted); }
+
+.beta-error {
+  color: var(--error);
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 102, 117, 0.08);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.beta-success {
+  color: var(--success);
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(53, 211, 154, 0.08);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+
+.btn-beta-submit { flex: 1; }
+.btn-beta-submit.loading { position: relative; color: transparent; pointer-events: none; }
+.btn-beta-submit.loading::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(128,128,128,0.35);
+  border-top-color: var(--on-accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.beta-verified-icon, .beta-notverified-icon { margin-bottom: 16px; }
+.btn-download-apk { text-decoration: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* â”€â”€â”€ Roadmap Section â€” neomorphic â”€â”€â”€ */
+.roadmap-section {
+  padding: 60px 24px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+.roadmap-section h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.roadmap-section > p { color: var(--text-secondary); font-size: 15px; margin-bottom: 40px; }
+
+.roadmap-timeline {
+  position: relative;
+  padding-left: 44px;
+}
+.roadmap-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.roadmap-item { position: relative; padding: 0 0 32px 0; text-align: left; }
+.roadmap-item:last-child { padding-bottom: 0; }
+
+.roadmap-dot {
+  position: absolute;
+  left: -35px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.roadmap-item.active .roadmap-dot {
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--glow), var(--neo-shadow-raised-sm);
+}
+
+.roadmap-content h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.roadmap-content p { font-size: 13px; color: var(--text-secondary); }
+.roadmap-item.active .roadmap-content p { color: var(--accent); }
+
+/* â”€â”€â”€ Modal â€” neomorphic â”€â”€â”€ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--neo-shadow-float);
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-platform-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 32px;
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.modal-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.modal-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.modal-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+.modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: var(--surface);
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: var(--neo-shadow-raised-sm);
+  transition: all 0.2s;
+}
+.btn-secondary:hover { box-shadow: var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-secondary:active { box-shadow: var(--neo-shadow-pressed); transform: translateY(0); }
+
+.btn-primary {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), var(--neo-shadow-raised-sm);
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 24px rgba(0,0,0,0.3), var(--neo-shadow-raised); transform: translateY(-1px); }
+.btn-primary:active { box-shadow: 0 2px 8px rgba(0,0,0,0.2), var(--neo-shadow-pressed); transform: translateY(0); }
+
+/* â”€â”€â”€ Footer â€” neomorphic â”€â”€â”€ */
+.download-footer {
+  padding: 32px 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.download-footer p { color: var(--text-secondary); font-size: 13px; margin-bottom: 12px; }
+.download-footer .footer-links { display: flex; gap: 24px; justify-content: center; }
+.download-footer .footer-links a {
+  color: var(--text-secondary); font-size: 13px; text-decoration: none;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  transition: all 0.15s;
+}
+.download-footer .footer-links a:hover { color: var(--text); background: var(--neo-highlight); }
+
+/* â”€â”€â”€ Mobile Responsive â”€â”€â”€ */
+@media (max-width: 768px) {
+  .download-hero { padding: 60px 20px 40px; }
+  .download-hero h1 { font-size: 32px; }
+  .download-hero p { font-size: 16px; }
+  .platforms-section { padding: 0 16px 60px; }
+  .platforms-grid { grid-template-columns: 1fr; }
+  .platform-card { padding: 24px; }
+  .roadmap-section { padding: 40px 16px 60px; }
+  .roadmap-section h2 { font-size: 24px; }
+  .modal-card { padding: 32px 24px; max-width: 100%; }
+  .download-footer .footer-links { flex-direction: column; gap: 12px; }
+}
+
+/* â”€â”€â”€ Reduced Motion â”€â”€â”€ */
+@media (prefers-reduced-motion: reduce) {
+  .platform-card { transition: none; }
+  .modal-card { animation: none; }
+}
+
+/* LIQUID GLASS overrides - tokens (--liquid-*) come from css/style.css */
+.platform-card {
+  position: relative; overflow: hidden;
+  background: var(--liquid-bg-soft);
+  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset), 0 10px 30px rgba(0,0,0,0.18);
+}
+.platform-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--liquid-shine); pointer-events: none;
+}
+.platform-card:hover { border-color: var(--liquid-border); box-shadow: var(--liquid-inset), 0 20px 46px rgba(0,0,0,0.28); }
+.platform-icon {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.15);
+}
+.modal-card, .beta-modal {
+  background: var(--liquid-bg-strong);
+  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-inset), var(--liquid-shadow);
+}
+.beta-input-group input {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border-soft);
+  box-shadow: var(--neo-shadow-recessed-sm);
+}
+.beta-input-group input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 3px var(--accent-soft);
+}
+.btn-download, .btn-beta-submit, .btn-download-apk {
+  background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(0,0,0,0.3);
+}
+.btn-download:hover, .btn-beta-submit:hover, .btn-download-apk:hover {
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 10px 28px rgba(0,0,0,0.35); transform: translateY(-1px);
+}
+.btn-beta, .btn-reapply, .download-page .btn-secondary {
+  background: var(--liquid-bg-soft);
+  border: 1px solid var(--liquid-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.15);
+  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+}
+.download-page .btn-primary {
+  background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 20px rgba(0,0,0,0.3);
+}
