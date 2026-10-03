@@ -266,7 +266,7 @@
       <div id="ob-form">
         <span class="ob-eyebrow ob-in" style="--d:0"><i></i> Quick setup</span>
         <h1 class="ob-in" style="--d:1">Tell us where you study.</h1>
-        <p class="ob-sub ob-in" style="--d:2">Three answers and Anteemonee lines up your syllabus, boards and past papers. You can change any of this later in Settings.</p>
+        <p class="ob-sub ob-in" style="--d:2">Three answers and Anteemonee lines up your syllabus, boards and past papers. You can change any of this at any time from your Account page.</p>
 
         <div class="ob-fields">
           <div class="ob-field ob-in" style="--d:3">
@@ -631,6 +631,18 @@
       setLoading(btn, true);
       hideMsg();
       try {
+        // Academic row first. If this fails we must NOT flip the completion
+        // flags, otherwise getOnboardingStep() would treat the student as done
+        // while their board and class are still missing.
+        var sapRes = await db.from('student_academic_profiles').upsert({
+          user_id: currentUser.id,
+          education_system_id: ref.systemId,
+          board_id: Number(state.board),
+          class_level_id: Number(state.cls),
+          group_id: null
+        }, { onConflict: 'user_id' });
+        if (sapRes.error) throw sapRes.error;
+
         var profRes = await db.from('profiles').update({
           province_id: Number(state.province),
           personal_info_completed: true,
@@ -638,22 +650,13 @@
         }).eq('id', currentUser.id);
         if (profRes.error) throw profRes.error;
 
-        var sapErr = await db.from('student_academic_profiles').upsert({
-          user_id: currentUser.id,
-          education_system_id: ref.systemId,
-          board_id: Number(state.board),
-          class_level_id: Number(state.cls),
-          group_id: null
-        }, { onConflict: 'user_id' });
-        if (sapErr.error) throw sapErr.error;
-
         $('ob-form').style.display = 'none';
         $('ob-done').classList.add('is-on');
         setTimeout(function () { window.location.href = BASE + '/dashboard/'; }, 1100);
       } catch (err) {
         console.error('[onboarding] save failed:', err);
         setLoading(btn, false);
-        showMsg('Could not save your answers. Please check your connection and try again.', true);
+        showMsg('We could not save your answers. Please try again in a moment.', true);
       }
     }
 
