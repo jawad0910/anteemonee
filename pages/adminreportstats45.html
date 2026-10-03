@@ -287,7 +287,7 @@
     host.innerHTML = shown.map(function (u) {
       var initial = (u.name || '?').trim().charAt(0).toUpperCase();
       var avatar = u.avatar
-        ? '<img src="../pages/' + esc(u.avatar) + '" alt="" loading="lazy" onerror="this.parentNode.textContent=\'' + initial + '\'">'
+        ? '<img src="' + esc(u.avatar) + '" alt="" loading="lazy" onerror="this.parentNode.textContent=\'' + initial + '\'">'
         : esc(initial);
       var sub = u.messages > 0
         ? n(u.messages) + ' msgs \u00b7 ' + n(u.conversations) + (u.conversations === 1 ? ' chat' : ' chats')

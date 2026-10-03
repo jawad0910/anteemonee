@@ -699,6 +699,7 @@
           </div>
         </div>
         <a href="../ai-chat/">AI Assistant</a>
+        <a href="../century-club/">Century Club</a>
       </nav>
       <div class="header-actions">
         <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
@@ -728,6 +729,7 @@
       <a href="../index.html" class="mobile-nav-link">AI Assistant</a>
       <a href="../pages/download.html" class="mobile-nav-link">Download App</a>
           <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+      <a href="../century-club/" class="mobile-nav-link">Century Club</a>
     <div class="mobile-cta">
         <a href="../pages/login.html" class="btn-login">Login</a>
         <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
@@ -737,6 +739,7 @@
       <div id="mobile-profile-section"></div>
       <a href="../index.html" class="mobile-nav-link">Home</a>
       <a href="../index.html" class="mobile-nav-link">AI Assistant</a>
+      <a href="../century-club/" class="mobile-nav-link">Century Club</a>
     </div>
   </div>
 
@@ -971,13 +974,13 @@
               '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
                 '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
                   '<div class="avatar-wrapper">' +
-                    (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
                   '</div>' +
                 '</button>' +
                 '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
                   '<div class="dropdown-header">' +
                     '<div class="dropdown-avatar">' +
-                      (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
                     '</div>' +
                     '<div class="dropdown-info">' +
                       '<span class="dropdown-name">' + (fullName || username) + '</span>' +
