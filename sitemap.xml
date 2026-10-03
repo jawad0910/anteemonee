@@ -19,19 +19,25 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://anteemonee.com/century-club/</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://anteemonee.com/pages/download.html</loc>
     <lastmod>2026-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/pages/terms.html</loc>
+    <loc>https://anteemonee.com/terms/</loc>
     <lastmod>2026-09-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/pages/privacy.html</loc>
+    <loc>https://anteemonee.com/privacy/</loc>
     <lastmod>2026-09-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

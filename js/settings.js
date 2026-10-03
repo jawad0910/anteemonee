@@ -1912,8 +1912,8 @@ function renderAbout() {
   c.appendChild(buildCard('APP INFORMATION', infoRows));
 
   const legalRows = [
-    buildClickableRow('Privacy Policy', 'How we handle your data', () => { window.location.href = '/pages/privacy.html'; }),
-    buildClickableRow('Terms of Service', 'Terms of use', () => { window.location.href = '/pages/terms.html'; }),
+    buildClickableRow('Privacy Policy', 'How we handle your data', () => { window.location.href = '/privacy/'; }),
+    buildClickableRow('Terms of Service', 'Terms of use', () => { window.location.href = '/terms/'; }),
   ];
   c.appendChild(buildCard('LEGAL', legalRows));
 }
