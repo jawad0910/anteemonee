@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <title>Settings - Anteemonee</title>
+  <meta name="description" content="Manage your Anteemonee account settings, preferences, and privacy.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=34">
+  <link rel="stylesheet" href="../css/settings.css?v=20">
+  <style>
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
+      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
+      --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
+      --liquid-bg-strong: rgba(10,10,12,0.85);
+    }
+    /* ── Site header (pills) ── */
+    .header { padding: 0; position: relative; z-index: 200; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; display: flex; align-items: center; position: relative; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .site-logo-link { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .site-logo-img { width: 32px; height: 32px; border-radius: 10px; }
+    .site-logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 700; color: var(--text); }
+    .site-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .site-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+    .site-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .site-nav .caret { font-size: 10px; opacity: 0.6; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .landing-nav .caret { font-size: 10px; opacity: 0.6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 10px; }
+    .nav-menu a:hover { background: var(--surface); }
+    .header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .site-icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
+    .site-icon-btn:hover { background: var(--surface); color: var(--text); }
+    .site-profile-wrap { position: relative; }
+    .site-avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .site-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; overflow: hidden; }
+    .site-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .site-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 300; display: none; }
+    .site-dropdown.open { display: block; }
+    .site-dd-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .site-dd-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .site-dd-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .site-dd-info { display: flex; flex-direction: column; min-width: 0; }
+    .site-dd-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .site-dd-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .site-dd-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .site-dd-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background .15s; }
+    .site-dd-item:hover { background: var(--surface); }
+    .site-dd-item svg { flex-shrink: 0; opacity: 0.7; }
+    .site-dd-logout { color: var(--error); }
+    .site-auth-btns { display: flex; gap: 8px; }
+    .site-btn-login, .site-btn-signup { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 22px; border-radius: 999px; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; line-height: 1; white-space: nowrap; text-decoration: none; cursor: pointer; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease, filter 0.2s ease; will-change: transform; }
+    .site-btn-login:focus-visible, .site-btn-signup:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+    .site-btn-login { color: var(--text-secondary); background: transparent; border: 1px solid var(--border); }
+    .site-btn-login:hover { color: var(--text); background: var(--accent-soft); border-color: var(--liquid-border); transform: translateY(-1px); }
+    .site-btn-login:active { transform: translateY(0) scale(0.97); }
+    .site-btn-signup { background: var(--accent); color: var(--on-accent); border: 1px solid transparent; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25); }
+    .site-btn-signup:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32); filter: brightness(1.07); }
+    .site-btn-signup:active { transform: translateY(0) scale(0.97); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); filter: none; }
+    .site-mobile-menu { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--bg-elevated); border-bottom: 1px solid var(--border); padding: 16px 24px; z-index: 190; flex-direction: column; gap: 4px; box-shadow: var(--neo-shadow-float); }
+    .site-mobile-menu.open { display: flex; }
+    .site-mobile-link { font-size: 15px; font-weight: 500; color: var(--text-secondary); padding: 12px 8px; border-radius: 10px; text-decoration: none; transition: color .15s; }
+    .site-mobile-link:hover { color: var(--text); background: var(--surface); }
+    .site-mobile-cta { display: flex; gap: 8px; margin-top: 8px; }
+    .site-mobile-cta .site-btn-login { flex: 1; text-align: center; border: 1px solid var(--border); border-radius: 8px; }
+    .site-mobile-cta .site-btn-signup { flex: 1; text-align: center; }
+    @media (max-width: 900px) { .site-nav, .landing-nav { display: none; } }
+    .site-menu-toggle { width: 38px; height: 38px; border-radius: 50%; display: none; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; }
+    @media (max-width: 900px) { .site-menu-toggle { display: inline-flex; } .site-auth-btns { display: none; } #site-profile-wrap { display: none !important; } }
+    .settings-page { padding-top: 100px; }
+  </style>
+</head>
+<body>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="site-logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="site-logo-img">
+        <span class="site-logo-text">Anteemonee</span>
+      </a>
+<nav class="landing-nav" aria-label="Primary">
+  <a href="../dashboard/">Dashboard</a>
+  <div class="nav-drop">
+    <a href="#">Library <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ebooks/">eBooks</a>
+      <a href="../flashcards/">Flashcards</a>
+      <a href="../past-papers/">Past Papers</a>
+    </div>
+  </div>
+  <a href="../ai-chat/">AI Assistant</a>
+</nav>
+      <div class="header-actions">
+        <a href="../messenger/" class="site-icon-btn" aria-label="Messenger" title="Messenger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
+        <button class="site-icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+        <div class="site-auth-btns" id="site-auth-logged-out">
+          <a href="../pages/login.html" class="site-btn-login">Log in</a>
+          <a href="../pages/signup.html" class="site-btn-signup">Sign Up</a>
+        </div>
+        <div class="site-profile-wrap" id="site-profile-wrap" style="display:none">
+          <button class="site-avatar-btn" id="site-avatar-btn">
+            <div class="site-avatar-circle" id="site-avatar-circle"></div>
+          </button>
+          <div class="site-dropdown" id="site-dropdown">
+            <div class="site-dd-header">
+              <div class="site-dd-avatar" id="site-dd-avatar"></div>
+              <div class="site-dd-info">
+                <span class="site-dd-name" id="site-dd-name"></span>
+                <span class="site-dd-email" id="site-dd-email"></span>
+              </div>
+            </div>
+            <div class="site-dd-divider"></div>
+            <a href="../account/" class="site-dd-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Account
+            </a>
+            <a href="../settings/" class="site-dd-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Settings
+            </a>
+            <div class="site-dd-divider"></div>
+            <button class="site-dd-item site-dd-logout" onclick="handleLogout()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Logout
+            </button>
+          </div>
+        </div>
+        <button class="site-menu-toggle" id="site-menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="site-mobile-menu" id="site-mobile-menu">
+  <a href="../index.html" class="site-mobile-link">Dashboard</a>
+  <a href="../pages/board-notes.html" class="site-mobile-link">Board Notes</a>
+  <div class="mobile-acc-dropdown">
+    <button type="button" class="mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+    <div class="mobile-acc-list">
+      <a href="../ebooks/" class="site-mobile-link">eBooks</a>
+      <a href="../flashcards/" class="site-mobile-link">Flashcards</a>
+      <a href="../past-papers/" class="site-mobile-link">Past Papers</a>
+    </div>
+  </div>
+  <a href="../ai-chat/" class="site-mobile-link">AI Assistant</a>
+
+        <a href="../messenger/" class="site-mobile-link">Messenger</a>
+    <div class="site-mobile-cta">
+      <a href="../pages/login.html" class="site-btn-login">Log in</a>
+      <a href="../pages/signup.html" class="site-btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <main class="settings-page" id="settings-page">
+    <!-- NOT AUTHENTICATED -->
+    <div id="settings-not-auth" style="display:none;flex:1;overflow-y:auto;padding:60px 20px;text-align:center">
+      <h2 style="margin-bottom:12px">Sign in required</h2>
+      <p style="color:var(--text-secondary);margin-bottom:24px">Please sign in to access your settings.</p>
+      <a href="../pages/login.html" class="btn-settings btn-settings-primary">Sign In</a>
+    </div>
+
+    <!-- SETTINGS CONTENT -->
+    <div class="settings-container" id="settings-overlay">
+      <div class="settings-header">
+        <h1>Settings</h1>
+        <p>Manage your Anteemonee experience and preferences.</p>
+      </div>
+
+      <div class="settings-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="settings-sidebar" id="settings-sidebar">
+          <button class="settings-nav-item active" data-cat="security">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Login & Security
+          </button>
+          <button class="settings-nav-item" data-cat="ai">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            AI Personalization
+          </button>
+          <button class="settings-nav-item" data-cat="appearance">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            Appearance
+          </button>
+          <div class="settings-nav-divider"></div>
+          <button class="settings-nav-item" data-cat="subscription">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Subscription
+          </button>
+          <button class="settings-nav-item" data-cat="coupons">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            Coupons
+          </button>
+          <button class="settings-nav-item" data-cat="api">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/></svg>
+            API Keys
+          </button>
+          <button class="settings-nav-item" data-cat="connected">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Connected Accounts
+          </button>
+
+          <div class="settings-nav-divider"></div>
+          <button class="settings-nav-item" data-cat="help">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Help & Support
+          </button>
+          <button class="settings-nav-item" data-cat="danger">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Advanced
+          </button>
+          <div class="settings-nav-divider"></div>
+          <button class="settings-nav-item" onclick="settingsLogout()" style="color:#FF6675">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Log Out
+          </button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="settings-content" id="settings-content">
+
+          <!-- ============ LOGIN & SECURITY ============ -->
+          <div class="settings-category active" data-cat="security">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Login & Security</h2>
+              <p>Manage your password and login methods.</p>
+            </div>
+            <div id="settings-security-content"></div>
+          </div>
+
+          <!-- ============ AI PERSONALIZATION ============ -->
+          <div class="settings-category" data-cat="ai">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>AI Personalization</h2>
+              <p>Customize how the AI tutor works for you.</p>
+            </div>
+            <div id="settings-ai-content"></div>
+          </div>
+
+          <!-- ============ APPEARANCE ============ -->
+          <div class="settings-category" data-cat="appearance">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Appearance</h2>
+              <p>Customize the look and feel of Anteemonee.</p>
+            </div>
+            <div id="settings-appearance-content"></div>
+          </div>
+
+          <!-- ============ SUBSCRIPTION ============ -->
+          <div class="settings-category" data-cat="subscription">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Subscription</h2>
+              <p>View your plan and manage premium access.</p>
+            </div>
+            <div id="settings-subscription-content"></div>
+          </div>
+
+          <!-- ============ COUPONS ============ -->
+          <div class="settings-category" data-cat="coupons">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Coupons</h2>
+              <p>Redeem a coupon code for premium access.</p>
+            </div>
+            <div id="settings-coupons-content"></div>
+          </div>
+
+          <!-- ============ API ============ -->
+          <div class="settings-category" data-cat="api">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>API Keys</h2>
+              <p>Add your own Mistral API key for 400 images/day.</p>
+            </div>
+            <div id="settings-api-content"></div>
+          </div>
+
+          <!-- ============ CONNECTED ACCOUNTS ============ -->
+          <div class="settings-category" data-cat="connected">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Connected Accounts</h2>
+              <p>Manage linked login providers.</p>
+            </div>
+            <div id="settings-connected-content"></div>
+          </div>
+
+          <!-- ============ VOICE CALL ============ -->
+
+
+          <!-- ============ HELP & SUPPORT ============ -->
+          <div class="settings-category" data-cat="help">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Help & Support</h2>
+              <p>Get help or send feedback.</p>
+            </div>
+            <div id="settings-help-content"></div>
+          </div>
+
+          <!-- ============ DANGER ZONE ============ -->
+          <div class="settings-category" data-cat="danger">
+            <button class="settings-mobile-back" onclick="showSidebar()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Settings
+            </button>
+            <div class="settings-category-header">
+              <h2>Advanced</h2>
+              <p>Manage your account data and settings.</p>
+            </div>
+            <div id="settings-danger-content"></div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- DELETE ACCOUNT MODAL -->
+    <div class="settings-modal-overlay" id="delete-account-modal">
+      <div class="settings-modal">
+        <h3>Delete Account</h3>
+        <p>This action is <strong style="color:#FF6675">permanent and irreversible</strong>. All your data including profile, academic information, study progress, AI history, and preferences will be permanently deleted.</p>
+        <p>Type <strong style="color:#FF6675">DELETE</strong> to confirm:</p>
+        <input type="text" class="confirm-input" id="delete-confirm-input" placeholder='Type "DELETE"'>
+        <div class="modal-actions">
+          <button class="btn-settings btn-settings-secondary" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn-settings btn-settings-danger" id="delete-account-btn" onclick="confirmDeleteAccount()" disabled>Delete Permanently</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="settings-toast" id="settings-toast"></div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=30"></script>
+<script src="../js/login-modal.js?v=5"></script>
+<script src="../js/forgot-modal.js?v=2"></script>
+<script src="../js/signup-modal.js?v=3"></script>
+  <script src="../js/mistral-key-modal.js?v=1"></script>
+  <script src="../js/settings.js?v=13"></script>
+  <script>
+    // Settings page: mobile menu, auth buttons
+    (function () {
+      // Site hamburger has its own handler below; the legacy #menu-toggle
+      // block was dead code (no such element on this page).
+      // Auth-aware header buttons
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            
+            var dropdownHtml = 
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="../ai-chat/" onclick="if(window.AnteemoneeSettings&&window.AnteemoneeSettings.open){event.preventDefault();closeLandingProfileDropdown();window.AnteemoneeSettings.open();}" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+      
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        
+        // Hover: keep open when moving from button to dropdown
+        var hideTimer = null;
+        function scheduleHide() {
+          hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150);
+        }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      
+      // Single click-outside handler (added once)
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+      
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+      
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') {
+            handleLogout();
+          } else {
+            window.location.href = '../index.html';
+          }
+        } catch (_) {
+          window.location.href = '../index.html';
+        }
+      }
+      
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      window.handleLandingLogout = handleLandingLogout;
+      
+      // Check immediately and then after app.js initializes
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 20) clearInterval(timer);
+        if (typeof currentUser !== 'undefined') clearInterval(timer);
+      }, 300);
+    })();
+  </script>
+  <script>
+    (function () {
+      var hdr = document.getElementById('site-header');
+      function onScroll() { if (hdr) { if (window.scrollY > 20) hdr.classList.add('scrolled'); else hdr.classList.remove('scrolled'); } }
+      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+      var toggle = document.getElementById('site-menu-toggle');
+      var menu = document.getElementById('site-mobile-menu');
+      if (toggle && menu) { toggle.addEventListener('click', function () { menu.classList.toggle('open'); toggle.classList.toggle('active'); }); }
+      var avBtn = document.getElementById('site-avatar-btn');
+      var drop = document.getElementById('site-dropdown');
+      var ddTimeout;
+      if (avBtn && drop) {
+        avBtn.addEventListener('mouseenter', function () { clearTimeout(ddTimeout); drop.classList.add('open'); });
+        avBtn.addEventListener('mouseleave', function () { ddTimeout = setTimeout(function () { drop.classList.remove('open'); }, 150); });
+        drop.addEventListener('mouseenter', function () { clearTimeout(ddTimeout); });
+        drop.addEventListener('mouseleave', function () { ddTimeout = setTimeout(function () { drop.classList.remove('open'); }, 150); });
+        avBtn.addEventListener('click', function (e) { e.stopPropagation(); drop.classList.toggle('open'); });
+      }
+      document.addEventListener('click', function (e) {
+        if (drop && !e.target.closest('.site-profile-wrap')) drop.classList.remove('open');
+        if (menu && !e.target.closest('.site-menu-toggle') && !e.target.closest('.site-mobile-menu')) { menu.classList.remove('open'); if (toggle) toggle.classList.remove('active'); }
+      });
+      function updateSiteHeader(user) {
+        var lo = document.getElementById('site-auth-logged-out');
+        var pw = document.getElementById('site-profile-wrap');
+        if (!lo || !pw) return;
+        if (user) {
+          lo.style.display = 'none'; pw.style.display = '';
+          var n = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || user.email || '';
+          var ini = n.charAt(0).toUpperCase() || 'U';
+          var ac = document.getElementById('site-avatar-circle');
+          var da = document.getElementById('site-dd-avatar');
+          var dn = document.getElementById('site-dd-name');
+          var de = document.getElementById('site-dd-email');
+          var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+          if (ac) { if (imgUrl) ac.innerHTML = '<img src="../pages/'+imgUrl+'" alt="">'; else ac.textContent = ini; }
+          if (da) { if (imgUrl) da.innerHTML = '<img src="../pages/'+imgUrl+'" alt="">'; else da.textContent = ini; }
+          if (dn) dn.textContent = n;
+          if (de) de.textContent = user.email || '';
+        } else { lo.style.display = ''; pw.style.display = 'none'; }
+      }
+      function pollAuth() {
+        if (window.__authReady && typeof currentUser !== 'undefined' && currentUser) updateSiteHeader(currentUser);
+        else updateSiteHeader(null);
+      }
+      pollAuth(); setInterval(pollAuth, 1500);
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
+</body>
+</html>
