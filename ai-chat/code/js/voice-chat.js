@@ -40,16 +40,80 @@
   let lastSpeechTime = 0;
   let recordingStartTime = 0;
   let capturePeak = 0;             // loudest sample seen during this capture
+  let roomFloor = Infinity;        // the room's own level, measured while idle
+  let levelTimer = null;           // fast peak sampler, only while recording
+  let floorTimer = null;           // slow room sampler, runs whenever the mic is live
+  // Local metering. Deciding "was that speech?" on the device means no network
+  // round trip and no dependence on a fixed number, so a quiet mic and a loud
+  // mic both work without retuning.
+  const LEVEL_POLL_MS = 25;             // ~40Hz; windows overlap so nothing is missed
+  const FLOOR_POLL_MS = 250;            // room tracking, no need to be fast
+  // Whisper is far more sensitive than any threshold, so this only has to
+  // separate a voice from room noise, not decide whether a word is intelligible.
+  // Tuned so a quiet voice in a mildly noisy room still passes: too strict here
+  // is what makes the mic claim "no words" while someone is clearly speaking.
+  const SPEECH_NOISE_MULT = 1.5;        // speech is this far above the room
+  const SPEECH_NOISE_MARGIN = 3;        // ...and at least this much above it
+  const SPEECH_ABS_FLOOR = 5;           // never amplify pure digital silence
+  const FLOOR_RISE_PER_SAMPLE = 0.4;    // floor drops at once, creeps up slowly
+
+  // The room floor is tracked continuously while the mic is live but idle, so it
+  // is already known before the student starts talking. Measuring it from the
+  // first moments of a recording meant that talking immediately made the floor
+  // equal the voice, which pushed the threshold out of reach and reported
+  // "no words detected" to someone who was plainly speaking.
+  function sampleFloor() {
+    // Never learn the room from a recording: that is the student talking, and it
+    // would drag the reference up until the speech test could never be passed.
+    if (isListening || isTranscribing) return 0;
+    const v = getVolume();
+    if (!isFinite(roomFloor)) { roomFloor = v; return v; }
+    if (v < roomFloor) roomFloor = v;
+    else roomFloor = Math.min(v, roomFloor + FLOOR_RISE_PER_SAMPLE);
+    return v;
+  }
+  function startFloorMeter() {
+    if (floorTimer) return;
+    sampleFloor();
+    floorTimer = setInterval(sampleFloor, FLOOR_POLL_MS);
+  }
+  function stopFloorMeter() {
+    if (floorTimer) { clearInterval(floorTimer); floorTimer = null; }
+  }
+
+  function sampleLevel() {
+    const v = getVolume();
+    if (v > capturePeak) capturePeak = v;
+    // Ten samples per tick, so this is the reliable "you are talking" signal.
+    if (v > VAD_SPEECH_THRESHOLD) lastSpeechTime = Date.now();
+    return v;
+  }
+  function startLevelMeter() {
+    stopLevelMeter();
+    capturePeak = 0;
+    levelTimer = setInterval(sampleLevel, LEVEL_POLL_MS);
+  }
+  function stopLevelMeter() {
+    if (levelTimer) { clearInterval(levelTimer); levelTimer = null; }
+  }
+  function speechThresholdNow() {
+    if (!isFinite(roomFloor)) return SPEECH_ABS_FLOOR;
+    return Math.max(roomFloor * SPEECH_NOISE_MULT, roomFloor + SPEECH_NOISE_MARGIN, SPEECH_ABS_FLOOR);
+  }
+  // True when this capture contained something that could plausibly be a voice.
+  function hasRealSpeech() {
+    return capturePeak >= speechThresholdNow();
+  }
   // Tuning — don't clip word edges (clipping = misheard words)
-  const VAD_SILENCE_MS = 850;            // stop 0.85s after you finish
+  // How long the mic stays open after you stop talking. This has to cover a
+  // natural pause *inside* a sentence: at 850ms, "what is ... what is
+  // Anteemonee" was cut off after "what is", because the half-second pause
+  // looked like the end of the turn. Two seconds is comfortable for thinking
+  // pauses while still feeling responsive, and VAD_MAX_RECORD_MS caps the worst
+  // case so the mic can never be left open indefinitely.
+  const VAD_SILENCE_MS = 2000;           // stop 2s after you finish
   const VAD_SPEECH_THRESHOLD = 12;
   const VAD_BARGE_THRESHOLD = 17;        // a normal word should still cut through
-  // Peak level the recording has to reach before it is worth sending to Whisper.
-  // The gate above only proves *something* was audible; a breath, a keyboard or
-  // a passing bus is enough to trip it, and Whisper will happily invent a
-  // sentence for it. Requiring a real peak is what stops silence from turning
-  // into a chat message.
-  const VAD_REAL_SPEECH_PEAK = 20;      // ~18 is normal speaking voice per getVolume's gain
   // How long the level must stay above the gate before it counts. This used to
   // be a frame count, which made sensitivity depend on the loop cadence and left
   // the mic twitchy: one or two noisy samples could cut the AI off mid-sentence.
@@ -70,7 +134,7 @@
   let lastSttError = '';             // surfaced in the status line on failure
   // Lightweight VAD counters. Cheap to keep and the only practical way to
   // confirm the gate latency without a human in front of a real microphone.
-  const stats = { speechOnsets: 0, bargeTriggers: 0, detectLatencyMs: [] };
+  const stats = { speechOnsets: 0, bargeTriggers: 0, detectLatencyMs: [], lastStopSilenceMs: null };
   function vadStats() {
     var d = stats.detectLatencyMs;
     var sum = 0;
@@ -81,13 +145,20 @@
       lastDetectLatencyMs: d.length ? d[d.length - 1] : null,
       avgDetectLatencyMs: d.length ? Math.round(sum / d.length) : null,
       samples: d.length,
+      lastStopSilenceMs: stats.lastStopSilenceMs,
+      silenceWindowMs: VAD_SILENCE_MS,
+      capturePeak: Math.round(capturePeak * 10) / 10,
+      roomFloor: isFinite(roomFloor) ? Math.round(roomFloor * 10) / 10 : null,
+      // Two different things, so they need two names: the noise-relative bar the
+      // local meter uses, and the fixed level the 260ms gate uses.
+      adaptiveSpeechThreshold: Math.round(speechThresholdNow() * 10) / 10,
       latencyMs: VAD_LATENCY_MS,
       tickMs: VAD_TICK_MS,
-      speechThreshold: VAD_SPEECH_THRESHOLD,
+      vadGateThreshold: VAD_SPEECH_THRESHOLD,
       bargeThreshold: VAD_BARGE_THRESHOLD,
     };
   }
-  function resetVadStats() { stats.speechOnsets = 0; stats.bargeTriggers = 0; stats.detectLatencyMs = []; }
+  function resetVadStats() { stats.speechOnsets = 0; stats.bargeTriggers = 0; stats.detectLatencyMs = []; stats.lastStopSilenceMs = null; }
   let micLevel = 0;                   // smoothed 0..1 input level for the UI
   let meterRAF = null;                // level meter animation handle
 
@@ -416,10 +487,17 @@
     if (!analyser && audioCtx && mediaStream) {
       try {
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 512;
+        // 2048 samples is ~43ms at 48kHz. At 512 (~10ms) the peak meter only
+        // ever saw a sliver of each 260ms tick, which is why real speech was
+        // being reported as "no words".
+        analyser.fftSize = 2048;
         analyser.smoothingTimeConstant = 0.3;
         vadData = new Uint8Array(analyser.fftSize);
         audioCtx.createMediaStreamSource(mediaStream).connect(analyser);
+        // Learn the room's level as soon as the mic is live, so the speech test
+        // has a reference before anyone starts talking.
+        roomFloor = Infinity;
+        startFloorMeter();
       } catch (e) { console.warn('[voice] analyser unavailable', e); }
     }
     setupLevelMeter();
@@ -475,7 +553,6 @@
       if (!isOverlayOpen || !conversationActive) { stopVADLoop(); return; }
 
       const vol = getVolume();
-      if (isListening) { if (vol > capturePeak) capturePeak = vol; }
 
       // --- Barge-in: AI is speaking, user starts talking → interrupt TTS ---
       if (voicePhase === 'ai-speaking' && !isPaused) {
@@ -526,12 +603,24 @@
         // Stop on silence once something has been heard, otherwise on a timer.
         // `heardSomething` also counts real audio arriving, so a deaf meter
         // cannot keep the recorder open forever.
-        if (hasSpeechSinceStart || elapsed > 1500 && vol > VAD_SPEECH_THRESHOLD * 0.55) {
+        // hasRealSpeech() comes from the 25ms meter, which sees far more of the
+        // audio than this tick, so a turn is never held open by a missed sample
+        // and never cut short by one either.
+        if (hasSpeechSinceStart || hasRealSpeech() || elapsed > 1500 && vol > VAD_SPEECH_THRESHOLD * 0.55) {
           const silence = now - lastSpeechTime;
-          if (silence > VAD_SILENCE_MS) stopWhisperCapture();
+          if (silence > VAD_SILENCE_MS) {
+            // Recorded so the effective pause can be checked rather than guessed.
+            stats.lastStopSilenceMs = Math.round(silence);
+            stopWhisperCapture();
+          }
         }
-        // Hard stop so a silent room can never hold the mic open.
-        if (elapsed > VAD_NO_SPEECH_TIMEOUT_MS && !hasSpeechSinceStart) stopWhisperCapture();
+        // Hard stop so a silent room can never hold the mic open. The 25ms local
+        // meter gets the final say: it sees far more of the audio than this
+        // 260ms tick can, so a voice the tick happened to miss still keeps the
+        // recording alive instead of being cut off as "no speech".
+        if (elapsed > VAD_NO_SPEECH_TIMEOUT_MS && !hasSpeechSinceStart && !hasRealSpeech()) {
+          stopWhisperCapture();
+        }
       }
     };
     tick();
@@ -546,6 +635,9 @@
   function teardownMic() {
     if (interimTimer) { clearInterval(interimTimer); interimTimer = null; }
     interimBusy = false;
+    stopLevelMeter();
+    stopFloorMeter();
+    roomFloor = Infinity;
     stopVADLoop();
     resetGates();
     hasSpeechSinceStart = false;
@@ -801,7 +893,7 @@
     stats.detectLatencyMs = [];
     lastSpeechTime = Date.now();
     recordingStartTime = Date.now();
-    capturePeak = 0;
+    startLevelMeter();
     resetBargeGate();
 
     console.log('[voice] starting capture, mime:', whisperMime, 'stream tracks:', mediaStream.getTracks().map(t => t.kind + ':' + t.enabled).join(', '));
@@ -841,7 +933,7 @@
         // This is the path that painted phantom bubbles: a breath or a passing
         // bus was enough to trip the gate, and Whisper answered it with a
         // sentence that was then shown as if the student had said it.
-        if (capturePeak < VAD_REAL_SPEECH_PEAK) return;
+        if (!hasRealSpeech()) return;
         const snapBlob = new Blob(audioChunks.slice(), { type: whisperMime || 'audio/webm' });
         if (snapBlob.size < 5000) return;
         interimBusy = true;
@@ -864,6 +956,7 @@
     mediaRecorder.onstop = async () => {
       if (interimTimer) { clearInterval(interimTimer); interimTimer = null; }
       interimBusy = false;
+      stopLevelMeter();
       isListening = false; updateMicUI();
       // If conversation was paused or closed while recording, discard
       if (!isOverlayOpen || !conversationActive || isPaused) {
@@ -891,11 +984,15 @@
         }
         return;
       }
-      console.log('[voice] capture peak level:', capturePeak.toFixed(1), '(needs', VAD_REAL_SPEECH_PEAK + ')');
-      // The gate above only proves something was audible. If the recording never
-      // reached a real speaking level it is a breath or a noise burst, and
-      // Whisper would answer it with an invented sentence.
-      if (capturePeak < VAD_REAL_SPEECH_PEAK) {
+      stopLevelMeter();
+      console.log('[voice] capture peak:', capturePeak.toFixed(1),
+        'room floor:', isFinite(roomFloor) ? roomFloor.toFixed(1) : 'n/a',
+        'needed:', speechThresholdNow().toFixed(1));
+      // Decided locally, with no network call. The gate above only proves
+      // something was audible; if it never cleared the room's own noise floor by
+      // a margin it was a breath or a noise burst, and Whisper would answer it
+      // with an invented sentence.
+      if (!hasRealSpeech()) {
         console.log('[voice] skipped whisper, peak too low to be speech');
         isTranscribing = false;
         voicePhase = 'idle';
