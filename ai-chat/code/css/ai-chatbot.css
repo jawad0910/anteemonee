@@ -205,12 +205,16 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
    horizontal scrollbar. */
 .history-item { align-items: flex-start; }
 .history-item-text {
+  display: block;
   flex: 1 1 auto;
   min-width: 0;          /* lets the column shrink inside the flex row */
   overflow: hidden;      /* nothing may paint outside the rounded row */
 }
 .history-item .history-title, .history-item .history-pin-mark { margin-top: 1px; }
-.history-item .history-title { flex: none; }   /* it is a block, not a flex item */
+/* The title is a <span>. As a flex item it used to be blockified for us; nested
+   inside the wrapper it falls back to inline, where overflow and
+   text-overflow are ignored and a long title spills instead of ellipsising. */
+.history-item .history-title { display: block; flex: none; }
 /* The action buttons keep their size so they are never the thing that clips. */
 .history-item .history-edit-btn,
 .history-item .history-delete-btn,
@@ -1540,6 +1544,160 @@ body.guest .sidebar-history:empty::before { content: none; }
   0% { opacity: 0.8; transform: scale(0.55); }
   100% { opacity: 0; transform: scale(1.3); }
 }
+/* ---------- Edit branches ---------- */
+.branch-bar {
+  display: flex; align-items: center; gap: 9px;
+  max-width: 860px; width: 100%;
+  margin: 0 auto 9px;
+  padding: 7px 8px 7px 12px;
+  font-size: 12.5px; line-height: 1.35;
+  color: var(--text-secondary);
+  background: var(--surface-raised, var(--neo-surface));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: editBannerIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.branch-bar[hidden] { display: none; }
+.branch-bar-icon { flex: none; opacity: 0.75; }
+.branch-bar-text { flex: 1 1 auto; min-width: 0; }
+.branch-bar-btn {
+  flex: none;
+  padding: 5px 12px;
+  font: inherit; font-weight: 500;
+  font-family: var(--font-ui, inherit);
+  color: var(--text-primary, var(--text));
+  background: var(--neo-highlight);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+}
+.branch-bar-btn:hover { background: var(--neo-surface); border-color: var(--text-tertiary, var(--border)); }
+.branch-bar-btn:active { transform: scale(0.96); }
+
+.branch-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: branchFade 0.18s ease;
+}
+.branch-panel {
+  width: 100%; max-width: 520px;
+  max-height: 82vh; overflow-y: auto;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  animation: editBannerIn 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.branch-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.branch-panel-head h3 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.branch-panel-close {
+  flex: none;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; line-height: 1;
+  color: var(--text-secondary);
+  background: transparent; border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.branch-panel-close:hover { background: var(--neo-highlight); color: var(--text-primary, var(--text)); }
+.branch-panel-note { margin: 8px 0 16px; font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); }
+.branch-list { display: flex; flex-direction: column; gap: 10px; }
+.branch-item {
+  padding: 13px 14px;
+  background: var(--surface-recessed, var(--neo-surface));
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+.branch-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.branch-item-title { font-size: 13px; font-weight: 600; }
+.branch-item-meta { flex: none; font-size: 11.5px; color: var(--text-tertiary, var(--text-secondary)); }
+.branch-item-body {
+  font-size: 12.5px; line-height: 1.5; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.branch-restore {
+  margin-top: 11px;
+  padding: 7px 13px;
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  font-family: var(--font-ui, inherit);
+  color: var(--on-accent, var(--text));
+  background: var(--accent);
+  border: none; border-radius: 9px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+.branch-restore:hover { opacity: 0.88; }
+.branch-restore:active { transform: scale(0.97); }
+@keyframes branchFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- User message actions (edit / copy / listen) ---------- */
+.msg-user-actions {
+  display: flex; align-items: center; gap: 2px;
+  margin-top: 7px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.message:hover .msg-user-actions,
+.message:focus-within .msg-user-actions { opacity: 1; }
+/* Icon-only, so it keeps the shared .fb-btn square footprint. */
+.msg-edit-btn { flex: none; }
+
+.edit-banner {
+  display: flex; align-items: center; gap: 9px;
+  max-width: 860px; width: 100%;
+  margin: 0 auto 9px;
+  padding: 8px 10px 8px 12px;
+  font-size: 12.5px; line-height: 1.35;
+  color: var(--text-secondary);
+  background: var(--surface-raised, var(--neo-surface));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 0 var(--neo-light-inset, transparent);
+  animation: editBannerIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.edit-banner[hidden] { display: none; }
+.edit-banner-icon { flex: none; color: var(--text-primary, var(--text)); opacity: 0.75; }
+.edit-banner-text { flex: 1 1 auto; min-width: 0; }
+.edit-banner-cancel {
+  flex: none;
+  padding: 5px 11px;
+  font: inherit; font-weight: 500;
+  font-family: var(--font-ui, inherit);
+  color: var(--text-primary, var(--text));
+  background: var(--neo-highlight);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+}
+.edit-banner-cancel:hover { background: var(--neo-surface); border-color: var(--text-tertiary, var(--border)); }
+.edit-banner-cancel:active { transform: scale(0.96); }
+@keyframes editBannerIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .msg-user-actions { opacity: 1; }
+  .msg-user-actions .fb-btn { width: 30px; height: 30px; }
+  .edit-banner { font-size: 12px; padding: 8px 9px; border-radius: 11px; }
+  .branch-bar { font-size: 12px; padding: 7px 7px 7px 10px; border-radius: 11px; }
+  .branch-panel { padding: 16px; border-radius: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edit-banner { animation: none; }
+  .branch-bar, .branch-panel, .branch-overlay { animation: none; }
+  .msg-user-actions { transition: none; }
+}
+
 .msg-feedback.fading { opacity: 0 !important; transform: translateY(5px); transition: opacity 0.3s ease, transform 0.3s ease; }
 
 /* ---------- Report popup ---------- */

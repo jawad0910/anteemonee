@@ -2296,6 +2296,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     autoResize();
     btnSend.disabled = true;
     renderHistory();
+    renderBranchBar();
   }
 
   function saveConversation() {
@@ -2363,12 +2364,286 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     }
   }
 
+  // Rebuild the whole message list from `messages`, keeping data-idx in step.
+  // One code path for load/edit so the DOM can never drift from the array.
+  function renderMessagesFrom() {
+    messagesList.innerHTML = '';
+    if (messages.length) {
+      welcome.style.display = 'none';
+      messagesList.style.display = 'flex';
+      messages.forEach((m, i) => appendMessage(m.role, m.content, false, {
+        idx: i, quote: m.quote || null, images: m.images || null,
+        quiz: m.quiz || null, generatedImage: m.generatedImage || null,
+      }));
+    } else {
+      messagesList.style.display = 'none';
+      welcome.style.display = 'flex';
+    }
+  }
+
+  // ---------- Edit branches ----------
+  // Editing rewrites history, so the messages after the edited turn have to go
+  // somewhere. They are archived as a branch instead of being destroyed, and
+  // kept in their own localStorage map so a DB sync (which replaces conv.messages)
+  // can never clobber them.
+  function branchStorageKey() {
+    var base = currentUserId() ? currentUserId() : 'anon';
+    return 'Anteemonee_ai_branches_' + base + '_' + subjectSlug(selectedSubject);
+  }
+  function readBranchMap() {
+    try {
+      var raw = localStorage.getItem(branchStorageKey());
+      var m = JSON.parse(raw || '{}');
+      return (m && typeof m === 'object') ? m : {};
+    } catch (_) { return {}; }
+  }
+  function writeBranchMap(map) {
+    try { localStorage.setItem(branchStorageKey(), JSON.stringify(map || {})); } catch (_) {}
+  }
+  function getBranches(convId) {
+    if (!convId) return [];
+    var list = readBranchMap()[convId];
+    return Array.isArray(list) ? list : [];
+  }
+  function addBranch(convId, at, snapshot) {
+    if (!convId || !Array.isArray(snapshot) || !snapshot.length) return null;
+    var map = readBranchMap();
+    var list = Array.isArray(map[convId]) ? map[convId] : [];
+    var branch = {
+      id: 'br_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36),
+      at: at,
+      createdAt: Date.now(),
+      messages: snapshot,
+    };
+    list.push(branch);
+    while (list.length > 5) list.shift();          // keep storage bounded
+    map[convId] = list;
+    writeBranchMap(map);
+    return branch;
+  }
+  function removeBranch(convId, branchId) {
+    var map = readBranchMap();
+    var list = Array.isArray(map[convId]) ? map[convId] : [];
+    map[convId] = list.filter(function (b) { return b && b.id !== branchId; });
+    if (!map[convId].length) delete map[convId];
+    writeBranchMap(map);
+  }
+
+  function branchBar() {
+    var area = document.querySelector('.chat-input-area');
+    if (!area) return null;
+    var el = area.querySelector('#branch-bar');
+    if (el) return el;
+    el = document.createElement('div');
+    el.className = 'branch-bar';
+    el.id = 'branch-bar';
+    el.hidden = true;
+    var wrapper = area.querySelector('.chat-input-wrapper');
+    if (wrapper && wrapper.parentNode) area.insertBefore(el, wrapper); else area.appendChild(el);
+    return el;
+  }
+
+  function renderBranchBar() {
+    var el = branchBar();
+    if (!el) return;
+    var list = getBranches(activeConversationId);
+    if (!list.length) { el.hidden = true; el.innerHTML = ''; return; }
+    var n = list.length;
+    el.hidden = false;
+    el.innerHTML = BRANCH_ICON
+      + '<span class="branch-bar-text">' + (n === 1 ? '1 earlier version' : n + ' earlier versions') + ' of this chat</span>'
+      + '<button class="branch-bar-btn" type="button">View</button>';
+    var btn = el.querySelector('.branch-bar-btn');
+    if (btn) btn.addEventListener('click', function () { openBranchPanel(); });
+  }
+
+  function openBranchPanel() {
+    closeBranchPanel();
+    var list = getBranches(activeConversationId);
+    if (!list.length) return;
+    var rows = list.map(function (b, i) {
+      var first = '';
+      for (var m = 0; m < b.messages.length; m++) {
+        if (b.messages[m] && b.messages[m].role === 'user') { first = String(b.messages[m].content || '').slice(0, 90); break; }
+      }
+      var turns = b.messages.filter(function (m) { return m && m.role === 'user'; }).length;
+      return '<div class="branch-item" data-branch="' + escapeHtml(b.id) + '">'
+        + '<div class="branch-item-head"><span class="branch-item-title">Version ' + (list.length - i) + '</span>'
+        + '<span class="branch-item-meta">' + turns + ' message' + (turns === 1 ? '' : 's') + '</span></div>'
+        + '<div class="branch-item-body">' + escapeHtml(first) + (first.length >= 90 ? '\u2026' : '') + '</div>'
+        + '<button class="branch-restore" type="button">Restore this version</button>'
+        + '</div>';
+    }).join('');
+
+    var ov = document.createElement('div');
+    ov.className = 'branch-overlay';
+    ov.id = 'branch-overlay';
+    ov.innerHTML = '<div class="branch-panel" role="dialog" aria-modal="true" aria-label="Earlier versions">'
+      + '<div class="branch-panel-head"><h3>Earlier versions</h3>'
+      + '<button class="branch-panel-close" type="button" aria-label="Close">\u00d7</button></div>'
+      + '<p class="branch-panel-note">These are the messages that came after the one you edited. Restoring replaces the current chat.</p>'
+      + '<div class="branch-list">' + rows + '</div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeBranchPanel(); });
+    ov.querySelector('.branch-panel-close').addEventListener('click', closeBranchPanel);
+    ov.querySelectorAll('.branch-restore').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var item = btn.closest('.branch-item');
+        if (item) restoreBranch(item.getAttribute('data-branch'));
+      });
+    });
+  }
+
+  function closeBranchPanel() {
+    var ov = document.getElementById('branch-overlay');
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  }
+
+  function restoreBranch(branchId) {
+    var list = getBranches(activeConversationId);
+    var branch = list.find(function (b) { return b && b.id === branchId; });
+    if (!branch) return;
+    messages = branch.messages.map(function (m) { return Object.assign({}, m); });
+    removeBranch(activeConversationId, branchId);
+    renderMessagesFrom();
+    scrollToBottom();
+    saveConversation();
+    renderHistory();
+    renderBranchBar();
+    closeBranchPanel();
+    try { showChatToast('Earlier version restored'); } catch (_) {}
+  }
+
+  // ---------- Edit & resend ----------
+  // Editing a message rewrites history: everything from that message onward is
+  // dropped and the new text is sent as a fresh turn. `backup` is only kept so
+  // Cancel can restore the branch that was removed.
+  function editBanner() {
+    var area = document.querySelector('.chat-input-area');
+    if (!area) return null;
+    var el = area.querySelector('#edit-banner');
+    if (el) return el;
+    el = document.createElement('div');
+    el.className = 'edit-banner';
+    el.id = 'edit-banner';
+    el.setAttribute('role', 'status');
+    el.innerHTML = EDIT_BANNER_SVG
+      + '<span class="edit-banner-text">Editing your message \u2014 resending replaces everything after it.</span>'
+      + '<button class="edit-banner-cancel" type="button" aria-label="Cancel editing">Cancel</button>';
+    var wrapper = area.querySelector('.chat-input-wrapper');
+    if (wrapper && wrapper.parentNode) area.insertBefore(el, wrapper); else area.appendChild(el);
+    el.querySelector('.edit-banner-cancel').addEventListener('click', function () { cancelEditMessage(); });
+    return el;
+  }
+
+  function showEditBanner() {
+    var el = editBanner();
+    if (el) el.hidden = false;
+  }
+
+  function hideEditBanner() {
+    var area = document.querySelector('.chat-input-area');
+    var el = area && area.querySelector('#edit-banner');
+    if (el) el.hidden = true;
+  }
+
+  // Actions for the user's own bubble: edit+resend and copy.
+  // Icon-only, revealed on hover (always visible on touch). Reuses the .fb-copy
+  // class so copying shares the assistant row's check-mark behaviour.
+  function attachUserActions(div) {
+    try {
+      if (!div || div.querySelector('.msg-user-actions')) return;
+      var body = div.querySelector('.msg-body');
+      if (!body) return;
+      var rawIdx = div.dataset ? div.dataset.idx : undefined;
+      if (rawIdx === undefined || rawIdx === null || rawIdx === '') return;
+      var idx = parseInt(rawIdx, 10);
+      var row = document.createElement('div');
+      row.className = 'msg-user-actions';
+      row.innerHTML =
+        '<button class="fb-btn msg-edit-btn" type="button" title="Edit and resend" aria-label="Edit message">' + EDIT_PEN_SVG + '</button>' +
+        '<button class="fb-btn fb-copy" type="button" title="Copy message" aria-label="Copy">' + FB_COPY_SVG + '</button>';
+      body.appendChild(row);
+
+      row.querySelector('.msg-edit-btn').addEventListener('click', function () {
+        startEditMessage(idx);
+      });
+      // onCopyMessage reads messages[idx] and swaps in the check mark on .fb-copy.
+      row.querySelector('.fb-copy').addEventListener('click', function () {
+        onCopyMessage(row, idx);
+      });
+    } catch (_) {}
+  }
+
+  function startEditMessage(idx) {
+    if (pendingEdit) return;            // already mid-edit; banner owns the composer
+    if (isStreaming) return;            // never rewrite history under an open stream
+    var target = messages[idx];
+    if (!target || target.role !== 'user') return;
+    var original = typeof target.content === 'string' ? target.content : '';
+
+    pendingEdit = {
+      idx: idx,
+      text: original,
+      backup: messages.slice(),
+      hadImages: Array.isArray(target.images) && target.images.length > 0,
+    };
+
+    // Quote refers to the turn being replaced, so it goes with it.
+    pendingQuote = null;
+    try { renderQuoteChip(); } catch (_) {}
+
+    messages = messages.slice(0, idx);  // drop this message + every AI reply after it
+    renderMessagesFrom();
+    scrollToBottom();
+
+    chatInput.value = original;
+    autoResize();
+    // Mirror the composer state: a disabled composer must not get a live send button.
+    btnSend.disabled = chatInput.disabled || (!chatInput.value.trim() && pendingImages.length === 0);
+    showEditBanner();
+    chatInput.focus();
+    try { chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length); } catch (_) {}
+  }
+
+  // Called when the edited turn is resent. The truncation stays (the model needs
+  // a coherent context) but the discarded tail is archived as a restorable branch,
+  // so an edit never destroys earlier work.
+  function commitEditMessage() {
+    // Only worth archiving if something came *after* the edited turn. The
+    // message at idx is replaced (already in the composer), so it is not a loss.
+    if (pendingEdit && Array.isArray(pendingEdit.backup) && pendingEdit.backup.length > pendingEdit.idx + 1) {
+      addBranch(activeConversationId, pendingEdit.idx, pendingEdit.backup);
+    }
+    pendingEdit = null;
+    hideEditBanner();
+    renderBranchBar();
+  }
+
+  // Silent=true is used when switching conversations: never touch the composer then.
+  function cancelEditMessage(silent) {
+    if (pendingEdit) {
+      messages = pendingEdit.backup;    // restore the branch we cut
+      renderMessagesFrom();
+      scrollToBottom();
+    }
+    pendingEdit = null;
+    hideEditBanner();
+    if (silent) return;
+    if (chatInput.value.trim()) {
+      chatInput.value = '';
+      autoResize();
+      btnSend.disabled = true;
+    }
+  }
+
   function loadConversation(id) {
     const conv = conversations.find(c => c.id === id);
     if (!conv) return;
     revealChatView();
     activeConversationId = id;
     pendingQuizTopic = false;
+    cancelEditMessage(true);
     setChatUrlParam(conv.shareCode || conv.id);
     try { updateChatLinkBar(); } catch (_) {}
     messages = conv.messages.map(function(message) {
@@ -2377,12 +2652,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       }
       return message;
     });
-    messagesList.innerHTML = '';
-    welcome.style.display = 'none';
-    messagesList.style.display = 'flex';
-    messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, quiz: m.quiz || null, generatedImage: m.generatedImage || null }));
+    renderMessagesFrom();
     scrollToBottom();
     renderHistory();
+    renderBranchBar();
     closeMobileSidebar();
   }
 
@@ -2630,6 +2903,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         <div class="msg-avatar user-avatar">${avatarHtml}</div>
         <div class="msg-body">${quoteHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
+      attachUserActions(div);
     }
     if (role === 'assistant') {
       try { handleFileBlocks(div, content); } catch (_) {}
@@ -2719,6 +2993,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     updatePersonaUI();
   }
 
+  var BRANCH_ICON = '<svg class="branch-bar-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4a8.8 8.8 0 0 1 0 16"/><path d="M3.5 9a9 9 0 0 0 0 6"/></svg>';
+  var EDIT_PEN_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokecap="round" strokelinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var EDIT_BANNER_SVG = '<svg class="edit-banner-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokecap="round" strokelinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   var FB_LIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
   var FB_DISLIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>';
   var FB_COPY_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -4034,6 +4311,8 @@ function handleFileBlocks(div, text) {
 
   // â”€â”€ Text Selection: Reply + Flashcard â”€â”€
   let pendingQuote = null; // { role: 'assistant'|'user', text }
+  // Edit-and-resend. `backup` keeps the discarded tail so Cancel can undo.
+  let pendingEdit = null; // { idx, text, backup, hadImages }
   let pendingSel = null;
   let selToolbar = null;
 
@@ -4995,6 +5274,7 @@ function handleFileBlocks(div, text) {
       messagesList.style.display = 'flex';
     }
 
+    commitEditMessage();
     appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null });
     messages.push(quote ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null } : { role: 'user', content: text, images: hasImages ? imagesToSend : null });
     bumpCounters(['total_messages', 'user_messages']);
