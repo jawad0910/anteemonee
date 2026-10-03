@@ -432,6 +432,9 @@
   function bindCallButtons() {
     const { muteBtn, speakerBtn, endBtn } = els();
     const closeBtn = document.getElementById('voice-close');
+    // voice-chat.js owns the overlay when present; binding here as well left
+    // stale state behind after closing.
+    if (window.AnteemoneeVoice) return;
     if (muteBtn && !muteBtn.dataset.bound) { muteBtn.dataset.bound = '1'; muteBtn.addEventListener('click', toggleMute); }
     if (speakerBtn && !speakerBtn.dataset.bound) { speakerBtn.dataset.bound = '1'; speakerBtn.addEventListener('click', toggleSpeaker); }
     if (endBtn && !endBtn.dataset.rtBound) { endBtn.dataset.rtBound = '1'; endBtn.addEventListener('click', endRealtimeCall); }

@@ -9,6 +9,12 @@
   const api = new AiApiService();
   let conversations = [];
   let activeConversationId = null;
+
+  // Chat store lifecycle. The composer must never wait on this: the history
+  // list shows a loading state, and anything the user writes in the meantime
+  // is written to localStorage immediately and uploaded once the store lands.
+  let chatStoreReady = false;
+  const pendingDbUploads = new Set();
   let messages = [];
   let isStreaming = false;
   let studentContext = null;
@@ -99,11 +105,6 @@
     if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_session_' + currentUser.id;
     return 'Anteemonee_ai_session_anon';
   }
-  function versionStorageKey() {
-    if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_version_' + currentUser.id;
-    return 'Anteemonee_ai_version_anon';
-  }
-
   // ── Chat store: premium → Supabase DB (all devices), free/guest → localStorage only ──
   let isPremiumTier = false;
 
@@ -327,9 +328,34 @@
     try { await db.from('chat_conversations').delete().eq('id', id); } catch (_) {}
   }
 
+  // Upload whatever was written while the store was still loading. Runs once,
+  // after the DB rows have been merged in, so nothing created during the wait
+  // is lost.
+  async function flushPendingDbUploads(extraIds) {
+    try {
+      if (extraIds && extraIds.length) extraIds.forEach(function (id) { pendingDbUploads.add(id); });
+      if (!pendingDbUploads.size) return;
+      if (!(isPremiumTier && currentUserId())) { pendingDbUploads.clear(); return; }
+      var ids = Array.from(pendingDbUploads);
+      pendingDbUploads.clear();
+      for (const id of ids) {
+        const conv = conversations.find(function (c) { return c.id === id; });
+        if (conv) await saveConversationToDb(conv);
+      }
+    } catch (e) { console.warn('[AI] pending upload failed:', e); }
+  }
+
   // Route a persistence write to DB (premium) or localStorage (free/guest).
   function persistConversation(convId) {
     try { if (window.__voiceEphemeral) return; } catch (_) {} // call chats: never saved
+    if (!chatStoreReady) {
+      // The store is still loading: save locally right now (instant, offline
+      // safe) and queue this chat for upload once it finishes.
+      writeLocalConversations();
+      var pendingId = convId || activeConversationId;
+      if (pendingId) pendingDbUploads.add(pendingId);
+      return;
+    }
     if (isPremiumTier && currentUserId()) {
       const conv = conversations.find(c => c.id === (convId || activeConversationId));
       if (conv) saveConversationToDb(conv).catch(() => {});
@@ -389,8 +415,37 @@
     } catch (_) {}
   }
 
+  // Chats written while the store was loading live in localStorage only. Fold
+  // them into the freshly loaded rows (local wins when it is newer) and report
+  // which ids still need uploading.
+  function mergeLocalChats(rows, queued) {
+    var ids = {};
+    rows.forEach(function (r) { ids[r.id] = 1; });
+    var local = readLocalConversations();
+    local.forEach(function (c) { if (!c.subject) c.subject = selectedSubject; });
+    local.forEach(function (c) {
+      if (!ids[c.id]) {
+        // Never uploaded: keep it and queue the upload.
+        if ((c.subject || selectedSubject) === selectedSubject) { rows.push(c); ids[c.id] = 1; queued.push(c.id); }
+        return;
+      }
+      // Present in the DB already: local may hold newer messages.
+      var row = rows.find(function (r) { return r.id === c.id; });
+      if (row && c.messages && c.messages.length > ((row.messages && row.messages.length) || 0)) {
+        row.messages = c.messages;
+        row.updatedAt = c.updatedAt;
+        queued.push(c.id);
+      }
+    });
+    return rows;
+  }
+
   async function initConversationStore() {
     const uid = currentUserId();
+    // Show the loading state in the history lists straight away.
+    chatStoreReady = false;
+    try { renderHistory(); } catch (_) {}
+    var queued = [];
     if (isPremiumTier && uid) {
       try {
         await pruneDbConversations(uid);
@@ -409,14 +464,8 @@
           for (const c of conversations) { c.subject = c.subject || selectedSubject; await saveConversationToDb(c); }
           // keep local per-subject key, do not remove — it is the free-tier store
         } else {
+          mergeLocalChats(filtered, queued);
           conversations = filtered.slice(0, 50);
-          // Merge any local-only chats for this subject not yet in DB
-          var ids = {};
-          conversations.forEach(function(c){ ids[c.id]=1; });
-          local.forEach(function(c){
-            if (!ids[c.id] && (c.subject||selectedSubject)===selectedSubject) conversations.push(c);
-          });
-          conversations = conversations.slice(0, 50);
         }
       } catch (_) {
         conversations = readLocalConversations();
@@ -444,6 +493,16 @@
     try { applyPinnedState(); } catch (_) {}
     // Free-tier path: drop chats older than 10 days on every load.
     if (!(isPremiumTier && uid)) pruneLocalConversations();
+    // Chats written during the wait are in localStorage; fold them in.
+    try {
+      var late = [];
+      mergeLocalChats(conversations, late);
+      conversations = conversations.slice(0, 50);
+      queued = queued.concat(late);
+    } catch (_) {}
+    chatStoreReady = true;
+    try { renderHistory(); } catch (_) {}
+    flushPendingDbUploads(queued);
   }
 
   // â”€â”€ Persist session state to localStorage (no tokens â€” always from DB) â”€â”€
@@ -540,136 +599,6 @@
   ];
   let activePersonaIndex = 0;
 
-  // ── Version State ──
-  // 'final' = the shipping pipeline (unchanged behaviour)
-  // 'redox' = the experimental pipeline
-  let aiVersion = 'final';
-  function isRedox() { return aiVersion === 'redox'; }
-
-  function loadAiVersion() {
-    try {
-      var v = localStorage.getItem(versionStorageKey());
-      if (v === 'redox') aiVersion = 'redox';
-      // 'beta' was the old save value. The shipping option is now called Final.
-      else aiVersion = 'final';
-    } catch (_) {}
-  }
-  function saveAiVersion(v) {
-    aiVersion = (v === 'redox') ? 'redox' : 'final';
-    try { localStorage.setItem(versionStorageKey(), aiVersion); } catch (_) {}
-  }
-  function moveVerThumb() {
-    var seg = document.getElementById('ver-seg');
-    var thumb = document.getElementById('ver-seg-thumb');
-    var active = seg?.querySelector('.ver-seg-btn.active');
-    if (!seg || !thumb || !active) return;
-    thumb.style.width = active.offsetWidth + 'px';
-    thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
-  }
-  function setAiVersion(v, persist) {
-    var ver = (v === 'redox') ? 'redox' : 'final';
-    var seg = document.getElementById('ver-seg');
-    if (seg) {
-      seg.querySelectorAll('.ver-seg-btn').forEach(function (b) {
-        var on = b.getAttribute('data-ver') === ver;
-        b.classList.toggle('active', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
-    }
-    if (persist) saveAiVersion(ver);
-    moveVerThumb();
-    syncVersionChoices(ver);
-    // Redox is a different pipeline, so the current answer no longer describes
-    // it. Drop any stale in-flight stream rather than mixing the two.
-    try {
-      if (typeof api !== 'undefined' && api && api._currentAbort) {
-        api._currentAbort.abort();
-        api._currentAbort = null;
-      }
-    } catch (_) {}
-  }
-
-  // Keep the dialog's choice cards in step with the active version.
-  function syncVersionChoices(ver) {
-    var v = ver || aiVersion;
-    try {
-      document.querySelectorAll('.ver-choice').forEach(function (c) {
-        var on = c.getAttribute('data-ver') === v;
-        c.classList.toggle('is-active', on);
-        c.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
-    } catch (_) {}
-  }
-
-  function bindVersionSelector() {
-    var seg = document.getElementById('ver-seg');
-    if (!seg || seg.dataset.bound === '1') return;
-    seg.dataset.bound = '1';
-    seg.addEventListener('click', function (e) {
-      var b = e.target.closest && e.target.closest('.ver-seg-btn');
-      if (!b || !seg.contains(b)) return;
-      var next = b.getAttribute('data-ver');
-      if (next === aiVersion) return;
-      setAiVersion(next, true);
-      // toast() is defined by the page's inline script, so guard the call
-      // rather than letting a ReferenceError break the switch.
-      try {
-        if (typeof toast === 'function') toast('Switched to ' + (next === 'redox' ? 'Redox' : 'Final') + ' version.');
-      } catch (_) {}
-    });
-    window.addEventListener('resize', moveVerThumb);
-    moveVerThumb();
-    // Info button opens the Final/Redox explainer.
-    var infoBtn = document.getElementById('ver-info');
-    var infoOv = document.getElementById('ver-info-ov');
-    var infoX = document.getElementById('ver-info-x');
-    if (infoBtn && infoOv && infoOv.dataset.bound !== '1') {
-      infoOv.dataset.bound = '1';
-      var lastFocus = null;
-      var closeInfo = function () {
-        infoOv.hidden = true;
-        try { if (lastFocus && lastFocus.focus) lastFocus.focus(); } catch (_) {}
-      };
-      infoBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        try { lastFocus = document.activeElement; } catch (_) {}
-        syncVersionChoices(aiVersion);
-        infoOv.hidden = false;
-        try { if (infoX) infoX.focus(); } catch (_) {}
-      });
-      if (infoX) infoX.addEventListener('click', closeInfo);
-      infoOv.addEventListener('mousedown', function (e) { if (e.target === infoOv) closeInfo(); });
-      // Choosing a card inside the dialog switches version and closes it.
-      infoOv.addEventListener('click', function (e) {
-        var choice = e.target.closest && e.target.closest('.ver-choice');
-        if (!choice || !infoOv.contains(choice)) return;
-        var next = choice.getAttribute('data-ver');
-        if (next && next !== aiVersion) {
-          setAiVersion(next, true);
-          try {
-            if (typeof toast === 'function') toast('Switched to ' + (next === 'redox' ? 'Redox' : 'Final') + ' version.');
-          } catch (_) {}
-        }
-        closeInfo();
-      });
-      document.addEventListener('keydown', function (e) {
-        if ((e.key === 'Escape' || e.keyCode === 27) && infoOv && !infoOv.hidden) closeInfo();
-      });
-    }
-  }
-
-  // Redox reorders the provider pool so the experimental engines are tried
-  // before the shipping ones. Same failover contract as before: if a
-  // provider dies, streamChat still walks the rest of the pool.
-  function redoxProviderOrder() {
-    return [2, 0, 1];
-  }
-  function applyVersionProvider(provIdx) {
-    if (!isRedox()) return provIdx;
-    var base = (typeof provIdx === 'number' && provIdx >= 0) ? provIdx : 0;
-    return redoxProviderOrder()[base % redoxProviderOrder().length];
-  }
-
   // ── Subject State ──
   const CHAT_SUBJECTS = [
     { name: 'Physics', code: '9702', color: '#2E7D32', bg: 'rgba(46,125,50,0.15)' },
@@ -758,7 +687,7 @@
       if (nameEl) nameEl.textContent = meta.name;
       if (input) input.placeholder = 'Ask anything about ' + meta.name + '...';
       if (pill) {
-        pill.style.borderColor = meta.color + '40';
+        pill.style.setProperty('--subj-color', meta.color);
       }
       // Update welcome subtitle if needed
       var sub = document.querySelector('.welcome-subtitle');
@@ -772,10 +701,14 @@
     if (!list) return;
     list.innerHTML = CHAT_SUBJECTS.map(function(s){
       var isActive = s.name === selectedSubject;
-      return '<div class="subject-item' + (isActive ? ' active' : '') + '" data-subject="' + s.name.replace(/"/g,'&quot;') + '">' +
-        '<span class="dot" style="background:' + s.color + '"></span>' +
-        '<span>' + s.name + '</span>' +
-        '</div>';
+      var meta = getSubjectMeta(s.name);
+      return '<button type="button" class="subject-item' + (isActive ? ' active' : '') + '" role="option"' +
+        ' aria-selected="' + (isActive ? 'true' : 'false') + '"' +
+        ' data-subject="' + s.name.replace(/"/g,'&quot;') + '" style="--subj-color:' + meta.color + '">' +
+        '<span class="dot"></span>' +
+        '<span class="subject-item-name">' + s.name + '</span>' +
+        '<span class="subject-item-check" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' +
+        '</button>';
     }).join('');
     list.querySelectorAll('.subject-item').forEach(function(el){
       el.addEventListener('click', function(){
@@ -787,10 +720,7 @@
   async function selectSubject(name) {
     if (!name || name === selectedSubject) {
       // just close dropdown
-      var dd = document.getElementById('subject-dropdown');
-      var pill = document.getElementById('subject-pill');
-      if (dd) dd.classList.remove('open');
-      if (pill) { pill.classList.remove('open'); pill.setAttribute('aria-expanded','false'); }
+      closeSubjectDropdown(document.getElementById('subject-dropdown'), document.getElementById('subject-pill'));
       return;
     }
     // Save current subject's conversations before switching
@@ -799,10 +729,7 @@
     saveSelectedSubject();
     updateSubjectUI();
     renderSubjectList();
-    var dd = document.getElementById('subject-dropdown');
-    var pill = document.getElementById('subject-pill');
-    if (dd) dd.classList.remove('open');
-    if (pill) { pill.classList.remove('open'); pill.setAttribute('aria-expanded','false'); }
+    closeSubjectDropdown(document.getElementById('subject-dropdown'), document.getElementById('subject-pill'));
     // Reload conversations for new subject
     try {
       // Clear current UI
@@ -814,8 +741,9 @@
       if (welcome) welcome.style.display = 'flex';
       var mList = document.getElementById('messages-list');
       if (mList) mList.style.display = 'none';
-      // Reload from storage/DB for new subject
-      await initConversationStore();
+      // Reload from storage/DB for new subject. Background: the composer stays
+      // usable while the list reloads.
+      try { initConversationStore().catch(function (e) { console.warn('[AI] store reload failed:', e); }); } catch (_) {}
     try { ensureShareCodes(); } catch (_) {}
     // Deep link to one of the user's chats via ?chat=SHARECODE.
     // Anyone else landing here is moved to their own first chat.
@@ -841,6 +769,75 @@
       if (inp) inp.focus();
     } catch(e) { console.warn('[Subject] switch failed', e); }
   }
+  var SUBJECT_SHEET_MAX = 420;
+  function subjectDropdownIsPortalled(dd) {
+    return !!(dd && dd.parentElement && dd.parentElement !== document.getElementById('subject-pill-wrap'));
+  }
+  // Phones only: the composer uses backdrop-filter, which makes it the
+  // containing block for position:fixed children. Move the sheet to <body> so
+  // it can span the viewport instead of being clipped by the composer.
+  function portalSubjectDropdown(dd, pill) {
+    if (!dd || !pill) return;
+    var wantSheet = window.innerWidth <= SUBJECT_SHEET_MAX;
+    var isSheet = subjectDropdownIsPortalled(dd);
+    if (!wantSheet && isSheet) {
+      var wrap = document.getElementById('subject-pill-wrap');
+      if (wrap && dd.parentElement === document.body) wrap.appendChild(dd);
+      dd.removeAttribute('style');
+      return;
+    }
+    if (!wantSheet) return;
+    if (!isSheet) document.body.appendChild(dd);
+    var H = window.innerHeight || document.documentElement.clientHeight || 0;
+    var GAP = 12;
+    // Anchor on the pill's own edge when it is measurable. If it comes back
+    // unmeasured (hidden mid-toggle, zero-height layout) anchor on the top of
+    // the composer's toolbar instead, which is where the pill renders.
+    // Walk a fallback chain: the pill itself, then its wrapper, then the
+    // toolbar row. A theme flip or reflow can momentarily report a zero-size
+    // rect, and anchoring on a stale edge would drop the sheet off screen.
+    var probe = null;
+    var candidates = [pill, document.getElementById('subject-pill-wrap'), document.querySelector('.chat-input-row-left')];
+    for (var ci = 0; ci < candidates.length; ci++) {
+      if (!candidates[ci]) continue;
+      var cr = candidates[ci].getBoundingClientRect();
+      if (cr && cr.height && cr.width) { probe = cr; break; }
+    }
+    var edgeTop = probe ? probe.top : null;
+    var edgeBottom = probe ? probe.bottom : null;
+    dd.style.position = 'fixed';
+    dd.style.left = '10px';
+    dd.style.right = '10px';
+    dd.style.zIndex = '2600';
+    if (edgeTop == null) {
+      dd.style.top = '72px';
+      dd.style.bottom = '12px';
+      dd.style.maxHeight = Math.max(160, H - 84) + 'px';
+      return;
+    }
+    // Anchor the sheet right above the pill, but flip below it when there is
+    // clearly more room underneath. Whichever side wins, the sheet only gets
+    // as tall as that side allows and otherwise sizes to its content, so the
+    // six subjects stay visible without scrolling when there is space.
+    var above = Math.round(edgeTop) - GAP;
+    var below = Math.round(H - edgeBottom) - GAP;
+    var useBelow = below > above && below > 240;
+    if (useBelow) {
+      dd.style.top = (Math.round(edgeBottom) + GAP) + 'px';
+      dd.style.bottom = 'auto';
+      dd.style.maxHeight = Math.max(120, below) + 'px';
+    } else {
+      dd.style.top = 'auto';
+      // Anchoring the bottom edge keeps the sheet sitting just above the pill
+      // no matter how tall its content ends up being.
+      dd.style.bottom = (Math.round(H - edgeTop) + GAP) + 'px';
+      dd.style.maxHeight = Math.max(120, above) + 'px';
+    }
+  }
+  function closeSubjectDropdown(dd, pill) {
+    if (dd) dd.classList.remove('open');
+    if (pill) { pill.classList.remove('open'); pill.setAttribute('aria-expanded','false'); }
+  }
   function setupSubjectDropdown() {
     var pill = document.getElementById('subject-pill');
     var dd = document.getElementById('subject-dropdown');
@@ -852,29 +849,35 @@
       e.stopPropagation();
       var isOpen = dd.classList.contains('open');
       if (isOpen) {
-        dd.classList.remove('open');
-        pill.classList.remove('open');
-        pill.setAttribute('aria-expanded','false');
+        closeSubjectDropdown(dd, pill);
       } else {
+        renderSubjectList();
+        portalSubjectDropdown(dd, pill);
         dd.classList.add('open');
         pill.classList.add('open');
         pill.setAttribute('aria-expanded','true');
-        renderSubjectList();
+        // One correction pass after layout settles.
+        try {
+          requestAnimationFrame(function(){ if (dd.classList.contains('open')) portalSubjectDropdown(dd, pill); });
+        } catch (_) {}
+        // Keep it correct if the window resizes while open.
+        try {
+          window.addEventListener('resize', function onRs(){
+            if (!dd.classList.contains('open')) { window.removeEventListener('resize', onRs); return; }
+            portalSubjectDropdown(dd, pill);
+          }, { passive: true });
+        } catch (_) {}
       }
     });
     document.addEventListener('click', function(e){
-      if (!wrap.contains(e.target)) {
-        dd.classList.remove('open');
-        pill.classList.remove('open');
-        pill.setAttribute('aria-expanded','false');
+      // Once portalled the sheet is outside the wrap, so check the pill too.
+      if (!wrap.contains(e.target) && e.target !== pill && !dd.contains(e.target)) {
+        closeSubjectDropdown(dd, pill);
       }
     });
-    // Close on outside click for mobile
     document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') {
-        dd.classList.remove('open');
-        pill.classList.remove('open');
-        pill.setAttribute('aria-expanded','false');
+      if (e.key === 'Escape' || e.key === 'Tab') {
+        if (dd.classList.contains('open')) closeSubjectDropdown(dd, pill);
       }
     });
     renderSubjectList();
@@ -1172,9 +1175,6 @@ Use this context if the student refers to the quiz, an answer, or a question num
     try { loadSelectedSubject(); } catch (_) {}
     try { updateSubjectUI(); } catch (_) {}
     // Version is per-user, so reload it once the user id is known.
-    try { loadAiVersion(); } catch (_) {}
-    try { setAiVersion(aiVersion, false); } catch (_) {}
-    try { bindVersionSelector(); } catch (_) {}
     await refreshTier();
     try {
       // Re-load subject with resolved user id (migrate anon choice if needed)
@@ -1190,22 +1190,33 @@ Use this context if the student refers to the quiz, an answer, or a question num
       }
     } catch (_) {}
     try { updateSubjectUI(); } catch (_) {}
-    await initConversationStore();
-    try { ensureShareCodes(); } catch (_) {}
-    // Deep link: restore the chat referenced in the URL (?chat=...) on refresh.
-    try {
-      var deepCode = null;
-      try { deepCode = new URL(window.location.href).searchParams.get('chat'); } catch (_) {}
-      if (deepCode) {
-        var owned = resolveConversationByCode(deepCode);
-        if (owned) {
-          loadConversation(owned.id);
-        } else {
-          var first = conversations.find(function(c){ return (c.subject || 'Physics') === selectedSubject; }) || conversations[0];
-          if (first) loadConversation(first.id);
+    // The chat store can take a while on a slow connection, so it runs in the
+    // background: the composer, send button and selectors come up immediately
+    // and anything sent meanwhile is saved locally, then uploaded to the DB.
+    try { renderHistory(); } catch (_) {}
+    var storeReady = initConversationStore().catch(function (e) {
+      console.warn('[AI] chat store failed:', e);
+      chatStoreReady = true;
+      try { renderHistory(); } catch (_) {}
+    });
+    var afterStore = function () {
+      try { ensureShareCodes(); } catch (_) {}
+      // Deep link: restore the chat referenced in the URL (?chat=...) on refresh.
+      try {
+        var deepCode = null;
+        try { deepCode = new URL(window.location.href).searchParams.get('chat'); } catch (_) {}
+        if (deepCode) {
+          var owned = resolveConversationByCode(deepCode);
+          if (owned) {
+            loadConversation(owned.id);
+          } else {
+            var first = conversations.find(function(c){ return (c.subject || 'Physics') === selectedSubject; }) || conversations[0];
+            if (first) loadConversation(first.id);
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    };
+    try { storeReady.then(afterStore); } catch (_) { afterStore(); }
     // Load persona from localStorage (per-user)
     try {
       activePersonaIndex = parseInt(localStorage.getItem(personaStorageKey()) || '0', 10);
@@ -1281,7 +1292,6 @@ if (idx >= 0 && idx < PERSONAS.length) {
     // Renders the modes bar. The GitHub repo chip is currently the only thing
     // that goes in it.
     try { renderModeChips(); } catch (_) {}
-    try { bindVersionSelector(); } catch (_) {}
     chatInput.focus();
     // Periodic streak check (every 5 min)
     setInterval(() => { refreshStreak(); saveSessionState(); }, 5 * 60 * 1000);
@@ -1871,16 +1881,6 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 - Never say "Sure!", "Of course!", "Great question!" or similar — just answer.`;
     }
 
-    if (typeof isRedox === 'function' && isRedox()) {
-      ctx += `\n\nREDOX VERSION — THINK VISUALLY: For graphs, tables, diagrams, timelines, animations, interactive cards, and any concept that benefits from a visual, ALWAYS make a single fenced block named \`redox-component\` containing a complete, self-contained, runnable HTML document (inline CSS and JS). You may temporarily edit HTML/CSS/JS to make it useful. The app renders it live in this tab only; when the user refreshes, it ends like a session expired.
-Inside the block you MUST:
-- Start with <!DOCTYPE html>, include <style> tag with at least: body { font-family: system-ui, sans-serif; background: white; color: #111; margin: 16px; }
-- Give graphs/tables/charts clear margins, borders, typography, grid lines, legends and reasonably spaced tick values.
-- Make visual cards look polished and use the full canvas; prefer SVG/HTML drawing or clear text over amateur ASCII art.
-- Include short labels/titles for the visuals so they are self-explanatory.
-Do NOT wrap the redox-component block in any other fence. Give a one-line explanation outside the block, then the component.`;
-    }
-
     return ctx;
   }
 
@@ -2177,6 +2177,24 @@ Do NOT wrap the redox-component block in any other fence. Give a one-line explan
   }
 
   function renderHistory() {
+    // Loading screen: the store may still be talking to the database. Keep the
+    // panel alive with skeleton rows so it never looks broken or empty.
+    if (!chatStoreReady) {
+      var rows = '';
+      for (var li = 0; li < 6; li++) {
+        rows += '<div class="history-skeleton" aria-hidden="true">'
+          + '<span class="hs-dot"></span>'
+          + '<span class="hs-bar" style="width:' + (58 + ((li * 13) % 34)) + '%"></span>'
+          + '</div>';
+      }
+      var loadingHtml = '<div class="history-loading" role="status" aria-live="polite">'
+        + '<div class="history-loading-label"><span class="hl-spinner" aria-hidden="true"></span>Loading your chats</div>'
+        + rows
+        + '</div>';
+      if (sidebarHistory) sidebarHistory.innerHTML = loadingHtml;
+      if (sidebarHistoryMobile) sidebarHistoryMobile.innerHTML = loadingHtml;
+      return;
+    }
     // Separate per subject: only show current subject's chats
     var visible = conversations.filter(function(c){
       var s = c.subject || 'Physics';
@@ -2377,15 +2395,6 @@ Do NOT wrap the redox-component block in any other fence. Give a one-line explan
         <div class="msg-avatar assistant-avatar"><img src="/assets/anteemonee.png" alt="Anteemonee"></div>
         <div class="msg-body">${quoteHtml}${generatedHtml}<div class="msg-content${displayContent ? '' : ' is-empty'}">${displayContent ? renderMarkdown(displayContent) : ''}</div></div>
       `;
-      try {
-        if (extractRedoxComponent(content)) {
-          var rdxNote = div.querySelector('.msg-content');
-          if (rdxNote) {
-            rdxNote.classList.remove('is-empty');
-            rdxNote.insertAdjacentHTML('beforeend', '<div class="redox-expired">Redox session expired. This temporary presentation ended when the tab was refreshed.</div>');
-          }
-        }
-      } catch (_) {}
     } else {
       const imgUrl = getUserAvatarUrl();
       const initial = getUserInitial();
@@ -2466,42 +2475,9 @@ Do NOT wrap the redox-component block in any other fence. Give a one-line explan
     return html;
   }
 
-  function deriveRedoxThingName(text) {
-    var t = String(text || '').toLowerCase();
-    if (/graph|plot|curve|line chart|bar chart|pie/.test(t)) return 'graph';
-    if (/table|matrix|table of values/.test(t)) return 'table';
-    if (/timeline|time-line/.test(t)) return 'timeline';
-    if (/diagram|flowchart|map|cycle/.test(t)) return 'diagram';
-    if (/animat/.test(t)) return 'animation';
-    if (/chart/.test(t)) return 'chart';
-    if (/song|music|audio|lyrics|tune/.test(t)) return 'song';
-    return 'component';
-  }
-
   function updateStreamingMessageImmediate(div, text) {
     const content = div.querySelector('.msg-content');
     var displayText = stripQuizStreamBlock(text);
-    // In Redox, hide the raw redox-component code fence while the model is
-    // still writing it. Show a small loader tied to what the student asked for.
-    // On finalisation the live component is rendered instead.
-    try {
-      if (typeof isRedox === 'function' && isRedox()) {
-        var partial = /```\s*redox-component/i;
-        if (partial.test(String(displayText))) {
-          displayText = String(displayText).replace(/```\s*redox-component[\s\S]*$/i, '').trim();
-          var lastUserPrompt = '';
-          try {
-            for (var i = messages.length - 1; i >= 0; i--) {
-              if (messages[i] && messages[i].role === 'user' && messages[i].content) { lastUserPrompt = messages[i].content; break; }
-            }
-          } catch (_) {}
-          var thing = deriveRedoxThingName(lastUserPrompt || displayText);
-          var generatedHtml = '<div class="redox-loading">Generating your ' + thing + '…</div>';
-          content.innerHTML = '<div class="streaming-text">' + (displayText ? renderStreamingMarkdown(displayText) : '') + '<span class="streaming-caret"></span></div>' + generatedHtml;
-          return;
-        }
-      }
-    } catch (_) {}
     var renderedText = displayText ? renderStreamingMarkdown(displayText) : '<span class="quiz-stream-placeholder">Preparing your interactive quiz…</span>';
     content.innerHTML = '<div class="streaming-text">' + renderedText + '<span class="streaming-caret"></span></div>';
   }
@@ -2776,11 +2752,8 @@ function stripFileBlocks(text) {
   return text.replace(/```\s*file-create\s*:[^\n]*\n[\s\S]*?```/g, "").trim();
 }
 
-function extractRedoxComponent(text) {
-  if (!text) return null;
-  var m = /```\s*redox-component\s*\n([\s\S]*?)```/i.exec(text);
-  return m ? m[1] : null;
-}
+// Legacy cleaner: older answers may still carry a redox-component fence in
+// stored history. It is no longer produced or rendered, just stripped out.
 function stripRedoxComponent(text) {
   if (!text) return text;
   return text.replace(/```\s*redox-component\s*\n[\s\S]*?```/ig, "").trim();
@@ -3804,19 +3777,9 @@ function handleFileBlocks(div, text) {
     try {
       quiz = parseQuizBlock(text, !!div.__quizRequested) || div.__quiz || null;
     } catch (_) {}
-    var redoxHtml = extractRedoxComponent(text);
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
     content.innerHTML = displayText ? renderMarkdown(displayText) : '';
     content.classList.toggle('is-empty', !displayText);
-    if (redoxHtml && typeof isRedox === 'function' && isRedox()) {
-      try {
-        var frame = document.createElement('div');
-        frame.className = 'redox-frame';
-        frame.innerHTML = '<iframe class="redox-iframe" sandbox="allow-scripts" referrerpolicy="no-referrer" title="Redox component"></iframe>';
-        content.appendChild(frame);
-        frame.querySelector('iframe').srcdoc = redoxHtml;
-      } catch (_) {}
-    }
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
@@ -4934,7 +4897,7 @@ function handleFileBlocks(div, text) {
     let fullResponse = '';
     let firstChunk = true;
     // Redox remaps which provider answers first; Beta uses the persona default.
-    const selectedProviderIndex = applyVersionProvider(getActivePersona().providerIndex);
+    const selectedProviderIndex = getActivePersona().providerIndex;
 
     try {
     // Images are deliberately NOT forwarded: the chat model is text-only, so

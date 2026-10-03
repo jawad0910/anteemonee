@@ -203,6 +203,8 @@
     .cc-claim p { margin: 0; max-width: 50ch; font-size: 14.5px; line-height: 1.65; color: var(--text-secondary); }
     .cc-claim-cta { display: flex; flex-direction: column; gap: 9px; flex-shrink: 0; }
     .cc-claim-cta .cc-btn { justify-content: center; white-space: nowrap; }
+    /* Signed-in visitors already have an account, so drop the prompts. */
+    .cc-claim.is-signed-in .cc-claim-cta { display: none; }
 
     .cc-meter { position: relative; margin-top: 30px; display: flex; align-items: center; gap: 14px; }
     .cc-meter-track { position: relative; flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--surface); box-shadow: var(--neo-shadow-recessed-sm); overflow: hidden; }
@@ -310,7 +312,7 @@
           </h1>
           <p class="cc-lede">
             The first <strong>100 students</strong> who walked through Anteemonee's doors.
-            Ranked by join date, oldest on top. This roll is written once and never re-sorted.
+            This roll is written once and never re-sorted.
           </p>
           <div class="cc-cta">
             <a href="#roster" class="cc-btn cc-btn--primary">
@@ -706,9 +708,21 @@ function monthYear(iso) {
       }
     }
 
+    function syncClaim() {
+      var claim = document.querySelector('.cc-claim');
+      if (claim) claim.classList.toggle('is-signed-in', !!youId);
+    }
+
     function fillYou() {
       var bar = $('cc-you-bar');
-      if (!bar || !youId) return;
+      syncClaim();
+      if (!bar) return;
+      if (!youId) {
+        // Signed out: clear any banner left over from a previous session.
+        bar.className = 'cc-you-bar';
+        bar.innerHTML = '';
+        return;
+      }
       var row = null;
       for (var i = 0; i < members.length; i++) { if (members[i].id === youId) { row = members[i]; break; } }
       bar.className = 'cc-you-bar is-on';
@@ -873,6 +887,7 @@ function monthYear(iso) {
         var id = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null;
         if (id === youId) return;
         youId = id;
+        syncClaim();
         if (members.length) { renderGrid(); fillYou(); }
       }
       if (typeof currentUser !== 'undefined') {

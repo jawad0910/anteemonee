@@ -38,7 +38,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=34">
-  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=64">
+  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=80">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
     [data-theme="dark"] {
@@ -131,6 +131,7 @@
     </div>
   </div>
   <a href="../ai-chat/">AI Assistant</a>
+  <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
         <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
@@ -238,48 +239,41 @@
         </div>
         <div class="messages-list" id="messages-list" role="log" aria-live="polite"></div>
       </div>
-      </div>
 
       <button class="scroll-down-btn" id="scroll-down-btn" aria-label="Scroll to bottom" title="Scroll to bottom">
         <svg class="scroll-down-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         <div class="generating-dots"><span></span><span></span><span></span></div>
       </button>
+      </div>
 
       <div class="chat-input-area">
         <div class="image-preview-bar" id="image-preview-bar" style="display:none"></div>
         <div class="chat-input-wrapper">
           <input type="file" id="image-file-input" accept="image/*" multiple style="display:none">
           <div class="chat-input-row-top">
-            <div class="subject-pill-wrap" id="subject-pill-wrap">
-              <button class="subject-pill" id="subject-pill" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="subject-dot" id="subject-dot"></span>
-                <span id="subject-name">Physics</span>
-                <span class="subject-caret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
-              </button>
-              <div class="subject-dropdown" id="subject-dropdown" role="listbox">
-                <div class="subject-list" id="subject-list"></div>
-              </div>
-            </div>
             <textarea class="chat-input" id="chat-input" placeholder="Ask anything about Physics..." rows="1"></textarea>
           </div>
           <div class="chat-input-row-bottom">
             <div class="chat-input-row-left">
-              <div class="plus-wrapper" id="plus-wrapper">
-                <button class="input-btn btn-plus" id="btn-plus" title="Attach photo" aria-label="Attach photo">
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5v13"/><path d="M5.5 12h13"/></svg>
+              <div class="subject-pill-wrap" id="subject-pill-wrap">
+                <button class="subject-pill" id="subject-pill" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="subject-dot" id="subject-dot"></span>
+                  <span id="subject-name">Physics</span>
+                  <span class="subject-caret"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
                 </button>
+                <div class="subject-dropdown" id="subject-dropdown" role="listbox">
+                  <div class="subject-dropdown-label">Subject</div>
+                  <div class="subject-list" id="subject-list"></div>
+                </div>
               </div>
               <div class="modes-bar" id="modes-bar"></div>
-              <div class="ver-seg" id="ver-seg" role="group" aria-label="AI version">
-                <span class="ver-seg-thumb" id="ver-seg-thumb" aria-hidden="true"></span>
-                <button type="button" class="ver-seg-btn active" data-ver="final" aria-pressed="true">Final</button>
-                <button type="button" class="ver-seg-btn" data-ver="redox" aria-pressed="false">Redox</button>
-              </div>
-              <button type="button" class="ver-info" id="ver-info" title="About versions" aria-label="About versions" aria-haspopup="dialog">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
-              </button>
             </div>
             <div class="chat-input-row-right">
+              <div class="plus-wrapper" id="plus-wrapper">
+                <button class="input-btn btn-plus" id="btn-plus" title="Attach image" aria-label="Attach image">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="3.2"/><circle cx="8.6" cy="10" r="1.7"/><path d="M20.5 15.6l-4.4-4a2 2 0 0 0-2.7 0L5 20"/></svg>
+                </button>
+              </div>
               <button class="input-btn btn-voice" id="btn-voice" title="Voice mode" aria-label="Voice mode">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               </button>
@@ -295,65 +289,6 @@
         <p class="chat-disclaimer">Anteemonee can make mistakes. Verify important information.</p>
       </div>
     </main>
-
-    <!-- Version info dialog -->
-    <div class="ver-info-ov" id="ver-info-ov" hidden>
-      <div class="ver-info-card" role="dialog" aria-modal="true" aria-labelledby="ver-info-title">
-        <div class="ver-info-glow" aria-hidden="true"></div>
-        <button type="button" class="ver-info-x" id="ver-info-x" aria-label="Close">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
-        </button>
-
-        <div class="ver-info-head">
-          <span class="ver-info-badge" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.9L19 9.8l-4.3 3.3L16.2 18 12 15.3 7.8 18l1.5-4.9L5 9.8l5.1-1.9z"/></svg>
-          </span>
-          <div>
-            <h3 id="ver-info-title">Choose an assistant</h3>
-            <p class="ver-info-sub">Two ways to get an answer. Switch whenever you like, your conversation carries over.</p>
-          </div>
-        </div>
-
-        <div class="ver-info-choices" role="group" aria-label="AI version">
-          <button type="button" class="ver-choice" data-ver="final" aria-pressed="true">
-            <span class="ver-choice-icon" aria-hidden="true">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <span class="ver-choice-body">
-              <span class="ver-choice-top">
-                <span class="ver-choice-name">Final</span>
-                <span class="ver-choice-state">Active</span>
-              </span>
-              <span class="ver-choice-text">The everyday tutor. Quick, steady answers in clean text, identical on every device. This is the version we support.</span>
-            </span>
-          </button>
-
-          <button type="button" class="ver-choice" data-ver="redox" aria-pressed="false">
-            <span class="ver-choice-icon" aria-hidden="true">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>
-            </span>
-            <span class="ver-choice-body">
-              <span class="ver-choice-top">
-                <span class="ver-choice-name">Redox</span>
-                <span class="ver-choice-state">Active</span>
-              </span>
-              <span class="ver-choice-text">The experimental one. It writes the code for its own interface, so an answer can arrive as a live visual instead of plain text.</span>
-              <span class="ver-chips">
-                <span class="ver-chip">Graphs</span>
-                <span class="ver-chip">Tables</span>
-                <span class="ver-chip">Slides</span>
-                <span class="ver-chip">Live CSS</span>
-              </span>
-            </span>
-          </button>
-        </div>
-
-        <p class="ver-info-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/></svg>
-          <span>Redox lives in this tab only. Nothing is ever written to the site files, so a reload always brings you back to Final.</span>
-        </p>
-      </div>
-    </div>
   </div>
 
   <!-- HISTORY DRAWER (mobile) -->
@@ -388,7 +323,7 @@
   <!-- Image lightbox -->
   <div class="image-lightbox" id="image-lightbox">
     <button class="lb-close" id="lb-close">&times;</button>
-    <img id="lb-img" src="../ai-chat" alt="Full image">
+    <img id="lb-img" src="" alt="Full image">
   </div>
 
   <!-- PROFILE POPUP (ChatGPT-style) -->
@@ -401,44 +336,53 @@
     </div>
   </div>
 
-  <!-- VOICE MODE — Phone-call style realtime -->
+  <!-- VOICE MODE — compact card, tap the orb to talk / send -->
   <div class="voice-overlay" id="voice-overlay" aria-hidden="true">
     <div class="voice-overlay-bg"></div>
-    <button class="voice-close" id="voice-close" aria-label="Close voice mode">×</button>
-    <div class="voice-call">
-      <div class="call-header">
-        <img src="../assets/anteemonee.png" alt="Anteemonee" class="call-avatar">
-        <div class="call-name">Anteemonee</div>
-        <div class="call-status" id="voice-status">Connecting…</div>
-      </div>
-      <div class="call-center">
-        <div class="voice-orb-wrap" id="voice-orb-wrap">
-          <div class="voice-orb" id="voice-orb">
-            <div class="voice-orb-core"></div>
-            <div class="voice-orb-ring"></div>
-            <div class="voice-orb-ring delay"></div>
+    <button class="voice-close" id="voice-close" aria-label="Close voice mode"></button>
+
+    <div class="voice-shell">
+      <div class="voice-card" role="dialog" aria-modal="true" aria-label="Voice chat with Anteemonee">
+
+        <header class="voice-head">
+          <img src="../assets/anteemonee.png" alt="Anteemonee" class="voice-avatar">
+          <div class="voice-head-text">
+            <div class="voice-name">Anteemonee</div>
+            <div class="voice-phase" id="voice-phase" data-phase="idle"><span class="vp-dot"></span><span id="voice-status">Ready</span></div>
           </div>
-          <div class="voice-wave" id="voice-wave" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
+        </header>
+
+        <div class="voice-stage">
+          <button type="button" class="voice-orb-btn" id="voice-orb-wrap"
+                  aria-label="Tap to start or send your voice message">
+            <span class="voice-orb" id="voice-orb">
+              <span class="voice-orb-core"></span>
+            </span>
+            <span class="voice-wave" id="voice-wave" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </span>
+          </button>
+          <p class="voice-hint" id="voice-hint">Tap to talk. Tap again to send.</p>
         </div>
-        <div class="call-messages" id="call-messages" aria-live="polite"></div>
-        <div class="voice-transcript call-captions" id="voice-transcript" aria-live="polite" style="display:none"></div>
-        <div class="voice-unsupported" id="voice-unsupported" style="display:none">Voice not supported in this browser. Try Chrome or Safari 16+.</div>
-      </div>
-      <div class="call-controls">
-        <button class="call-btn" id="call-mute-btn" aria-label="Mute">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          <span>Mute</span>
-        </button>
-        <button class="call-end-btn" id="voice-exit-btn" type="button" aria-label="End call">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" style="transform:rotate(135deg);transform-origin:center"/></svg>
-        </button>
+
+        <div class="voice-transcript" id="voice-transcript" aria-live="polite" hidden></div>
+        <div class="voice-unsupported" id="voice-unsupported"></div>
+
+        <div class="voice-log" id="call-messages" aria-live="polite"></div>
+
+        <footer class="voice-foot">
+          <button type="button" class="voice-btn" id="call-mute-btn" aria-label="Mute mic">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            <span>Mute</span>
+          </button>
+          <button type="button" class="voice-btn voice-end" id="voice-exit-btn" aria-label="End voice chat">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.4 19.4 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a19.5 19.5 0 0 0 6 6c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>End</span>
+          </button>
+          <button id="voice-mic-btn" style="display:none" aria-hidden="true"></button>
+        </footer>
 
       </div>
-      <!-- hidden compat: keep mic btn for old JS -->
-      <button id="voice-mic-btn" style="display:none" aria-hidden="true"></button>
-      <span id="voice-mic-label" style="display:none"></span>
     </div>
   </div>
 
@@ -471,10 +415,10 @@
   <script src="code/js/ai-api-service.js?v=22"></script>
   <script src="../js/mistral-key-modal.js?v=1"></script>
   <script src="code/js/image-limit-card.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=79"></script>
-  <script src="code/js/voice-chat.js?v=21"></script>
-  <script src="code/js/realtime-call.js?v=6"></script>
-  <script src="code/js/gemini-live-call.js?v=6"></script>
+  <script src="code/js/ai-chatbot.js?v=92"></script>
+  <script src="code/js/voice-chat.js?v=35"></script>
+  <script src="code/js/realtime-call.js?v=8"></script>
+  <script src="code/js/gemini-live-call.js?v=8"></script>
   <script>
     // "Coming soon" toast for sidebar features not built yet.
     (function () {
@@ -532,7 +476,7 @@
         var mAv = document.getElementById('m-acct-avatar');
         if (mAv) {
           var safeImg = String(imgUrl).replace(/"/g, '');
-          mAv.innerHTML = '<span>' + initial + '</span>' + (safeImg ? '<img src="../pages/' + safeImg + '" alt="" onerror="this.remove()">' : '');
+          mAv.innerHTML = '<span>' + initial + '</span>' + (safeImg ? '<img src="' + safeImg + '" alt="" onerror="this.remove()">' : '');
         }
         var mRow = document.getElementById('drawer-account');
         if (mRow) mRow.style.display = 'flex';
@@ -726,7 +670,7 @@
           document.getElementById('logout-name').textContent = name;
           document.getElementById('logout-email').textContent = email;
           document.getElementById('logout-avatar').innerHTML = '<span>' + initial + '</span>'
-            + (img ? '<img src="../pages/' + String(img).replace("/g, '') + '" alt="" onerror="this.remove()">' : '');
+            + (img ? '<img src="' + String(img).replace(/["']/g, '') + '" alt="" onerror="this.remove()">' : '');
         } catch (_) {}
       }
       function openLogout() {
@@ -870,18 +814,36 @@
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
 
-      /* Mobile menu toggle (header button) */
-      var toggle = document.getElementById('menu-toggle');
+      /* Mobile menu toggle. The chat topbar ships a second, id-less hamburger
+         next to the history button, so bind every .mobile-menu-toggle on the
+         page to the same panel instead of leaving that one dead. */
       var menu = document.getElementById('mobile-menu');
-      if (toggle && !toggle.dataset.bound) {
-        toggle.dataset.bound = '1';
-        toggle.addEventListener('click', function () {
-          toggle.classList.toggle('active');
-          if (menu) menu.classList.remove('open');
-          var sm = document.getElementById('site-mobile-menu');
-          if (sm) sm.classList.toggle('open');
+      var siteMenu = document.getElementById('site-mobile-menu');
+      function syncMobileMenuButtons() {
+        var open = !!(siteMenu && siteMenu.classList.contains('open'));
+        document.querySelectorAll('.mobile-menu-toggle').forEach(function (b) {
+          b.classList.toggle('active', open);
         });
       }
+      document.querySelectorAll('.mobile-menu-toggle').forEach(function (toggle) {
+        if (toggle.dataset.bound) return;
+        toggle.dataset.bound = '1';
+        toggle.addEventListener('click', function () {
+          if (menu) menu.classList.remove('open');
+          if (siteMenu) siteMenu.classList.toggle('open');
+          syncMobileMenuButtons();
+        });
+      });
+      // Outside tap closes the panel. This listener also sees the click that
+      // opened it (the event bubbles to document), so taps on a toggle have to
+      // be ignored here or the panel would open and close in the same tap.
+      document.addEventListener('click', function (e) {
+        if (!siteMenu || !siteMenu.classList.contains('open')) return;
+        var t = e.target;
+        if (t && t.closest && (t.closest('#site-mobile-menu') || t.closest('.mobile-menu-toggle'))) return;
+        siteMenu.classList.remove('open');
+        syncMobileMenuButtons();
+      });
 
       function renderLandingAuth() {
         try {
@@ -899,13 +861,13 @@
               '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
                 '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
                   '<div class="avatar-wrapper">' +
-                    (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
                   '</div>' +
                 '</button>' +
                 '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
                   '<div class="dropdown-header">' +
                     '<div class="dropdown-avatar">' +
-                      (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
                     '</div>' +
                     '<div class="dropdown-info">' +
                       '<span class="dropdown-name">' + (fullName || username) + '</span>' +

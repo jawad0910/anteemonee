@@ -405,6 +405,9 @@
   function bindCallButtons() {
     const { muteBtn, speakerBtn, endBtn } = els();
     const closeBtn = document.getElementById('voice-close');
+    // voice-chat.js owns the overlay when it is present: its handlers already
+    // cover mute/end/close, and binding here as well left stale state behind.
+    if (window.AnteemoneeVoice) return;
     if (muteBtn && !muteBtn.dataset.glBound) { muteBtn.dataset.glBound = '1'; muteBtn.addEventListener('click', toggleMute); }
     if (speakerBtn && !speakerBtn.dataset.glBound) { speakerBtn.dataset.glBound = '1'; speakerBtn.addEventListener('click', toggleSpeaker); }
     if (endBtn && !endBtn.dataset.glBound) { endBtn.dataset.glBound = '1'; endBtn.addEventListener('click', endCall); }
