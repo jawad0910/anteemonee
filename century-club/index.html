@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Century Club - Anteemonee</title>
+  <meta name="description" content="The Century Club: the first 100 students who joined Anteemonee, listed oldest first. Your place in the roll of honour.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link rel="stylesheet" href="../css/style.css?v=33">
+  <style>
+    /* ── Tokens local to this page ── */
+    :root {
+      --cc-ease: cubic-bezier(.22, 1, .36, 1);
+      --cc-spring: cubic-bezier(.34, 1.56, .64, 1);
+      --cc-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --cc-serif: 'Fraunces', Georgia, serif;
+      --cc-hairline: inset 0 1px 0 rgba(255,255,255,.07);
+    }
+    [data-theme="light"] { --cc-hairline: inset 0 1px 0 rgba(255,255,255,.9); }
+
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; font-family: var(--cc-font); }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f; --bg-card-hover: #141416;
+      --surface: #111113; --surface-recessed: #08080a; --footer-bg: #000;
+      --liquid-bg: rgba(255,255,255,.04); --liquid-bg-soft: rgba(255,255,255,.05); --liquid-bg-strong: rgba(10,10,12,.85);
+    }
+
+    /* ── Site header (matches all pages) ── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: color .2s, background-color .2s; }
+    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a.is-current { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: .6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 10px; }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s, color .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--text-secondary); }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--text); }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background .2s var(--cc-ease); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: .7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); text-align: left; }
+
+    /* ══════════════ HERO ══════════════ */
+    .cc-hero { position: relative; padding: 132px 24px 66px; overflow: hidden; isolation: isolate; }
+    .cc-hero-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 56px; align-items: center; }
+    .cc-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 15px 7px 11px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
+    .cc-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 0 var(--text); animation: ccPulse 2.6s var(--cc-ease) infinite; }
+    @keyframes ccPulse { 0% { box-shadow: 0 0 0 0 rgba(127,127,127,.5); } 70% { box-shadow: 0 0 0 9px rgba(127,127,127,0); } 100% { box-shadow: 0 0 0 0 rgba(127,127,127,0); } }
+
+    .cc-title { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(2.6rem, 8.2vw, 5.4rem); line-height: .94; letter-spacing: -.035em; margin: 22px 0 0; }
+    .cc-title .cc-word { display: inline-block; opacity: 0; transform: translateY(.55em) rotate(1.5deg); filter: blur(6px); }
+    .cc-hero.is-in .cc-word { animation: ccWord .95s var(--cc-ease) forwards; animation-delay: calc(var(--w) * .085s + .08s); }
+    @keyframes ccWord { to { opacity: 1; transform: none; filter: blur(0); } }
+    .cc-title em { font-style: normal; background: linear-gradient(180deg, var(--text) 42%, color-mix(in srgb, var(--text) 52%, transparent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+    .cc-lede { margin: 22px 0 0; max-width: 46ch; font-size: clamp(.95rem, 1.6vw, 1.075rem); line-height: 1.65; color: var(--text-secondary); letter-spacing: -.005em; }
+    .cc-lede strong { color: var(--text); font-weight: 600; }
+
+    .cc-cta { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 30px; }
+    .cc-btn { position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 13px 24px; border-radius: var(--radius-pill); font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; text-decoration: none; cursor: pointer; border: 1px solid transparent; overflow: hidden; transition: transform .35s var(--cc-spring), box-shadow .35s var(--cc-ease), background-color .25s var(--cc-ease), color .25s var(--cc-ease), border-color .25s var(--cc-ease); }
+    .cc-btn--primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--neo-shadow-raised); }
+    .cc-btn--primary:hover { transform: translateY(-2px); box-shadow: var(--neo-shadow-raised-lg); }
+    .cc-btn--primary:active { transform: translateY(0) scale(.97); }
+    .cc-btn--ghost { background: var(--liquid-bg-soft); border-color: var(--liquid-border-soft); color: var(--text); box-shadow: var(--cc-hairline); }
+    .cc-btn--ghost:hover { transform: translateY(-2px); background: var(--liquid-bg); border-color: var(--liquid-border); }
+    .cc-btn:active { transform: translateY(0) scale(.97); }
+    .cc-btn svg { flex-shrink: 0; transition: transform .35s var(--cc-ease); }
+    .cc-btn:hover svg { transform: translateX(3px); }
+
+    /* Ambient field: two slow-drifting radial washes */
+    .cc-aurora { position: absolute; inset: -30% -10% auto -10%; height: 620px; z-index: -1; pointer-events: none; opacity: .9; }
+    .cc-aurora span { position: absolute; display: block; border-radius: 50%; filter: blur(90px); will-change: transform; }
+    .cc-aurora span:nth-child(1) { width: 460px; height: 460px; left: 4%; top: 6%; background: radial-gradient(circle, var(--aurora-1), transparent 68%); animation: ccDrift1 26s ease-in-out infinite alternate; }
+    .cc-aurora span:nth-child(2) { width: 400px; height: 400px; right: 8%; top: 0%; background: radial-gradient(circle, var(--aurora-2), transparent 68%); animation: ccDrift2 32s ease-in-out infinite alternate; }
+    @keyframes ccDrift1 { to { transform: translate3d(70px, 46px, 0) scale(1.14); } }
+    @keyframes ccDrift2 { to { transform: translate3d(-64px, 60px, 0) scale(1.1); } }
+
+    /* ══════════════ RING ══════════════ */
+    .cc-ring-wrap { display: grid; place-items: center; position: relative; }
+    .cc-ring { position: relative; width: clamp(190px, 24vw, 250px); aspect-ratio: 1; }
+    .cc-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+    .cc-ring .cc-track { fill: none; stroke: var(--border); stroke-width: 9; }
+    .cc-ring .cc-fill { fill: none; stroke: var(--text); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 1.6s var(--cc-ease); }
+    .cc-ring-core { position: absolute; inset: 20px; display: grid; place-content: center; text-align: center; gap: 1px; }
+    .cc-ring-num { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(2.5rem, 5.4vw, 3.35rem); line-height: 1; letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-ring-of { font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+    .cc-ring-badge { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 7px 15px; border-radius: var(--radius-pill); background: var(--bg-elevated); border: 1px solid var(--liquid-border-soft); box-shadow: var(--neo-shadow-float); font-size: 12px; font-weight: 600; letter-spacing: -.005em; }
+
+    /* ══════════════ STATS ══════════════ */
+    .cc-stats { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .cc-stat { position: relative; padding: 20px 20px 18px; border-radius: var(--radius-lg); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); overflow: hidden; transition: transform .5s var(--cc-ease), box-shadow .5s var(--cc-ease); }
+    .cc-stat:hover { transform: translateY(-3px); box-shadow: var(--neo-shadow-raised); }
+    .cc-stat .k { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+    .cc-stat .v { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 1.95rem); letter-spacing: -.035em; line-height: 1.15; margin-top: 7px; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-stat .v small { font-family: var(--cc-font); font-size: 12.5px; font-weight: 500; letter-spacing: -.005em; color: var(--text-muted); margin-left: 4px; }
+    #cc-since { letter-spacing: -.01em !important; word-spacing: .1em; }
+
+    /* ══════════════ ROSTER ══════════════ */
+    .cc-roster-wrap { max-width: 1180px; margin: 0 auto; padding: 84px 24px 20px; }
+    .cc-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 26px; }
+    .cc-section-head h2 { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(1.6rem, 3.6vw, 2.3rem); letter-spacing: -.03em; margin: 0; line-height: 1.05; }
+    .cc-section-head p { margin: 9px 0 0; font-size: 14px; color: var(--text-secondary); max-width: 48ch; line-height: 1.6; }
+
+    .cc-search { position: relative; display: flex; align-items: center; gap: 9px; padding: 0 15px; height: 44px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); transition: border-color .25s var(--cc-ease), background-color .25s var(--cc-ease), box-shadow .25s var(--cc-ease); min-width: 268px; }
+    .cc-search:focus-within { border-color: var(--text); background: var(--bg-card); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .cc-search svg { flex-shrink: 0; color: var(--text-muted); }
+    .cc-search input { flex: 1; min-width: 0; border: none; background: none; outline: none; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500; letter-spacing: -.005em; }
+    .cc-search input::placeholder { color: var(--text-muted); }
+    .cc-search-x { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; border: none; background: var(--surface); color: var(--text-secondary); cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 13px; line-height: 1; }
+    .cc-search.has-value .cc-search-x { display: inline-flex; }
+    .cc-search-count { flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-top: 22px; }
+
+    .cc-card { position: relative; display: flex; align-items: center; gap: 13px; padding: 13px 15px; border-radius: var(--radius-lg); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); overflow: hidden; content-visibility: auto; contain-intrinsic-size: auto 74px; transition: transform .4s var(--cc-ease), box-shadow .4s var(--cc-ease), border-color .3s var(--cc-ease), background-color .3s var(--cc-ease); }
+    .cc-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 32%, var(--glow) 50%, transparent 68%); transform: translateX(-115%); transition: transform .85s var(--cc-ease); pointer-events: none; }
+    .cc-card:hover { transform: translateY(-2px); border-color: var(--liquid-border); background: var(--bg-card); box-shadow: var(--neo-shadow-raised); }
+    .cc-card:hover::after { transform: translateX(115%); }
+    .cc-card[hidden] { display: none; }
+
+    .cc-rank { position: relative; z-index: 1; flex-shrink: 0; width: 34px; text-align: right; font-family: var(--cc-serif); font-weight: 700; font-size: 15px; letter-spacing: -.03em; color: var(--text-muted); font-variant-numeric: lining-nums tabular-nums; }
+    .cc-rank sup { font-family: var(--cc-font); font-size: 8.5px; font-weight: 700; vertical-align: super; margin-left: .5px; }
+
+    .cc-av { position: relative; z-index: 1; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--surface); border: 1px solid var(--liquid-border-soft); }
+    .cc-av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cc-fb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--text-secondary); }
+
+    .cc-who { position: relative; z-index: 1; min-width: 0; flex: 1; }
+    .cc-name { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 14.5px; font-weight: 600; letter-spacing: -.015em; color: var(--text); line-height: 1.3; }
+    .cc-nm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cc-sub { display: block; font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-card.is-you { border-color: var(--text); box-shadow: 0 0 0 1px var(--text), var(--neo-shadow-raised); }
+    .cc-you-flag { display: none; }
+    .cc-card.is-you .cc-you-flag { display: inline-block; flex-shrink: 0; padding: 2px 7px; border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+
+    /* Your place banner */
+    .cc-you { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+    .cc-you-bar { display: none; align-items: center; gap: 14px; padding: 16px 20px; border-radius: var(--radius-lg); background: var(--accent); color: var(--on-accent); box-shadow: var(--neo-shadow-raised); }
+    .cc-you-bar.is-on { display: flex; animation: ccSlide .7s var(--cc-ease) both; }
+    @keyframes ccSlide { from { opacity: 0; transform: translateY(14px); } }
+    .cc-you-bar b { font-weight: 700; font-size: 14.5px; letter-spacing: -.015em; }
+    .cc-you-bar span { font-size: 13.5px; opacity: .78; }
+
+    /* ══════════════ STATES ══════════════ */
+    .cc-skel { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-top: 22px; }
+    .cc-skel-item { height: 74px; border-radius: var(--radius-lg); background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card-hover) 50%, var(--surface) 75%); background-size: 200% 100%; animation: ccShimmer 1.4s linear infinite; }
+    @keyframes ccShimmer { to { background-position: -200% 0; } }
+
+    .cc-state { text-align: center; padding: 74px 24px; }
+    .cc-state-icon { width: 58px; height: 58px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); color: var(--text-secondary); }
+    .cc-state h3 { font-family: var(--cc-serif); font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; margin: 0 0 9px; }
+    .cc-state p { margin: 0 auto 24px; max-width: 42ch; font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
+
+    /* ══════════════ CLAIM CARD ══════════════ */
+    .cc-closer { max-width: 1180px; margin: 0 auto; padding: 60px 24px 92px; }
+    .cc-claim { position: relative; overflow: hidden; padding: clamp(28px, 4.6vw, 48px); border-radius: var(--radius-xl); background: var(--bg-card); border: 1px solid var(--liquid-border); box-shadow: var(--neo-shadow-raised-lg); }
+    .cc-claim::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; background: linear-gradient(90deg, transparent, var(--liquid-border), transparent); }
+    .cc-claim-glow { position: absolute; width: 420px; height: 420px; right: -110px; top: -170px; border-radius: 50%; filter: blur(88px); background: radial-gradient(circle, var(--aurora-1), transparent 70%); pointer-events: none; }
+    .cc-claim-top { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 30px; align-items: center; }
+    .cc-claim .cc-eyebrow { margin-bottom: 16px; }
+    .cc-claim h2 { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(1.55rem, 3.5vw, 2.15rem); letter-spacing: -.032em; margin: 0 0 11px; line-height: 1.08; }
+    .cc-claim p { margin: 0; max-width: 50ch; font-size: 14.5px; line-height: 1.65; color: var(--text-secondary); }
+    .cc-claim-cta { display: flex; flex-direction: column; gap: 9px; flex-shrink: 0; }
+    .cc-claim-cta .cc-btn { justify-content: center; white-space: nowrap; }
+
+    .cc-meter { position: relative; margin-top: 30px; display: flex; align-items: center; gap: 14px; }
+    .cc-meter-track { position: relative; flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--surface); box-shadow: var(--neo-shadow-recessed-sm); overflow: hidden; }
+    .cc-meter-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: var(--radius-pill); background: var(--accent); transition: width 1.5s var(--cc-ease); }
+    .cc-meter-num { flex-shrink: 0; font-size: 12.5px; font-weight: 700; letter-spacing: .01em; color: var(--text-secondary); font-variant-numeric: lining-nums tabular-nums; }
+
+    .cc-perks { position: relative; list-style: none; display: flex; flex-wrap: wrap; gap: 7px; margin: 24px 0 0; padding: 22px 0 0; border-top: 1px solid var(--border); }
+    .cc-perks li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); font-size: 12.5px; font-weight: 600; letter-spacing: -.005em; color: var(--text-secondary); }
+    .cc-perks li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text); opacity: .55; }
+
+    /* ══════════════ RESPONSIVE ══════════════ */
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    @media (max-width: 1000px) {
+      .cc-hero-inner { grid-template-columns: 1fr; gap: 46px; justify-items: start; }
+      .cc-ring-wrap { justify-self: center; }
+      .cc-stats { grid-template-columns: repeat(2, 1fr); }
+      .cc-claim-top { grid-template-columns: 1fr; }
+      .cc-claim-cta { flex-direction: row; flex-wrap: wrap; }
+    }
+    @media (max-width: 700px) {
+      .cc-hero { padding: 108px 18px 52px; }
+      .cc-stats, .cc-roster-wrap, .cc-you, .cc-closer { padding-left: 18px; padding-right: 18px; }
+      .cc-grid, .cc-skel { grid-template-columns: 1fr; }
+      .cc-section-head { flex-direction: column; align-items: stretch; }
+      .cc-search { min-width: 0; width: 100%; }
+      .cc-you-bar { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .cc-aurora span, .cc-eyebrow i { animation: none !important; }
+      .cc-title .cc-word { opacity: 1 !important; transform: none !important; filter: none !important; animation: none !important; }
+      .cc-ring .cc-fill { transition: none; }
+      .cc-card, .cc-card::after, .cc-btn, .cc-stat { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <a href="../dashboard/">Dashboard</a>
+        <div class="nav-drop">
+          <a href="#">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ebooks/">eBooks</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../past-papers/">Past Papers</a>
+          </div>
+        </div>
+        <a href="../ai-chat/">AI Assistant</a>
+        <a href="../century-club/" class="is-current" aria-current="page">Century Club</a>
+      </nav>
+      <div class="header-actions">
+        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none;position:relative"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="../dashboard/" class="mobile-nav-link">Dashboard</a>
+    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
+    <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+    <div class="mobile-cta">
+      <a href="../pages/login.html" class="btn-login">Log in</a>
+      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- ══ HERO ══ -->
+    <section class="cc-hero" id="cc-hero">
+      <div class="cc-aurora" aria-hidden="true"><span></span><span></span></div>
+      <div class="cc-hero-inner">
+        <div>
+          <span class="cc-eyebrow"><i></i> The First 100</span>
+          <h1 class="cc-title">
+            <span class="cc-word" style="--w:0">The</span>
+            <span class="cc-word" style="--w:1">Century</span>
+            <span class="cc-word" style="--w:2"><em>Club</em></span>
+          </h1>
+          <p class="cc-lede">
+            The first <strong>100 students</strong> who walked through Anteemonee's doors.
+            Ranked by join date, oldest on top. This roll is written once and never re-sorted.
+          </p>
+          <div class="cc-cta">
+            <a href="#roster" class="cc-btn cc-btn--primary">
+              See the roll
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+            </a>
+            <a href="../pages/signup.html" class="cc-btn cc-btn--ghost">
+              Join Anteemonee
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="cc-ring-wrap">
+          <div class="cc-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="cc-track" cx="60" cy="60" r="52"></circle>
+              <circle class="cc-fill" id="cc-fill" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="326.73"></circle>
+            </svg>
+            <div class="cc-ring-core">
+              <span class="cc-ring-num" id="cc-ring-num">0</span>
+              <span class="cc-ring-of">of 100</span>
+            </div>
+            <span class="cc-ring-badge" id="cc-ring-badge">Counting…</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ STATS ══ -->
+    <section class="cc-stats" id="cc-stats" aria-label="Club at a glance">
+      <div class="cc-stat"><div class="k">On the roll</div><div class="v" data-count>&nbsp;</div></div>
+      <div class="cc-stat"><div class="k">Spots left</div><div class="v" data-count>&nbsp;</div></div>
+      <div class="cc-stat"><div class="k">First member</div><div class="v" id="cc-since" style="font-size:clamp(1.15rem,2.4vw,1.5rem)">&nbsp;</div></div>
+    </section>
+
+    <!-- ══ YOUR PLACE ══ -->
+    <div class="cc-you"><div class="cc-you-bar" id="cc-you-bar"></div></div>
+
+    <!-- ══ ROSTER ══ -->
+    <section class="cc-roster-wrap" id="roster">
+      <div class="cc-section-head">
+        <div>
+          <h2>The Roll</h2>
+          <p>Every member of the Century Club, in the order they arrived. The list stops at one hundred. That is the whole point of the name.</p>
+        </div>
+        <div class="cc-search" id="cc-search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="cc-search" type="search" placeholder="Find a member…" autocomplete="off" aria-label="Search club members">
+          <button class="cc-search-x" type="button" id="cc-search-x" aria-label="Clear search">&times;</button>
+          <span class="cc-search-count" id="cc-search-count">100</span>
+        </div>
+      </div>
+
+      <div class="cc-skel" id="cc-skel" aria-hidden="true"></div>
+      <div class="cc-grid" id="cc-grid" role="list"></div>
+      <div class="cc-state" id="cc-empty" style="display:none">
+        <div class="cc-state-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </div>
+        <h3>No member by that name</h3>
+        <p>Try a different spelling, or clear the search to see the full hundred.</p>
+        <button class="cc-btn cc-btn--ghost" type="button" id="cc-empty-reset">Clear search</button>
+      </div>
+      <div class="cc-state" id="cc-error" style="display:none">
+        <div class="cc-state-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>
+        </div>
+        <h3>The roll is out of reach</h3>
+        <p id="cc-error-msg">We couldn't reach the members register. Check your connection and try again.</p>
+        <button class="cc-btn cc-btn--primary" type="button" id="cc-retry">
+          Try again
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ CLAIM ══ -->
+    <section class="cc-closer">
+      <div class="cc-claim">
+        <span class="cc-claim-glow" aria-hidden="true"></span>
+        <div class="cc-claim-top">
+          <div>
+            <span class="cc-eyebrow"><i></i> <span id="cc-claim-eyebrow">Open roll</span></span>
+            <h2 id="cc-claim-title">Take your place on the roll.</h2>
+            <p id="cc-claim-text">Every account gets the whole library: eBooks, flashcards, past papers and an AI tutor that actually knows your syllabus. The Century Club just marks the people who were here at the start.</p>
+          </div>
+          <div class="cc-claim-cta">
+            <a href="../pages/signup.html" class="cc-btn cc-btn--primary">
+              Create your account
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="../pages/login.html" class="cc-btn cc-btn--ghost">I already have an account</a>
+          </div>
+        </div>
+        <div class="cc-meter">
+          <div class="cc-meter-track"><span class="cc-meter-fill" id="cc-meter-fill"></span></div>
+          <span class="cc-meter-num" id="cc-meter-num">0 / 100</span>
+        </div>
+        <ul class="cc-perks">
+          <li>eBooks</li>
+          <li>Flashcards</li>
+          <li>Past Papers</li>
+          <li>AI Tutor</li>
+          <li>Live Classroom</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="../ai-chat/">AI Assistant</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../century-club/">Century Club</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../pages/payment-plan.html?plan=lifetime">Lifetime Access</a>
+        </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="../pages/privacy.html">Privacy Policy</a>
+            <a href="../pages/terms.html">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=30"></script>
+  <script src="../js/login-modal.js?v=5"></script>
+  <script src="../js/forgot-modal.js?v=2"></script>
+  <script src="../js/signup-modal.js?v=3"></script>
+  <script>
+    (function () {
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 0-1 1.51V21"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Log out' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'block';
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {
+          var lo = document.getElementById('landing-auth');
+          if (lo) lo.style.display = 'flex';
+        }
+      }
+      function handleLandingLogout() { try { if (typeof handleLogout === 'function') { handleLogout(); return; } } catch (_) {} window.location.href = '../index.html'; }
+      function toggleLandingProfileDropdown() { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.toggle('open'); }
+      function closeLandingProfileDropdown() { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.remove('open'); }
+      window.handleLandingLogout = handleLandingLogout;
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++; renderLandingAuth();
+        if (tries > 40 || window.__authReady === true) clearInterval(timer);
+      }, 300);
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+      document.addEventListener('click', function (e) {
+        var d = document.getElementById('landing-profile-dropdown');
+        if (d && !d.contains(e.target)) closeLandingProfileDropdown();
+      });
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var SUPA_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+    var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+    var CLUB_CAP = 100;
+    var _sdb = null;
+
+    // Curated roll. The live source of truth is public.century_club_config, read
+    // inside the get_century_club RPC. These lists only drive the fallback query
+    // that runs before that migration is applied, so both stay in step.
+    // Emails are matched against but never written into the page.
+    var HIDE_EMAILS = [
+      'abdurrehmanusmani574@gmail.com',
+      'jawadingemini@gmail.com',
+      'anteemoneee@gmail.com',
+      'jawadshafaqat0910@gmail.com'
+    ];
+
+    function isHidden(email) { return HIDE_EMAILS.indexOf(String(email || '').trim().toLowerCase()) !== -1; }
+
+    var $ = function (id) { return document.getElementById(id); };
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function getDb() {
+      if (window.db) return window.db;
+      if (_sdb) return _sdb;
+      try { _sdb = supabase.createClient(SUPA_URL, SUPA_ANON); return _sdb; } catch (_) { return null; }
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    /* ---------- number + ring animation ---------- */
+    function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
+
+    function countUp(el, to) {
+      if (reduce) { el.textContent = to.toLocaleString('en-US'); return; }
+      var from = 0, dur = 1200, t0 = performance.now();
+      function step(now) {
+        var p = Math.min(1, (now - t0) / dur);
+        el.textContent = Math.round(from + (to - from) * easeOutExpo(p)).toLocaleString('en-US');
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    var RING_C = 326.726; // 2 * PI * 52
+    function paintRing(n) {
+      var fill = $('cc-fill'), num = $('cc-ring-num'), badge = $('cc-ring-badge');
+      var pct = Math.min(1, n / CLUB_CAP);
+      if (fill) fill.style.strokeDashoffset = String(RING_C * (1 - pct));
+      countUp(num, n);
+      if (badge) {
+        badge.textContent = n >= CLUB_CAP ? 'All 100 seats filled' : (CLUB_CAP - n) + ' ' + (CLUB_CAP - n === 1 ? 'seat' : 'seats') + ' still open';
+      }
+    }
+
+    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function monthYear(iso) {
+      if (!iso) return 'Not yet';
+      var d = new Date(iso);
+      if (isNaN(d)) return 'Not yet';
+      return MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    }
+    function fullDate(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      if (isNaN(d)) return '';
+      return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    /* ---------- render ---------- */
+    var members = [];
+    var totalCount = 0;
+    var youId = null;
+    var grid, countEl;
+
+    function nameOf(m) {
+      var n = (m.full_name || '').trim();
+      if (n) return n;
+      var u = (m.username || '').trim();
+      if (u) return u;
+      return 'Anteemonee member';
+    }
+
+    function cardHtml(m, i) {
+      var nm = nameOf(m);
+      var handle = (m.username || '').trim();
+      var you = youId && m.id === youId ? ' is-you' : '';
+      var av = m.avatar_url
+        ? '<img src="' + esc(m.avatar_url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+        : '';
+      return '' +
+        '<article class="cc-card' + you + '" role="listitem">' +
+          '<span class="cc-rank" aria-label="Number ' + m.rank + '">#' + m.rank + '</span>' +
+          '<span class="cc-av" aria-hidden="true">' + av + '<span class="cc-fb">' + esc(nm.charAt(0).toUpperCase()) + '</span></span>' +
+          '<span class="cc-who">' +
+            '<span class="cc-name"><span class="cc-nm">' + esc(nm) + '</span>' +
+              (youId && m.id === youId ? '<span class="cc-you-flag">You</span>' : '') +
+            '</span>' +
+            '<span class="cc-sub">' + (handle ? '@' + esc(handle) + ' · ' : '') + esc(fullDate(m.created_at)) + '</span>' +
+          '</span>' +
+        '</article>';
+    }
+
+    function renderGrid() {
+      var html = '';
+      for (var i = 0; i < members.length; i++) html += cardHtml(members[i], i);
+      grid.innerHTML = html;
+
+      // Avatars: hide the letter fallback once (and if) the photo loads.
+      var imgs = grid.querySelectorAll('.cc-av img');
+      for (var j = 0; j < imgs.length; j++) {
+        (function (img) {
+          var fb = img.parentNode.querySelector('.cc-fb');
+          if (fb) fb.style.display = 'none';
+          img.addEventListener('error', function () {
+            img.style.display = 'none';
+            if (fb) fb.style.display = '';
+          });
+        })(imgs[j]);
+      }
+
+      if (countEl) countEl.textContent = String(members.length);
+    }
+
+    function fillStats(total) {
+      var n = members.length;
+      var stats = document.querySelectorAll('#cc-stats [data-count]');
+      var vals = [n, Math.max(0, CLUB_CAP - n)];
+      for (var i = 0; i < stats.length; i++) countUp(stats[i], vals[i] != null ? vals[i] : 0);
+
+      var since = $('cc-since');
+      if (since) {
+        var first = members.reduce(function (acc, m) {
+          return (!acc || (m.created_at && m.created_at < acc)) ? m.created_at : acc;
+        }, null);
+        since.textContent = monthYear(first);
+      }
+
+      fillClaim(n);
+    }
+
+    function fillClaim(n) {
+      var full = n >= CLUB_CAP;
+      var fill = $('cc-meter-fill'), num = $('cc-meter-num');
+      var eb = $('cc-claim-eyebrow'), title = $('cc-claim-title'), text = $('cc-claim-text');
+      if (fill) fill.style.width = Math.min(100, (n / CLUB_CAP) * 100) + '%';
+      if (num) num.textContent = n + ' / ' + CLUB_CAP;
+      if (eb) eb.textContent = full ? 'Roll complete' : (CLUB_CAP - n) + ' spots open';
+      if (title) {
+        title.textContent = full
+          ? 'The first hundred are on the sheet.'
+          : 'Take your place on the roll.';
+      }
+      if (text) {
+        text.textContent = full
+          ? 'The Century Club is closed to new members, but nothing here is locked away. Sign in and the whole library is waiting for you.'
+          : 'Every account gets the whole library: eBooks, flashcards, past papers and an AI tutor that actually knows your syllabus. The Century Club just marks the people who were here at the start.';
+      }
+    }
+
+    function fillYou() {
+      var bar = $('cc-you-bar');
+      if (!bar || !youId) return;
+      var row = null;
+      for (var i = 0; i < members.length; i++) { if (members[i].id === youId) { row = members[i]; break; } }
+      bar.className = 'cc-you-bar is-on';
+      if (row) {
+        bar.innerHTML = '<b>That is you, number ' + row.rank + '.</b>' +
+          '<span>Joined ' + esc(fullDate(row.created_at)) + '. Your place on the roll is permanent.</span>';
+      } else {
+        bar.innerHTML = '<b>You are not on the Century Club roll.</b>' +
+          '<span>Nothing is locked away though. Your account has the same full library.</span>';
+      }
+    }
+
+    /* ---------- loading / error states ---------- */
+    var skeletons = '';
+    function buildSkeleton() {
+      var s = $('cc-skel');
+      if (!s || s.childElementCount) return;
+      var out = '';
+      for (var i = 0; i < 12; i++) out += '<div class="cc-skel-item"></div>';
+      s.innerHTML = out;
+    }
+
+    function showError(msg) {
+      buildSkeleton(); if ($('cc-skel')) $('cc-skel').style.display = 'none';
+      if ($('cc-empty')) $('cc-empty').style.display = 'none';
+      var box = $('cc-error');
+      if (msg) $('cc-error-msg').textContent = msg;
+      if (box) box.style.display = 'block';
+      // Keep the hero honest rather than pretending the club is empty.
+      paintRing(0);
+      var badge = $('cc-ring-badge');
+      if (badge) badge.textContent = 'Register unavailable';
+      fillStats(0);
+    }
+
+    function showEmpty() {
+      buildSkeleton(); if ($('cc-skel')) $('cc-skel').style.display = 'none';
+      if ($('cc-error')) $('cc-error').style.display = 'none';
+      if ($('cc-empty')) $('cc-empty').style.display = 'block';
+      paintRing(0);
+      fillStats(0);
+    }
+
+    /* ---------- data ---------- */
+    var busy = false;
+
+    function load() {
+      if (busy) return;
+      busy = true;
+      $('cc-error').style.display = 'none';
+      $('cc-empty').style.display = 'none';
+      buildSkeleton();
+      var sk = $('cc-skel'); if (sk) sk.style.display = 'grid';
+
+      var db = getDb();
+      if (!db) {
+        busy = false;
+        showError('The members database could not be reached. Please try again.');
+        return;
+      }
+
+      // Preferred path: the SECURITY DEFINER RPC (reads auth.users, oldest first,
+      // and applies the curated roll from century_club_config).
+      db.rpc('get_century_club', { p_limit: CLUB_CAP })
+        .then(function (res) {
+          if (res && res.error) throw res.error;
+          var rows = ((res && res.data) || []).map(function (r) {
+            return {
+              rank: Number(r.rank), id: r.id, username: r.username, full_name: r.full_name,
+              avatar_url: r.avatar_url, created_at: r.created_at
+            };
+          });
+          if (!rows.length) return finish(0, []);
+          var t = rows[0].total_count != null ? Number(rows[0].total_count) : rows.length;
+          finish(t, rows);
+        })
+        .catch(function (err) {
+          console.warn('[century-club] RPC unavailable:', (err && err.message) || err);
+          // Fallback used until the migration is applied: read the public
+          // profiles table and apply the same curated rules here.
+          db.from('profiles')
+            .select('id,username,full_name,profile_image_url,created_at,email', { count: 'exact' })
+            .order('created_at', { ascending: true })
+            .limit(500)
+            .then(function (res2) {
+              if (res2 && res2.error) throw res2.error;
+              var all = ((res2 && res2.data) || []).filter(function (r) { return !isHidden(r.email); });
+              var rows2 = all.slice(0, CLUB_CAP).map(function (r, i) {
+                return {
+                  rank: i + 1, id: r.id, username: r.username, full_name: r.full_name,
+                  avatar_url: r.profile_image_url, created_at: r.created_at
+                };
+              });
+              finish(all.length, rows2);
+            })
+            .catch(function (err2) {
+              console.warn('[century-club] profiles fallback failed:', (err2 && err2.message) || err2);
+              showError('The Century Club is still being set up. Please check back shortly.');
+            });
+        })
+        .then(function () { busy = false; });
+    }
+
+    function finish(total, rows) {
+      var sk = $('cc-skel'); if (sk) sk.style.display = 'none';
+      members = rows || [];
+      if (!members.length) { showEmpty(); return; }
+      totalCount = Number(total) || members.length;
+      renderGrid();
+      fillStats(totalCount);
+      fillYou();
+      // Ring + counters start once the grid is in place.
+      requestAnimationFrame(function () { paintRing(members.length); });
+    }
+
+    /* ---------- search ---------- */
+    function wireSearch() {
+      var input = $('cc-search'), wrap = $('cc-search-wrap');
+      if (!input || !wrap) return;
+      var cards = null;
+      function cardsOf() { if (!cards || !cards.length) cards = Array.prototype.slice.call(grid.querySelectorAll('.cc-card')); return cards; }
+      function apply() {
+        var q = input.value.trim().toLowerCase();
+        wrap.classList.toggle('has-value', q.length > 0);
+        if (!q) {
+          cardsOf().forEach(function (c) { c.hidden = false; });
+          $('cc-empty').style.display = 'none';
+          if (countEl) countEl.textContent = String(members.length);
+          return;
+        }
+        var shown = 0;
+        cardsOf().forEach(function (c) {
+          var hit = c.textContent.toLowerCase().indexOf(q) !== -1;
+          c.hidden = !hit;
+          if (hit) shown++;
+        });
+        if (countEl) countEl.textContent = String(shown);
+        $('cc-empty').style.display = shown ? 'none' : 'block';
+      }
+      var t = null;
+      input.addEventListener('input', function () { clearTimeout(t); t = setTimeout(apply, 90); });
+      input.addEventListener('search', apply);
+      $('cc-search-x').addEventListener('click', function () { input.value = ''; apply(); input.focus(); });
+      var reset = $('cc-empty-reset');
+      if (reset) reset.addEventListener('click', function () { input.value = ''; apply(); input.focus(); });
+      grid.addEventListener('keydown', function (e) { if (e.key === 'Escape' && input.value) { input.value = ''; apply(); } });
+    }
+
+    /* ---------- boot ---------- */
+    function boot() {
+      grid = $('cc-grid');
+      countEl = $('cc-search-count');
+
+      requestAnimationFrame(function () { $('cc-hero').classList.add('is-in'); });
+
+      var retry = $('cc-retry');
+      if (retry) retry.addEventListener('click', load);
+      wireSearch();
+
+      // Pick up the signed-in id as soon as app.js resolves the session.
+      function syncYou() {
+        var id = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null;
+        if (id === youId) return;
+        youId = id;
+        if (members.length) { renderGrid(); fillYou(); }
+      }
+      if (typeof currentUser !== 'undefined') {
+        syncYou();
+        var n = 0;
+        var iv = setInterval(function () {
+          n++; syncYou();
+          if (currentUser || n > 30) clearInterval(iv);
+        }, 300);
+        window.addEventListener('auth-ready', syncYou);
+      }
+
+      load();
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  })();
+  </script>
+</body>
+</html>
