@@ -966,20 +966,102 @@
   // Explicit only: avoids hijacking "what is an image..." study questions.
   // Pure text trigger: no buttons or modes. Anything that reads like an
   // image request routes to image generation.
-  var IMAGE_NOUNS = '(image|picture|photo|illustration|drawing|diagram|poster|logo|art|painting)';
-  var IMAGE_VERBS = '(generate|create|make|draw|paint|design|produce|show|give|send)';
+  // Widened so ordinary phrasing routes on its own: "sketch the water cycle",
+  // "wallpaper of Karachi at night", "tasveer banao". An image noun is still
+  // required, because bare "draw X" would swallow study questions like "draw a
+  // conclusion" or "make a graph in the answer".
+  var IMAGE_NOUNS = '(image|picture|photo|photograph|illustration|drawing|diagram|poster|logo|art|painting|sketch|wallpaper|meme|avatar|icon|banner|portrait|scene|artwork|visual)';
+  var IMAGE_VERBS = '(generate|create|make|draw|paint|design|produce|show|give|send|render|sketch|illustrate|visualise|visualize|capture|illustrate)';
+  // Roman Urdu and the phrasing students actually type.
+  var IMAGE_URDU = '(tasveer|tasveerbanai|image|picture|photo|sketch|drawing|khanay|tablo)';
+
+  // Phrases that look like an image request but are asking for words. These must
+  // never be hijacked, or ordinary study help silently turns into a picture.
+  var IMAGE_FALSE_FRIENDS = [
+    'draw a conclusion', 'draw conclusions', 'draw a graph', 'draw graphs',
+    'draw a diagram in', 'diagram in text', 'in text form', 'in text',
+    'write a description', 'describe the image', 'what is an image',
+    'what are images', 'types of image', 'image processing', 'image compression',
+    'image format', 'unit of image', 'real image', 'virtual image',
+    'make a plan', 'make a summary', 'make a table', 'make a list',
+    'make a note', 'make a difference', 'show me how', 'show the steps',
+    'show your work', 'show the formula', 'show me the code',
+    'explain how images work', 'binary image', 'grayscale image',
+  ];
+  // ...unless the student is clearly contrasting it with a real picture.
+  var IMAGE_FALSE_FRIEND_BYPASS = /(but|instead|rather)\b[^.?!]{0,40}\b(generate|create|draw|make|paint|render|sketch)\b/i;
+
+  function looksLikeTextOnlyAsk(t) {
+    for (var i = 0; i < IMAGE_FALSE_FRIENDS.length; i++) {
+      if (t.indexOf(IMAGE_FALSE_FRIENDS[i]) !== -1) {
+        if (IMAGE_FALSE_FRIEND_BYPASS.test(t)) continue;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // These verbs already mean "make me a picture", so they do not need a noun:
+  // "sketch the water cycle", "visualise the ecosystem". "draw" is excluded on
+  // purpose, because "draw a conclusion" / "draw a graph" are everyday phrases.
+  var VISUAL_VERB = '\\b(sketch|paint|render|illustrate|visualise|visualize|illustrate|depict)\\b';
+  // Roman Urdu needs both orders: "tasveer banao" and "tasveer chahiye".
+  var URDU_VERB = '\\b(banao|banani|banway|banaye|banati|kar[oe]|kro|kardo|d[eo]|dijiye|chahiye|chaahiye|banwa)\\b';
 
   function isImageGenRequest(text) {
     if (!text || isCodingTask(text)) return false;
     var t = String(text).trim();
     if (/^\s*\/image\b/i.test(t)) return true;
-    var leadRe = new RegExp('^\\s*(please\\s+)?' + IMAGE_VERBS + '\\s+(me\\s+|us\\s+)?(an?\\s+|the\\s+)?' + IMAGE_NOUNS + '\\b', 'i');
-    if (leadRe.test(t)) return true;
-    var midRe = new RegExp('\\b' + IMAGE_VERBS + '\\s+(me\\s+|us\\s+|an?\\s+|the\\s+)?.{0,60}\\b' + IMAGE_NOUNS + '\\b\\s+(of|for|about|showing|with|depicting)\\b', 'i');
+    if (/^\s*\/(?:draw|paint|art|sketch)\b/i.test(t)) return true;
+
+    var lower = t.toLowerCase();
+    if (looksLikeTextOnlyAsk(lower)) return false;
+
+    // Roman Urdu: "tasveer banao", "picture banao", "mujhe tasveer chahiye"
+    if (new RegExp(IMAGE_URDU + '\\s*' + URDU_VERB, 'i').test(t)) return true;
+    if (new RegExp(URDU_VERB + '\\s*(?:me\\s+)?(?:ek\\s+)?' + IMAGE_URDU, 'i').test(t)) return true;
+
+    // "give me a picture of a cat", "can you draw a diagram of the heart"
+    var polite = new RegExp('^\\s*(please\\s+)?(can\\s+you\\s+|could\\s+you\\s+|would\\s+you\\s+)?' + IMAGE_VERBS + '\\s+(me\\s+|us\\s+|an?\\s+|the\\s+)?(?:of\\s+)?' + IMAGE_NOUNS + '\\b', 'i');
+    if (polite.test(t)) return true;
+
+    // "sketch the water cycle", "visualise the ecosystem for me"
+    if (new RegExp(VISUAL_VERB + '\\s+(me\\s+|an?\\s+|the\\s+)?\\S', 'i').test(t)) return true;
+
+    // "... generate an image of ..." anywhere in the sentence
+    var midRe = new RegExp('\\b' + IMAGE_VERBS + '\\s+(me\\s+|us\\s+|an?\\s+|the\\s+)?.{0,60}\\b' + IMAGE_NOUNS + '\\b\\s*(of|for|about|showing|with|depicting|that|where)\\b', 'i');
     if (midRe.test(t)) return true;
-    var wantRe = new RegExp('\\bi\\s+(want|need)\\s+(an?\\s+|the\\s+)?' + IMAGE_NOUNS + '\\b', 'i');
+
+    // "i want/need a picture", "mujhe tasveer chahiye"
+    var wantRe = new RegExp('\\b(?:i\\s+(?:want|need|require))\\s+(an?\\s+|the\\s+|ek\\s+)?' + IMAGE_NOUNS + '\\b', 'i');
     if (wantRe.test(t)) return true;
+
+    // "a picture of a lion", "logo for my app", "wallpaper of the stars"
+    var bareRe = new RegExp('^\\s*(an?\\s+|the\\s+)?' + IMAGE_NOUNS + '\\s+(of|for|about|showing|with|depicting)\\b', 'i');
+    if (bareRe.test(t)) return true;
+
     return false;
+  }
+
+  // Vision. The student attaching an image already routes to the vision model, so
+  // this exists for the cases where they announce the intent before uploading,
+  // or attach one with a vague caption. It only ever runs when an image is
+  // actually present, so it can never fire on text alone.
+  var VISION_TRIGGERS = '\\b(scan|scanned|read|reads|look at|whats (in|this|that)|what is (in|this|that)|solve|explain|answer|question|homework|worksheet|transcribe|ocr|extract|summarise|summarize|identify|check this|correct this|diagram|label|notes?|photo|picture|image|pic)\\b';
+  // True whenever an image is attached: the vision model reads it and the text
+  // model answers from that description, whatever the student typed alongside.
+  function wantsVisionRead(text, hasImages) {
+    if (!hasImages) return false;
+    return true;
+  }
+  // They asked us to look at something but never attached it. Worth catching so
+  // the reply can ask for the photo instead of answering blind.
+  function asksToScanWithoutImage(text) {
+    if (!text) return false;
+    var t = String(text).trim();
+    if (!new RegExp(VISION_TRIGGERS, 'i').test(t)) return false;
+    return /\b(this|these|it|here|my (photo|picture|image|notes|page|book|work|homework)|attached?)\b/i.test(t)
+        || /^\s*(scan|read|look at|solve|explain|check|ocr|transcribe)\b/i.test(t);
   }
 
   function extractImagePrompt(text) {
@@ -1497,6 +1579,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     });
 
     document.getElementById('btn-new-chat').addEventListener('click', newChat);
+    try { bindChatSearch(); } catch (e) { console.warn('[Search] setup failed', e); }
     document.getElementById('btn-new-chat-mobile').addEventListener('click', () => { closeMobileSidebar(); newChat(); });
 
     document.querySelectorAll('.quick-btn').forEach(btn => {
@@ -1869,6 +1952,18 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 - NEVER refuse a question and NEVER tell the student to switch to another model, tutor, or persona. There is only one assistant. If a question needs code, just answer it.
 - NEVER output a refusal or any switch marker.`;
 
+    // Capabilities. The student should feel they are talking to one assistant
+    // that can read what they photograph and can draw what they describe. Behind
+    // the scenes those requests are handled by dedicated vision and image models,
+    // but the student never needs to know, ask, or choose: never mention models,
+    // tools, routing, or "vision", and never refuse on the grounds that you
+    // cannot see or cannot create images.
+    ctx += `\n\nWHAT YOU CAN DO (all of it is you, there is nothing else to switch to):
+- READING IMAGES: when the student attaches a photo, screenshot, diagram, handwritten page, or past-paper question, read it carefully and answer from what is actually in it. The image is described to you before you reply, so treat that description as ground truth. Never say you cannot see the image, never ask them to retype it, and never apologise for not being able to view it. If part of the image is genuinely unreadable, say which part, briefly, and answer the rest.
+- CREATING IMAGES: when the student asks for a picture, diagram, drawing, poster, logo, illustration, or any visual, produce it. Say nothing about it beforehand, do not apologise, and do not describe how you would make it. Just make it and then, if useful, add one short line about the result.
+- ONE ASSISTANT: there is no second bot, no "image mode", no switching. If the student asks what you can do, tell them plainly that you can answer questions, read their photos and diagrams, and create images for them. If they ask which company or model you are, answer as Anteemonee and move on.
+- NEVER SAY: "I can't generate images", "I can't see images", "as a text model", "I don't have vision", "please use the image tool", or anything that implies the student has to do it themselves or pick a different assistant.`;
+
     // Voice mode — short spoken responses, no filler words
     if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.voiceMode) {
       ctx += `\n\nVOICE MODE ACTIVE — CRITICAL RULES:
@@ -2071,7 +2166,122 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     } catch (_) {}
   }
 
+  // ── Chat history search ────────────────────────────────────────────────────
+  // The desktop and mobile sidebars each own an input, but one shared query so
+  // typing in either filters both lists at once.
+  let chatSearchQuery = '';
+  function currentChatSearch() { return chatSearchQuery.trim(); }
+
+  // Split on whitespace so "water cycle" only matches the phrase in that order.
+  function searchTerms(query) {
+    return String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
+  }
+  // Best matching message snippet, so results show why they matched.
+  function matchSnippet(conv, query) {
+    var terms = searchTerms(query);
+    if (!terms.length) return '';
+    var msgs = Array.isArray(conv && conv.messages) ? conv.messages : [];
+    var best = '', bestScore = 0;
+    for (var i = 0; i < msgs.length; i++) {
+      var body = String((msgs[i] && msgs[i].content) || '').replace(/\s+/g, ' ').trim();
+      if (!body) continue;
+      var low = body.toLowerCase();
+      var score = 0;
+      for (var t = 0; t < terms.length; t++) { if (low.indexOf(terms[t]) !== -1) score++; }
+      if (score > bestScore) { bestScore = score; best = body; }
+    }
+    if (!best || !bestScore) return '';
+    // Show the neighbourhood of the first hit rather than the very start.
+    var at = -1, firstTerm = terms[0];
+    for (var k = 0; k < terms.length && at === -1; k++) at = best.toLowerCase().indexOf(terms[k]);
+    var start = at > 48 ? at - 40 : 0;
+    var text = (start > 0 ? '\u2026' : '') + best.slice(start, start + 96) + (start + 96 < best.length ? '\u2026' : '');
+    return '<span class="history-snippet">' + highlightMatch(text, query) + '</span>';
+  }
+  function conversationMatches(conv, query) {
+    var terms = searchTerms(query);
+    if (!terms.length) return true;
+    var hay = String((conv && conv.title) || '').toLowerCase();
+    var msgs = Array.isArray(conv && conv.messages) ? conv.messages : [];
+    for (var i = 0; i < msgs.length; i++) hay += ' ' + String((msgs[i] && msgs[i].content) || '').toLowerCase();
+    // Every term must appear somewhere in the chat, which is what students
+    // expect from a search box.
+    for (var t = 0; t < terms.length; t++) if (hay.indexOf(terms[t]) === -1) return false;
+    return true;
+  }
+  function searchScore(conv, query) {
+    var terms = searchTerms(query);
+    var title = String((conv && conv.title) || '').toLowerCase();
+    var score = 0;
+    for (var t = 0; t < terms.length; t++) {
+      if (title.indexOf(terms[t]) !== -1) score += 3;
+      else if (Array.isArray(conv && conv.messages)) {
+        for (var i = 0; i < conv.messages.length; i++) {
+          if (String((conv.messages[i] && conv.messages[i].content) || '').toLowerCase().indexOf(terms[t]) !== -1) { score += 1; break; }
+        }
+      }
+    }
+    return score;
+  }
+  // Wrap matches in <mark>. Operates on escaped text, and splits on the terms
+  // first so the markers are never injected into user content.
+  function highlightMatch(text, query) {
+    var safe = escapeHtml(String(text || ''));
+    var terms = searchTerms(query);
+    if (!terms.length) return safe;
+    // Escape the term for use inside a regex, then match on the escaped form.
+    var pattern = terms
+      .map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); })
+      .filter(Boolean)
+      .sort(function (a, b) { return b.length - a.length; });
+    if (!pattern.length) return safe;
+    var re;
+    try { re = new RegExp('(' + pattern.join('|') + ')', 'gi'); } catch (_) { return safe; }
+    return safe.replace(re, '<mark>$1</mark>');
+  }
+  function applyChatSearch() {
+    var query = currentChatSearch();
+    document.querySelectorAll('[data-chat-search]').forEach(function (box) {
+      var input = box.querySelector('.chat-search-input');
+      var clear = box.querySelector('.chat-search-clear');
+      if (input && input.value !== query) input.value = query;
+      if (clear) clear.hidden = !query;
+      box.setAttribute('data-active', query ? 'true' : 'false');
+    });
+    try { renderHistory(); } catch (_) {}
+  }
+  function bindChatSearch() {
+    document.querySelectorAll('[data-chat-search]').forEach(function (box) {
+      if (box.dataset.bound === '1') return;
+      box.dataset.bound = '1';
+      var input = box.querySelector('.chat-search-input');
+      var clear = box.querySelector('.chat-search-clear');
+      if (!input) return;
+      // Debounced so a long history is not re-rendered on every keystroke.
+      var timer = null;
+      input.addEventListener('input', function () {
+        chatSearchQuery = input.value;
+        var clearBtn = box.querySelector('.chat-search-clear');
+        if (clearBtn) clearBtn.hidden = !input.value;
+        box.setAttribute('data-active', input.value ? 'true' : 'false');
+        clearTimeout(timer);
+        timer = setTimeout(function () { try { renderHistory(); } catch (_) {} }, 130);
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); try { renderHistory(); } catch (_) {} }
+        else if (e.key === 'Escape' && input.value) { e.preventDefault(); input.value = ''; chatSearchQuery = ''; applyChatSearch(); }
+      });
+      if (clear) clear.addEventListener('click', function () {
+        input.value = ''; chatSearchQuery = '';
+        applyChatSearch();
+        input.focus();
+      });
+    });
+  }
+
   function newChat() {
+    // Leaving a filtered list behind looks like history has vanished.
+    if (currentChatSearch()) { chatSearchQuery = ''; try { applyChatSearch(); } catch (_) {} }
     revealChatView();
     activeConversationId = null;
     clearChatUrlParam();
@@ -2200,19 +2410,34 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       var s = c.subject || 'Physics';
       return s === selectedSubject;
     });
-    // pinned first, then by recency
+    // Search narrows further, across titles AND the messages inside each chat.
+    var query = currentChatSearch();
+    if (query) visible = visible.filter(function (c) { return conversationMatches(c, query); });
+    // pinned first, then by recency. While searching, relevance leads.
     var sorted = visible.slice().sort(function(a,b){
+      if (query) {
+        var ra = searchScore(a, query), rb = searchScore(b, query);
+        if (ra !== rb) return rb - ra;
+      }
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
       return (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0);
-    }).slice(0,30);
+    }).slice(0, query ? 50 : 30);
     var pinSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
     var pinSvgFilled = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
     const html = sorted.map(c =>
-      `<div class="history-item ${c.pinned ? 'pinned' : ''} ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}">${c.pinned ? '<span class="history-pin-mark">'+pinSvgFilled+'</span>' : ''}<span class="history-title">${escapeHtml(c.title)}</span><button class="history-pin-btn ${c.pinned ? 'pinned' : ''}" data-id="${c.id}" aria-label="${c.pinned ? 'Unpin' : 'Pin'}" title="${c.pinned ? 'Unpin' : 'Pin'}">${c.pinned ? pinSvgFilled : pinSvg}</button><button class="history-edit-btn" data-id="${c.id}" aria-label="Rename chat" title="Rename"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button><button class="history-delete-btn" data-id="${c.id}" aria-label="Delete chat" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`
+      `<div class="history-item ${c.pinned ? 'pinned' : ''} ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}">${c.pinned ? '<span class="history-pin-mark">'+pinSvgFilled+'</span>' : ''}<span class="history-item-text"><span class="history-title">${query ? highlightMatch(c.title, query) : escapeHtml(c.title)}</span>${query ? matchSnippet(c, query) : ''}</span><button class="history-pin-btn ${c.pinned ? 'pinned' : ''}" data-id="${c.id}" aria-label="${c.pinned ? 'Unpin' : 'Pin'}" title="${c.pinned ? 'Unpin' : 'Pin'}">${c.pinned ? pinSvgFilled : pinSvg}</button><button class="history-edit-btn" data-id="${c.id}" aria-label="Rename chat" title="Rename"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button><button class="history-delete-btn" data-id="${c.id}" aria-label="Delete chat" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`
     ).join('');
-    sidebarHistory.innerHTML = html;
-    if (sidebarHistoryMobile) sidebarHistoryMobile.innerHTML = html;
+    // No early return here: the binding code below must still run, otherwise the
+    // chat-link controls would go unclickable the next time a search has results.
+    if (!sorted.length && query) {
+      var noneHtml = '<div class="chat-search-empty">No chats match \u201C' + escapeHtml(query) + '\u201D</div>';
+      sidebarHistory.innerHTML = noneHtml;
+      if (sidebarHistoryMobile) sidebarHistoryMobile.innerHTML = noneHtml;
+    } else {
+      sidebarHistory.innerHTML = html;
+      if (sidebarHistoryMobile) sidebarHistoryMobile.innerHTML = html;
+    }
 
     [sidebarHistory, sidebarHistoryMobile].forEach(container => {
       if (!container) return;
@@ -4844,6 +5069,16 @@ function handleFileBlocks(div, text) {
     // otherwise.
     let visionContext = '';
     let visionFailed = false;
+    // Asked us to read something but never attached it. Say so plainly and ask
+    // for the photo, rather than answering blind or claiming to have seen it.
+    if (!hasImages && asksToScanWithoutImage(text)) {
+      visionContext =
+        'The student asked you to read, scan or answer something from a photo, diagram or page, ' +
+        'but no image came through. You cannot see anything yet. Reply in one or two short ' +
+        'sentences: say you need them to attach or send the photo, and that you will read it and ' +
+        'answer straight away once they do. Do not answer the question speculatively, do not say ' +
+        'you cannot see images, and do not pretend you already looked.';
+    }
     if (hasImages) {
       try {
         updateStreamingStatus(streamDiv, 'Reading the image' + (imagesToSend.length > 1 ? 's' : '') + '\u2026', 'analyzing');

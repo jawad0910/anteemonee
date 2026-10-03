@@ -38,7 +38,7 @@
 html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-family: var(--font-ui);
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
@@ -67,6 +67,19 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
 .header-actions { margin-left: auto; }
 .mobile-menu { z-index: 99; }
 
+/* ══ Type system ══════════════════════════════════════════════════════════════
+   SF Pro on Apple is already the most modern UI face available; Inter is loaded
+   purely as the fallback so Windows and Android get the same geometric,
+   slightly tighter feel instead of Arial. Fraunces carries display type. */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+             'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter',
+             'Segoe UI Variable Display', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo,
+               Consolas, monospace;
+}
+
 /* Sidebar - Modern glass */
 .sidebar {
   width: var(--sidebar-width); min-width: var(--sidebar-width); height: 100%;
@@ -74,17 +87,134 @@ textarea { border: none; outline: none; background: none; font-family: inherit; 
   display: flex; flex-direction: column;
   transition: margin-left 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.22s ease, visibility 0s;
 }
-.sidebar-top { padding: 24px 20px; border-bottom: 1px solid var(--border-glass); }
+.sidebar-top { padding: 20px 16px 16px; border-bottom: 1px solid var(--border-glass); }
+
+/* New chat: a real control, so it gets a real press rather than a jump. The
+   raised look is reserved for hover; at rest it sits flat and quiet. */
 .btn-new-chat {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 14px 16px; background: var(--liquid-bg-soft);
+  position: relative; overflow: hidden;
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 9px;
+  height: 42px; padding: 0 16px;
+  background: var(--liquid-bg-soft);
   border: 1px solid var(--liquid-border-soft);
-  border-radius: 14px; color: var(--text-primary); font-size: 0.9375rem; font-weight: 500;
+  border-radius: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9375rem; font-weight: 590; letter-spacing: -0.006em;
   box-shadow: var(--neo-shadow-recessed-sm);
-  transition: all var(--transition-fast);
+  transition:
+    background-color .2s cubic-bezier(.2,.8,.3,1),
+    border-color .2s cubic-bezier(.2,.8,.3,1),
+    color .2s cubic-bezier(.2,.8,.3,1),
+    box-shadow .24s cubic-bezier(.2,.8,.3,1),
+    transform .18s cubic-bezier(.2,.8,.3,1);
+  -webkit-user-select: none; user-select: none;
 }
-.btn-new-chat:hover { background: var(--liquid-bg); border-color: var(--liquid-border); box-shadow: var(--neo-shadow-recessed); transform: translateY(-1px); }
-.btn-new-chat:active { background: var(--surface); box-shadow: var(--neo-shadow-pressed); transform: translateY(0); }
+.btn-new-chat-icon {
+  display: inline-flex; flex-shrink: 0;
+  transition: transform .34s cubic-bezier(.2,.9,.3,1.1);
+}
+.btn-new-chat-label { position: relative; }
+/* Sheen: a soft highlight that sweeps across on hover. */
+.btn-new-chat::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 28%, var(--liquid-shine, rgba(255,255,255,.08)) 50%, transparent 72%);
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+.btn-new-chat:hover {
+  background: var(--liquid-bg);
+  border-color: var(--liquid-border);
+  box-shadow: var(--neo-shadow-raised-sm), 0 6px 18px rgba(0,0,0,.16);
+  transform: translateY(-1px);
+}
+.btn-new-chat:hover::after { opacity: 1; }
+.btn-new-chat:hover .btn-new-chat-icon { transform: rotate(90deg); }
+.btn-new-chat:active {
+  transform: translateY(0) scale(.985);
+  box-shadow: var(--neo-shadow-pressed);
+  transition-duration: .08s;
+}
+.btn-new-chat:focus-visible {
+  outline: none;
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+/* Search — sits directly under New chat so it reads as one control block. */
+.chat-search {
+  position: relative;
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 10px; height: 38px; padding: 0 11px;
+  border-radius: 11px;
+  background: var(--surface-recessed);
+  border: 1px solid transparent;
+  transition:
+    background-color .2s ease, border-color .2s ease,
+    box-shadow .22s cubic-bezier(.2,.8,.3,1);
+}
+.chat-search-icon { flex-shrink: 0; color: var(--text-tertiary); transition: color .2s ease; }
+.chat-search-input {
+  flex: 1; min-width: 0;
+  border: none; background: transparent; outline: none;
+  color: var(--text-primary);
+  font-family: inherit; font-size: 0.875rem; font-weight: 450;
+  letter-spacing: -0.004em;
+}
+.chat-search-input::placeholder { color: var(--text-tertiary); }
+/* The native clear affordance duplicates our own button. */
+.chat-search-input::-webkit-search-cancel-button,
+.chat-search-input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+.chat-search-clear {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex-shrink: 0;
+  border-radius: 6px; color: var(--text-tertiary);
+  transition: background-color .16s ease, color .16s ease, transform .16s ease;
+}
+/* display:inline-flex above outranks the UA rule for [hidden], so restate it. */
+.chat-search-clear[hidden] { display: none; }
+.chat-search-clear:hover { background: var(--liquid-bg-soft); color: var(--text-primary); }
+.chat-search-clear:active { transform: scale(.88); }
+.chat-search[data-active='true'] {
+  background: var(--bg-card);
+  border-color: var(--liquid-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.chat-search[data-active='true'] .chat-search-icon { color: var(--text-secondary); }
+.chat-search-empty {
+  padding: 22px 12px; text-align: center;
+  font-size: 0.8125rem; color: var(--text-tertiary); line-height: 1.6;
+}
+/* Highlight the matched run so results read at a glance. */
+.history-title mark,
+.history-snippet mark {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.history-snippet {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.75rem; line-height: 1.45;
+  color: var(--text-tertiary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Rows carry a title (+ a snippet while searching) followed by the action
+   buttons. The text column must be the only thing that shrinks, otherwise a
+   long title pushes the last button outside the row and the sidebar grows a
+   horizontal scrollbar. */
+.history-item { align-items: flex-start; }
+.history-item-text {
+  flex: 1 1 auto;
+  min-width: 0;          /* lets the column shrink inside the flex row */
+  overflow: hidden;      /* nothing may paint outside the rounded row */
+}
+.history-item .history-title, .history-item .history-pin-mark { margin-top: 1px; }
+.history-item .history-title { flex: none; }   /* it is a block, not a flex item */
+/* The action buttons keep their size so they are never the thing that clips. */
+.history-item .history-edit-btn,
+.history-item .history-delete-btn,
+.history-item .history-pin-btn { flex-shrink: 0; }
 
 .sidebar-history { flex: 1; overflow-y: auto; padding: 16px 14px; }
 .sidebar-history:empty::before { content: 'Start a new conversation'; display: block; font-size: 0.875rem; color: var(--text-tertiary); text-align: center; padding: 24px 0; font-weight: 400; }
@@ -273,7 +403,7 @@ body.guest .sidebar-history:empty::before { content: none; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
 .welcome-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 2.25rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 14px;
   color: var(--text);
   line-height: 1.15;
@@ -311,22 +441,63 @@ body.guest .sidebar-history:empty::before { content: none; }
   word-wrap: break-word; overflow-wrap: break-word;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
+/* User bubble: the accent fill is the loudest thing on screen, so it is kept
+   small and the reply stays the visual focus. */
 .messages-list > .message.user .msg-content {
   background: var(--accent);
   color: var(--on-accent);
-  border-radius: 18px 18px 4px 18px;
-  padding: 12px 16px;
+  border-radius: 20px 20px 6px 20px;
+  padding: 11px 16px;
   display: inline-block;
   max-width: 100%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   line-height: 1.6;
+  font-size: 0.9688rem;
+  letter-spacing: -0.004em;
+  box-shadow: 0 1px 2px rgba(0,0,0,.10), 0 4px 14px rgba(0,0,0,.10);
+  transition: box-shadow .28s cubic-bezier(.2,.8,.3,1), transform .28s cubic-bezier(.2,.8,.3,1);
+}
+.messages-list > .message.user:hover .msg-content {
+  box-shadow: 0 2px 4px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.14);
 }
 [data-theme="light"] .messages-list > .message.user .msg-content {
-  background: var(--accent);
-  box-shadow: 0 2px 8px rgba(15,23,42,0.1);
+  box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 14px rgba(15,23,42,.08);
 }
+[data-theme="light"] .messages-list > .message.user:hover .msg-content {
+  box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 8px 22px rgba(15,23,42,.10);
+}
+
+/* Assistant reply: no bubble at all. Floating text reads calmer than a second
+   block of colour, and lets diagrams and code breathe. */
 .messages-list > .message.assistant .msg-content {
   padding: 2px 0;
+  font-size: 1rem;
+  line-height: 1.72;
+  letter-spacing: -0.008em;
+  color: var(--text-primary);
+}
+/* Staggered entrance: a short rise with a slight scale, not a bounce. */
+.messages-list > .message {
+  animation: msgIn .34s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px) scale(.994); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Inline code and links inside replies pick up the tighter rhythm. */
+.messages-list > .message.assistant .msg-content code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  letter-spacing: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .messages-list > .message,
+  .btn-new-chat, .btn-new-chat-icon, .btn-new-chat::after,
+  .chat-search, .messages-list > .message.user .msg-content {
+    animation: none !important;
+    transition: none !important;
+  }
+  .btn-new-chat:hover, .btn-new-chat:active { transform: none; }
+  .btn-new-chat:hover .btn-new-chat-icon { transform: none; }
 }
 
 /* Markdown - Modern Typography */
@@ -1971,7 +2142,7 @@ body.sidebar-collapsed .sidebar {
 /* Welcome: centered prompt + quick actions */
 .chat-welcome { max-width: 768px; width: 100%; margin: 0 auto; }
 .welcome-title { 
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(1.7rem, 4vw, 2.1rem); font-weight: 700; letter-spacing: -0.03em; 
 }
 .welcome-actions {
