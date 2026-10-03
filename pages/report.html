@@ -8,7 +8,7 @@
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/style.css">
   <script>
     // Apply saved theme mode (light/dark/device) before first paint.
     (function () {
@@ -24,8 +24,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg, #080A09);
-      color: var(--text, #EDEFF0);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -34,61 +34,61 @@
     .report-page { width: 100%; max-width: 640px; }
     .report-back {
       display: inline-block; font-size: 13px; font-weight: 600;
-      color: var(--text-secondary, #9BA39E); text-decoration: none;
+      color: var(--text-secondary); text-decoration: none;
       margin-bottom: 20px;
     }
-    .report-back:hover { color: var(--accent, #6366F1); }
+    .report-back:hover { color: var(--accent); }
     .report-page h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
-    .report-sub { font-size: 13px; color: var(--text-secondary, #9BA39E); margin-bottom: 24px; line-height: 1.5; }
-    .rp-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted, #6F7971); margin: 16px 0 8px; }
+    .report-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .rp-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 16px 0 8px; }
     .rp-uid {
       width: 100%; padding: 10px 14px;
       font-size: 12px; font-family: monospace;
-      color: var(--text-secondary, #9BA39E);
-      background: var(--surface, #10130F);
-      border: 1px solid var(--border, #1E231D);
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 10px;
     }
     .rp-readonly {
       padding: 12px 14px; font-size: 13px; line-height: 1.6;
-      color: var(--text, #EDEFF0);
-      background: var(--surface, #10130F);
-      border: 1px solid var(--border, #1E231D);
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 12px;
       max-height: 220px; overflow-y: auto;
       white-space: pre-wrap; word-break: break-word;
     }
-    .rp-readonly.empty { color: var(--text-muted, #6F7971); font-style: italic; }
+    .rp-readonly.empty { color: var(--text-muted); font-style: italic; }
     #rp-desc {
       width: 100%; min-height: 120px; padding: 12px 14px;
       font-size: 14px; font-family: inherit; resize: vertical;
-      color: var(--text, #EDEFF0);
-      background: var(--surface, #10130F);
-      border: 1.5px solid var(--border, #1E231D);
+      color: var(--text);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
       border-radius: 12px;
       transition: border-color 0.2s ease;
     }
-    #rp-desc:focus { outline: none; border-color: var(--accent, #6366F1); }
+    #rp-desc:focus { outline: none; border-color: var(--accent); }
     #rp-error { display: none; font-size: 13px; color: #f87171; margin-top: 12px; }
     .rp-submit {
       width: 100%; margin-top: 20px; padding: 13px;
       font-size: 14px; font-weight: 700;
-      color: #fff; background: var(--accent, #6366F1);
+      color: var(--on-accent); background: var(--accent);
       border: none; border-radius: 12px; cursor: pointer;
       transition: transform 0.15s ease, filter 0.15s ease;
     }
     .rp-submit:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
     .rp-submit:disabled { opacity: 0.6; cursor: default; }
-    .rp-center { text-align: center; padding: 40px 0; color: var(--text-secondary, #9BA39E); font-size: 14px; }
+    .rp-center { text-align: center; padding: 40px 0; color: var(--text-secondary); font-size: 14px; }
     .rp-success-icon {
       width: 56px; height: 56px; margin: 0 auto 16px;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 26px; background: rgba(99,102,241,0.12); border: 1.5px solid rgba(99,102,241,0.3);
+      font-size: 26px; background: var(--accent-soft); border: 1.5px solid var(--accent-soft);
     }
     .rp-status-pill {
       display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
-      color: #60a5fa; background: rgba(96,165,250,0.12);
-      border: 1px solid rgba(96,165,250,0.3);
+      color: var(--text); background: var(--accent-soft);
+      border: 1px solid var(--border);
       padding: 3px 12px; border-radius: 20px; margin: 10px 0 18px;
     }
   </style>
@@ -120,7 +120,7 @@
 
     <div class="rp-center" id="report-success" style="display:none">
       <div class="rp-success-icon">&#10003;</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text,#EDEFF0)">Report sent</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text)">Report sent</div>
       <div><span class="rp-status-pill">STATUS: SENT</span></div>
       <a class="report-back" href="../index.html" style="margin:0">&larr; Back to Chat</a>
     </div>
@@ -192,6 +192,6 @@
       }).catch(function () { fail('Could not verify your session. Please sign in again.'); });
     })();
   </script>
-  <script src="../js/header-ai-dropdown.js?v=6"></script>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
 </body>
 </html>

@@ -43,6 +43,45 @@ function generateUsername(fullName, email) {
   return (email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
 }
 
+// OAuth providers never return a username (Google sends only name/email/picture), and
+// the auth.users trigger that creates the profiles row copies those fields but leaves
+// `username` NULL. So the profile row already exists and the insert path above never
+// runs — which is why these users had to press "Save changes" once to get a username.
+// Derive one here instead, and let the unique constraint arbitrate collisions.
+async function ensureUsername(user, profile) {
+  const existing = profile?.username == null ? '' : String(profile.username).trim();
+  if (existing) return existing;
+
+  const meta = user?.user_metadata || {};
+  const base = generateUsername(meta.full_name || meta.name || '', user?.email);
+
+  // Deterministic suffix first so a collision resolves the same way on every retry,
+  // then one random attempt as a last resort.
+  const seed = String(user?.id || '');
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 9000;
+  const candidates = [
+    base,
+    base.slice(0, 16) + (1000 + h),
+    base.slice(0, 14) + Math.floor(Math.random() * 9000 + 1000),
+  ];
+
+  for (const cand of candidates) {
+    if (!cand || cand.length < 3) continue;
+    const { error, data } = await db.from('profiles')
+      .update({ username: cand })
+      .eq('id', user.id)
+      .select('username')
+      .maybeSingle();
+    if (!error && data?.username) {
+      if (profile) profile.username = data.username;
+      return data.username;
+    }
+  }
+  console.warn('Could not auto-assign a username; user will set it on the account page.');
+  return '';
+}
+
 function setStatus(text) {
   const el = document.getElementById('callback-status');
   if (el) el.textContent = text;
@@ -178,8 +217,8 @@ async function handleUser(user) {
 
       if (insertError) {
         if (insertError.message?.includes('USERNAME_TAKEN') || insertError.code === '23505') {
-          const fallbackUsername = username + Math.floor(Math.random() * 9000 + 1000);
-          await db.from('profiles').insert({
+          const fallbackUsername = username.slice(0, 16) + Math.floor(Math.random() * 9000 + 1000);
+          const { error: retryError } = await db.from('profiles').insert({
             id: user.id,
             username: fallbackUsername,
             email: user.email,
@@ -189,6 +228,7 @@ async function handleUser(user) {
             academic_profile_completed: false,
             goals_completed: false
           });
+          if (retryError) console.error('Profile insert retry failed:', retryError.message);
         } else {
           console.error('Profile insert error:', insertError.message);
         }
@@ -215,6 +255,10 @@ async function handleUser(user) {
       setTimeout(() => { window.location.href = ONBOARDING_URL; }, 1500);
       return;
     }
+
+    // Google signups land here with a trigger-created row whose username is NULL.
+    // Persist one now so the account page never has to be saved by hand.
+    await ensureUsername(user, profile);
 
     // Only seed Google avatar when user never set one. Never overwrite custom upload or explicit removal ('').
     if (avatarUrl && profile.profile_image_url == null) {
