@@ -874,8 +874,8 @@
           </div>
           <div class="footer-col">
             <h4>Legal</h4>
-            <a href="../pages/privacy.html">Privacy Policy</a>
-            <a href="../pages/terms.html">Terms of Service</a>
+            <a href="/privacy/">Privacy Policy</a>
+            <a href="/terms/">Terms of Service</a>
           </div>
         </div>
       </div>
@@ -885,7 +885,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=30"></script>
+  <script src="../js/app.js?v=31"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>
@@ -895,8 +895,12 @@
       acad: null,
       subjects: [],
       subjectDetails: [],
-      ref: { provinces: [], cities: [], education_systems: [], boards: [], class_levels: [], groups: [], subjects_list: [] }
+      ref: { provinces: [], education_systems: [], boards: [], class_levels: [], subjects_list: [] }
     };
+
+    // Boards and class levels are identical across the active systems, so the student is
+    // never asked which system they are in. Change this code to change the default.
+    const PREFERRED_SYSTEM_CODE = 'fsc';
 
     function showToast(msg, isError) {
       const t = document.getElementById('toast');
@@ -929,24 +933,7 @@
       acctData.ref.class_levels = data || [];
     }
 
-    async function loadGroups(systemId) {
-      const { data } = await db.from('groups').select('*').eq('education_system_id', systemId).order('name');
-      acctData.ref.groups = data || [];
-    }
 
-    async function loadSubjectsList(systemId, groupId) {
-      const { data } = await db.from('subjects').select('*')
-        .eq('education_system_id', systemId)
-        .order('is_compulsory', { ascending: false })
-        .order('name');
-      const seen = new Set();
-      acctData.ref.subjects_list = (data || []).filter(s => {
-        const key = s.name.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
 
     async function loadAllSubjects(systemId) {
       const { data } = await db.from('subjects').select('*')
@@ -962,37 +949,10 @@
       });
     }
 
-    async function loadICSSubjectsList(systemId) {
-      const { data } = await db.from('subjects').select('*')
-        .eq('education_system_id', systemId)
-        .eq('is_compulsory', false)
-        .order('name');
-      const seen = new Set();
-      acctData.ref.subjects_list = (data || []).filter(s => {
-        const key = s.name.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
-
-    async function loadAllColleges() {
-      try {
-        const { data } = await db.from('colleges').select('*').order('name');
-        acctData.ref.colleges = data || [];
-      } catch (e) {
-        acctData.ref.colleges = [];
-      }
-    }
-
     async function getCompulsorySubjects() {
       return (acctData.ref.subjects_list || []).filter(s => s.is_compulsory);
     }
 
-    async function loadCities(provinceId) {
-      const { data } = await db.from('cities').select('*').eq('province_id', provinceId).order('name');
-      acctData.ref.cities = data || [];
-    }
 
     async function loadAcademicData(userId) {
       try {
@@ -1021,9 +981,7 @@
       const email = user?.email || 'â€”';
       const imgUrl = p?.profile_image_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? '';
 
-      const provOptions = r.provinces.filter(pr => String(pr.name).toLowerCase() === 'punjab').map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id || !p?.province_id ? 'selected' : ''}>${pr.name}</option>`).join('');
-      const cityOptions = r.cities.map(c => `<option value="${c.id}" ${p?.city_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      const sysOptions = r.education_systems.map(s => `<option value="${s.id}" ${a?.education_system_id == s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+      const provOptions = r.provinces.map(pr => `<option value="${pr.id}" ${p?.province_id == pr.id ? 'selected' : ''}>${pr.name}</option>`).join('');
       const boardOptions = r.boards.map(b => `<option value="${b.id}" ${a?.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
       const classOptions = r.class_levels.map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
       document.getElementById('account-cards').innerHTML = `
@@ -1048,22 +1006,18 @@
 
         <div class="account-card">
           <div class="card-header">
-            <span class="card-title">Personal Info</span>
-            <button class="edit-btn" onclick="toggleSection('personal')">
+            <span class="card-title">Study Details</span>
+            <button class="edit-btn" onclick="toggleSection('studies')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit
             </button>
           </div>
-          <div class="field-rows" id="personal-display">
-            <div class="field-row"><span class="field-label">Date of Birth</span><span class="field-value ${p?.date_of_birth ? '' : 'empty'}">${p?.date_of_birth || 'Not set'}</span></div>
+          <div class="field-rows" id="studies-display">
             <div class="field-row"><span class="field-label">Province</span><span class="field-value ${p?.province_id ? '' : 'empty'}">${p?.province_id ? resolveName(r.provinces, p.province_id) : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">City</span><span class="field-value ${p?.city_id ? '' : 'empty'}">${p?.city_id ? resolveName(r.cities, p.city_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
+            <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
           </div>
-          <div class="field-row-edit" id="personal-edit">
-            <div class="edit-form-group">
-              <label>Date of Birth</label>
-              <input type="date" id="edit-dob" value="${p?.date_of_birth || ''}" max="${new Date().toISOString().split('T')[0]}" lang="en-GB">
-            </div>
+          <div class="field-row-edit" id="studies-edit">
             <div class="edit-form-group">
               <label>Province</label>
               <select id="edit-province" onchange="onProvinceChange()">
@@ -1072,51 +1026,16 @@
               </select>
             </div>
             <div class="edit-form-group">
-              <label>City</label>
-              <select id="edit-city">
-                <option value="">Select city</option>
-                ${cityOptions}
-              </select>
-            </div>
-            <div class="edit-actions">
-              <button class="btn-cancel" onclick="toggleSection('personal')">Cancel</button>
-              <button class="btn-save" onclick="savePersonal()">Save</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="account-card">
-          <div class="card-header">
-            <span class="card-title">Academic Profile</span>
-            <button class="edit-btn" onclick="toggleSection('academic')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit
-            </button>
-          </div>
-          <div class="field-rows" id="academic-display">
-            <div class="field-row"><span class="field-label">Education System</span><span class="field-value ${a?.education_system_id ? '' : 'empty'}">${a?.education_system_id ? resolveName(r.education_systems, a.education_system_id) : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Board</span><span class="field-value ${a?.board_id ? '' : 'empty'}">${a?.board_id ? resolveName(r.boards, a.board_id) : 'Not set'}</span></div>
-            <div class="field-row"><span class="field-label">Class</span><span class="field-value ${a?.class_level_id ? '' : 'empty'}">${a?.class_level_id ? resolveName(r.class_levels, a.class_level_id, 'label') : 'Not set'}</span></div>
-          </div>
-          <div class="field-row-edit" id="academic-edit">
-            <div class="edit-form-group">
-              <label>Education System</label>
-              <select id="edit-edu-system" onchange="onEduSystemChange()">
-                <option value="">Select system</option>
-                ${sysOptions}
-              </select>
-            </div>
-            <div class="edit-form-group">
               <label>Board</label>
               <select id="edit-board"><option value="">Select board</option>${boardOptions}</select>
             </div>
             <div class="edit-form-group">
               <label>Class</label>
-              <select id="edit-class" onchange="onClassChange()"><option value="">Select class</option>${classOptions}</select>
+              <select id="edit-class">${classOptions}</select>
             </div>
             <div class="edit-actions">
-              <button class="btn-cancel" onclick="toggleSection('academic')">Cancel</button>
-              <button class="btn-save" onclick="saveAcademic()">Save</button>
+              <button class="btn-cancel" onclick="toggleSection('studies')">Cancel</button>
+              <button class="btn-save" onclick="saveStudies()">Save</button>
             </div>
           </div>
         </div>
@@ -1134,104 +1053,74 @@
       } else {
         display.classList.add('hidden');
         edit.classList.add('active');
-        if (section === 'academic') preloadAcademicDependent();
+        if (section === 'studies') preloadStudyOptions();
       }
     }
 
-    async function onProvinceChange() {
+    // Boards belong to a province through boards.region. Federal boards
+    // (FBISE) stay available everywhere, matching the onboarding page.
+    function boardsForProvince(provinceId) {
+      const prov = acctData.ref.provinces.find(x => String(x.id) === String(provinceId));
+      if (!prov) return [];
+      return acctData.ref.boards.filter(b => !b.region || b.region === prov.name || b.region === 'Federal');
+    }
+
+    function paintBoardOptions(provinceId, selectedBoard) {
+      const sel = document.getElementById('edit-board');
+      if (!sel) return;
+      const list = boardsForProvince(provinceId);
+      sel.innerHTML = '<option value="">Select board</option>' + list
+        .map(b => `<option value="${b.id}" ${String(selectedBoard) === String(b.id) ? 'selected' : ''}>${b.name}</option>`).join('');
+    }
+
+    function onProvinceChange() {
       const pid = document.getElementById('edit-province').value;
-      if (pid) {
-        await loadCities(pid);
-        const citySelect = document.getElementById('edit-city');
-        const currentCity = acctData.profile?.city_id;
-        citySelect.innerHTML = '<option value="">Select city</option>' + acctData.ref.cities.map(c => `<option value="${c.id}" ${currentCity == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-      }
+      const prev = document.getElementById('edit-board').value;
+      paintBoardOptions(pid, boardsForProvince(pid).some(b => String(b.id) === String(prev)) ? prev : '');
     }
 
-    function renderICSChips() {
-      return acctData.ref.subjects_list.filter(s => !s.is_compulsory).map(s => {
-        const isSelected = acctData.subjects.includes(s.id);
-        return `<div class="multi-select-chip ${isSelected ? 'selected' : ''}" data-id="${s.id}" onclick="toggleSubjectChip(this)">${s.name}</div>`;
-      }).join('');
+    // The education system is no longer something the student picks. It is
+    // derived: whatever they already had, otherwise the default active system.
+    function resolveSystemId() {
+      if (acctData.acad?.education_system_id) return acctData.acad.education_system_id;
+      const preferred = acctData.ref.education_systems.find(s => s.code === PREFERRED_SYSTEM_CODE);
+      return (preferred || acctData.ref.education_systems[0])?.id || null;
     }
 
-    async function onEduSystemChange() {
-      const sid = document.getElementById('edit-edu-system').value;
-      if (!sid) return;
-      const prevBoard = document.getElementById('edit-board').value;
-      const prevClassLabel = document.getElementById('edit-class').selectedOptions[0]?.text || '';
-      await Promise.all([loadBoards(sid), loadClassLevels(sid)]);
-      document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${prevBoard == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-      const matchedClass = acctData.ref.class_levels.find(c => c.label === prevClassLabel);
-      document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${matchedClass && matchedClass.id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
-    }
-
-    async function onClassChange() {
-    }
-
-    async function onBoardChange() {
-      await loadAllColleges();
-      document.getElementById('edit-college').innerHTML = '<option value="">Select college</option>' + acctData.ref.colleges.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    }
-
-    async function preloadAcademicDependent() {
+    async function preloadStudyOptions() {
+      const sysId = resolveSystemId();
+      if (!sysId) return;
       const a = acctData.acad;
-      if (!a) return;
-      if (a.education_system_id) {
-        await Promise.all([loadBoards(a.education_system_id), loadClassLevels(a.education_system_id)]);
-        document.getElementById('edit-board').innerHTML = '<option value="">Select board</option>' + acctData.ref.boards.map(b => `<option value="${b.id}" ${a.board_id == b.id ? 'selected' : ''}>${b.name}</option>`).join('');
-        document.getElementById('edit-class').innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels.map(c => `<option value="${c.id}" ${a.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
+      await Promise.all([loadBoards(sysId), loadClassLevels(sysId)]);
+      paintBoardOptions(document.getElementById('edit-province')?.value, a?.board_id);
+      const cls = document.getElementById('edit-class');
+      if (cls) {
+        cls.innerHTML = '<option value="">Select class</option>' + acctData.ref.class_levels
+          .map(c => `<option value="${c.id}" ${a?.class_level_id == c.id ? 'selected' : ''}>${c.label}</option>`).join('');
       }
     }
 
-    function toggleSubjectChip(el) {
-      if (el.classList.contains('disabled')) return;
-      el.classList.toggle('selected');
-    }
-
-    async function savePersonal() {
-      const btn = document.querySelector('#personal-edit .btn-save');
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-      try {
-        const dob = document.getElementById('edit-dob').value;
-        const provinceId = document.getElementById('edit-province').value || null;
-        const cityId = document.getElementById('edit-city').value || null;
-        const { error } = await db.from('profiles').update({
-          date_of_birth: dob || null,
-          province_id: provinceId,
-          city_id: cityId
-        }).eq('id', currentUser.id);
-        if (error) throw error;
-        acctData.profile.date_of_birth = dob || null;
-        acctData.profile.province_id = provinceId;
-        acctData.profile.city_id = cityId;
-        renderCards();
-        showToast('Personal info updated!');
-      } catch (e) {
-        showToast(e.message || 'Failed to save', true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Save';
-      }
-    }
-
-    async function saveAcademic() {
-      const btn = document.querySelector('#academic-edit .btn-save');
-      const eduSystem = document.getElementById('edit-edu-system').value;
+    async function saveStudies() {
+      const btn = document.querySelector('#studies-edit .btn-save');
+      const provinceId = document.getElementById('edit-province').value || null;
       const board = document.getElementById('edit-board').value;
       const cls = document.getElementById('edit-class').value;
 
-      if (!eduSystem) { showToast('Please select an education system', true); return; }
+      if (!provinceId) { showToast('Please select a province', true); return; }
       if (!board) { showToast('Please select a board', true); return; }
       if (!cls) { showToast('Please select a class', true); return; }
+
+      const sysId = resolveSystemId();
+      if (!sysId) { showToast('No active education system is configured', true); return; }
 
       btn.disabled = true;
       btn.textContent = 'Saving...';
       try {
+        // Academic row first: if that fails we must not touch the profile flags,
+        // or getOnboardingStep() would treat the student as complete.
         const { data: acadProfile, error: acadErr } = await db.from('student_academic_profiles').upsert({
           user_id: currentUser.id,
-          education_system_id: eduSystem,
+          education_system_id: sysId,
           board_id: board,
           class_level_id: cls,
           group_id: null,
@@ -1241,7 +1130,7 @@
 
         if (acadProfile?.id) {
           await db.from('student_subjects').delete().eq('academic_profile_id', acadProfile.id);
-          const { data: subjects } = await db.from('subjects').select('id').eq('education_system_id', eduSystem);
+          const { data: subjects } = await db.from('subjects').select('id').eq('education_system_id', sysId);
           const subjectIds = (subjects || []).map(s => s.id);
           if (subjectIds.length) {
             await db.from('student_subjects').insert(subjectIds.map(sid => ({ academic_profile_id: acadProfile.id, subject_id: sid })));
@@ -1249,10 +1138,18 @@
           acctData.subjects = subjectIds;
         }
 
-        acctData.acad = { ...acctData.acad, education_system_id: eduSystem, board_id: board, class_level_id: cls, group_id: null };
+        const { error: profErr } = await db.from('profiles').update({
+          province_id: provinceId,
+          personal_info_completed: true,
+          academic_profile_completed: true
+        }).eq('id', currentUser.id);
+        if (profErr) throw profErr;
+
+        acctData.profile.province_id = provinceId;
+        acctData.acad = { ...acctData.acad, education_system_id: sysId, board_id: board, class_level_id: cls, group_id: null };
 
         renderCards();
-        showToast('Academic profile updated!');
+        showToast('Study details updated!');
       } catch (e) {
         showToast(e.message || 'Failed to save', true);
       } finally {
@@ -1260,10 +1157,6 @@
         btn.textContent = 'Save';
       }
     }
-
-    document.addEventListener('change', function(e) {
-      if (e.target.id === 'edit-board') onBoardChange();
-    });
 
     let epUsernameTimer = null;
     let epSelectedImage = null;
@@ -1647,16 +1540,11 @@
     }
 
     async function loadDependentRefData() {
-      const a = acctData.acad;
-      const p = acctData.profile;
-      const tasks = [];
-      if (a?.education_system_id) {
-        tasks.push(loadBoards(a.education_system_id));
-        tasks.push(loadClassLevels(a.education_system_id));
-        tasks.push(loadAllSubjects(a.education_system_id));
-      }
-      if (p?.province_id) tasks.push(loadCities(p.province_id));
-      await Promise.all(tasks);
+      // Use the same resolver as the save path, otherwise a profile with no
+      // education_system_id yet would render an empty board and class list.
+      const sysId = resolveSystemId();
+      if (!sysId) return;
+      await Promise.all([loadBoards(sysId), loadClassLevels(sysId), loadAllSubjects(sysId)]);
     }
 
     (async function() {
