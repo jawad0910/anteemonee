@@ -1,20 +1,40 @@
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* ── Type tokens ────────────────────────────────────────────────────────────
+   Native-first. Every Apple device resolves these to the real system faces:
+   SF Pro for text and display, New York for serif, SF Mono for code. That
+   means zero webfont downloads, no flash of unstyled text, and the crisp
+   optical sizing Apple ships with. Fraunces stays in the serif stack as a
+   fallback so the pages that still load it keep the same look, and Inter
+   covers Windows and Android with the same geometric voice as SF. */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+             'Helvetica Neue', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter',
+             'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  --font-serif: ui-serif, 'New York', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-family: var(--font-ui);
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
   overflow-x: hidden;
   transition: background 0.3s, color 0.3s;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  /* Kerning and standard ligatures only: these help every face, and the
+     cv0x set that was here only exists in SF and would misfire elsewhere. */
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  font-optical-sizing: auto;
 }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 ul { list-style: none; }
-.serif { font-family: 'Fraunces', Georgia, serif; }
+.serif { font-family: var(--font-serif); }
 
 /* ===== THEME VARIABLES — STUDYAI PALETTE ===== */
 :root, [data-theme="dark"] {
@@ -621,7 +641,7 @@ a.mobile-nav-link > svg, a.site-mobile-link > svg { flex-shrink: 0; opacity: 0.7
 .flag-icon { border-radius: 3px; box-shadow: 0 0 0 1px var(--border); flex-shrink: 0; }
 [data-theme="dark"] .hero-badge { color: var(--green); }
 .hero h1 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-serif);
   font-size: clamp(2.6rem, 5vw, 3.9rem); font-weight: 700; line-height: 1.08;
   letter-spacing: -0.015em; margin-bottom: 22px; color: var(--text);
 }
@@ -677,7 +697,7 @@ a.mobile-nav-link > svg, a.site-mobile-link > svg { flex-shrink: 0; opacity: 0.7
   width: 38px; height: 38px; border-radius: 11px; background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.16);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 14px;
+  font-family: var(--font-serif); font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 14px;
 }
 .dash-side a, .dash-side .dash-side-link {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px;
@@ -757,7 +777,7 @@ a.mobile-nav-link > svg, a.site-mobile-link > svg { flex-shrink: 0; opacity: 0.7
 .features-head { margin-bottom: 36px; }
 .section-label { font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 10px; }
 .section-title {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-serif);
   font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 700; color: var(--text);
   letter-spacing: -0.01em; margin-bottom: 10px;
 }
@@ -952,7 +972,7 @@ body { overflow-x: hidden; }
 .auth-header .logo-link { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 20px; }
 .auth-header .logo-img { width: 42px; height: 42px; border-radius: 13px; }
 .auth-header .logo-text { font-size: 21px; }
-.auth-header h1 { font-family: 'Fraunces', Georgia, serif; font-size: 1.7rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+.auth-header h1 { font-family: var(--font-serif); font-size: 1.7rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
 .auth-header p { font-size: 0.92rem; color: var(--text-secondary); }
 .auth-providers { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 .btn-google {
@@ -1371,7 +1391,7 @@ body { overflow-x: hidden; }
 .lm-close:hover { background: var(--neo-highlight); color: var(--text); }
 .lm-head { text-align: center; margin-bottom: 16px; }
 .lm-head img { width: 36px; height: 36px; border-radius: 11px; margin: 0 auto 10px; }
-.lm-head h2 { font-family: 'Fraunces', Georgia, serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+.lm-head h2 { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
 .lm-head p { font-size: 0.85rem; color: var(--text-secondary); }
 .lm-form { display: flex; flex-direction: column; gap: 12px; }
 .lm-error {
@@ -1469,7 +1489,7 @@ body { overflow-x: hidden; }
 }
 .sm-head { text-align: center; margin-bottom: 10px; }
 .sm-head img { width: 32px; height: 32px; border-radius: 10px; margin: 0 auto 8px; }
-.sm-head h2 { font-family: 'Fraunces', Georgia, serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 2px; }
+.sm-head h2 { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 2px; }
 .sm-head p { font-size: 0.8rem; color: var(--text-secondary); }
 .sm-form { display: flex; flex-direction: column; gap: 9px; }
 .sm-error, .sm-success {
