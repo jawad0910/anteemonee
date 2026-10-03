@@ -837,12 +837,23 @@
         if (!isListening || isTranscribing || interimBusy || audioChunks.length === 0) return;
         // Show text as soon as there is real audio. This deliberately does not
         // wait for the VAD: a silent analyser used to block text forever.
+        // Never transcribe a snapshot that never held a real speaking level.
+        // This is the path that painted phantom bubbles: a breath or a passing
+        // bus was enough to trip the gate, and Whisper answered it with a
+        // sentence that was then shown as if the student had said it.
+        if (capturePeak < VAD_REAL_SPEECH_PEAK) return;
         const snapBlob = new Blob(audioChunks.slice(), { type: whisperMime || 'audio/webm' });
         if (snapBlob.size < 5000) return;
         interimBusy = true;
         try {
           const txt = await transcribeWithWhisper(snapBlob);
-          if (txt && isListening && !isTranscribing) { setTranscript(txt, true); lastSttError = ''; }
+          if (txt && isListening && !isTranscribing) {
+            // Same gate as the final result: zero words or a known hallucination
+            // must not appear on screen either.
+            if (countWords(txt) === 0 || isWhisperHallucination(txt)) return;
+            setTranscript(txt, true);
+            lastSttError = '';
+          }
         } catch (e) {
           // Keep the last error so the final attempt (and the status line) can
           // explain a failure instead of appearing to hang.
