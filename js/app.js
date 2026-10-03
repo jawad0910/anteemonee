@@ -47,7 +47,7 @@ function getBaseUrl() {
 }
 const BASE = getBaseUrl();
 const REDIRECT_URL = BASE + '/';
-const ONBOARDING_URL = BASE + '/pages/onboarding.html';
+const ONBOARDING_URL = BASE + '/onboarding/';
 const RECOVERY_URL = BASE + '/pages/reset-password.html';
 
 /* =========================
@@ -1424,30 +1424,29 @@ async function signInWithSpotify() {
    ========================= */
 
 async function getOnboardingStep() {
-  if (!currentUser) { console.log('[getOnboardingStep] no currentUser â†’ -1'); return -1; }
+  if (!currentUser) { console.log('[getOnboardingStep] no currentUser -> -1'); return -1; }
   try {
     if (!currentProfile) await loadProfile();
     const profile = currentProfile;
-    if (!profile) { console.log('[getOnboardingStep] no profile â†’ 0'); return 0; }
-    if (!profile.date_of_birth || !profile.province_id) { console.log('[getOnboardingStep] missing dob/province â†’ 0', profile.date_of_birth, profile.province_id); return 0; }
-    if (!profile.city_id) { console.log('[getOnboardingStep] missing city â†’ 1'); return 1; }
+    // Onboarding is a single step now: province + board + class.
+    if (!profile || !profile.province_id) { console.log('[getOnboardingStep] missing province -> 0'); return 0; }
+
     const { data: acads, error: acadErr } = await db.from('student_academic_profiles')
-      .select('id, education_system_id, board_id, class_level_id, group_id')
+      .select('id, board_id, class_level_id')
       .eq('user_id', currentUser.id);
     if (acadErr) { console.error('[getOnboardingStep] SAP query error:', acadErr); return -1; }
     const acad = acads?.length ? acads[0] : null;
-    console.log('[getOnboardingStep] SAP row:', acad);
-    if (!acad || !acad.education_system_id) { console.log('[getOnboardingStep] no SAP or no edu_system â†’ 2'); return 2; }
-    if (!acad.board_id) { console.log('[getOnboardingStep] no board â†’ 3'); return 3; }
-    if (!acad.class_level_id) { console.log('[getOnboardingStep] no class_level â†’ 4'); return 4; }
+    if (!acad || !acad.board_id || !acad.class_level_id) {
+      // Once a profile is flagged complete we trust it. The flag is only written
+      // after the academic row saved, and without RLS on student_academic_profiles
+      // that row can be invisible to reads even though it is really there.
+      // Without this, a read-blocked row would trap the student in an endless
+      // redirect to onboarding with no way out.
+      if (profile.academic_profile_completed) { console.log('[getOnboardingStep] flagged complete, trusting flag -> -1'); return -1; }
+      console.log('[getOnboardingStep] missing board/class -> 0'); return 0;
+    }
 
-    // For ICS: no group step — academic profile is complete after class
-    const isIcsSystem = await db.from('education_systems').select('code').eq('id', acad.education_system_id).maybeSingle();
-    const icsMode = isIcsSystem?.data?.code === 'ics';
-
-    if (!icsMode && !acad.group_id) { console.log('[getOnboardingStep] no group → 5'); return 5; }
-
-    console.log('[getOnboardingStep] all complete → -1');
+    console.log('[getOnboardingStep] all complete -> -1');
     return -1;
   } catch (e) {
     console.error('[getOnboardingStep] error:', e);
