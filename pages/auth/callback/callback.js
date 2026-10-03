@@ -109,22 +109,15 @@ function showSuccess(message) {
 
 async function getOnboardingStep(userId) {
   try {
-    const { data: profiles } = await db.from('profiles').select('*').eq('id', userId);
+    // Must stay in step with getOnboardingStep() in js/app.js: onboarding is a
+    // single step now, asking only for province, board and class.
+    const { data: profiles } = await db.from('profiles').select('province_id').eq('id', userId);
     const profile = profiles?.length ? profiles[0] : null;
-    if (!profile) return 0;
-    if (!profile.date_of_birth || !profile.province_id) return 0;
-    if (!profile.city_id) return 1;
-    const { data: acads } = await db.from('student_academic_profiles').select('*').eq('user_id', userId);
+    if (!profile || !profile.province_id) return 0;
+    const { data: acads } = await db.from('student_academic_profiles')
+      .select('board_id, class_level_id').eq('user_id', userId);
     const acad = acads?.length ? acads[0] : null;
-    if (!acad || !acad.education_system_id) return 2;
-    if (!acad.board_id) return 3;
-    if (!acad.class_level_id) return 4;
-    if (!acad.group_id) return 5;
-    if (!profile.goals_completed) {
-      const { count } = await db.from('academic_goals').select('id', { count: 'exact', head: true }).eq('user_id', userId);
-      if (!count) return 10;
-      return 11;
-    }
+    if (!acad || !acad.board_id || !acad.class_level_id) return 0;
     return -1;
   } catch (e) {
     console.error('getOnboardingStep error:', e);
