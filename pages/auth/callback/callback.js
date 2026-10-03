@@ -29,7 +29,7 @@ function getBaseUrl() {
 
 const ORIGIN = window.location.origin;
 const ACCOUNT_URL = ORIGIN + '/';
-const ONBOARDING_URL = ORIGIN + '/pages/onboarding.html';
+const ONBOARDING_URL = ORIGIN + '/onboarding/';
 
 function generateUsername(fullName, email) {
   if (fullName && fullName.trim()) {

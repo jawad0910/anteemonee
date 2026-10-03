@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set up your profile - Anteemonee</title>
+  <meta name="description" content="Tell us your province, board and class so Anteemonee can tailor your study material to your syllabus.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link rel="stylesheet" href="../css/style.css?v=33">
+  <style>
+    :root {
+      --ob-ease: cubic-bezier(.22, 1, .36, 1);
+      --ob-spring: cubic-bezier(.34, 1.56, .64, 1);
+      --ob-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --ob-serif: 'Fraunces', Georgia, serif;
+      --ob-hairline: inset 0 1px 0 rgba(255,255,255,.07);
+    }
+    [data-theme="light"] { --ob-hairline: inset 0 1px 0 rgba(255,255,255,.9); }
+
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; font-family: var(--ob-font); }
+    [data-theme="dark"] {
+      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f; --bg-card-hover: #141416;
+      --surface: #111113; --surface-recessed: #08080a;
+      --liquid-bg: rgba(255,255,255,.04); --liquid-bg-soft: rgba(255,255,255,.05); --liquid-bg-strong: rgba(10,10,12,.85);
+    }
+
+    /* ── Site header (matches all pages) ── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
+    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: color .2s, background-color .2s; }
+    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: .6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 10px; }
+    .nav-menu a:hover { background: var(--surface); }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s, color .15s; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--text-secondary); }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--text); }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background .2s var(--ob-ease); }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: .7; }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); text-align: left; }
+
+    /* ══════════════ SHELL ══════════════ */
+    .ob-shell { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 104px 24px 72px; overflow: hidden; isolation: isolate; }
+    .ob-aurora { position: absolute; inset: -20% -10% auto -10%; height: 720px; z-index: -1; pointer-events: none; }
+    .ob-aurora span { position: absolute; display: block; border-radius: 50%; filter: blur(95px); will-change: transform; }
+    .ob-aurora span:nth-child(1) { width: 460px; height: 460px; left: 6%; top: 4%; background: radial-gradient(circle, var(--aurora-1), transparent 68%); animation: obDrift1 28s ease-in-out infinite alternate; }
+    .ob-aurora span:nth-child(2) { width: 400px; height: 400px; right: 8%; top: 12%; background: radial-gradient(circle, var(--aurora-2), transparent 68%); animation: obDrift2 34s ease-in-out infinite alternate; }
+    @keyframes obDrift1 { to { transform: translate3d(64px, 48px, 0) scale(1.12); } }
+    @keyframes obDrift2 { to { transform: translate3d(-58px, 56px, 0) scale(1.1); } }
+
+    /* ══════════════ THE SINGLE BOX ══════════════ */
+    .ob-box { position: relative; width: 100%; max-width: 560px; padding: clamp(26px, 4.4vw, 40px); border-radius: var(--radius-xl); background: var(--bg-card); border: 1px solid var(--liquid-border); box-shadow: var(--neo-shadow-raised-lg); }
+    .ob-box::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: var(--radius-xl) var(--radius-xl) 0 0; background: linear-gradient(90deg, transparent, var(--liquid-border), transparent); }
+    .ob-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 11px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--ob-hairline); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-secondary); }
+    .ob-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--text); animation: obPulse 2.6s var(--ob-ease) infinite; }
+    @keyframes obPulse { 0% { box-shadow: 0 0 0 0 rgba(127,127,127,.5); } 70% { box-shadow: 0 0 0 9px rgba(127,127,127,0); } 100% { box-shadow: 0 0 0 0 rgba(127,127,127,0); } }
+
+    .ob-box h1 { font-family: var(--ob-serif); font-weight: 700; font-size: clamp(1.75rem, 4.4vw, 2.4rem); letter-spacing: -.035em; line-height: 1.06; margin: 20px 0 0; }
+    .ob-sub { margin: 12px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--text-secondary); max-width: 44ch; }
+
+    .ob-fields { display: grid; gap: 20px; margin-top: 30px; }
+    .ob-field { position: relative; z-index: 1; }
+    /* The entrance animation leaves a residual transform on .ob-field, which
+       creates a stacking context and traps the open dropdown inside it. Lift
+       the whole field so the list can sit above the fields below it. */
+    .ob-field.is-open { z-index: 70; }
+    .ob-label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 9px; }
+    .ob-label .ob-step { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); color: var(--text-secondary); font-size: 10px; letter-spacing: 0; }
+
+    /* select trigger */
+    .ob-select { position: relative; }
+    .ob-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 16px; border-radius: 16px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--ob-hairline); color: var(--text-secondary); font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: -.01em; text-align: left; cursor: pointer; transition: border-color .25s var(--ob-ease), background-color .25s var(--ob-ease), box-shadow .25s var(--ob-ease), transform .25s var(--ob-ease); }
+    .ob-trigger:hover { background: var(--liquid-bg); border-color: var(--liquid-border); }
+    .ob-trigger:active { transform: scale(.995); }
+    .ob-trigger:focus-visible { outline: none; border-color: var(--text); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .ob-trigger.has-value { color: var(--text); }
+    .ob-trigger .ob-chev { flex-shrink: 0; color: var(--text-muted); transition: transform .35s var(--ob-ease); }
+    .ob-select.is-open .ob-trigger { border-color: var(--text); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .ob-select.is-open .ob-chev { transform: rotate(180deg); }
+    .ob-select.is-busy .ob-trigger { opacity: .55; pointer-events: none; }
+
+    .ob-list { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 8px); max-height: 264px; overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-radius: 16px; background: var(--bg-elevated); border: 1px solid var(--liquid-border); box-shadow: var(--neo-shadow-float); opacity: 0; transform: translateY(-8px) scale(.985); transform-origin: top center; pointer-events: none; transition: opacity .22s var(--ob-ease), transform .28s var(--ob-ease), visibility .22s; visibility: hidden; }
+    .ob-select.is-open .ob-list { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
+    .ob-list::-webkit-scrollbar { width: 8px; }
+    .ob-list::-webkit-scrollbar-thumb { background: var(--surface); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+    .ob-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border-radius: 11px; font-size: 14.5px; font-weight: 500; color: var(--text); cursor: pointer; list-style: none; transition: background-color .15s; }
+    .ob-opt:hover, .ob-opt.is-active { background: var(--surface); }
+    .ob-opt[aria-selected="true"] { font-weight: 650; }
+    .ob-opt .ob-tick { flex-shrink: 0; opacity: 0; transition: opacity .15s; }
+    .ob-opt[aria-selected="true"] .ob-tick { opacity: 1; }
+    .ob-opt-empty { padding: 14px 12px; font-size: 13.5px; color: var(--text-muted); text-align: center; }
+
+    /* class chips */
+    .ob-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ob-chip { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 15px 16px; border-radius: 16px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--ob-hairline); cursor: pointer; font-family: inherit; text-align: left; color: var(--text-secondary); transition: border-color .25s var(--ob-ease), background-color .25s var(--ob-ease), color .25s var(--ob-ease), transform .3s var(--ob-spring), box-shadow .25s var(--ob-ease); }
+    .ob-chip:hover { background: var(--liquid-bg); border-color: var(--liquid-border); transform: translateY(-2px); }
+    .ob-chip .ob-chip-main { font-size: 17px; font-weight: 700; letter-spacing: -.02em; color: var(--text); font-variant-numeric: lining-nums; }
+    .ob-chip .ob-chip-sub { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .ob-chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); box-shadow: var(--neo-shadow-raised); }
+    .ob-chip[aria-pressed="true"] .ob-chip-main, .ob-chip[aria-pressed="true"] .ob-chip-sub { color: var(--on-accent); }
+    .ob-chip[aria-pressed="true"] .ob-chip-sub { opacity: .72; }
+    .ob-chip:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--accent-soft); }
+
+    /* message + submit */
+    .ob-msg { display: none; align-items: center; gap: 9px; margin-top: 20px; padding: 12px 15px; border-radius: 14px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); font-size: 13.5px; font-weight: 500; color: var(--text-secondary); }
+    .ob-msg.is-on { display: flex; animation: ccSlide .5s var(--ob-ease) both; }
+    .ob-msg.is-error { border-color: color-mix(in srgb, var(--error) 42%, transparent); }
+    @keyframes ccSlide { from { opacity: 0; transform: translateY(10px); } }
+
+    .ob-submit { width: 100%; margin-top: 26px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 15px 24px; border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); border: none; box-shadow: var(--neo-shadow-raised); font-family: inherit; font-size: 15px; font-weight: 650; letter-spacing: -.015em; cursor: pointer; transition: transform .3s var(--ob-spring), box-shadow .3s var(--ob-ease), opacity .2s; }
+    .ob-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--neo-shadow-raised-lg); }
+    .ob-submit:active:not(:disabled) { transform: translateY(0) scale(.98); }
+    .ob-submit:disabled { opacity: .45; cursor: not-allowed; }
+    .ob-submit:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+    .ob-submit svg { transition: transform .3s var(--ob-ease); }
+    .ob-submit:hover:not(:disabled) svg { transform: translateX(3px); }
+    .ob-submit.loading .ob-spin { display: block; }
+    .ob-submit.loading .ob-arrow { display: none; }
+    .ob-spin { display: none; width: 17px; height: 17px; border: 2.5px solid color-mix(in srgb, var(--on-accent) 30%, transparent); border-top-color: var(--on-accent); border-radius: 50%; animation: obSpin .7s linear infinite; }
+    @keyframes obSpin { to { transform: rotate(360deg); } }
+
+    .ob-note { margin: 16px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--text-muted); text-align: center; }
+    .ob-note a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* success */
+    .ob-done { display: none; text-align: center; padding: 22px 0 8px; }
+    .ob-done.is-on { display: block; }
+    .ob-done-tick { width: 62px; height: 62px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); animation: obPop .6s var(--ob-spring) both; }
+    @keyframes obPop { from { transform: scale(.6); opacity: 0; } }
+    .ob-done h2 { font-family: var(--ob-serif); font-weight: 700; font-size: 1.6rem; letter-spacing: -.03em; margin: 0 0 9px; }
+    .ob-done p { margin: 0 auto; max-width: 34ch; font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+
+    /* skeleton */
+    .ob-skel { height: 50px; border-radius: 16px; background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card-hover) 50%, var(--surface) 75%); background-size: 200% 100%; animation: obShimmer 1.4s linear infinite; }
+    @keyframes obShimmer { to { background-position: -200% 0; } }
+
+    /* entrance */
+    .ob-in { opacity: 0; transform: translateY(16px); }
+    .ob-box.is-in .ob-in { animation: obIn .75s var(--ob-ease) both; animation-delay: calc(var(--d, 0) * 80ms); }
+    @keyframes obIn { to { opacity: 1; transform: none; } }
+    /* Once finished, drop the animation entirely so no element keeps a
+       transformed (stacking-context-forming) state for the rest of the page. */
+    .ob-box.is-settled .ob-in { animation: none; opacity: 1; transform: none; }
+
+    /* ── responsive ── */
+    @media (max-width: 1100px) { .landing-nav { display: none; } }
+    @media (max-width: 700px) {
+      .ob-shell { padding: 96px 18px 56px; }
+      .ob-box { padding: 24px 20px; border-radius: var(--radius-lg); }
+      .ob-chips { grid-template-columns: 1fr; }
+      .ob-list { max-height: 232px; }
+    }
+
+    /* ── reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .ob-aurora span, .ob-eyebrow i { animation: none !important; }
+      .ob-in { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .ob-list, .ob-chip, .ob-submit, .ob-trigger, .ob-btn, .ob-opt { transition: none !important; }
+      .ob-done-tick { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <a href="../dashboard/">Dashboard</a>
+        <div class="nav-drop">
+          <a href="#">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ebooks/">eBooks</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../past-papers/">Past Papers</a>
+          </div>
+        </div>
+        <a href="../ai-chat/">AI Assistant</a>
+        <a href="../century-club/">Century Club</a>
+      </nav>
+      <div class="header-actions">
+        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none;position:relative"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="../dashboard/" class="mobile-nav-link">Dashboard</a>
+    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
+    <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+    <div class="mobile-cta">
+      <a href="../pages/login.html" class="btn-login">Log in</a>
+      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <main class="ob-shell">
+    <div class="ob-aurora" aria-hidden="true"><span></span><span></span></div>
+
+    <section class="ob-box" id="ob-box">
+      <div id="ob-form">
+        <span class="ob-eyebrow ob-in" style="--d:0"><i></i> Quick setup</span>
+        <h1 class="ob-in" style="--d:1">Tell us where you study.</h1>
+        <p class="ob-sub ob-in" style="--d:2">Three answers and Anteemonee lines up your syllabus, boards and past papers. You can change any of this later in Settings.</p>
+
+        <div class="ob-fields">
+          <div class="ob-field ob-in" style="--d:3">
+            <span class="ob-label" id="ob-l-prov"><span class="ob-step">1</span> Province</span>
+            <div class="ob-select" id="ob-province"></div>
+          </div>
+
+          <div class="ob-field ob-in" style="--d:4">
+            <span class="ob-label" id="ob-l-board"><span class="ob-step">2</span> Board</span>
+            <div class="ob-select" id="ob-board"></div>
+          </div>
+
+          <div class="ob-field ob-in" style="--d:5">
+            <span class="ob-label" id="ob-l-class"><span class="ob-step">3</span> Class</span>
+            <div class="ob-chips" id="ob-class" role="group" aria-labelledby="ob-l-class"></div>
+          </div>
+        </div>
+
+        <div class="ob-msg" id="ob-msg" role="status" aria-live="polite"></div>
+
+        <button class="ob-submit" id="ob-submit" type="button" disabled>
+          <span class="ob-spin" aria-hidden="true"></span>
+          Save and continue
+          <svg class="ob-arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+
+        <p class="ob-note">Just want to look around? <a href="../dashboard/" id="ob-skip">Skip for now</a></p>
+      </div>
+
+      <div class="ob-done" id="ob-done">
+        <div class="ob-done-tick">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>You are all set.</h2>
+        <p>Your dashboard is being personalised with your board and class.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=30"></script>
+  <script src="../js/login-modal.js?v=5"></script>
+  <script src="../js/forgot-modal.js?v=2"></script>
+  <script src="../js/signup-modal.js?v=3"></script>
+  <script>
+    (function () {
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var html =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">Account</a>' +
+                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">Settings</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Log out</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = html;
+            loggedIn.style.display = 'block';
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {
+          var lo = document.getElementById('landing-auth');
+          if (lo) lo.style.display = 'flex';
+        }
+      }
+      function handleLandingLogout() { try { if (typeof handleLogout === 'function') { handleLogout(); return; } } catch (_) {} window.location.href = '../index.html'; }
+      function toggleLandingProfileDropdown() { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.toggle('open'); }
+      function closeLandingProfileDropdown() { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.remove('open'); }
+      window.handleLandingLogout = handleLandingLogout;
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++; renderLandingAuth();
+        if (tries > 40 || window.__authReady === true) clearInterval(timer);
+      }, 300);
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+      document.addEventListener('click', function (e) {
+        var d = document.getElementById('landing-profile-dropdown');
+        if (d && !d.contains(e.target)) closeLandingProfileDropdown();
+      });
+    })();
+  </script>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    // Boards and class levels are identical across the active systems, so the
+    // form never has to ask which system you are in. Change this one code to
+    // make a different system the default.
+    var PREFERRED_SYSTEM_CODE = 'fsc';
+
+    var state = { province: null, board: null, cls: null };
+    var ref = { provinces: [], boards: [], classLevels: [], systemId: null, systemName: '' };
+
+    var $ = function (id) { return document.getElementById(id); };
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    /* ─────────────── select component ─────────────── */
+    var openSelect = null;
+    var listSeq = 0;
+
+    function createSelect(mount, opts) {
+      var uid = 'ob-sel-' + (++listSeq);
+      mount.innerHTML =
+        '<button type="button" class="ob-trigger" id="' + uid + '-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="' + uid + '-list">' +
+          '<span class="ob-trigger-label">' + esc(opts.placeholder) + '</span>' +
+          '<svg class="ob-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</button>' +
+        '<ul class="ob-list" id="' + uid + '-list" role="listbox" tabindex="-1" aria-labelledby="' + uid + '-btn"></ul>';
+
+      var btn = mount.querySelector('.ob-trigger');
+      var label = mount.querySelector('.ob-trigger-label');
+      var list = mount.querySelector('.ob-list');
+      var field = mount.closest('.ob-field');
+      var items = [];
+      var active = -1;
+
+      function paint() {
+        list.innerHTML = items.length
+          ? items.map(function (o, i) {
+              return '<li class="ob-opt' + (i === active ? ' is-active' : '') + '" role="option" id="' + uid + '-o' + i + '" data-i="' + i + '" aria-selected="' + (String(o.id) === String(opts.value()) ? 'true' : 'false') + '">' +
+                '<span>' + esc(o.label) + '</span>' +
+                '<svg class="ob-tick" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>' +
+              '</li>';
+            }).join('')
+          : '<li class="ob-opt-empty">' + esc(opts.emptyText || 'Nothing to choose yet') + '</li>';
+        list.querySelectorAll('.ob-opt').forEach(function (li) {
+          li.addEventListener('click', function () { pick(parseInt(li.dataset.i, 10)); });
+          li.addEventListener('mousemove', function () { setActive(parseInt(li.dataset.i, 10)); });
+        });
+      }
+
+      function setActive(i) {
+        if (i === active) return;
+        var prev = list.querySelector('.ob-opt.is-active');
+        if (prev) prev.classList.remove('is-active');
+        active = i;
+        var el = list.querySelector('.ob-opt[data-i="' + i + '"]');
+        if (el) {
+          el.classList.add('is-active');
+          if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+        }
+      }
+
+      function render() {
+        items = opts.items();
+        var cur = items.filter(function (o) { return String(o.id) === String(opts.value()); })[0];
+        label.textContent = cur ? cur.label : opts.placeholder;
+        btn.classList.toggle('has-value', !!cur);
+        active = items.map(function (o, i) { return String(o.id) === String(opts.value()) ? i : -1; }).filter(function (i) { return i >= 0; })[0];
+        if (typeof active !== 'number') active = -1;
+        paint();
+      }
+
+      function open() {
+        if (openSelect && openSelect.close) openSelect.close();
+        render();
+        mount.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+        if (field) field.classList.add('is-open');
+        openSelect = api;
+        list.focus();
+      }
+      function close() {
+        mount.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+        if (field) field.classList.remove('is-open');
+        btn.focus();
+        if (openSelect === api) openSelect = null;
+      }
+      function isOpen() { return mount.classList.contains('is-open'); }
+
+      function pick(i) {
+        var o = items[i];
+        if (!o) return;
+        opts.onPick(o);
+        render();
+        close();
+      }
+
+      btn.addEventListener('click', function () { isOpen() ? close() : open(); });
+      list.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(items.length - 1, active + 1)); return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(0, active - 1)); return; }
+        if (e.key === 'Home') { e.preventDefault(); setActive(0); return; }
+        if (e.key === 'End') { e.preventDefault(); setActive(items.length - 1); return; }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (active >= 0) pick(active); return; }
+        if (e.key === 'Tab') { close(); }
+      });
+
+      var api = { render: render, close: close, isOpen: isOpen, refresh: function () { if (isOpen()) render(); } };
+      render();
+      return api;
+    }
+
+    document.addEventListener('click', function (e) {
+      if (openSelect && !e.target.closest('.ob-select')) openSelect.close();
+    });
+
+    /* ─────────────── selects ─────────────── */
+    var provinceSel, boardSel;
+
+    function provinceItems() {
+      return ref.provinces.map(function (p) { return { id: p.id, label: p.name }; });
+    }
+
+    function boardsForProvince() {
+      var p = ref.provinces.filter(function (x) { return String(x.id) === String(state.province); })[0];
+      if (!p) return [];
+      return ref.boards.filter(function (b) {
+        return !b.region || b.region === p.name || b.region === 'Federal';
+      });
+    }
+
+    function boardItems() { return boardsForProvince().map(function (b) { return { id: b.id, label: b.name }; }); }
+
+    function classItems() {
+      return ref.classLevels.map(function (c) {
+        return { id: c.id, main: c.value === 11 ? '11th' : c.value === 12 ? '12th' : c.label, sub: c.label };
+      });
+    }
+
+    /* ─────────────── selection state ─────────────── */
+    function sync() {
+      var ok = !!(state.province && state.board && state.cls);
+      $('ob-submit').disabled = !ok;
+      if (ok) hideMsg();
+    }
+
+    function showMsg(text, isError) {
+      var m = $('ob-msg');
+      if (!m) return;
+      m.textContent = text;
+      m.classList.toggle('is-error', !!isError);
+      m.classList.add('is-on');
+    }
+    function hideMsg() {
+      var m = $('ob-msg');
+      if (m) m.classList.remove('is-on');
+    }
+
+    function onProvince(v) {
+      state.province = v;
+      // The board list depends on the province, so drop a now-invalid choice.
+      var valid = boardsForProvince().some(function (b) { return String(b.id) === String(state.board); });
+      if (!valid) state.board = null;
+      boardSel.render();
+      sync();
+    }
+
+    function onBoard(v) { state.board = v; sync(); }
+
+    function renderChips() {
+      var items = classItems();
+      var host = $('ob-class');
+      host.innerHTML = items.map(function (c) {
+        return '<button type="button" class="ob-chip" role="button" data-id="' + c.id + '" aria-pressed="' + (String(c.id) === String(state.cls) ? 'true' : 'false') + '">' +
+          '<span class="ob-chip-main">' + esc(c.main) + '</span>' +
+          '<span class="ob-chip-sub">' + esc(c.sub) + '</span>' +
+        '</button>';
+      }).join('');
+      host.querySelectorAll('.ob-chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.cls = b.dataset.id;
+          renderChips();
+          sync();
+        });
+      });
+    }
+
+    /* ─────────────── data ─────────────── */
+    async function loadRef() {
+      var sysRes = await db.from('education_systems').select('*').eq('is_active', true).order('sort_order');
+      var systems = sysRes.data || [];
+      var sys = systems.filter(function (s) { return s.code === PREFERRED_SYSTEM_CODE; })[0] || systems[0];
+      if (!sys) throw new Error('No active education system is configured.');
+      ref.systemId = sys.id;
+      ref.systemName = sys.name;
+
+      var [provRes, boardsRes, clsRes] = await Promise.all([
+        db.from('provinces').select('id, name').order('id'),
+        db.from('education_system_boards').select('board_id, boards(id, name, region)').eq('education_system_id', sys.id),
+        db.from('class_levels').select('id, label, value, sort_order').eq('education_system_id', sys.id).order('sort_order')
+      ]);
+
+      if (provRes.error) throw provRes.error;
+      if (boardsRes.error) throw boardsRes.error;
+      if (clsRes.error) throw clsRes.error;
+
+      ref.provinces = provRes.data || [];
+      ref.classLevels = clsRes.data || [];
+      ref.boards = (boardsRes.data || [])
+        .map(function (r) { return r.boards; })
+        .filter(function (b) { return b && b.is_active !== false; });
+
+      if (!ref.provinces.length) throw new Error('No provinces are configured yet.');
+      if (!ref.boards.length) throw new Error('No boards are configured for this system.');
+      if (!ref.classLevels.length) throw new Error('No classes are configured for this system.');
+    }
+
+    async function loadExisting() {
+      if (!currentProfile) await loadProfile();
+      if (currentProfile && currentProfile.province_id) state.province = currentProfile.province_id;
+      try {
+        var { data } = await db.from('student_academic_profiles')
+          .select('board_id, class_level_id').eq('user_id', currentUser.id).maybeSingle();
+        if (data) {
+          if (data.board_id) state.board = data.board_id;
+          if (data.class_level_id) state.cls = data.class_level_id;
+        }
+      } catch (_) {}
+    }
+
+    /* ─────────────── save ─────────────── */
+    async function save() {
+      if (!state.province || !state.board || !state.cls) {
+        showMsg('Please answer all three questions.', true);
+        return;
+      }
+      var btn = $('ob-submit');
+      setLoading(btn, true);
+      hideMsg();
+      try {
+        var profRes = await db.from('profiles').update({
+          province_id: Number(state.province),
+          personal_info_completed: true,
+          academic_profile_completed: true
+        }).eq('id', currentUser.id);
+        if (profRes.error) throw profRes.error;
+
+        var sapErr = await db.from('student_academic_profiles').upsert({
+          user_id: currentUser.id,
+          education_system_id: ref.systemId,
+          board_id: Number(state.board),
+          class_level_id: Number(state.cls),
+          group_id: null
+        }, { onConflict: 'user_id' });
+        if (sapErr.error) throw sapErr.error;
+
+        $('ob-form').style.display = 'none';
+        $('ob-done').classList.add('is-on');
+        setTimeout(function () { window.location.href = BASE + '/dashboard/'; }, 1100);
+      } catch (err) {
+        console.error('[onboarding] save failed:', err);
+        setLoading(btn, false);
+        showMsg('Could not save your answers. Please check your connection and try again.', true);
+      }
+    }
+
+    /* ─────────────── boot ─────────────── */
+    async function boot() {
+      var box = $('ob-box');
+      requestAnimationFrame(function () {
+        box.classList.add('is-in');
+        // Clear the entrance animation once the slowest one has finished.
+        setTimeout(function () { box.classList.add('is-settled'); }, 1400);
+      });
+
+      await checkAuth();
+      if (!currentUser) { window.location.href = BASE + '/?auth=login'; return; }
+      await ensureProfile();
+
+      // Already answered everything: nothing to do here.
+      if (await getOnboardingStep() === -1) { window.location.href = BASE + '/dashboard/'; return; }
+
+      provinceSel = createSelect($('ob-province'), {
+        placeholder: 'Select your province',
+        value: function () { return state.province; },
+        items: provinceItems,
+        onPick: function (o) { onProvince(o.id); }
+      });
+
+      boardSel = createSelect($('ob-board'), {
+        placeholder: 'Select your board',
+        emptyText: 'Pick a province first',
+        value: function () { return state.board; },
+        items: boardItems,
+        onPick: function (o) { onBoard(o.id); }
+      });
+
+      try {
+        await loadRef();
+        await loadExisting();
+      } catch (err) {
+        console.error('[onboarding] reference data failed:', err);
+        showMsg(err.message || 'We could not load your syllabus options.', true);
+        $('ob-submit').disabled = true;
+        return;
+      }
+
+      provinceSel.render();
+      boardSel.render();
+      renderChips();
+      sync();
+    }
+
+    $('ob-submit').addEventListener('click', save);
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  })();
+  </script>
+</body>
+</html>

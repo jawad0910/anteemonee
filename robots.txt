@@ -7,6 +7,7 @@ Disallow: /pages/payment.html
 Disallow: /pages/payment-success.html
 Disallow: /pages/payment-cancel.html
 Disallow: /pages/onboarding.html
+Disallow: /onboarding/
 Disallow: /pages/reset-password.html
 Disallow: /pages/verify-email.html
 Disallow: /pages/report.html
