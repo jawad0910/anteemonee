@@ -25,11 +25,8 @@
   <meta property="og:description" content="Notes, past papers with solutions, AI tutor, flashcards and test builder for Pakistani board students.">
   <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
   <meta property="og:url" content="https://anteemonee.com/">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/anteemonee.png">
-  <link rel="stylesheet" href="css/style.css?v=33">
+  <link rel="stylesheet" href="css/style.css?v=34">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -45,7 +42,7 @@
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
     .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .logo-text { font-family: var(--font-serif); font-size: 21px; }
     .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
     .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
     .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
@@ -85,7 +82,7 @@
     @keyframes pdot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
     .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 30px; }
     .step { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 20px 16px; position: relative; }
-    .step .n { font-family: 'Fraunces', Georgia, serif; font-size: 26px; font-weight: 700; color: var(--accent); }
+    .step .n { font-family: var(--font-serif); font-size: 26px; font-weight: 700; color: var(--accent); }
     .step h3 { font-size: 14.5px; margin: 8px 0 6px; }
     .step p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
     .step.star { background: linear-gradient(135deg, #000000 0%, #333333 100%); border: none; color: #fff; }
@@ -102,18 +99,155 @@
     .tool p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
     @media (max-width: 900px) { .tools-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 520px) { .tools-grid { grid-template-columns: 1fr; } }
-    .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 26px; max-width: 860px; }
-    .pricing-grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 1100px; }
-    @media (max-width: 1000px) { .pricing-grid-3 { grid-template-columns: 1fr; max-width: 520px; } }
-    .price-card { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 28px 26px; position: relative; }
-    .price-card.hot { border: 2px solid var(--accent); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
-    .price-card .flag { position: absolute; top: -12px; left: 24px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
-    .price-card h3 { font-size: 16px; margin-bottom: 4px; }
-    .price-card .amt { font-family: 'Fraunces', Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
-    .price-card .per { font-size: 13px; color: var(--text-muted); }
-    .price-card ul { list-style: none; margin: 18px 0 22px; }
-    .price-card li { font-size: 13.5px; padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; color: var(--text-secondary); }
-    .price-card li i { color: var(--text); font-style: normal; font-weight: 700; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 26px; max-width: 860px; }
+    .pricing-grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 1120px; align-items: stretch; }
+    /* Signed in: the free tier is noise, so the remaining plans share the row. */
+    .pricing-grid-3.two-up { grid-template-columns: repeat(2, 1fr); max-width: 760px; }
+    .pricing-grid-3.two-up .price-card { max-width: 380px; width: 100%; justify-self: center; }
+    @media (max-width: 1000px) { .pricing-grid-3, .pricing-grid-3.two-up { grid-template-columns: 1fr; max-width: 520px; } }
+
+    /* ── Plan cards ──────────────────────────────────────────────────────────
+       The palette here is monochrome by design (accent/green/success are all
+       white in dark, black in light), so the tiers are separated by elevation
+       and form rather than hue: Free is recessed, Exam Plan is lifted and
+       outlined, Lifetime is lifted with a single warm hairline. */
+    .price-card {
+      /* Not clipped: the RECOMMENDED flag deliberately overhangs the top edge.
+         The glow below clips itself with an inherited radius instead. */
+      position: relative;
+      display: flex; flex-direction: column;
+      background:
+        linear-gradient(180deg, var(--liquid-bg-soft), transparent 42%),
+        var(--bg-card);
+      border: 1px solid var(--liquid-border-soft);
+      border-radius: var(--radius-xl);
+      padding: 28px 26px;
+      box-shadow: var(--neo-shadow-recessed-sm);
+      transition:
+        transform .34s cubic-bezier(.2,.8,.3,1),
+        border-color .28s ease,
+        box-shadow .34s cubic-bezier(.2,.8,.3,1);
+    }
+    /* Recessed tier: sits below the line rather than competing with it. */
+    /* display:flex above outranks the UA rule for [hidden], so restate it. */
+    .price-card[hidden] { display: none; }
+    .price-card[data-plan="free"] {
+      background: var(--surface-recessed);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.18);
+    }
+    .price-card[data-plan="free"]:hover {
+      transform: translateY(-2px);
+      border-color: var(--liquid-border);
+    }
+    /* Lifted tier: the one we want the eye to land on. */
+    .price-card.hot {
+      border-color: var(--accent);
+      box-shadow: var(--liquid-inset), 0 18px 46px rgba(0,0,0,.28);
+    }
+    .price-card.hot:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--liquid-inset), 0 26px 60px rgba(0,0,0,.34);
+    }
+    /* Premium tier: same lift, plus a warm hairline for identity. */
+    .price-card[data-plan="lifetime"] { border-color: color-mix(in srgb, var(--warning) 34%, transparent); }
+    .price-card[data-plan="lifetime"]::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      border-radius: inherit;
+      background: radial-gradient(120% 62% at 50% 0%, color-mix(in srgb, var(--warning) 11%, transparent), transparent 68%);
+    }
+    .price-card[data-plan="lifetime"]:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--warning) 58%, transparent);
+      box-shadow: var(--liquid-inset), 0 26px 60px rgba(0,0,0,.34);
+    }
+    .price-card > * { position: relative; }
+    .price-card .flag {
+      position: absolute; top: -12px; left: 24px;
+      background: var(--accent); color: var(--on-accent);
+      font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+      padding: 4px 13px; border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.28);
+    }
+    .price-card h3 { font-size: 16px; margin-bottom: 4px; letter-spacing: -.01em; }
+    .price-card .amt { font-family: var(--font-serif); font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+    .price-card .per { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    .price-card ul { list-style: none; margin: 20px 0 24px; flex: 1; }
+    .price-card li {
+      font-size: 13.5px; padding: 7px 0; display: flex; gap: 10px; align-items: flex-start;
+      color: var(--text-secondary);
+      transition: color .2s ease, transform .2s cubic-bezier(.2,.8,.3,1);
+    }
+    .price-card li:hover { color: var(--text-primary); transform: translateX(2px); }
+    .price-card li i {
+      color: var(--text); font-style: normal; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+      border-radius: 50%; background: var(--liquid-bg-soft);
+      font-size: 10px;
+    }
+    .price-card[data-plan="lifetime"] li i { background: color-mix(in srgb, var(--warning) 16%, transparent); }
+
+    /* ── Plan buttons ────────────────────────────────────────────────────────
+       One shared control so all three read as siblings. Each variant differs
+       in surface only; the motion, press and focus ring are identical. */
+    .plan-btn {
+      position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      width: 100%; height: 50px;
+      border-radius: var(--radius-pill);
+      font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.006em;
+      text-decoration: none;
+      cursor: pointer;
+      -webkit-user-select: none; user-select: none;
+      border: 1px solid var(--liquid-border);
+      background: var(--liquid-bg-soft);
+      color: var(--text-primary);
+      transition:
+        background-color .22s cubic-bezier(.2,.8,.3,1),
+        border-color .22s cubic-bezier(.2,.8,.3,1),
+        color .22s cubic-bezier(.2,.8,.3,1),
+        box-shadow .26s cubic-bezier(.2,.8,.3,1),
+        transform .18s cubic-bezier(.2,.8,.3,1);
+    }
+    .plan-btn::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.10) 50%, transparent 70%);
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s ease;
+    }
+    .plan-btn:hover { background: var(--liquid-bg); border-color: var(--liquid-border); transform: translateY(-2px); box-shadow: var(--liquid-inset), 0 12px 28px rgba(0,0,0,.24); }
+    .plan-btn:hover::after { opacity: 1; }
+    .plan-btn:active { transform: translateY(0) scale(.985); box-shadow: var(--neo-shadow-pressed); transition-duration: .08s; }
+    .plan-btn:focus-visible { outline: none; box-shadow: var(--liquid-inset), 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+
+    .plan-btn-primary {
+      background: var(--accent); color: var(--on-accent);
+      border-color: var(--accent);
+      box-shadow: var(--liquid-inset), 0 10px 26px rgba(0,0,0,.28);
+    }
+    .plan-btn-primary:hover { background: var(--accent); border-color: var(--accent); box-shadow: var(--liquid-inset), 0 18px 40px rgba(0,0,0,.34); }
+    .plan-btn-primary::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,.24), transparent 52%);
+    }
+    [data-theme="light"] .plan-btn-primary::before { background: linear-gradient(180deg, rgba(255,255,255,.35), transparent 52%); }
+
+    .plan-btn-ghost { background: var(--liquid-bg-soft); }
+    .plan-btn-ghost:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+    .plan-btn-premium {
+      border-color: color-mix(in srgb, var(--warning) 42%, transparent);
+      background: color-mix(in srgb, var(--warning) 10%, transparent);
+      color: var(--text-primary);
+    }
+    .plan-btn-premium:hover {
+      background: var(--accent); color: var(--on-accent);
+      border-color: var(--accent);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .price-card, .price-card li, .plan-btn, .plan-btn::after { animation: none !important; transition: none !important; }
+      .price-card:hover, .plan-btn:hover, .plan-btn:active, .price-card li:hover { transform: none; }
+    }
     @media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
     .unified-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 28px; }
     .unified-col { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 24px; }
@@ -158,7 +292,7 @@
     .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
     .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
     .cta-band { background: linear-gradient(135deg, #000000 0%, #333333 100%); border-radius: var(--radius-xl); padding: 56px 32px; text-align: center; color: #fff; margin-top: 70px; }
-    .cta-band h2 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 10px; }
+    .cta-band h2 { font-family: var(--font-serif); font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 10px; }
     .cta-band p { opacity: 0.85; margin-bottom: 24px; }
     .btn-white { display: inline-block; background: #fff; color: #111; font-weight: 700; padding: 14px 34px; border-radius: 999px; font-size: 15px; }
     /* Hero primary CTA — modern smooth button */
@@ -343,7 +477,7 @@
         <h2 class="section-title">Free forever. Exam plan. Lifetime.</h2>
         <p class="section-desc">Start free with a 7-day trial of everything. Pay per exam period, or once for lifetime.</p>
         <div class="pricing-grid pricing-grid-3">
-          <div class="price-card">
+          <div class="price-card" id="price-free" data-plan="free">
             <h3>Free</h3>
             <div class="amt">Rs 0</div><div class="per">forever</div>
             <ul>
@@ -352,9 +486,9 @@
               <li><i>✓</i> Auto switches to free after trial</li>
               <li><i>✓</i> No card required</li>
             </ul>
-            <a href="pages/signup.html" class="btn-secondary" style="width:100%">Start free</a>
+            <a href="pages/signup.html" class="plan-btn plan-btn-ghost" id="free-cta">Start free</a>
           </div>
-          <div class="price-card hot">
+          <div class="price-card hot" data-plan="exam">
             <div class="flag">RECOMMENDED</div>
             <h3>Exam Plan</h3>
             <div class="amt" id="exam-price">Rs 999</div><div class="per" id="exam-per">per selected period</div>
@@ -366,9 +500,9 @@
               <li><i>✓</i> Valid until your exams end</li>
               <li><i>✓</i> 7-day money-back guarantee</li>
             </ul>
-            <a href="pages/payment-plan.html?plan=exam&period=may-jun-2027" class="btn-primary" id="exam-cta" style="width:100%">Continue →</a>
+            <a href="pages/payment-plan.html?plan=exam&period=may-jun-2027" class="plan-btn plan-btn-primary" id="exam-cta">Continue →</a>
           </div>
-          <div class="price-card">
+          <div class="price-card" data-plan="lifetime">
             <h3>Lifetime Access</h3>
             <div class="amt">Rs 4,999</div><div class="per">one-time · yours forever</div>
             <ul>
@@ -377,7 +511,7 @@
               <li><i>✓</i> Never pay again</li>
               <li><i>✓</i> 7-day money-back guarantee</li>
             </ul>
-            <a href="pages/payment-plan.html?plan=lifetime" class="btn-secondary" style="width:100%">Get lifetime access</a>
+            <a href="pages/payment-plan.html?plan=lifetime" class="plan-btn plan-btn-premium">Get lifetime access</a>
           </div>
         </div>
       </div>
@@ -543,9 +677,31 @@
           if (aText) aiEl.textContent = aText;
         } catch (_) {}
       }
+      // The Free tier only makes sense to someone who has not signed up yet.
+      // Hiding it for signed-in users keeps the pricing row about the decision
+      // they actually have to make. The grid drops to two columns so the
+      // remaining plans do not stretch awkwardly.
+      function renderPricingForAuth(user) {
+        try {
+          var card = document.getElementById('price-free');
+          var grid = document.querySelector('.pricing-grid-3');
+          if (!card || !grid) return;
+          var signedIn = !!(user && user.id);
+          if (signedIn) {
+            card.hidden = true;
+            grid.classList.add('two-up');
+          } else {
+            card.hidden = false;
+            grid.classList.remove('two-up');
+          }
+          card.setAttribute('aria-hidden', signedIn ? 'true' : 'false');
+        } catch (_) {}
+      }
+
       function renderLandingAuth() {
         try {
           var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          renderPricingForAuth(user);
           var loggedOut = document.getElementById('landing-auth');
           var loggedIn = document.getElementById('landing-auth-in');
           if (!loggedOut || !loggedIn) return;
