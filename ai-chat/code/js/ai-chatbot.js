@@ -1757,17 +1757,28 @@ ${refBlock}`;
 
   // â”€â”€ AI preference rules injected into the system prompt â”€â”€
   function aiPrefsPrompt() {
+    // Every response, at every style, must actually DEFINE what it is talking
+    // about before explaining it. This is the rule that was missing, which is
+    // why answers felt useless: short replies were skipping the definition.
+    const foundationRule =
+      'ANSWER FOUNDATION - MANDATORY IN EVERY RESPONSE:\n' +
+      '1. DEFINE THE TOPIC FIRST. Open by stating what the concept, term, or process actually IS, in one or two plain sentences, BEFORE any explanation. If the student used a technical term, define that exact term first. Never assume a term is known.\n' +
+      '2. GIVE IT CONTEXT. Say why it matters, what it is used for, and where it fits in the bigger picture of the subject.\n' +
+      '3. ONLY THEN WORK IT THROUGH. Break it into steps, show the reasoning, give a concrete worked example, and mention the mistakes students usually make.\n' +
+      '4. CLOSE WITH THE KEY IDEA. End with one or two sentences the student could repeat in an exam.\n' +
+      'Never reply with a bare one-line answer that skips the definition. Short is fine, undefined is not.';
+
     const styleRule = {
-      concise: 'RESPONSE STYLE is concise: keep every response short and to the point. No extra examples, analogies, or background unless the student explicitly asks for more.',
-      balanced: 'RESPONSE STYLE is balanced: give clear explanations with moderate detail, one short example where it helps.',
-      detailed: 'RESPONSE STYLE is detailed: give thorough, in-depth explanations with steps, examples, and extra context. Do not hold back.',
-    }[aiPrefs.responseStyle] || 'RESPONSE STYLE is balanced: give clear explanations with moderate detail.';
+      concise: 'RESPONSE STYLE is CONCISE: define the topic in 1-2 sentences, then give the direct answer and the single most important point. Skip extra examples and background. Never skip the definition. Roughly 120-200 words.',
+      balanced: 'RESPONSE STYLE is BALANCED: a full, complete explanation, not a summary. Define the topic, give context, then walk through it step by step, add one clear worked example, note a common mistake, and close with the key takeaway. Roughly 350-600 words.',
+      detailed: 'RESPONSE STYLE is DETAILED: teach the topic thoroughly rather than summarising it. Define it, give context, then use clear headed sections for each part, show multiple worked examples, cover edge cases and exceptions, list the mistakes students actually make in exams, and add exam tips and memory aids. Roughly 700-1200 words. Write as much as the topic genuinely needs. Do not hold back, and do not pad with filler.',
+    }[aiPrefs.responseStyle] || 'RESPONSE STYLE is BALANCED: a full, complete explanation with a definition, context, step-by-step working, a worked example, and a key takeaway. Roughly 350-600 words.';
 
     const levelRule = {
-      simple: 'EXPLANATION LEVEL is simple: explain like the student is a complete beginner. Very simple words, everyday analogies, tiny steps, no jargon without defining it first.',
-      standard: 'EXPLANATION LEVEL is standard: explain at FSc board-exam level.',
-      advanced: 'EXPLANATION LEVEL is advanced: go deep with full reasoning, derivations where relevant, edge cases, and common exam traps.',
-    }[aiPrefs.explanationLevel] || 'EXPLANATION LEVEL is standard: explain at FSc board-exam level.';
+      simple: 'EXPLANATION LEVEL is SIMPLE: explain as if the student has never seen this topic before. Very simple words, everyday analogies, tiny steps, and define every piece of jargon the moment you use it. Explain the WHY, not just the WHAT.',
+      standard: 'EXPLANATION LEVEL is STANDARD: explain at FSc board-exam level, but completely and self-contained. Assume the student knows the class background, NOT that they know this specific topic.',
+      advanced: 'EXPLANATION LEVEL is ADVANCED: go deep. Show the full reasoning and the derivation where one exists, explain WHY the result holds, discuss edge cases and limiting cases, compare it against related ideas the student might confuse it with, and flag the classic exam traps and which marks are awarded for each part. Be substantially longer than a standard explanation.',
+    }[aiPrefs.explanationLevel] || 'EXPLANATION LEVEL is STANDARD: explain at FSc board-exam level, completely and self-contained.';
 
     const langRule = {
       english: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in English. Every single word, sentence, heading, bullet point, explanation â€” everything must be in English. Do NOT use any Urdu words, Urdu script, or Roman Urdu. Write as if you are an English-speaking tutor.',
@@ -1799,7 +1810,20 @@ ${refBlock}`;
 Rules: cite the exact book, chapter number/name, and page values from the excerpts block. If a source has no chapter metadata, cite the book and page without a chapter. If no usable source is available, omit the References heading and both separator lines entirely. NEVER place anything after a real References section.`
       : 'REFERENCES — OFF: NEVER include a References section in any response. Just answer and stop (plus study-suggestion closing lines only if those are enabled). Do not cite books, pages, or websites.';
 
-    return [styleRule, levelRule, langRule, suggestRule, emojiRule, referencesRule, personalRule].filter(Boolean).join('\n\n');
+    // Response style and explanation level combine: the two deepest settings
+    // together mean a textbook-chapter answer, and that has to be spelled out
+    // or the model settles for something short.
+    const isDetailed = aiPrefs.responseStyle === 'detailed';
+    const isAdvanced = aiPrefs.explanationLevel === 'advanced';
+    const depthRule = (isDetailed && isAdvanced)
+      ? 'MAXIMUM DEPTH MODE: response style is DETAILED and explanation level is ADVANCED. This is the deepest setting available. Write a long, thorough, textbook-chapter-quality explanation: full derivations, every relevant case, several worked examples, and a complete summary of the key ideas. Length is expected here, roughly 900-1500 words, unless the question is genuinely trivial. Never cut the explanation short.'
+      : (isDetailed || isAdvanced)
+        ? 'HIGH DEPTH MODE: write a full thorough explanation rather than a summary. Include the complete reasoning, a worked example, and the mistakes students make. Length is expected, roughly 600-1000 words.'
+        : (aiPrefs.responseStyle === 'concise'
+          ? 'KEEP IT TIGHT: this is the concise style. Do not write long sections, do not add multiple examples, and do not pad. But always include the definition and the key idea.'
+          : '');
+
+    return [foundationRule, styleRule, levelRule, depthRule, langRule, suggestRule, emojiRule, referencesRule, personalRule].filter(Boolean).join('\n\n');
   }
 
   // â”€â”€ System Prompt â”€â”€
@@ -1844,7 +1868,7 @@ ACADEMIC SUBJECTS — CRITICAL: You handle Computer Science theory as well as co
 
 RESPONSE FORMAT:
 - For code: Use markdown code blocks with language tag. Include file name as comment at top if relevant.
-- For explanations: Be concise and technical. Use examples.
+- For explanations: follow the RESPONSE STYLE and EXPLANATION LEVEL rules given below. Define the term first, then explain the reasoning, then give examples.
 - For projects: Break into files, show structure, explain architecture.
 - For debugging: Show the error, explain the cause, provide the fix.
 
@@ -1881,6 +1905,9 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
 - For simple questions: answer in ONE sentence.
 - Never say "Sure!", "Of course!", "Great question!" — just answer.`;
       }
+      // The coding persona used to skip the student's response style and
+      // explanation level entirely, so those settings had no effect here.
+      ctx += `\n\n${aiPrefsPrompt()}`;
       return ctx;
     }
 
@@ -1946,7 +1973,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
 
 
-    ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches of any word count). Always write the maximum you can in this response with full quality. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
+    ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches, and full topic explanations of any word count). Always write the maximum you can in this response with full quality. NEVER cut a real explanation short just to be brief, and NEVER pad it with filler words to make it longer. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
 
 SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the student selects, including Computer Science theory.
 - NEVER refuse a question and NEVER tell the student to switch to another model, tutor, or persona. There is only one assistant. If a question needs code, just answer it.
