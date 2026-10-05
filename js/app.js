@@ -2315,15 +2315,28 @@ const Access = {
           bar.id = 'access-paywall';
           area.prepend(bar);
         }
-        const payHref = (typeof BASE !== 'undefined' ? BASE : '') + '/pages/payment-plan.html?plan=lifetime';
+        // Offer BOTH paid plans. Pushing only Lifetime here made it look like the
+        // exam plan (which is far cheaper) does not exist.
+        const base = (typeof BASE !== 'undefined' ? BASE : '');
+        const P = (typeof window !== 'undefined' && window.ANTEEM_PLANS) || {};
+        const lifePrice = P.fmt ? P.fmt(P.lifetimePrice) : (typeof LIFETIME_PRICE !== 'undefined' ? LIFETIME_PRICE : 'Rs 4,999');
+        const perList = Array.isArray(P.examPeriods) && P.examPeriods.length ? P.examPeriods : [];
+        const firstPer = perList[0];
         const title = st.reason === 'blocked' ? 'Free trial already used on this device' : 'Your 7-day free trial has ended';
+        const examLine = firstPer
+          ? 'Exam plan ' + (P.fmt ? P.fmt(firstPer.price) : 'Rs ' + firstPer.price) + ' until ' + firstPer.label + '  ·  '
+          : '';
         bar.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--accent)">
-            <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:10px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--accent)">
+            <div style="flex:1 1 220px;min-width:0">
               <div style="font-size:13.5px;font-weight:700">${title}</div>
-              <div style="font-size:12px;opacity:0.75">Get lifetime access for ${typeof LIFETIME_PRICE !== 'undefined' ? LIFETIME_PRICE : 'Rs 4,999'} — pay once, yours forever.</div>
+              <div style="font-size:12px;opacity:0.75">Pick what suits you: Exam plan from ${firstPer && P.fmt ? P.fmt(firstPer.price) : 'Rs 999'}, or Lifetime ${lifePrice} once.</div>
             </div>
-            <a href="${payHref}" style="flex-shrink:0;padding:10px 18px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;text-decoration:none">Get Access</a>
+            <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
+              <a href="${base}/premium/" style="padding:10px 16px;border-radius:10px;background:transparent;color:var(--text);border:1px solid var(--accent);font-size:13px;font-weight:600;text-decoration:none">See plans</a>
+              <a href="${base}/payment/index.html?plan=exam" style="padding:10px 16px;border-radius:10px;background:transparent;color:var(--text);border:1px solid var(--accent);font-size:13px;font-weight:600;text-decoration:none">Exam plan${firstPer ? ' ' + (P.fmt ? P.fmt(firstPer.price) : '') : ''}</a>
+              <a href="${base}/payment/index.html?plan=lifetime" style="padding:10px 18px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;text-decoration:none">Lifetime ${lifePrice}</a>
+            </div>
           </div>`;
         bar.style.display = '';
       } else if (bar) {

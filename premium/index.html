@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Premium Plans - Anteemonee</title>
+  <meta name="description" content="Choose an Anteemonee plan: an Exam plan for a single exam period, or Lifetime access forever.">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=34">
+  <style>
+    body { font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 40px 20px 80px; }
+
+    .px-head { text-align: center; margin-bottom: 34px; }
+    .px-eyebrow {
+      display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--text-muted, #71717A); margin-bottom: 12px;
+    }
+    .px-title {
+      font-family: var(--font-display, inherit);
+      font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em;
+      margin: 0 0 10px; color: var(--text);
+    }
+    .px-sub { font-size: 15px; line-height: 1.6; color: var(--text-secondary); margin: 0 auto; max-width: 520px; }
+
+    /* Plan choice */
+    .px-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
+    .px-plan {
+      position: relative; display: block; cursor: pointer;
+      padding: 22px 22px 20px;
+      background: var(--bg-card, #0d0d0f);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), border-color 0.25s ease, box-shadow 0.3s cubic-bezier(0.22,1,0.36,1);
+    }
+    .px-plan:hover { transform: translateY(-3px); box-shadow: 0 10px 34px rgba(0,0,0,0.28); }
+    .px-plan input { position: absolute; opacity: 0; pointer-events: none; }
+    .px-plan-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .px-plan-top > span:first-child { min-width: 0; }
+    .px-plan-name { display: block; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
+    .px-plan-for { display: block; font-size: 12.5px; color: var(--text-muted, #71717A); margin-top: 3px; }
+    .px-radio {
+      flex: none; width: 22px; height: 22px; border-radius: 50%;
+      border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .px-radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--on-accent, #000); transform: scale(0); transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+    .px-plan input:checked ~ .px-plan-top .px-radio { background: var(--accent); border-color: var(--accent); }
+    .px-plan input:checked ~ .px-plan-top .px-radio::after { transform: scale(1); }
+    .px-plan:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .px-plan:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .px-price { display: flex; align-items: baseline; gap: 8px; margin: 16px 0 4px; }
+    .px-amount { font-family: var(--font-display, inherit); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+    .px-per { font-size: 13px; color: var(--text-muted, #71717A); }
+
+    /* Exam period picker */
+    .px-periods { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: none; }
+    .px-choice[data-active="exam"] .px-periods { display: block; }
+    .px-periods-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; }
+    .px-period-list { display: flex; flex-direction: column; gap: 7px; }
+    .px-period {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 11px 13px; cursor: pointer;
+      border: 1px solid var(--border); border-radius: 11px;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .px-period:hover { background: var(--surface, #141416); }
+    .px-period input { position: absolute; opacity: 0; pointer-events: none; }
+    .px-period-name { display: block; font-size: 13.5px; color: var(--text); font-weight: 500; }
+    .px-period-ends { display: block; font-size: 11.5px; color: var(--text-muted, #71717A); margin-top: 2px; }
+    .px-period-price { font-size: 13.5px; font-weight: 650; color: var(--text); flex: none; }
+    .px-period:has(input:checked) { border-color: var(--accent); background: var(--surface, #141416); }
+    .px-period:has(input:checked) .px-period-name::after { content: ' \2713'; font-weight: 700; }
+    .px-period:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .px-feats { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .px-feats li { position: relative; padding-left: 24px; font-size: 13.5px; line-height: 1.5; color: var(--text-secondary); }
+    .px-feats li::before {
+      content: ''; position: absolute; left: 0; top: 1px;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--accent-soft, rgba(255,255,255,0.12));
+    }
+    .px-feats li::after {
+      content: ''; position: absolute; left: 4.5px; top: 5px;
+      width: 6px; height: 3px;
+      border-left: 1.6px solid var(--text); border-bottom: 1.6px solid var(--text);
+      transform: rotate(-45deg);
+    }
+
+    /* Summary + CTA */
+    .px-summary {
+      padding: 20px 22px; border-radius: 18px;
+      background: var(--bg-card, #0d0d0f); border: 1px solid var(--border);
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    }
+    .px-sum-main { flex: 1 1 240px; min-width: 0; }
+    .px-sum-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted, #71717A); }
+    .px-sum-plan { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); margin-top: 4px; }
+    .px-sum-note { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+    .px-cta {
+      flex: none; display: inline-flex; align-items: center; gap: 9px;
+      padding: 14px 24px; border-radius: 999px;
+      background: var(--accent); color: var(--on-accent, #fff);
+      font-size: 15px; font-weight: 650; letter-spacing: -0.01em; text-decoration: none;
+      border: 1px solid var(--accent); cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease, box-shadow 0.3s ease;
+    }
+    .px-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,0,0,0.3); opacity: 0.94; }
+    .px-cta:active { transform: translateY(0) scale(0.98); }
+    .px-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    .px-steps { margin-top: 30px; }
+    .px-steps-title { font-size: 13px; font-weight: 650; color: var(--text); margin-bottom: 14px; }
+    .px-step-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .px-step { padding: 15px 16px; border: 1px solid var(--border); border-radius: 13px; background: var(--bg-card, #0d0d0f); }
+    .px-step b { display: block; font-size: 13px; color: var(--text); margin-bottom: 5px; }
+    .px-step span { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+    .px-step-n {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 6px; margin-bottom: 9px;
+      background: var(--accent-soft, rgba(255,255,255,0.12));
+      font-size: 11px; font-weight: 700; color: var(--text);
+    }
+
+    .px-foot { margin-top: 26px; text-align: center; font-size: 12.5px; color: var(--text-muted, #71717A); line-height: 1.6; }
+    .px-foot a { color: var(--text-secondary); }
+
+    .px-back {
+      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px;
+      font-size: 13.5px; color: var(--text-secondary); text-decoration: none;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .px-back:hover { color: var(--text); transform: translateX(-2px); }
+
+    [data-theme="light"] .px-cta { --on-accent: #fff; }
+
+    @media (max-width: 760px) {
+      .wrap { padding: 28px 16px 60px; }
+      .px-choice { grid-template-columns: 1fr; }
+      .px-step-list { grid-template-columns: 1fr; }
+      .px-summary { flex-direction: column; align-items: stretch; }
+      .px-cta { justify-content: center; width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .px-plan, .px-cta, .px-back, .px-radio, .px-radio::after { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="px-back" href="../index.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Back to home
+    </a>
+
+    <div class="px-head">
+      <span class="px-eyebrow">Premium</span>
+      <h1 class="px-title">Pick the plan that fits you</h1>
+      <p class="px-sub">Pay for one exam period, or unlock everything forever. Either way you get the full AI tutor, past papers and flashcards.</p>
+    </div>
+
+    <div class="px-choice" id="px-choice" data-active="exam">
+      <label class="px-plan">
+        <input type="radio" name="plan" value="exam" checked>
+        <span class="px-plan-top">
+          <span>
+            <span class="px-plan-name">Exam Plan</span>
+            <span class="px-plan-for">Everything until your exams finish</span>
+          </span>
+          <span class="px-radio" aria-hidden="true"></span>
+        </span>
+        <span class="px-price">
+          <span class="px-amount" id="px-exam-amount">Rs 999</span>
+          <span class="px-per" id="px-exam-per">one exam period</span>
+        </span>
+        <span class="px-periods">
+          <span class="px-periods-label">Choose your exam period</span>
+          <span class="px-period-list" id="px-period-list"></span>
+        </span>
+        <ul class="px-feats">
+          <li>Full AI tutor, textbook RAG and image reading</li>
+          <li>Past papers, notes and flashcards for your board</li>
+          <li>Access ends automatically when the period ends</li>
+        </ul>
+      </label>
+
+      <label class="px-plan">
+        <input type="radio" name="plan" value="lifetime">
+        <span class="px-plan-top">
+          <span>
+            <span class="px-plan-name">Lifetime Access</span>
+            <span class="px-plan-for">Every subject, every exam, forever</span>
+          </span>
+          <span class="px-radio" aria-hidden="true"></span>
+        </span>
+        <span class="px-price">
+          <span class="px-amount" id="px-life-amount">Rs 4,999</span>
+          <span class="px-per">pay once</span>
+        </span>
+        <ul class="px-feats">
+          <li>Everything in the Exam Plan, with no expiry</li>
+          <li>All future subjects, boards and new features</li>
+          <li>One payment, no renewals</li>
+        </ul>
+      </label>
+    </div>
+
+    <div class="px-summary">
+      <div class="px-sum-main">
+        <div class="px-sum-label">Your selection</div>
+        <div class="px-sum-plan" id="px-sum-plan">Exam Plan</div>
+        <div class="px-sum-note" id="px-sum-note">Pick an exam period to continue.</div>
+      </div>
+      <button class="px-cta" id="px-go" type="button">
+        Continue to payment
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <div class="px-steps">
+      <div class="px-steps-title">How payment works</div>
+      <div class="px-step-list">
+        <div class="px-step"><span class="px-step-n">1</span><b>Send the payment</b><span>Transfer with Easypaisa or JazzCash to the account shown on the next screen.</span></div>
+        <div class="px-step"><span class="px-step-n">2</span><b>Upload the screenshot</b><span>Attach your payment receipt so we can verify it.</span></div>
+        <div class="px-step"><span class="px-step-n">3</span><b>We activate your plan</b><span>We review the proof and switch your account on, usually within a few hours.</span></div>
+      </div>
+    </div>
+
+    <p class="px-foot">Questions about a plan? <a href="../index.html#faq">Read the FAQ</a> or message us on WhatsApp.</p>
+  </div>
+
+  <script src="../js/plans.js?v=1"></script>
+  <script>
+    (function () {
+      'use strict';
+      var P = window.ANTEEM_PLANS || {};
+      var periods = Array.isArray(P.examPeriods) ? P.examPeriods : [];
+      var fmt = P.fmt || function (n) { return 'Rs ' + n; };
+      var choice = document.getElementById('px-choice');
+      var list = document.getElementById('px-period-list');
+      var state = { plan: 'exam', period: (periods[0] && periods[0].id) || '' };
+
+      function endLabel(iso) {
+        try {
+          return 'Access until ' + new Date(iso).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch (_) { return ''; }
+      }
+
+      function renderPeriods() {
+        if (!list) return;
+        if (!periods.length) {
+          list.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted)">Exam periods are loading…</div>';
+          return;
+        }
+        list.innerHTML = periods.map(function (p) {
+          return '<label class="px-period">'
+            + '<input type="radio" name="period" value="' + p.id + '"' + (p.id === state.period ? ' checked' : '') + '>'
+            + '<span><span class="px-period-name">' + p.label + '</span>'
+            + '<span class="px-period-ends">' + endLabel(p.endsAt) + '</span></span>'
+            + '<span class="px-period-price">' + fmt(p.price) + '</span>'
+            + '</label>';
+        }).join('');
+        Array.prototype.forEach.call(list.querySelectorAll('input[name="period"]'), function (r) {
+          r.addEventListener('change', function () { state.period = r.value; sync(); });
+        });
+      }
+
+      function sync() {
+        var planEl = document.querySelector('input[name="plan"]:checked');
+        state.plan = planEl ? planEl.value : 'exam';
+        choice.setAttribute('data-active', state.plan);
+
+        var per = P.periodById ? P.periodById(state.period) : null;
+        var sumPlan = document.getElementById('px-sum-plan');
+        var sumNote = document.getElementById('px-sum-note');
+        var examAmt = document.getElementById('px-exam-amount');
+
+        if (state.plan === 'lifetime') {
+          sumPlan.textContent = 'Lifetime Access';
+          sumNote.textContent = 'One payment of ' + fmt(P.lifetimePrice || 4999) + '. Yours forever, no renewal.';
+        } else if (per) {
+          sumPlan.textContent = 'Exam Plan - ' + per.label;
+          sumNote.textContent = fmt(per.price) + '. ' + endLabel(per.endsAt) + '.';
+          if (examAmt) examAmt.textContent = fmt(per.price);
+        } else {
+          sumPlan.textContent = 'Exam Plan';
+          sumNote.textContent = 'Pick an exam period to continue.';
+        }
+        var lifeAmt = document.getElementById('px-life-amount');
+        if (lifeAmt) lifeAmt.textContent = fmt(P.lifetimePrice || 4999);
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('input[name="plan"]'), function (r) {
+        r.addEventListener('change', sync);
+      });
+
+      var go = document.getElementById('px-go');
+      if (go) {
+        go.addEventListener('click', function () {
+          var base = (typeof BASE !== 'undefined' && BASE) ? BASE : '';
+          var q = '?plan=' + encodeURIComponent(state.plan);
+          if (state.plan === 'exam' && state.period) q += '&period=' + encodeURIComponent(state.period);
+          window.location.href = base + '/payment/index.html' + q;
+        });
+      }
+
+      renderPeriods();
+      sync();
+    })();
+  </script>
+</body>
+</html>

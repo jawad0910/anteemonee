@@ -1015,7 +1015,7 @@ async function renderSubscriptionContent(container, planCard) {
         <div class="plan-icon free">&#9201;</div>
         <div class="plan-info">
           <h4>Free Trial ${badge('active', trial.daysLeft <= 1 ? 'Ends today' : trial.daysLeft + ' days left')}</h4>
-          <p>Full access until ${endStr}. Get lifetime access before it ends.</p>
+          <p>Full access until ${endStr}. Upgrade to an Exam plan or Lifetime before it ends.</p>
         </div>
       </div>`;
   } else if (trial.reason === 'blocked') {
@@ -1024,7 +1024,7 @@ async function renderSubscriptionContent(container, planCard) {
         <div class="plan-icon free">&#128218;</div>
         <div class="plan-info">
           <h4>Trial Unavailable</h4>
-          <p>This device has already used its free trial. Get lifetime access to continue.</p>
+          <p>This device has already used its free trial. Choose an Exam plan or Lifetime to continue.</p>
         </div>
       </div>`;
   } else {
@@ -1059,7 +1059,7 @@ async function renderSubscriptionContent(container, planCard) {
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>One active session per account</span></li>
           <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>7-day money-back guarantee</span></li>
         </ul>
-        <a href="/pages/payment-plan.html?plan=lifetime" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Lifetime Access - Rs 4,999</a>
+        <a href="/../payment/index.html?plan=lifetime" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Lifetime Access - Rs 4,999</a>
       </div>`;
     container.appendChild(upgradeCard);
   }
