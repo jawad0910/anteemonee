@@ -220,6 +220,7 @@
     </div>
   </div>
   <a href="../ai-chat/">AI Assistant</a>
+  <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
         <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
@@ -249,6 +250,7 @@
       </div>
     </div>
     <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
         <a href="../messenger/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
       <a href="../pages/login.html" class="btn-login">Log in</a>
@@ -438,8 +440,8 @@
           </div>
           <div class="footer-col">
             <h4>Legal</h4>
-            <a href="../pages/privacy.html">Privacy Policy</a>
-            <a href="../pages/terms.html">Terms of Service</a>
+            <a href="/privacy/">Privacy Policy</a>
+            <a href="/terms/">Terms of Service</a>
           </div>
         </div>
       </div>
@@ -449,7 +451,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=30"></script>
+  <script src="../js/app.js?v=31"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>
@@ -474,13 +476,13 @@
               '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
                 '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
                   '<div class="avatar-wrapper">' +
-                    (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
                   '</div>' +
                 '</button>' +
                 '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
                   '<div class="dropdown-header">' +
                     '<div class="dropdown-avatar">' +
-                      (imgUrl ? '<img src="../pages/' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
                     '</div>' +
                     '<div class="dropdown-info">' +
                       '<span class="dropdown-name">' + (fullName || username) + '</span>' +
@@ -1179,7 +1181,7 @@
       function paintBm() {
         var html = S.bookmarks.map(function (b) {
           var url = b.url && /^https?:\/\//i.test(b.url) ? b.url : 'https://' + (b.url || '');
-          return '<div class="bm-row" data-id="' + b.id + '"><a href="../pages/' + esc(url) + '" target="_blank" rel="noopener">' + esc(b.title || url) + '</a><button class="task-del" data-bm="del" aria-label="Delete">×</button></div>';
+          return '<div class="bm-row" data-id="' + b.id + '"><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(b.title || url) + '</a><button class="task-del" data-bm="del" aria-label="Delete">×</button></div>';
         }).join('');
         var main = document.getElementById('bm-list'); if (main) main.innerHTML = html || '<p class="muted">No bookmarks yet</p>';
         var per = document.getElementById('bm-list-personal'); if (per) per.innerHTML = html || '<p class="muted">No bookmarks yet</p>';

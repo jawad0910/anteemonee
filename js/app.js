@@ -1978,7 +1978,7 @@ const DEFAULT_PREFS = {
   theme_mode: 'dark', accent_color: 'violet',
   glass_intensity: 'medium', reduce_animations: false,
   layout_density: 'comfortable',
-  ai_response_style: 'balanced', ai_language: 'english',
+  ai_response_style: 'balanced', ai_explanation_level: 'standard', ai_language: 'english',
   ai_voice_enabled: true, ai_voice_speed: 100,
   ai_study_recommendations: true, ai_autoplay_voice: false,
   ai_memory_enabled: true, ai_personalization: '', ai_references: false,
