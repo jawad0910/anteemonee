@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request a Refund - Anteemonee</title>
+  <meta name="description" content="Open a refund request for an Anteemonee premium plan.">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=34">
+  <style>
+    body { font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); }
+    .rf-wrap { max-width: 720px; margin: 0 auto; padding: 36px 20px 80px; }
+    .rf-back {
+      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px;
+      font-size: 13.5px; color: var(--text-secondary); text-decoration: none;
+      transition: color .2s ease, transform .2s ease;
+    }
+    .rf-back:hover { color: var(--text); transform: translateX(-2px); }
+    .rf-title {
+      font-family: var(--font-display, inherit);
+      font-size: clamp(1.7rem, 4.5vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em;
+      margin: 0 0 8px; color: var(--text);
+    }
+    .rf-sub { font-size: 14.5px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 26px; }
+
+    .rf-card {
+      padding: 22px; border-radius: 16px;
+      background: var(--bg-card, #0d0d0f); border: 1px solid var(--border);
+    }
+    .rf-field { margin-bottom: 16px; }
+    .rf-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+    .rf-hint { font-size: 12px; color: var(--text-muted, #71717A); margin-top: 6px; line-height: 1.5; }
+    .rf-input, .rf-select, .rf-textarea {
+      width: 100%; box-sizing: border-box;
+      padding: 11px 13px; font: inherit; font-size: 14px;
+      color: var(--text); background: var(--bg, #000);
+      border: 1px solid var(--border); border-radius: 11px;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .rf-textarea { min-height: 108px; resize: vertical; line-height: 1.55; }
+    .rf-input:focus, .rf-select:focus, .rf-textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft, rgba(255,255,255,0.1));
+    }
+    .rf-input::placeholder, .rf-textarea::placeholder { color: var(--text-muted, #71717A); }
+    .rf-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* receipt picker */
+    .rf-receipts { display: flex; flex-direction: column; gap: 8px; }
+    .rf-receipt {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; cursor: pointer;
+      border: 1px solid var(--border); border-radius: 12px;
+      transition: border-color .2s ease, background-color .2s ease;
+    }
+    .rf-receipt:hover { background: var(--surface, #141416); }
+    .rf-receipt input { position: absolute; opacity: 0; pointer-events: none; }
+    .rf-rc-main { flex: 1 1 auto; min-width: 0; }
+    .rf-rc-no { font-size: 13.5px; font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+    .rf-rc-meta { font-size: 11.5px; color: var(--text-muted, #71717A); margin-top: 3px; }
+    .rf-rc-amt { flex: none; font-size: 13.5px; font-weight: 650; color: var(--text); }
+    .rf-receipt:has(input:checked) { border-color: var(--accent); background: var(--surface, #141416); }
+    .rf-receipt:has(input:checked) .rf-rc-no::after { content: ' ✓'; }
+    .rf-receipt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* proof attach */
+    .rf-file {
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      padding: 18px; cursor: pointer; text-align: center;
+      border: 1.5px dashed var(--border); border-radius: 12px;
+      font-size: 13.5px; color: var(--text-secondary);
+      transition: border-color .2s ease, background-color .2s ease;
+    }
+    .rf-file:hover { border-color: var(--text-tertiary, var(--border)); background: var(--surface, #141416); }
+    .rf-file input { display: none; }
+    .rf-prev { margin-top: 12px; display: none; }
+    .rf-prev.on { display: block; }
+    .rf-prev img {
+      max-width: 100%; max-height: 260px; object-fit: contain;
+      border-radius: 11px; border: 1px solid var(--border); display: block;
+    }
+
+    .rf-submit {
+      width: 100%; margin-top: 8px; padding: 14px 22px;
+      font: inherit; font-size: 15px; font-weight: 650; letter-spacing: -0.01em;
+      color: var(--on-accent, #fff); background: var(--accent);
+      border: 1px solid var(--accent); border-radius: 12px; cursor: pointer;
+      transition: transform .28s cubic-bezier(.22,1,.36,1), opacity .2s ease;
+    }
+    .rf-submit:hover:not(:disabled) { transform: translateY(-2px); opacity: .94; }
+    .rf-submit:active:not(:disabled) { transform: translateY(0) scale(.985); }
+    .rf-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .rf-submit:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    .rf-msg {
+      display: none; margin-bottom: 18px; padding: 13px 16px; border-radius: 12px;
+      font-size: 13px; line-height: 1.55;
+    }
+    .rf-msg.on { display: block; }
+    .rf-msg.err { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.35); color: var(--text); }
+    .rf-msg.ok { background: var(--accent-soft, rgba(255,255,255,0.08)); border: 1px solid var(--accent); color: var(--text); }
+
+    .rf-note { margin-top: 22px; font-size: 12.5px; line-height: 1.65; color: var(--text-muted, #71717A); }
+    .rf-note b { color: var(--text-secondary); }
+    .rf-foot { margin-top: 26px; text-align: center; font-size: 12.5px; color: var(--text-muted, #71717A); }
+
+    @media (max-width: 620px) {
+      .rf-wrap { padding: 26px 16px 60px; }
+      .rf-two { grid-template-columns: 1fr; }
+      .rf-card { padding: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .rf-submit, .rf-back { transition: none; } }
+  </style>
+</head>
+<body>
+  <div class="rf-wrap">
+    <a class="rf-back" href="../index.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Back to home
+    </a>
+
+    <h1 class="rf-title">Request a refund</h1>
+    <p class="rf-sub">Tell us which payment you want refunded and where to send the money. We review every request by hand.</p>
+
+    <div id="rf-msg" class="rf-msg"></div>
+
+    <div id="rf-gate" style="display:none;padding:26px 22px;border-radius:16px;border:1px solid var(--border);background:var(--bg-card,#0d0d0f);text-align:center">
+      <b style="font-size:16px">Sign in to open a refund request</b>
+      <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0">We need your account so the refund can be matched to the right payment.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+        <a href="../pages/login.html" class="rf-submit" style="width:auto;display:inline-flex;align-items:center;text-decoration:none">Log in</a>
+        <a href="../payment/" class="rf-submit" style="width:auto;display:inline-flex;align-items:center;text-decoration:none;background:transparent;color:var(--text);border-color:var(--border)">View my payments</a>
+      </div>
+    </div>
+
+    <form id="rf-form" style="display:none">
+      <div class="rf-card">
+        <div class="rf-field">
+          <span class="rf-label">Which payment do you want refunded?</span>
+          <div id="rf-receipts" class="rf-receipts"></div>
+          <div id="rf-no-receipts" style="display:none;font-size:12.5px;color:var(--text-muted);line-height:1.6">
+            We could not find any receipts on your account yet. A receipt is created the moment you submit a payment proof —
+            you can also enter the receipt number manually below.
+          </div>
+          <input id="rf-manual" class="rf-input" placeholder="Or type your receipt number (AMB-XXXXXX-XXXX)" style="margin-top:10px;display:none">
+          <div class="rf-hint">Your receipt number looks like <b>AMB-8K2P1Q-4F7D</b>. It is on your payment confirmation screen.</div>
+        </div>
+
+        <div class="rf-two">
+          <div class="rf-field">
+            <label class="rf-label" for="rf-title-in">Account title</label>
+            <input id="rf-title-in" class="rf-input" placeholder="Name on the account" required>
+          </div>
+          <div class="rf-field">
+            <label class="rf-label" for="rf-number">Account / IBAN number</label>
+            <input id="rf-number" class="rf-input" placeholder="PK00 XXXX XXXX XXXX XXXX" inputmode="numeric" required>
+            <div class="rf-hint">We refund to the same kind of account you paid from.</div>
+          </div>
+        </div>
+
+        <div class="rf-two">
+          <div class="rf-field">
+            <label class="rf-label" for="rf-bank">Bank / wallet</label>
+            <input id="rf-bank" class="rf-input" placeholder="Meezan Bank, Easypaisa…">
+          </div>
+          <div class="rf-field">
+            <label class="rf-label" for="rf-amount">Amount to refund (Rs)</label>
+            <input id="rf-amount" class="rf-input" inputmode="numeric" placeholder="999">
+            <div class="rf-hint">Leave blank to refund the full amount paid.</div>
+          </div>
+        </div>
+
+        <div class="rf-field">
+          <label class="rf-label" for="rf-reason">Why are you requesting a refund?</label>
+          <textarea id="rf-reason" class="rf-textarea" placeholder="Tell us what went wrong, e.g. I bought the wrong exam period, or I was charged twice." required></textarea>
+        </div>
+
+        <div class="rf-field">
+          <span class="rf-label">Screenshot of your original payment</span>
+          <label class="rf-file" for="rf-proof">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.8" cy="9" r="1.6"/><path d="m21 15.5-4.6-4.6L5 21"/></svg>
+            <span id="rf-file-name">Attach the payment screenshot (JPG or PNG, max 5MB)</span>
+          </label>
+          <input id="rf-proof" type="file" accept="image/png,image/jpeg,image/webp">
+          <div class="rf-hint" style="margin-top:8px">If you used a receipt we already have on file you can skip this.</div>
+          <div class="rf-prev" id="rf-prev"><img id="rf-prev-img" alt="Payment screenshot preview"></div>
+        </div>
+
+        <button class="rf-submit" id="rf-submit" type="submit">Submit refund request</button>
+      </div>
+    </form>
+
+    <p class="rf-note">
+      <b>Before you submit:</b> refunds are only possible for plans that are still active or were activated in the last 14 days.
+      Exam plans are non-refundable once their exam period has started. Refunds are sent to the account you give above within 3&ndash;7 working days.
+      Your premium stays on until the refund is processed.
+    </p>
+    <p class="rf-foot">Need help? <a href="../index.html#faq">Read the FAQ</a> or message us on WhatsApp.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/plans.js?v=1"></script>
+  <script>
+  (function () {
+    'use strict';
+    var SB_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+    var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+    // Reuse the app-wide client when this page is opened inside the site shell.
+    try { if (typeof db !== 'undefined' && db) { state.dbPre = db; } } catch (_) {}
+
+    var state = { db: null, dbPre: null, user: null, receipts: [], chosen: '', file: null, sending: false };
+    var $ = function (id) { return document.getElementById(id); };
+
+    function say(msg, kind) {
+      var el = $('rf-msg');
+      el.className = 'rf-msg on ' + (kind || 'err');
+      el.textContent = msg;
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function clearSay() { $('rf-msg').className = 'rf-msg'; }
+    function fmtRs(n) {
+      var P = window.ANTEEM_PLANS || {};
+      return P.fmt ? P.fmt(n) : ('Rs ' + n);
+    }
+    function randChars(n) {
+      var out = '';
+      try {
+        var buf = new Uint32Array(n);
+        crypto.getRandomValues(buf);
+        for (var i = 0; i < n; i++) out += buf[i].toString(36).slice(-1);
+        return out.toUpperCase();
+      } catch (_) {}
+      for (var j = 0; j < n; j++) out += Math.floor(Math.random() * 36).toString(36);
+      return out.toUpperCase();
+    }
+    function refundNo() {
+      var t = Date.now().toString(36).toUpperCase();
+      return 'RFD-' + t.slice(-6) + '-' + randChars(8);
+    }
+    function uuid() {
+      try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (_) {}
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0; return (c === 'x' ? r : ((r & 0x3 | 0x8))).toString(16);
+      });
+    }
+
+    function renderReceipts() {
+      var box = $('rf-receipts');
+      var list = state.receipts.filter(function (r) { return r.status !== 'refunded'; });
+      if (!list.length) {
+        box.innerHTML = '';
+        $('rf-no-receipts').style.display = 'block';
+        $('rf-manual').style.display = 'block';
+        return;
+      }
+      $('rf-no-receipts').style.display = 'none';
+      $('rf-manual').style.display = 'none';
+      box.innerHTML = list.map(function (r, i) {
+        var meta = (r.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan')
+          + ' · ' + fmtRs(r.amount) + ' · ' + String(r.method || '').toUpperCase()
+          + (r.issued_at ? ' · ' + new Date(r.issued_at).toLocaleDateString('en-PK') : '');
+        return '<label class="rf-receipt">'
+          + '<input type="radio" name="rf-receipt" value="' + (r.receipt_no || '') + '"' + (i === 0 ? ' checked' : '') + '>'
+          + '<span class="rf-rc-main"><span class="rf-rc-no">' + (r.receipt_no || '(no receipt no)') + '</span>'
+          + '<span class="rf-rc-meta">' + meta + '</span></span>'
+          + '<span class="rf-rc-amt">' + fmtRs(r.amount) + '</span>'
+          + '</label>';
+      }).join('');
+      Array.prototype.forEach.call(box.querySelectorAll('input'), function (el) {
+        el.addEventListener('change', function () {
+          state.chosen = el.value;
+          var r = state.receipts.filter(function (x) { return x.receipt_no === el.value; })[0];
+          if (r) {
+            $('rf-amount').value = r.amount || '';
+            $('rf-amount').placeholder = fmtRs(r.amount);
+          }
+        });
+      });
+      var first = box.querySelector('input:checked');
+      if (first) first.dispatchEvent(new Event('change'));
+    }
+
+    function onFile(ev) {
+      var f = ev.target.files && ev.target.files[0];
+      state.file = f || null;
+      var prev = $('rf-prev'), img = $('rf-prev-img');
+      if (!f) { prev.className = 'rf-prev'; $('rf-file-name').textContent = 'Attach the payment screenshot (JPG or PNG, max 5MB)'; return; }
+      if (!/^image\/(png|jpeg|webp)$/.test(f.type) && !/\.(png|jpe?g|webp)$/i.test(f.name)) {
+        say('That file is not a JPG, PNG or WebP image.', 'err');
+        ev.target.value = ''; state.file = null; return;
+      }
+      if (f.size > 5 * 1024 * 1024) { say('That image is over 5MB. Please compress it or send a smaller screenshot.', 'err'); ev.target.value = ''; state.file = null; return; }
+      $('rf-file-name').textContent = f.name;
+      var fr = new FileReader();
+      fr.onload = function () { img.src = fr.result; prev.className = 'rf-prev on'; };
+      fr.readAsDataURL(f);
+    }
+
+    async function submit(ev) {
+      ev.preventDefault();
+      if (state.sending) return;
+      clearSay();
+      var receipt = state.chosen || ($('rf-manual').value || '').trim().toUpperCase();
+      if (!receipt) { say('Pick a receipt, or type your receipt number.', 'err'); return; }
+      var title = ($('rf-title-in').value || '').trim();
+      var number = ($('rf-number').value || '').trim();
+      var reason = ($('rf-reason').value || '').trim();
+      if (!title) { say('Enter the account title.', 'err'); return; }
+      if (number.replace(/[^0-9A-Za-z]/g, '').length < 8) { say('That account number looks too short. Include the full IBAN or account number.', 'err'); return; }
+      if (reason.length < 10) { say('Please give a short reason so we can process the refund quickly.', 'err'); return; }
+      if (!state.db || !state.user) { say('You need to be signed in. Reload the page after logging in.', 'err'); return; }
+
+      state.sending = true;
+      var btn = $('rf-submit');
+      var label = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Submitting…';
+      try {
+        var proofUrl = null;
+        if (state.file) {
+          var ext = 'jpg';
+          var m = /\.([a-z0-9]+)$/i.exec(state.file.name || '');
+          if (m) ext = m[1].toLowerCase();
+          if (!/^(jpg|jpeg|png|webp)$/.test(ext)) ext = 'jpg';
+          var path = state.user.id + '/refund-' + uuid() + '.' + ext;
+          var up = await state.db.storage.from('payment-proofs').upload(path, state.file, { upsert: false });
+          if (up.error) {
+            var msg = String(up.error.message || '');
+            if (/bucket not found|does not exist|not_found|404/i.test(msg)) {
+              throw new Error('We could not store your screenshot right now (storage bucket missing). Please email your screenshot to support@anteemonee.com with receipt ' + receipt + ' and we will still process the refund.');
+            }
+            throw new Error(msg || 'Could not upload the screenshot.');
+          }
+          var pub = state.db.storage.from('payment-proofs').getPublicUrl(path);
+          proofUrl = pub && pub.data && pub.data.publicUrl;
+        }
+
+        var matched = state.receipts.filter(function (x) { return x.receipt_no === receipt; })[0] || null;
+        var amt = parseInt(($('rf-amount').value || '').replace(/[^0-9]/g, ''), 10);
+        var row = {
+          refund_no: refundNo(),
+          user_id: state.user.id,
+          receipt_no: receipt,
+          plan: matched ? matched.plan : null,
+          amount: (!isNaN(amt) && amt > 0) ? amt : (matched ? matched.amount : 0),
+          account_title: title,
+          account_number: number,
+          bank_name: ($('rf-bank').value || '').trim() || null,
+          reason: reason,
+          proof_url: proofUrl,
+          status: 'pending'
+        };
+        var ins = await state.db.from('refund_requests').insert(row);
+        if (ins.error) {
+          var im = String(ins.error.message || '');
+          if (/relation .*refund_requests.* does not exist|42P01/i.test(im)) {
+            throw new Error('Refund requests are not set up yet on our side. Please email your receipt number and account details to support@anteemonee.com and we will sort it out manually.');
+          }
+          throw new Error(im || 'Could not submit the refund request.');
+        }
+        document.getElementById('rf-form').style.display = 'none';
+        say('Refund request ' + row.refund_no + ' received for receipt ' + receipt + '. We will review it and email you within 3 working days.', 'ok');
+      } catch (e) {
+        say(e.message || 'Something went wrong. Please try again.', 'err');
+      } finally {
+        state.sending = false;
+        btn.disabled = false; btn.textContent = label;
+      }
+    }
+
+    async function init() {
+      try { state.db = state.dbPre || window.supabase.createClient(SB_URL, SB_KEY); } catch (_) {}
+      if (!state.db) { $('rf-gate').style.display = 'block'; return; }
+      try {
+        var sess = await state.db.auth.getSession();
+        state.user = sess && sess.data && sess.data.session ? sess.data.session.user : null;
+      } catch (_) {}
+      if (!state.user) { $('rf-gate').style.display = 'block'; return; }
+
+      $('rf-gate').style.display = 'none';
+      $('rf-form').style.display = 'block';
+
+      try {
+        var r = await state.db.from('payment_receipts')
+          .select('receipt_no,plan,exam_period,amount,method,issued_at,status')
+          .eq('user_id', state.user.id).order('issued_at', { ascending: false }).limit(50);
+        if (r && !r.error && r.data && r.data.length) state.receipts = r.data;
+      } catch (_) {}
+
+      if (!state.receipts.length) {
+        try {
+          var q = await state.db.from('payment_requests')
+            .select('receipt_no,plan,exam_period,amount,method,created_at,status')
+            .eq('user_id', state.user.id).order('created_at', { ascending: false }).limit(50);
+          if (q && !q.error && q.data) {
+            state.receipts = q.data.map(function (x) {
+              return { receipt_no: x.receipt_no, plan: x.plan, exam_period: x.exam_period, amount: x.amount, method: x.method, issued_at: x.created_at, status: x.status };
+            }).filter(function (x) { return !!x.receipt_no; });
+          }
+        } catch (_) {}
+      }
+      renderReceipts();
+      $('rf-proof').addEventListener('change', onFile);
+      $('rf-form').addEventListener('submit', submit);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  })();
+  </script>
+</body>
+</html>

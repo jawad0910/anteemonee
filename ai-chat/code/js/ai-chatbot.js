@@ -4781,7 +4781,7 @@ function handleFileBlocks(div, text) {
       try {
         chatInput.value = '';
         chatInput.disabled = true;
-        chatInput.placeholder = 'Your free trial has ended — get lifetime access to continue.';
+        chatInput.placeholder = 'Your free trial has ended. Choose an Exam plan or Lifetime to continue.'
         autoResize();
         btnSend.disabled = true;
         btnSend.style.display = 'flex';

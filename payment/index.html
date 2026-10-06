@@ -212,14 +212,22 @@
       <div id="pp-paid" class="pp-card" style="display:none;text-align:center">
         <b style="font-size:16px">You already have premium access ✓</b>
         <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0">No payment needed. Enjoy everything, forever or until your exam period ends.</p>
-        <a href="../dashboard/" class="btn-secondary" style="margin-top:16px">Go to Dashboard</a>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+          <a href="../dashboard/" class="btn-secondary" style="text-decoration:none">Go to Dashboard</a>
+          <a href="../refunds/" class="btn-secondary" style="text-decoration:none">Request a refund</a>
+        </div>
       </div>
 
       <!-- PENDING REVIEW -->
       <div id="pp-pending" class="pp-card" style="display:none;text-align:center">
         <b style="font-size:16px">Payment under review ⏳</b>
         <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0" id="pp-pending-text">We received your screenshot proof and will activate your plan shortly.</p>
-        <button class="btn-secondary" id="pp-new-btn" style="margin-top:16px">Submit a new payment</button>
+        <div id="pp-pending-receipt" style="margin-top:14px;display:none;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
+          <div style="font-size:19px;font-weight:700;letter-spacing:.01em;margin-top:4px" id="pp-receipt-no">—</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px" id="pp-receipt-meta"></div>
+        </div>
+        <p style="margin-top:14px"><a href="../refunds/" style="font-size:13px;color:var(--text-secondary)">Need a refund? Open a request</a></p>
       </div>
 
       <!-- MAIN FLOW -->
@@ -297,7 +305,17 @@
         <div class="pp-success-icon">✓</div>
         <b style="font-size:16px">Proof submitted!</b>
         <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0">Our team will verify your payment and activate your plan shortly. You will see premium features appear automatically.</p>
-        <a href="../index.html" class="btn-secondary" style="margin-top:16px">Back to Home</a>
+        <div id="pp-success-receipt" style="margin-top:18px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
+          <div style="font-size:22px;font-weight:700;letter-spacing:.02em;margin-top:5px" id="pp-success-receipt-no">—</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);margin-top:5px" id="pp-success-receipt-meta"></div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Keep this number. You need it for any refund or support request.</div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+          <a href="../refunds/" class="btn-secondary" style="text-decoration:none">Request a refund</a>
+          <a href="../account/" class="btn-secondary" style="text-decoration:none">My account</a>
+          <a href="../index.html" class="btn-secondary" style="text-decoration:none">Back to Home</a>
+        </div>
       </div>
     </div>
   </main>
@@ -468,7 +486,6 @@
         });
 
         document.getElementById('pp-submit').addEventListener('click', submitPayment);
-        document.getElementById('pp-new-btn').addEventListener('click', function () { show('pp-main'); });
 
         // Wait for auth (same pattern as other pages).
         var tries = 0;
@@ -507,7 +524,7 @@
         // Pending request?
         try {
           var pr = await state.db.from('payment_requests')
-            .select('id,plan,exam_period,amount,method,created_at')
+            .select('id,plan,exam_period,amount,method,created_at,receipt_no')
             .eq('user_id', user.id).eq('status', 'pending')
             .order('created_at', { ascending: false }).limit(1).maybeSingle();
           if (pr && !pr.error && pr.data) {
@@ -516,6 +533,13 @@
             try { when = new Date(d.created_at).toLocaleString(); } catch (_) {}
             document.getElementById('pp-pending-text').textContent =
               'We received your ' + fmtRs(d.amount) + ' ' + d.method + ' payment proof (' + when + ') and will activate your plan shortly.';
+            var rn = document.getElementById('pp-pending-receipt');
+            if (d.receipt_no) {
+              rn.style.display = 'block';
+              document.getElementById('pp-receipt-no').textContent = d.receipt_no;
+              document.getElementById('pp-receipt-meta').textContent =
+                (d.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan') + ' · ' + fmtRs(d.amount) + ' · ' + String(d.method || '').toUpperCase();
+            }
             show('pp-pending');
             return;
           }
@@ -531,6 +555,26 @@
           }
         } catch (_) {}
         show('pp-main');
+      }
+
+      // AMB-<time36>-<8 random base36>. The random part needs real entropy: a
+      // 4-char tail collides within a few thousand submissions in the same
+      // millisecond, and a duplicate receipt number would let a refund lookup
+      // match the wrong payment.
+      function randChars(n) {
+        var out = '';
+        try {
+          var buf = new Uint32Array(n);
+          crypto.getRandomValues(buf);
+          for (var i = 0; i < n; i++) out += buf[i].toString(36).slice(-1);
+          return out.toUpperCase();
+        } catch (_) { /* fall through to Math.random */ }
+        for (var j = 0; j < n; j++) out += Math.floor(Math.random() * 36).toString(36);
+        return out.toUpperCase();
+      }
+      function receiptNo() {
+        var t = Date.now().toString(36).toUpperCase();
+        return 'AMB-' + t.slice(-6) + '-' + randChars(8);
       }
 
       function uuid() {
@@ -565,7 +609,7 @@
                 /storage\.buckets/i.test(msg)) {
               throw new Error(
                 'Payment proof storage is not set up yet (bucket "' + BUCKET + '" is missing). ' +
-                'Please run supabase/migrations/20261001000000_exam_plans_payments.sql in the Supabase SQL editor, ' +
+                'Please run supabase/migrations/20261015000000_payment_proofs_setup.sql in the Supabase SQL editor, ' +
                 'or message support and attach your screenshot directly.'
               );
             }
@@ -582,7 +626,8 @@
           if (!url) throw new Error('Could not get screenshot URL.');
           var sender = '';
           try { sender = (document.getElementById('pp-sender').value || '').trim(); } catch (_) {}
-          var ins = await state.db.from('payment_requests').insert({
+          var receipt = receiptNo();
+          var row = {
             user_id: state.user.id,
             plan: state.plan,
             exam_period: state.plan === 'exam' ? state.period : null,
@@ -590,19 +635,51 @@
             method: state.method,
             sender_number: sender || null,
             screenshot_url: url,
-            status: 'pending'
-          });
+            status: 'pending',
+            receipt_no: receipt
+          };
+          var ins = { error: null };
+          // receipt_no has a unique index; retry with a fresh number on the rare
+          // collision instead of failing a real payment submission.
+          for (var attempt = 0; attempt < 4; attempt++) {
+            row.receipt_no = receipt;
+            ins = await state.db.from('payment_requests').insert(row);
+            if (!ins.error) break;
+            if (!/duplicate key|23505|unique/i.test(String(ins.error.message || ''))) break;
+            receipt = receiptNo();
+          }
           if (ins.error) {
             var im = String(ins.error.message || '');
             if (/relation .*payment_requests.* does not exist|42P01/i.test(im)) {
               throw new Error(
                 'Payment requests are not set up yet (table payment_requests is missing). ' +
-                'Please run supabase/migrations/20261001000000_exam_plans_payments.sql in the Supabase SQL editor, ' +
+                'Please run supabase/migrations/20261015000000_payment_proofs_setup.sql in the Supabase SQL editor, ' +
                 'or message support with your screenshot.'
               );
             }
             throw new Error(im || 'Could not save payment request.');
           }
+
+          // Mirror into payment_receipts so the user has a durable receipt even
+          // if the request is later approved or rejected. Never block on it.
+          try {
+            await state.db.from('payment_receipts').insert({
+              receipt_no: receipt,
+              user_id: state.user.id,
+              plan: state.plan,
+              exam_period: state.plan === 'exam' ? state.period : null,
+              amount: currentAmount(),
+              method: state.method,
+              sender_number: sender || null,
+              proof_url: url,
+              payment_request_id: (ins.data && ins.data[0] && ins.data[0].id) || null
+            });
+          } catch (_) { /* receipts table may not exist yet; the request itself is saved */ }
+
+          var rn = document.getElementById('pp-success-receipt-no');
+          if (rn) rn.textContent = receipt;
+          var rm = document.getElementById('pp-success-receipt-meta');
+          if (rm) rm.textContent = (state.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan') + ' · ' + fmtRs(currentAmount()) + ' · ' + String(state.method || '').toUpperCase();
           show('pp-success');
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { window.scrollTo(0, 0); }
         } catch (e) {
