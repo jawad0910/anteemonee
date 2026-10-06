@@ -222,10 +222,20 @@
       <div id="pp-pending" class="pp-card" style="display:none;text-align:center">
         <b style="font-size:16px">Payment under review ⏳</b>
         <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0" id="pp-pending-text">We received your screenshot proof and will activate your plan shortly.</p>
-        <div id="pp-pending-receipt" style="margin-top:14px;display:none;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface)">
+        <div id="pp-pending-receipt" style="margin-top:14px;display:none;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface)">
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
-          <div style="font-size:19px;font-weight:700;letter-spacing:.01em;margin-top:4px" id="pp-receipt-no">—</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px">
+            <div style="font-size:19px;font-weight:700;letter-spacing:.01em" id="pp-receipt-no">—</div>
+            <span style="font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid var(--warning);color:var(--warning)">PENDING ACTIVATION</span>
+          </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:4px" id="pp-receipt-meta"></div>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn-secondary" id="pp-download-pending" type="button">Download receipt</button>
+            <a href="../receipts/" class="btn-secondary" style="text-decoration:none">All my receipts</a>
+          </div>
+          <div id="pp-pending-preview" style="margin-top:12px;display:none">
+            <img id="pp-pending-img" alt="Your payment receipt" style="width:100%;max-width:300px;border-radius:10px;border:1px solid var(--border);display:block;box-shadow:0 6px 20px rgba(0,0,0,.14)">
+          </div>
         </div>
         <p style="margin-top:14px"><a href="../refunds/" style="font-size:13px;color:var(--text-secondary)">Need a refund? Open a request</a></p>
       </div>
@@ -305,11 +315,23 @@
         <div class="pp-success-icon">✓</div>
         <b style="font-size:16px">Proof submitted!</b>
         <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0">Our team will verify your payment and activate your plan shortly. You will see premium features appear automatically.</p>
-        <div id="pp-success-receipt" style="margin-top:18px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--surface)">
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
-          <div style="font-size:22px;font-weight:700;letter-spacing:.02em;margin-top:5px" id="pp-success-receipt-no">—</div>
-          <div style="font-size:12.5px;color:var(--text-secondary);margin-top:5px" id="pp-success-receipt-meta"></div>
-          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Keep this number. You need it for any refund or support request.</div>
+        <div id="pp-success-receipt" style="margin-top:18px;padding:16px;border-radius:14px;border:1px solid var(--border);background:var(--surface)">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
+              <div style="font-size:22px;font-weight:700;letter-spacing:.02em;margin-top:4px" id="pp-success-receipt-no">—</div>
+            </div>
+            <span id="pp-receipt-badge" style="margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid var(--warning);color:var(--warning)">PENDING ACTIVATION</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px" id="pp-success-receipt-meta"></div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Keep this receipt. It stays here until an admin activates your plan, and you need it for any refund request.</div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn-secondary" id="pp-download-receipt" type="button">Download receipt</button>
+            <a href="../receipts/" class="btn-secondary" style="text-decoration:none">All my receipts</a>
+          </div>
+          <div id="pp-receipt-preview" style="margin-top:14px;display:none">
+            <img id="pp-receipt-img" alt="Your payment receipt" style="width:100%;max-width:330px;border-radius:10px;border:1px solid var(--border);display:block;box-shadow:0 6px 20px rgba(0,0,0,.14)">
+          </div>
         </div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">
           <a href="../refunds/" class="btn-secondary" style="text-decoration:none">Request a refund</a>
@@ -354,6 +376,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
   <script src="../js/plans.js?v=1"></script>
+  <script src="../js/receipt.js?v=2"></script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=31"></script>
   <script>
@@ -384,7 +407,7 @@
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      var state = { plan: 'exam', period: null, method: 'easypaisa', file: null, user: null, db: null };
+      var state = { plan: 'exam', period: null, method: 'easypaisa', file: null, user: null, db: null, receipt: null, pendingReceipt: null };
 
       function periods() {
         return (window.ANTEEM_PLANS && window.ANTEEM_PLANS.examPeriods) || [];
@@ -457,6 +480,13 @@
         setMethod('easypaisa');
         refreshOrder();
 
+        try {
+          var dBtn = document.getElementById('pp-download-receipt');
+          if (dBtn) dBtn.addEventListener('click', function () { downloadCurrentReceipt('success'); });
+          var dPend = document.getElementById('pp-download-pending');
+          if (dPend) dPend.addEventListener('click', function () { downloadCurrentReceipt('pending'); });
+        } catch (_) {}
+
         document.getElementById('pp-copy').addEventListener('click', function () {
           var btn = this;
           var num = document.getElementById('pp-acc-num').textContent.trim();
@@ -524,7 +554,7 @@
         // Pending request?
         try {
           var pr = await state.db.from('payment_requests')
-            .select('id,plan,exam_period,amount,method,created_at,receipt_no')
+            .select('id,plan,exam_period,amount,method,created_at,receipt_no,receipt_image')
             .eq('user_id', user.id).eq('status', 'pending')
             .order('created_at', { ascending: false }).limit(1).maybeSingle();
           if (pr && !pr.error && pr.data) {
@@ -539,6 +569,10 @@
               document.getElementById('pp-receipt-no').textContent = d.receipt_no;
               document.getElementById('pp-receipt-meta').textContent =
                 (d.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan') + ' · ' + fmtRs(d.amount) + ' · ' + String(d.method || '').toUpperCase();
+              state.pendingReceipt = d;
+              var pv = document.getElementById('pp-pending-preview');
+              var pi = document.getElementById('pp-pending-img');
+              if (d.receipt_image && pv && pi) { pi.src = d.receipt_image; pv.style.display = 'block'; }
             }
             show('pp-pending');
             return;
@@ -575,6 +609,42 @@
       function receiptNo() {
         var t = Date.now().toString(36).toUpperCase();
         return 'AMB-' + t.slice(-6) + '-' + randChars(8);
+      }
+
+      function downloadCurrentReceipt(which) {
+        var r = (which === 'pending') ? state.pendingReceipt : state.receipt;
+        if (!r) return fail('No receipt to download yet.');
+        var no = r.no || r.receipt_no;
+        if (!no) return fail('No receipt number found.');
+        var planLabel = r.planLabel || (r.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan');
+        var amount = r.amount || 0;
+        var method = String(r.method || '').toUpperCase();
+        var image = r.image || r.receipt_image;
+        try {
+          if (!image || typeof window.AnteemoneeReceipt === 'undefined') {
+            // Receipt image was not stored (older receipt) -- render it now.
+            image = window.AnteemoneeReceipt.render({
+              shopName: 'Anteemonee',
+              address: ['Student OS for Pakistan', 'FSc, Matric & Intermediate', 'support@anteemonee.com'],
+              title: 'Payment Receipt',
+              columns: [
+                { label: planLabel, value: fmtRs(amount) },
+                { label: 'Paid via ' + method, value: '' }
+              ],
+              totalLabel: 'Total Paid', total: fmtRs(amount),
+              footerLines: [{ label: 'Receipt No', value: no }],
+              thanks: 'THANK YOU!',
+              stamp: { text: (r.status === 'active' ? 'VERIFIED' : 'PENDING'), color: r.status === 'active' ? '#15803d' : '#b45309' },
+              barcodeText: no
+            });
+          }
+          var a = document.createElement('a');
+          a.href = image;
+          a.download = 'anteemonee-receipt-' + no + '.png';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        } catch (e) {
+          fail('Could not build the receipt image: ' + (e.message || 'unknown error'));
+        }
       }
 
       function uuid() {
@@ -660,26 +730,68 @@
             throw new Error(im || 'Could not save payment request.');
           }
 
-          // Mirror into payment_receipts so the user has a durable receipt even
-          // if the request is later approved or rejected. Never block on it.
+          // Render the receipt image and keep it in state so the preview and
+          // the download button use the exact same PNG we store.
+          var planLabel = state.plan === 'lifetime' ? 'Lifetime Access'
+            : 'Exam Plan - ' + ((periods().filter(function (x) { return x.id === state.period; })[0] || {}).label || '');
+          var receiptImage = '';
+          try {
+            receiptImage = window.AnteemoneeReceipt.render({
+              shopName: 'Anteemonee',
+              address: ['Student OS for Pakistan', 'FSc, Matric & Intermediate', 'support@anteemonee.com'],
+              title: 'Payment Receipt',
+              columns: [
+                { label: planLabel, value: fmtRs(currentAmount()) },
+                { label: 'Paid via ' + String(state.method || '').toUpperCase(), value: '' },
+                { label: 'Status', value: 'Pending activation' }
+              ],
+              totalLabel: 'Total Paid', total: fmtRs(currentAmount()),
+              subTotals: [
+                { label: 'Plan', value: state.plan === 'lifetime' ? 'Lifetime' : 'Exam' },
+                { label: 'Method', value: String(state.method || '').toUpperCase() }
+              ],
+              footerLines: [
+                { label: 'Receipt No', value: receipt },
+                { label: 'Issued', value: new Date().toLocaleDateString('en-PK') }
+              ],
+              thanks: 'THANK YOU!',
+              stamp: { text: 'PENDING', color: '#b45309' },
+              barcodeText: receipt
+            });
+          } catch (_) { receiptImage = ''; }
+
+          // Mirror into payment_receipts. Never block the payment on it.
           try {
             await state.db.from('payment_receipts').insert({
               receipt_no: receipt,
               user_id: state.user.id,
               plan: state.plan,
               exam_period: state.plan === 'exam' ? state.period : null,
+              plan_label: planLabel,
               amount: currentAmount(),
               method: state.method,
               sender_number: sender || null,
+              sender_reference: sender || null,
               proof_url: url,
+              receipt_image: receiptImage || null,
+              status: 'pending',
               payment_request_id: (ins.data && ins.data[0] && ins.data[0].id) || null
             });
           } catch (_) { /* receipts table may not exist yet; the request itself is saved */ }
 
+          state.receipt = { no: receipt, image: receiptImage, planLabel: planLabel,
+                            amount: currentAmount(), method: state.method };
+          try {
+            localStorage.setItem('Anteemonee_last_receipt', JSON.stringify(state.receipt));
+          } catch (_) {}
+
           var rn = document.getElementById('pp-success-receipt-no');
           if (rn) rn.textContent = receipt;
           var rm = document.getElementById('pp-success-receipt-meta');
-          if (rm) rm.textContent = (state.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan') + ' · ' + fmtRs(currentAmount()) + ' · ' + String(state.method || '').toUpperCase();
+          if (rm) rm.textContent = planLabel + ' · ' + fmtRs(currentAmount()) + ' · ' + String(state.method || '').toUpperCase();
+          var pv = document.getElementById('pp-receipt-preview');
+          var pi = document.getElementById('pp-receipt-img');
+          if (receiptImage && pv && pi) { pi.src = receiptImage; pv.style.display = 'block'; }
           show('pp-success');
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { window.scrollTo(0, 0); }
         } catch (e) {

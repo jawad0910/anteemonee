@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Receipts - Anteemonee</title>
+  <meta name="description" content="Download your Anteemonee payment receipts.">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=34">
+  <style>
+    body { font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); }
+    .rc-wrap { max-width: 900px; margin: 0 auto; padding: 36px 20px 80px; }
+
+    /* ---------- modern nav buttons ---------- */
+    .rc-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+    .rb {
+      --ease: cubic-bezier(.22, 1, .36, 1);
+      position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 999px;
+      font-size: 13.5px; font-weight: 550; letter-spacing: -0.01em;
+      text-decoration: none; font-family: inherit; cursor: pointer;
+      color: var(--text-secondary);
+      background: var(--liquid-bg-soft, rgba(255,255,255,.05));
+      border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      transition: transform .3s var(--ease), background-color .22s ease,
+                  border-color .22s ease, color .22s ease, box-shadow .3s var(--ease);
+    }
+    .rb::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+      background: linear-gradient(115deg, transparent 14%, rgba(255,255,255,.14) 50%, transparent 84%);
+      opacity: 0; transform: translateX(-60%);
+      transition: opacity .3s ease, transform .55s var(--ease);
+    }
+    .rb > * { position: relative; z-index: 1; }
+    .rb:hover { color: var(--text); background: var(--liquid-bg, rgba(255,255,255,.08)); border-color: var(--text-tertiary, rgba(255,255,255,.2)); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.18); }
+    .rb:hover::after { opacity: 1; transform: translateX(60%); }
+    .rb:active { transform: translateY(0) scale(.97); transition-duration: .09s; }
+    .rb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .rb-primary { color: var(--on-accent, #fff); background: var(--accent); border-color: var(--accent); }
+    .rb-primary:hover { color: var(--on-accent, #fff); background: var(--accent); opacity: .93; }
+    .rb svg { flex: none; }
+
+    .rc-title {
+      font-family: var(--font-display, inherit);
+      font-size: clamp(1.7rem, 4.5vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em;
+      margin: 0 0 8px; color: var(--text);
+    }
+    .rc-sub { font-size: 14.5px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 26px; }
+
+    /* ---------- receipt cards ---------- */
+    .rc-card {
+      position: relative;
+      padding: 18px 20px; margin-bottom: 14px;
+      border-radius: 16px; border: 1px solid var(--border);
+      background: var(--bg-card, #0d0d0f);
+      box-shadow: 0 1px 0 rgba(255,255,255,.04) inset;
+      transition: transform .3s cubic-bezier(.22,1,.36,1), border-color .22s ease, box-shadow .3s ease;
+    }
+    .rc-card:hover { transform: translateY(-2px); border-color: var(--text-tertiary, rgba(255,255,255,.2)); box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+    .rc-top { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+    .rc-thumb {
+      flex: none; width: 74px; height: 100px; border-radius: 9px;
+      border: 1px solid var(--border); background: #fff; overflow: hidden; cursor: pointer;
+      display: block; padding: 0;
+      transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease;
+    }
+    .rc-thumb:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(0,0,0,.28); }
+    .rc-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+    .rc-thumb.empty { display: flex; align-items: center; justify-content: center; color: #999; font-size: 10px; background: #f2f2f2; }
+    .rc-main { flex: 1 1 220px; min-width: 0; }
+    .rc-no { font-size: 16px; font-weight: 650; letter-spacing: .01em; color: var(--text); font-variant-numeric: tabular-nums; }
+    .rc-plan { font-size: 13.5px; color: var(--text-secondary); margin-top: 3px; }
+    .rc-meta { font-size: 12px; color: var(--text-muted, #71717A); margin-top: 6px; line-height: 1.6; }
+    .rc-acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .rc-badge {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .07em;
+      padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary);
+    }
+    .rc-badge.pending { border-color: var(--warning); color: var(--warning); }
+    .rc-badge.active { border-color: #16a34a; color: #16a34a; }
+
+    .rc-empty {
+      padding: 40px 24px; text-align: center; border-radius: 16px;
+      border: 1px dashed var(--border); color: var(--text-secondary);
+    }
+    .rc-msg { display: none; margin-bottom: 18px; padding: 13px 16px; border-radius: 12px; font-size: 13px; line-height: 1.55; }
+    .rc-msg.on { display: block; }
+    .rc-msg.err { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.35); color: var(--text); }
+
+    /* lightbox */
+    .rc-lb {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      animation: rcf .18s ease;
+    }
+    .rc-lb[hidden] { display: none; }
+    .rc-lb-inner {
+      max-width: min(760px, 94vw); max-height: 90vh; overflow: auto;
+      display: flex; flex-direction: column; gap: 12px; align-items: center;
+      animation: rcIn .24s cubic-bezier(.22,1,.36,1);
+    }
+    .rc-lb img { max-width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.45); background: #fff; }
+    @keyframes rcf { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes rcIn { from { opacity: 0; transform: translateY(10px) scale(.985) } to { opacity: 1; transform: none } }
+
+    @media (max-width: 560px) { .rc-wrap { padding: 24px 16px 60px; } .rc-bar .rb { flex: 1 1 auto; justify-content: center; } }
+    @media (prefers-reduced-motion: reduce) { .rb, .rb::after, .rc-card, .rc-thumb { transition: none; animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="rc-wrap">
+    <div class="rc-bar">
+      <a class="rb" href="../index.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        Home
+      </a>
+      <a class="rb" href="../account/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        Account
+      </a>
+      <a class="rb" href="../refunds/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Request a refund
+      </a>
+      <a class="rb rb-primary" href="../premium/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        Buy a plan
+      </a>
+    </div>
+
+    <h1 class="rc-title">My receipts</h1>
+    <p class="rc-sub">Every payment receipt for your account. A receipt stays here as <b>Pending</b> until an admin activates your plan, then flips to <b>Active</b>. You need the receipt number for any refund request.</p>
+
+    <div id="rc-msg" class="rc-msg"></div>
+    <div id="rc-list"></div>
+  </div>
+
+  <div class="rc-lb" id="rc-lb" hidden>
+    <div class="rc-lb-inner">
+      <img id="rc-lb-img" alt="Payment receipt">
+      <div class="rc-bar" style="margin:0;justify-content:center">
+        <button class="rb rb-primary" id="rc-lb-dl" type="button">Download PNG</button>
+        <button class="rb" id="rc-lb-close" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="../js/plans.js?v=1"></script>
+  <script src="../js/receipt.js?v=2"></script>
+  <script>
+  (function () {
+    'use strict';
+    var SB_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+    var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+    var $ = function (id) { return document.getElementById(id); };
+    var state = { db: null, user: null, rows: [], current: null };
+
+    function fmtRs(n) { var P = window.ANTEEM_PLANS || {}; return P.fmt ? P.fmt(n) : ('Rs ' + n); }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function say(msg) { var e = $('rc-msg'); e.className = 'rc-msg on err'; e.textContent = msg; }
+    function planLabel(r) {
+      if (r.plan_label) return r.plan_label;
+      if (r.plan === 'lifetime') return 'Lifetime Access';
+      var per = (window.ANTEEM_PLANS && window.ANTEEM_PLANS.periodById) ? window.ANTEEM_PLANS.periodById(r.exam_period) : null;
+      return 'Exam Plan' + (per ? ' - ' + per.label : '');
+    }
+    function isActive(r) { return r.status === 'active'; }
+
+    function renderImage(r) {
+      var no = r.receipt_no;
+      if (r.receipt_image) return r.receipt_image;
+      // Older receipts have no stored image; rebuild it so Download always works.
+      try {
+        return window.AnteemoneeReceipt.render({
+          shopName: 'Anteemonee',
+          address: ['Student OS for Pakistan', 'FSc, Matric & Intermediate', 'support@anteemonee.com'],
+          title: 'Payment Receipt',
+          columns: [
+            { label: planLabel(r), value: fmtRs(r.amount) },
+            { label: 'Paid via ' + String(r.method || '').toUpperCase(), value: '' }
+          ],
+          totalLabel: 'Total Paid', total: fmtRs(r.amount),
+          footerLines: [{ label: 'Receipt No', value: no }],
+          thanks: 'THANK YOU!',
+          stamp: { text: isActive(r) ? 'VERIFIED' : 'PENDING', color: isActive(r) ? '#15803d' : '#b45309' },
+          barcodeText: no
+        });
+      } catch (_) { return ''; }
+    }
+
+    function card(r) {
+      var img = renderImage(r);
+      var thumb = img
+        ? '<button class="rc-thumb" data-view="' + esc(r.receipt_no) + '" title="View full size"><img src="' + img + '" alt="Receipt ' + esc(r.receipt_no) + '"></button>'
+        : '<span class="rc-thumb empty">no image</span>';
+      var when = '';
+      try { when = r.issued_at ? new Date(r.issued_at).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) : ''; } catch (_) {}
+      return '<article class="rc-card" data-no="' + esc(r.receipt_no) + '">'
+        + '<div class="rc-top">' + thumb
+        + '<div class="rc-main">'
+        +   '<div class="rc-no">' + esc(r.receipt_no) + '</div>'
+        +   '<div class="rc-plan">' + esc(planLabel(r)) + ' &middot; ' + fmtRs(r.amount) + '</div>'
+        +   '<div class="rc-meta">' + esc(String(r.method || '').toUpperCase()) + (when ? ' &middot; ' + when : '')
+        +     (r.sender_number ? ' &middot; from ' + esc(r.sender_number) : '') + '</div>'
+        + '</div>'
+        + '<span class="rc-badge ' + (isActive(r) ? 'active' : 'pending') + '">' + (isActive(r) ? 'ACTIVE' : 'PENDING ACTIVATION') + '</span>'
+        + '</div>'
+        + '<div class="rc-acts">'
+        +   '<button class="rb rb-primary" data-dl="' + esc(r.receipt_no) + '" type="button">Download receipt</button>'
+        +   (isActive(r) ? '<a class="rb" href="../refunds/?receipt=' + encodeURIComponent(r.receipt_no) + '">Request refund</a>' : '')
+        +   '<a class="rb" href="../account/">My account</a>'
+        + '</div></article>';
+    }
+
+    function download(no) {
+      var r = state.rows.filter(function (x) { return x.receipt_no === no; })[0];
+      if (!r) return;
+      var img = renderImage(r);
+      if (!img) return say('Could not build the receipt image.');
+      var a = document.createElement('a');
+      a.href = img; a.download = 'anteemonee-receipt-' + no + '.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function openView(no) {
+      var r = state.rows.filter(function (x) { return x.receipt_no === no; })[0];
+      if (!r) return;
+      var img = renderImage(r);
+      if (!img) return say('Could not build the receipt image.');
+      state.current = r;
+      $('rc-lb-img').src = img;
+      $('rc-lb').hidden = false;
+    }
+    function closeView() { $('rc-lb').hidden = true; $('rc-lb-img').src = ''; }
+
+    function paint() {
+      var box = $('rc-list');
+      if (!state.rows.length) {
+        box.innerHTML = '<div class="rc-empty">No receipts yet.<br><br>'
+          + '<a class="rb rb-primary" href="../premium/">Buy a plan</a></div>';
+        return;
+      }
+      box.innerHTML = state.rows.map(card).join('');
+      box.querySelectorAll('[data-dl]').forEach(function (b) { b.addEventListener('click', function () { download(b.getAttribute('data-dl')); }); });
+      box.querySelectorAll('[data-view]').forEach(function (b) { b.addEventListener('click', function () { openView(b.getAttribute('data-view')); }); });
+    }
+
+    async function load() {
+      try { state.db = window.supabase.createClient(SB_URL, SB_KEY); } catch (_) {}
+      if (!state.db) { say('Could not connect. Please reload the page.'); return; }
+      var sess;
+      try { sess = await state.db.auth.getSession(); } catch (_) {}
+      state.user = sess && sess.data && sess.data.session ? sess.data.session.user : null;
+      if (!state.user) {
+        $('rc-list').innerHTML = '<div class="rc-empty">Sign in to see your receipts.<br><br>'
+          + '<a class="rb rb-primary" href="../pages/login.html">Log in</a></div>';
+        return;
+      }
+      var res = await state.db.from('payment_receipts')
+        .select('receipt_no,plan,plan_label,exam_period,amount,method,sender_number,receipt_image,status,issued_at')
+        .eq('user_id', state.user.id).order('issued_at', { ascending: false }).limit(60);
+      if (res.error) {
+        if (/does not exist|42P01/i.test(String(res.error.message || ''))) {
+          say('Receipts are not set up on our side yet. Please run supabase/migrations/20261017000000_receipt_images.sql.');
+        } else say(res.error.message);
+        $('rc-list').innerHTML = '';
+        return;
+      }
+      state.rows = res.data || [];
+      paint();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      $('rc-lb-close').addEventListener('click', closeView);
+      $('rc-lb').addEventListener('click', function (e) { if (e.target === $('rc-lb')) closeView(); });
+      $('rc-lb-dl').addEventListener('click', function () { if (state.current) download(state.current.receipt_no); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeView(); });
+      load();
+    });
+  })();
+  </script>
+</body>
+</html>
