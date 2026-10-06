@@ -1898,7 +1898,7 @@ function renderAbout() {
   aboutCard.className = 'settings-card';
   aboutCard.innerHTML = `
     <div class="settings-profile-card" style="flex-direction:column;text-align:center;padding:28px 20px">
-      <img src="assets/anteemonee.png" alt="Anteemonee" style="width:56px;height:56px;margin-bottom:12px;border-radius:14px">
+      <img src="/assets/anteemonee.png" alt="Anteemonee" style="width:56px;height:56px;margin-bottom:12px;border-radius:14px">
       <h3 style="font-size:20px;font-weight:700;margin-bottom:4px">Anteemonee</h3>
       <p style="font-size:13px;color:var(--text-secondary)">The Student OS for Pakistan</p>
     </div>`;
