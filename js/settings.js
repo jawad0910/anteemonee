@@ -1734,7 +1734,7 @@ function renderAccounts() {
   container.innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
         <div style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-weight:700;font-size:18px;overflow:hidden;flex-shrink:0;">
-        ${avatar ? `<img src="${avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : initial}
+        ${avatar ? `<img src="${avatar}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()" style="width:100%;height:100%;object-fit:cover;">` : initial}
       </div>
       <div>
         <div style="font-size:15px;font-weight:600;color:var(--text);">${name}</div>
@@ -2130,4 +2130,3 @@ function escapeHtmlSettings(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
-

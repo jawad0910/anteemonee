@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -35,7 +35,7 @@
   <meta name="twitter:image" content="https://anteemonee.com/assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=34">
   <link rel="stylesheet" href="code/css/ai-chatbot.css?v=86">
@@ -103,13 +103,14 @@
     @media (max-width: 900px) { .site-nav { display: none; } }
     .site-menu-toggle { width: 38px; height: 38px; border-radius: 50%; display: none; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; }
     @media (max-width: 900px) { .site-menu-toggle { display: inline-flex; } .site-auth-btns { display: none; } #landing-auth-in { display: none !important; } }
-    .chatbot-layout { top: 72px; }
-    /* Force consistent background everywhere */
-    body, .sidebar, .chat-main, .mobile-sidebar, html, .chat-input-area { background: var(--bg) !important; }
-    .sidebar, .mobile-sidebar, .chat-input-area { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: var(--border) !important; }
-    .chat-disclaimer { background: var(--bg) !important; }
-
   </style>
+  <!-- macOS / iOS Messages design system -->
+  <link rel="stylesheet" href="code/css/tokens.css?v=1">
+  <link rel="stylesheet" href="code/css/layout.css?v=1">
+  <link rel="stylesheet" href="code/css/messages.css?v=1">
+  <link rel="stylesheet" href="code/css/composer.css?v=1">
+  <link rel="stylesheet" href="code/css/responsive.css?v=1">
+  <link rel="stylesheet" href="../css/header.css?v=1">
 </head>
 <body>
 
@@ -198,7 +199,6 @@
       <nav class="feat-nav" aria-label="Features">
       </nav>
 
-      <div class="sidebar-label">Chats</div>
       <div class="sidebar-history" id="sidebar-history"></div>
 
       <div class="model-selector sidebar-model loading" id="model-selector">
@@ -229,6 +229,9 @@
       <div class="app-view" id="view-chat">
       <div class="chat-content" id="chat-content">
         <div class="chat-welcome" id="chat-welcome">
+          <div class="welcome-icon" aria-hidden="true">
+            <img src="../assets/anteemonee.png" alt="">
+          </div>
           <h1 class="welcome-title skel-text">What can I help with?</h1>
           <p class="welcome-subtitle">Ask me anything about your studies.</p>
           <div class="welcome-actions">
@@ -333,7 +336,6 @@
           </button>
         </div>
     </div>
-    <div class="sidebar-label">Chats</div>
     <div class="sidebar-history" id="sidebar-history-mobile"></div>
     <div class="model-selector sidebar-model loading" id="model-selector-mobile">
       <div class="model-selector-trigger" id="model-selector-trigger-mobile">

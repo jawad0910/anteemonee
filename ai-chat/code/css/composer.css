@@ -1,0 +1,172 @@
+/* ==========================================================
+   Anteemonee AI Chat — Design System
+   Layer 4 · Composer · iOS Messages input bar
+   ========================================================== */
+
+/* ── Dock — frosted strip that fades into the wallpaper ───────── */
+.chat-input-area {
+  background: linear-gradient(180deg, transparent, var(--chat-dock) 26%);
+  -webkit-backdrop-filter: var(--m-blur-sm);
+  backdrop-filter: var(--m-blur-sm);
+  border-top: none;
+  padding: 8px 20px 18px;
+}
+:root[data-theme="dark"] .chat-input-area {
+  background: linear-gradient(180deg, transparent, var(--chat-dock) 30%);
+}
+
+/* ── Composer capsule — the primary field ─────────────────────── */
+.chat-input-wrapper {
+  max-width: 860px;
+  background: var(--chat-composer);
+  -webkit-backdrop-filter: var(--m-blur-sm);
+  backdrop-filter: var(--m-blur-sm);
+  border: 1px solid var(--chat-composer-border);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    0 12px 32px rgba(0, 0, 0, 0.08);
+  padding: 6px 6px 6px 18px;
+  transition: border-color var(--m-base) var(--m-ease-out),
+              box-shadow var(--m-base) var(--m-ease-out),
+              transform var(--m-base) var(--m-ease-out);
+}
+.chat-input-wrapper:focus-within {
+  border-color: var(--chat-tint);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 3px var(--chat-tint-ring),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    0 12px 32px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ── Textarea — clean, quiet, generous line-height ────────────── */
+.chat-input {
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.006em;
+  color: var(--text-primary);
+  border-radius: 10px;
+}
+.chat-input::placeholder { color: var(--chat-text-meta); }
+.chat-input-row-top { padding: 8px 2px 6px; }
+.chat-input-row-bottom { padding: 6px 2px; }
+
+/* ── Subject pill — tinted capsule ────────────────────────────── */
+.subject-pill {
+  height: 32px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: var(--chat-tint-soft);
+  border: 1px solid transparent;
+  color: var(--chat-tint-hi);
+  font-weight: 600;
+  font-size: 13px;
+}
+.subject-pill:hover {
+  background: var(--chat-tint-soft);
+  border-color: var(--chat-tint-ring);
+}
+.subject-dot { background: var(--chat-tint); box-shadow: none; }
+.subject-caret { color: var(--chat-tint-hi); }
+.subject-dropdown {
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur);
+  backdrop-filter: var(--m-blur);
+  border: 1px solid var(--m-hairline);
+  border-radius: 18px;
+  box-shadow: var(--m-sh-2);
+  transform-origin: bottom left;
+}
+.subject-item:hover { background: var(--chat-tint-soft); }
+.subject-item.active { background: var(--chat-tint-soft); }
+.subject-item.active .subject-item-check { color: var(--chat-tint); }
+
+/* ── Toolbar buttons — quiet orbs, tinted on active ───────────── */
+.input-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: var(--chat-text-meta);
+  transition: background var(--m-fast) var(--m-ease-out),
+              color var(--m-fast) var(--m-ease-out),
+              transform var(--m-fast) var(--m-ease-out);
+}
+.input-btn:hover { background: var(--chat-tint-soft); color: var(--chat-tint-hi); }
+
+.btn-plus, .btn-voice {
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+}
+.btn-plus.has-images {
+  background: var(--chat-tint);
+  color: var(--chat-on-tint);
+  box-shadow: 0 4px 14px var(--chat-tint-ring);
+}
+.btn-voice.active {
+  background: var(--chat-tint);
+  color: var(--chat-on-tint);
+  box-shadow: 0 4px 14px var(--chat-tint-ring);
+}
+.btn-stop {
+  color: var(--error);
+}
+
+/* ── Send — solid tinted circle with inset highlight ──────────── */
+.btn-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--chat-tint);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 45%);
+  color: var(--chat-on-tint);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 14px var(--chat-tint-ring);
+  transition: transform var(--m-fast) var(--m-ease-out),
+              box-shadow var(--m-base) var(--m-ease-out),
+              opacity var(--m-fast) var(--m-ease-out),
+              background var(--m-fast) var(--m-ease-out);
+}
+.btn-send:not(:disabled):hover {
+  transform: scale(1.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 20px var(--chat-tint-ring);
+  filter: brightness(1.05);
+}
+.btn-send:not(:disabled):active { transform: scale(0.96); }
+.btn-send:disabled {
+  background: var(--chat-field);
+  color: var(--chat-text-meta);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ── Mode chips — tinted gradient stays, softened ─────────────── */
+.mode-chip {
+  background: linear-gradient(135deg, var(--chat-tint-hi), var(--chat-tint));
+  box-shadow: 0 2px 8px var(--chat-tint-ring);
+  border-radius: 999px;
+}
+
+/* ── Image preview bar — breathing room above the composer ────── */
+.image-preview-bar {
+  max-width: 860px;
+  padding: 10px 6px 2px;
+}
+.preview-thumb {
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--m-sh-1);
+}
+.preview-remove { background: rgba(0, 0, 0, 0.6); }
+
+/* ── Reply chip above composer ────────────────────────────────── */
+#reply-chip {
+  max-width: 844px;
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur-xs);
+  backdrop-filter: var(--m-blur-xs);
+  border: 1px solid var(--m-hairline-soft);
+  border-radius: 14px;
+  box-shadow: none;
+}

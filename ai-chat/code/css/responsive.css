@@ -1,0 +1,100 @@
+/* ==========================================================
+   Anteemonee AI Chat — Design System
+   Layer 5 · Responsive · safe areas · reduced motion
+   ========================================================== */
+
+/* ── Compact desktop — tighten the rail ───────────────────────── */
+@media (max-width: 1100px) {
+  .sidebar { width: 252px; min-width: 252px; }
+}
+
+/* ── Tablet ───────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar { width: 252px; min-width: 252px; }
+  .messages-list { padding: 16px 14px 6px; }
+}
+
+/* ── Phones ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body { background: var(--chat-wallpaper); }
+
+  .chat-input-area {
+    padding: 6px 10px 14px;
+    background: var(--chat-dock);
+    border-top: 1px solid var(--m-hairline-soft);
+  }
+  .chat-input-wrapper {
+    border-radius: 20px;
+    padding: 4px 4px 4px 14px;
+  }
+  .messages-list { padding: 12px 10px 4px; }
+  .messages-list > .message { margin-bottom: 10px; }
+  .messages-list > .message.user .msg-body { max-width: 84%; }
+
+  /* Bubbles: slightly tighter for small screens */
+  .messages-list > .message.assistant .msg-content,
+  .messages-list > .message.user .msg-content {
+    font-size: 14.5px;
+    padding: 9px 13px;
+  }
+
+  .welcome-action-btn { border-radius: 12px; }
+  .welcome-action-icon { width: 28px; height: 28px; border-radius: 9px; }
+
+  /* Composer controls hug the corners on phones */
+  .chat-input-row-bottom { padding: 4px 2px 2px; }
+  .chat-input-row-left { gap: 2px; }
+  .chat-input-row-right { gap: 2px; }
+  .input-btn, .btn-plus, .btn-voice { width: 34px; height: 34px; border-radius: 10px; }
+  .btn-send { width: 34px; height: 34px; }
+
+  /* iOS keyboard: keep floaters clear of the dock */
+  .scroll-down-btn { bottom: 78px; }
+}
+
+/* Touch devices have no hover — keep message actions visible */
+@media (hover: none) {
+  .msg-feedback,
+  .msg-user-actions {
+    opacity: 1;
+  }
+}
+
+/* ── Very narrow phones ───────────────────────────────────────── */
+@media (max-width: 380px) {
+  .subject-pill { max-width: 116px; }
+  .chat-input-wrapper { border-radius: 18px; }
+  .welcome-actions { gap: 6px; }
+}
+
+/* ── Short screens — dropdown must not overflow ───────────────── */
+@media (max-height: 620px) {
+  .subject-dropdown { max-height: calc(100dvh - 140px); }
+}
+
+/* ── Focus visibility ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--chat-tint);
+  outline-offset: 2px;
+}
+
+/* ── Respect reduced motion ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .chat-input-wrapper,
+  .btn-send,
+  .btn-new-chat,
+  .welcome-action-btn,
+  .welcome-action-icon,
+  .scroll-down-btn,
+  .messages-list > .message,
+  .welcome-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── Safe areas (notched iPhones) ─────────────────────────────── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .chat-input-area { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .mobile-sidebar { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+}

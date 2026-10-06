@@ -1,0 +1,377 @@
+/* ==========================================================
+   Anteemonee AI Chat — Design System
+   Layer 2 · App shell · sidebar · topbar · welcome · window
+   ========================================================== */
+
+/* ── Full-app wallpaper (macOS Sonoma-style tint wash) ────────── */
+body {
+  background: var(--chat-wallpaper);
+}
+
+/* ── Window chrome ────────────────────────────────────────────── */
+.chatbot-layout {
+  top: 72px;
+  background: transparent;
+}
+
+/* ── Sidebar — frosted glass panel with hairline edge ─────────── */
+.sidebar {
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur);
+  backdrop-filter: var(--m-blur);
+  border-right: 1px solid var(--m-hairline);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+  width: 288px;
+  min-width: 288px;
+  padding: 12px 10px 12px;
+}
+
+.sidebar-brand {
+  padding: 4px 8px 12px;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* Brand text owns the remaining row; collapse stays far right */
+.sidebar-brand .brand-name { display: block; margin-right: auto; }
+
+/* ── New chat — terse macOS capsule ───────────────────────────── */
+.btn-new-chat {
+  height: 40px;
+  border-radius: 12px;
+  background: var(--chat-composer);
+  -webkit-backdrop-filter: var(--m-blur-xs);
+  backdrop-filter: var(--m-blur-xs);
+  border: 1px solid var(--m-hairline-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+.btn-new-chat:hover {
+  background: var(--chat-composer);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--m-hairline);
+}
+
+/* ── Search — quiet inset field ───────────────────────────────── */
+.chat-search {
+  height: 34px;
+  border-radius: 10px;
+  background: var(--chat-field);
+  border: 1px solid var(--m-hairline-soft);
+}
+.chat-search[data-active='true'] {
+  background: var(--chat-field);
+  border-color: var(--chat-tint);
+  box-shadow: 0 0 0 3px var(--chat-tint-ring);
+}
+
+/* ── History list — conversational rows ───────────────────────── */
+.sidebar-history {
+  padding: 8px 2px;
+}
+.sidebar-label {
+  color: var(--chat-text-meta);
+  font-family: var(--font-ui);
+  letter-spacing: 0.04em;
+}
+
+/* ── History rebuild · pinned section + ⋮ menu ────────────────── */
+.history-section + .history-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--m-hairline-soft);
+}
+/* Guests don't see section labels (matches the old static label). */
+body.guest .history-section .sidebar-label { display: none; }
+.history-section .sidebar-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.history-label-pin {
+  display: inline-flex;
+  color: var(--chat-tint);
+  opacity: 0.85;
+}
+/* Pinned rows read as cards: lifted, hairlined, with a quiet pin mark. */
+.history-item.pinned {
+  background: var(--chat-sidebar);
+  border: 1px solid var(--m-hairline-soft);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: 4px;
+}
+.history-item.pinned:hover {
+  background: var(--chat-composer);
+  border-color: var(--m-hairline);
+}
+.history-item.pinned .history-pin-mark {
+  color: var(--chat-tint);
+  opacity: 0.8;
+  display: inline-flex;
+}
+.history-item.pinned .history-title { font-weight: 600; }
+
+/* The ⋮ control: quiet until the row is hovered. */
+.history-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  color: var(--chat-text-meta);
+  transition: background var(--m-fast) var(--m-ease-out), color var(--m-fast) var(--m-ease-out);
+}
+.history-item:hover .history-menu-btn { display: inline-flex; }
+.history-item.active .history-menu-btn,
+.history-item.pinned .history-menu-btn { display: inline-flex; }
+.history-menu-btn:hover {
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint);
+}
+@media (hover: none) {
+  .history-menu-btn { display: inline-flex; opacity: 0.75; }
+}
+
+/* The popup menu itself — frosted, hairlined, floats above the row. */
+.history-menu {
+  position: fixed;
+  z-index: 9000;
+  min-width: 186px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur);
+  backdrop-filter: var(--m-blur);
+  border: 1px solid var(--m-hairline);
+  box-shadow: var(--m-sh-2);
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity var(--m-fast) var(--m-ease-out), transform var(--m-fast) var(--m-ease-out);
+  pointer-events: none;
+}
+.history-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--m-fast) var(--m-ease-out);
+}
+.history-menu-item svg { flex-shrink: 0; color: var(--chat-text-meta); }
+.history-menu-item:hover { background: var(--chat-tint-soft); }
+.history-menu-item:hover svg { color: var(--chat-tint); }
+.history-menu-item.danger { color: var(--error); }
+.history-menu-item.danger svg { color: var(--error); }
+.history-menu-item.danger:hover { background: color-mix(in srgb, var(--error) 10%, transparent); }
+.history-menu-sep {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--m-hairline-soft);
+}
+.history-item {
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 1px;
+  font-size: 13.5px;
+  transition: background var(--m-fast) var(--m-ease-out), color var(--m-fast) var(--m-ease-out);
+}
+.history-item:hover {
+  background: var(--chat-tint-soft);
+}
+.history-item.active {
+  background: var(--chat-tint-soft);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── Model selector — tinted footer capsule ───────────────────── */
+.model-selector-trigger {
+  background: var(--chat-composer);
+  -webkit-backdrop-filter: var(--m-blur-xs);
+  backdrop-filter: var(--m-blur-xs);
+  border: 1px solid var(--m-hairline-soft);
+  border-radius: 12px;
+  box-shadow: none;
+}
+.model-dot { background: var(--chat-tint); }
+
+/* ── Main column ──────────────────────────────────────────────── */
+.chat-main {
+  background: transparent;
+}
+
+/* ── Topbar (mobile) — frosted strip ──────────────────────────── */
+.chat-topbar {
+  background: var(--chat-dock);
+  -webkit-backdrop-filter: var(--m-blur-sm);
+  backdrop-filter: var(--m-blur-sm);
+  border-bottom: 1px solid var(--m-hairline-soft);
+}
+.chat-history-btn {
+  background: var(--chat-composer);
+  border: 1px solid var(--m-hairline-soft);
+  box-shadow: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  padding: 0;
+  justify-content: center;
+}
+.chat-history-btn:hover {
+  background: var(--chat-composer);
+  border-color: var(--chat-tint);
+  color: var(--chat-tint);
+}
+
+/* ── Scroll-to-bottom — frosted orb ───────────────────────────── */
+.scroll-down-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--chat-composer);
+  -webkit-backdrop-filter: var(--m-blur-sm);
+  backdrop-filter: var(--m-blur-sm);
+  border: 1px solid var(--m-hairline);
+  box-shadow: var(--m-sh-1);
+  color: var(--chat-text-meta);
+}
+.scroll-down-btn:hover {
+  color: var(--chat-tint);
+  box-shadow: var(--m-sh-1), 0 0 0 3px var(--chat-tint-ring);
+}
+.generating-dots span { background: var(--chat-tint); }
+
+/* ── Sidebar reopen orb ───────────────────────────────────────── */
+#sidebar-reopen {
+  background: var(--chat-composer);
+  -webkit-backdrop-filter: var(--m-blur-sm);
+  backdrop-filter: var(--m-blur-sm);
+  border: 1px solid var(--m-hairline);
+  box-shadow: var(--m-sh-1);
+}
+
+/* ── Panels / modals ──────────────────────────────────────────── */
+.acct-menu,
+.logout-modal,
+.settings-modal,
+.profile-modal,
+.github-panel,
+.quote-modal,
+.report-popup-box,
+.gh-apply-card,
+.branch-panel,
+.voice-card {
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur);
+  backdrop-filter: var(--m-blur);
+  border: 1px solid var(--m-hairline);
+  box-shadow: var(--m-sh-2);
+}
+
+/* ── Welcome — macOS launch-page treatment ────────────────────── */
+.chat-welcome {
+  padding: 56px 28px 40px;
+}
+.welcome-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 26px;
+  background: linear-gradient(160deg, var(--chat-tint-hi), var(--chat-tint) 55%, color-mix(in srgb, var(--chat-tint) 65%, #000));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -10px 24px rgba(0, 0, 0, 0.25),
+    0 20px 50px var(--chat-tint-ring);
+  animation: float 5s ease-in-out infinite;
+}
+.welcome-icon img {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+.welcome-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.6vw, 2.2rem);
+  letter-spacing: -0.028em;
+}
+.welcome-subtitle {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--chat-text-meta);
+  font-size: 1rem;
+}
+.welcome-action-btn {
+  border-radius: 14px;
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur-xs);
+  backdrop-filter: var(--m-blur-xs);
+  border: 1px solid var(--m-hairline-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 8px 16px 8px 8px;
+}
+.welcome-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--m-sh-1);
+  border-color: var(--chat-tint);
+}
+.welcome-action-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--chat-tint-soft);
+  border: none;
+  color: var(--chat-tint);
+}
+.welcome-action-btn:hover .welcome-action-icon {
+  background: var(--chat-tint);
+  color: var(--chat-on-tint);
+}
+
+/* ── Skeleton — tinted shimmer ────────────────────────────────── */
+.skel-text {
+  background: linear-gradient(90deg, var(--chat-sidebar) 25%, var(--chat-tint-soft) 50%, var(--chat-sidebar) 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Mobile drawer — full frosted sheet ───────────────────────── */
+.mobile-sidebar {
+  background: var(--chat-sidebar);
+  -webkit-backdrop-filter: var(--m-blur);
+  backdrop-filter: var(--m-blur);
+  border-right: 1px solid var(--m-hairline);
+  width: min(84vw, 320px);
+}
+.mobile-sidebar-overlay {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.3);
+}
+.btn-close-sidebar {
+  background: var(--chat-field);
+  border: 1px solid var(--m-hairline-soft);
+  box-shadow: none;
+}

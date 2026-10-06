@@ -107,7 +107,7 @@ async function loadHomepageData() {
           const colors = ['#000000', '#333333', '#333333'];
           avatarsEl.innerHTML = avatars.slice(0, 3).map((a, i) => {
             const initial = ((a.username || 'W').charAt(0) || 'W').toUpperCase();
-            return `<span style="background:${colors[i % colors.length]};overflow:hidden"><img src="${a.profile_image_url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${initial}'"></span>`;
+            return `<span style="background:${colors[i % colors.length]};overflow:hidden"><img src="${a.profile_image_url}" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${initial}'"></span>`;
           }).join('');
         }
       }
@@ -531,7 +531,7 @@ function renderProfileAvatar() {
   container.innerHTML = `
     <button class="profile-btn" onclick="toggleProfileDropdown()" aria-label="Profile menu">
       <div class="avatar-wrapper">
-        <img src="${imgUrl}" alt="${username}" class="avatar-img"
+        <img src="${imgUrl}" alt="${username}" class="avatar-img" referrerpolicy="no-referrer"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
         <div class="avatar-fallback" style="${imgUrl ? 'display:none' : ''}">${username.charAt(0).toUpperCase()}</div>
       </div>
@@ -539,7 +539,7 @@ function renderProfileAvatar() {
     <div class="profile-dropdown" id="profile-dropdown">
       <div class="dropdown-header">
         <div class="dropdown-avatar">
-          <img src="${imgUrl}" alt="${username}" class="dropdown-avatar-img"
+          <img src="${imgUrl}" alt="${username}" class="dropdown-avatar-img" referrerpolicy="no-referrer"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
           <div class="avatar-fallback dropdown-avatar-fallback" style="${imgUrl ? 'display:none' : ''}">${username.charAt(0).toUpperCase()}</div>
         </div>
@@ -611,7 +611,7 @@ function hamburgerAccountHtml(linkCls) {
   const name = fullName || username || 'User';
   const initial = (username || 'U').charAt(0).toUpperCase();
   const avatarInner = imgUrl
-    ? `<img src="${escapeHtmlAttr(imgUrl)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="ha-initial" style="display:none">${escapeHtmlAttr(initial)}</span>`
+    ? `<img src="${escapeHtmlAttr(imgUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="ha-initial" style="display:none">${escapeHtmlAttr(initial)}</span>`
     : `<span class="ha-initial">${escapeHtmlAttr(initial)}</span>`;
   return `
     <div class="mobile-acc-dropdown ha-dropdown">

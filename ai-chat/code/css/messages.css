@@ -1,0 +1,209 @@
+/* ==========================================================
+   Anteemonee AI Chat — Design System
+   Layer 3 · Conversation · iOS Messages bubbles
+   ========================================================== */
+
+/* ── Conversation column ──────────────────────────────────────── */
+.messages-list {
+  padding: 20px 18px 8px;
+  gap: 0;
+  width: min(100%, 900px);
+  margin: 0 auto;
+}
+.messages-list > .message {
+  margin: 3px 0 14px;
+  animation: msgIn var(--m-base) var(--m-ease-out) both;
+}
+/* Grouped bubbles: consecutive same-role messages hug together */
+.messages-list > .message.user + .message.user,
+.messages-list > .message.assistant + .message.assistant {
+  margin-top: 3px;
+}
+
+/* ── Avatars ────────────────────────────────────────────────────
+   iMessage hides avatars inside grouped threads. The AI keeps its
+   mark on the very first message of a run only. */
+.message .msg-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  opacity: 0.9;
+}
+.message.assistant + .message.assistant .msg-avatar,
+.message.user + .message.user .msg-avatar {
+  opacity: 0;
+  width: 0;
+  margin: 0;
+}
+.message .msg-body { gap: 5px; }
+
+/* Bubbles hug their content and align to their owner's side:
+   assistant left (beside its mark), user right. Never center. */
+.messages-list > .message.assistant .msg-body {
+  flex: 0 1 auto;
+  max-width: 82%;
+}
+.messages-list > .message.user .msg-body {
+  flex: 0 1 auto;
+  max-width: 82%;
+}
+
+/* ── Assistant bubble — frosted iOS gray card ─────────────────── */
+.messages-list > .message.assistant .msg-content {
+  background: var(--chat-bubble);
+  -webkit-backdrop-filter: var(--m-blur-xs);
+  backdrop-filter: var(--m-blur-xs);
+  border: 1px solid var(--chat-bubble-border);
+  border-radius: 18px 18px 18px 6px;
+  color: var(--chat-bubble-text);
+  padding: 11px 15px;
+  display: inline-block;
+  font-size: 15px;
+  line-height: 1.66;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  max-width: 100%;
+}
+/* Consecutive assistant bubbles square the inner corners */
+/* Tail belongs to the end of a same-role run */
+.messages-list > .message.assistant .msg-content {
+  border-bottom-left-radius: 4px;
+}
+.messages-list > .message.assistant:last-child .msg-content,
+.messages-list > .message.assistant + .message.user .msg-content,
+.messages-list > .message.assistant + .message.assistant:last-child .msg-content {
+  border-bottom-left-radius: 6px;
+}
+
+/* ── User bubble — iOS Messages tinted pill ───────────────────── */
+.messages-list > .message.user .msg-content {
+  background: var(--chat-tint);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 40%);
+  color: var(--chat-on-tint);
+  border-radius: 18px 18px 6px 18px;
+  padding: 10px 15px;
+  display: inline-block;
+  font-size: 15px;
+  line-height: 1.58;
+  box-shadow: 0 1px 2px var(--chat-tint-ring);
+}
+[data-theme="light"] .messages-list > .message.user .msg-content {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.messages-list > .message.user + .message.user .msg-content {
+  border-top-right-radius: 8px;
+}
+.messages-list > .message.user:last-child .msg-content {
+  border-radius: 18px 18px 6px 18px;
+}
+.messages-list > .message.user .msg-body { max-width: 76%; }
+
+/* ── Meta row inside a bubble (time/status) ───────────────────── */
+.message .msg-content .msg-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  float: right;
+  margin: 5px -2px -2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0.72;
+}
+.message.user .msg-content .msg-meta { color: rgba(255, 255, 255, 0.92); }
+.message.assistant .msg-content .msg-meta { color: var(--chat-text-meta); }
+.msg-meta .msg-check { font-size: 10px; }
+
+/* ── Markdown typography inside bubbles ───────────────────────── */
+.message.assistant .msg-content {
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+.msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--chat-bubble-text);
+}
+.msg-content a {
+  color: var(--chat-tint);
+  border-bottom-color: transparent;
+}
+.msg-content a:hover { border-bottom-color: var(--chat-tint); }
+.msg-content blockquote {
+  border-left-color: var(--chat-tint);
+  background: var(--chat-tint-soft);
+  color: var(--chat-bubble-text);
+  border-radius: 10px;
+}
+.msg-content code:not(pre code) {
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint-hi);
+  font-family: var(--font-mono);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.msg-content pre {
+  background: color-mix(in srgb, #000 46%, var(--chat-bubble));
+  border: 1px solid var(--m-hairline-soft);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.msg-content .code-block { border-radius: 14px; overflow: hidden; }
+.msg-content .code-block-header {
+  background: color-mix(in srgb, #000 30%, transparent);
+  border-bottom: 1px solid var(--m-hairline-soft);
+}
+.msg-content .table-wrap {
+  border-color: var(--m-hairline-soft);
+  box-shadow: none;
+}
+.msg-content th {
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint-hi);
+}
+/* KaTeX in tint */
+.msg-content .katex { color: var(--chat-bubble-text); }
+
+/* ── Streaming / thinking ─────────────────────────────────────── */
+.streaming-caret {
+  background: var(--chat-tint);
+  border-radius: 1px;
+}
+.thinking-dot { background: var(--chat-tint); }
+
+/* ── Feedback + actions under a bubble — macOS context tint ───── */
+.msg-feedback,
+.msg-user-actions {
+  gap: 2px;
+  opacity: 0;
+}
+.message:hover .msg-feedback,
+.message:hover .msg-user-actions,
+.message:focus-within .msg-user-actions { opacity: 1; }
+.fb-btn, .msg-user-actions .fb-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--chat-text-meta);
+}
+.fb-btn:hover { background: var(--chat-tint-soft); color: var(--chat-tint); }
+.fb-btn.fb-like.active { color: var(--chat-tint); }
+.fb-btn.fb-like.active svg { fill: var(--chat-tint-soft); }
+.fb-btn.fb-copy.copied { color: var(--chat-tint); }
+
+/* ── Reply chip / quote — tinted leading bar ──────────────────── */
+.reply-chip-bar { background: var(--chat-tint); }
+.reply-chip-label { color: var(--chat-tint); }
+.msg-quote { border-left-color: var(--chat-tint); }
+.msg-quote-label { color: var(--chat-tint); }
+
+/* ── Chat disclaimer — quiet meta ─────────────────────────────── */
+.chat-disclaimer { color: var(--chat-text-meta); font-size: 11.5px; }
+
+/* ── Image thumbnails + generated images ──────────────────────── */
+.preview-thumb {
+  border-radius: 12px;
+  border: none;
+  box-shadow: var(--m-sh-1);
+}
+.msg-image-thumb { border-radius: 12px; }
+.msg-generated-image { border-radius: 14px; }
+.msg-image-loading { border-radius: 16px; }

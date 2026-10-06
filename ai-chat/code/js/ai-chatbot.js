@@ -2723,11 +2723,26 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (!a.pinned && b.pinned) return 1;
       return (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0);
     }).slice(0, query ? 50 : 30);
-    var pinSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
-    var pinSvgFilled = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
-    const html = sorted.map(c =>
-      `<div class="history-item ${c.pinned ? 'pinned' : ''} ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}">${c.pinned ? '<span class="history-pin-mark">'+pinSvgFilled+'</span>' : ''}<span class="history-item-text"><span class="history-title">${query ? highlightMatch(c.title, query) : escapeHtml(c.title)}</span>${query ? matchSnippet(c, query) : ''}</span><button class="history-pin-btn ${c.pinned ? 'pinned' : ''}" data-id="${c.id}" aria-label="${c.pinned ? 'Unpin' : 'Pin'}" title="${c.pinned ? 'Unpin' : 'Pin'}">${c.pinned ? pinSvgFilled : pinSvg}</button><button class="history-edit-btn" data-id="${c.id}" aria-label="Rename chat" title="Rename"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button><button class="history-delete-btn" data-id="${c.id}" aria-label="Delete chat" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`
-    ).join('');
+    // Rebuilt row: one "⋮" control per chat; actions live in a popup.
+    const pinMarkSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
+    const itemHtml = (c) =>
+      `<div class="history-item ${c.pinned ? 'pinned' : ''} ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}">${c.pinned ? '<span class="history-pin-mark">' + pinMarkSvg + '</span>' : ''}<span class="history-item-text"><span class="history-title">${query ? highlightMatch(c.title, query) : escapeHtml(c.title)}</span>${query ? matchSnippet(c, query) : ''}</span><button class="history-menu-btn" data-id="${c.id}" aria-label="Chat options" aria-haspopup="true" title="Chat options">${HISTORY_MENU_SVG.dots}</button></div>`;
+
+    // Pinned chats regroup into their own section above the normal chats.
+    const pinnedList = sorted.filter(c => c.pinned);
+    const normalList = sorted.filter(c => !c.pinned);
+    let html = '';
+    if (query) {
+      // While searching, relevance leads — keep one flat list.
+      html = sorted.map(itemHtml).join('');
+    } else {
+      if (pinnedList.length) {
+        html += '<div class="history-section"><div class="sidebar-label"><span class="history-label-pin">' + pinMarkSvg + '</span>Pinned</div>' + pinnedList.map(itemHtml).join('') + '</div>';
+      }
+      if (normalList.length) {
+        html += '<div class="history-section"><div class="sidebar-label">Chats</div>' + normalList.map(itemHtml).join('') + '</div>';
+      }
+    }
     // No early return here: the binding code below must still run, otherwise the
     // chat-link controls would go unclickable the next time a search has results.
     if (!sorted.length && query) {
@@ -2743,26 +2758,14 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (!container) return;
       container.querySelectorAll('.history-item').forEach(el => {
         el.addEventListener('click', (e) => {
-          if (e.target.closest('.history-pin-btn') || e.target.closest('.history-edit-btn') || e.target.closest('.history-delete-btn') || e.target.closest('.history-title-input')) return;
+          if (e.target.closest('.history-menu-btn') || e.target.closest('.history-title-input')) return;
           loadConversation(el.dataset.id);
         });
       });
-      container.querySelectorAll('.history-pin-btn').forEach(btn => {
+      container.querySelectorAll('.history-menu-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          togglePin(btn.dataset.id);
-        });
-      });
-      container.querySelectorAll('.history-edit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          startRenameChat(btn.dataset.id, btn);
-        });
-      });
-      container.querySelectorAll('.history-delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          deleteConversation(btn.dataset.id);
+          openHistoryMenu(btn);
         });
       });
       try {
@@ -2805,6 +2808,74 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     }
     renderHistory();
   }
+
+  // ── Chat row "⋮" menu · rename / pin / delete in one popup ──
+  const HISTORY_MENU_SVG = {
+    dots: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>',
+    rename: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
+    pin: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>',
+    delete: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+  };
+  var _historyMenu = null;
+  var _historyMenuOwner = null;
+
+  function closeHistoryMenu() {
+    if (_historyMenu) { _historyMenu.remove(); _historyMenu = null; _historyMenuOwner = null; }
+  }
+
+  function openHistoryMenu(btn) {
+    closeHistoryMenu();
+    const id = btn.getAttribute('data-id');
+    const conv = conversations.find(c => c.id === id);
+    if (!conv) return;
+    const menu = document.createElement('div');
+    menu.className = 'history-menu';
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', 'Chat actions');
+    menu.innerHTML =
+      '<button class="history-menu-item" data-act="rename" role="menuitem">' + HISTORY_MENU_SVG.rename + '<span>Rename</span></button>'
+      + '<button class="history-menu-item" data-act="pin" role="menuitem">' + HISTORY_MENU_SVG.pin + '<span>' + (conv.pinned ? 'Unpin' : 'Pin to top') + '</span></button>'
+      + '<div class="history-menu-sep" role="separator"></div>'
+      + '<button class="history-menu-item danger" data-act="delete" role="menuitem">' + HISTORY_MENU_SVG.delete + '<span>Delete chat</span></button>';
+    document.body.appendChild(menu);
+
+    menu.addEventListener('click', (e) => {
+      const item = e.target.closest('.history-menu-item');
+      if (!item) return;
+      const act = item.getAttribute('data-act');
+      e.stopPropagation();
+      closeHistoryMenu();
+      if (act === 'rename') startRenameChat(id, btn);
+      else if (act === 'pin') togglePin(id);
+      else if (act === 'delete') deleteConversation(id);
+    });
+
+    // Position next to the ⋮ button, kept inside the viewport.
+    const r = btn.getBoundingClientRect();
+    const mw = menu.offsetWidth || 190;
+    const mh = menu.offsetHeight || 150;
+    let left = r.right - mw;
+    let top = r.top - 6;
+    if (left < 12) left = 12;
+    if (top + mh > window.innerHeight - 12) top = Math.max(12, r.bottom - mh);
+    if (top < 12) top = 12;
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.top = Math.round(top) + 'px';
+    menu.style.opacity = '1';
+    menu.style.transform = 'translateY(0) scale(1)';
+    menu.style.pointerEvents = 'auto';
+    _historyMenu = menu;
+    _historyMenuOwner = btn;
+  }
+
+  document.addEventListener('click', function (e) {
+    if (_historyMenu && !e.target.closest('.history-menu') && !e.target.closest('.history-menu-btn')) {
+      closeHistoryMenu();
+    }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeHistoryMenu(); });
+  window.addEventListener('resize', closeHistoryMenu);
+  window.addEventListener('scroll', closeHistoryMenu, { passive: true, capture: true });
 
   function startRenameChat(id, btn) {
     const item = btn.closest('.history-item');
