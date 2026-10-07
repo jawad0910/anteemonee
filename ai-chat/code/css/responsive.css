@@ -164,10 +164,16 @@
   .mobile-sidebar {
     top: 0;
     height: 100dvh;
+    left: 0;
+    transform: none !important;
+    display: none !important;
   }
   .mobile-sidebar,
   .mobile-sidebar-overlay {
     z-index: 1200 !important;
+  }
+  .mobile-sidebar.active {
+    display: flex !important;
   }
   .slash-menu {
     bottom: calc(100% + 8px);
