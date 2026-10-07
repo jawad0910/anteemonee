@@ -10,8 +10,8 @@
 (function () {
   'use strict';
 
-  var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-  var PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var PDFJS = '/assets/js/vendor/pdf.min.js';
+  var PDFJS_WORKER = '/assets/js/vendor/pdf.worker.min.js';
 
   var doc = null;
   var url = null;
