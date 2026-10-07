@@ -5,28 +5,28 @@
 
 /* ── Conversation column ──────────────────────────────────────── */
 .messages-list {
-  padding: 20px 18px 8px;
+  padding: 14px 14px 2px;
   gap: 0;
   width: min(100%, 900px);
   margin: 0 auto;
 }
 .messages-list > .message {
-  margin: 3px 0 14px;
+  margin: 2px 0 8px;
   animation: msgIn var(--m-base) var(--m-ease-out) both;
 }
 /* Grouped bubbles: consecutive same-role messages hug together */
 .messages-list > .message.user + .message.user,
 .messages-list > .message.assistant + .message.assistant {
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 /* ── Avatars ────────────────────────────────────────────────────
    iMessage hides avatars inside grouped threads. The AI keeps its
    mark on the very first message of a run only. */
 .message .msg-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   opacity: 0.9;
 }
 .message.assistant + .message.assistant .msg-avatar,
@@ -56,10 +56,10 @@
   border: 1px solid var(--chat-bubble-border);
   border-radius: 18px 18px 18px 6px;
   color: var(--chat-bubble-text);
-  padding: 11px 15px;
+  padding: 8px 13px;
   display: inline-block;
-  font-size: 15px;
-  line-height: 1.66;
+  font-size: 13.5px;
+  line-height: 1.52;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   max-width: 100%;
 }
@@ -80,10 +80,10 @@
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 40%);
   color: var(--chat-on-tint);
   border-radius: 18px 18px 6px 18px;
-  padding: 10px 15px;
+  padding: 7px 13px;
   display: inline-block;
-  font-size: 15px;
-  line-height: 1.58;
+  font-size: 13.5px;
+  line-height: 1.5;
   box-shadow: 0 1px 2px var(--chat-tint-ring);
 }
 [data-theme="light"] .messages-list > .message.user .msg-content {
@@ -169,6 +169,24 @@
 }
 .thinking-dot { background: var(--chat-tint); }
 
+/* Streamed graph block placeholder while the chart is being generated. */
+.graph-stream-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--chat-tint-hi);
+  background: var(--chat-tint-soft);
+  animation: gpulse 1.6s ease-in-out infinite;
+}
+@keyframes gpulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* ── Feedback + actions under a bubble — macOS context tint ───── */
 .msg-feedback,
 .msg-user-actions {
@@ -207,3 +225,168 @@
 .msg-image-thumb { border-radius: 12px; }
 .msg-generated-image { border-radius: 14px; }
 .msg-image-loading { border-radius: 16px; }
+
+/* ── Interactive graph card ─────────────────────────────────────── */
+.graph-card {
+  margin: 12px 0 4px;
+  border: 1px solid var(--chat-composer-border);
+  border-radius: 16px;
+  background: var(--chat-composer);
+  overflow: hidden;
+  max-width: 100%;
+}
+.graph-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--chat-composer-border);
+}
+.graph-card-title {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 2px 0;
+}
+.graph-type-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 1px solid var(--chat-composer-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 22px 5px 9px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 10px) 50%, calc(100% - 6px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+.graph-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint-hi);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.16s var(--m-ease-out), color 0.16s var(--m-ease-out);
+}
+.graph-download:hover {
+  background: var(--chat-tint);
+  color: var(--chat-on-tint);
+}
+.graph-canvas-wrap {
+  position: relative;
+  height: 280px;
+  padding: 14px 14px 6px;
+}
+.graph-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.graph-editor {
+  border-top: 1px solid var(--chat-composer-border);
+  padding: 10px 12px 12px;
+}
+.graph-ed-head,
+.graph-editor-row {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(var(--graph-cols, 1), 1fr) 28px;
+  gap: 6px;
+  align-items: center;
+}
+.graph-ed-head {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chat-text-meta);
+  padding: 0 2px 6px;
+}
+.graph-editor-row {
+  margin-bottom: 6px;
+}
+.graph-ed-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--chat-field);
+  border: 1px solid var(--chat-composer-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color 0.15s var(--m-ease-out);
+}
+.graph-ed-input:focus { border-color: var(--chat-tint); }
+.graph-ed-remove {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--chat-text-meta);
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s var(--m-ease-out), color 0.15s var(--m-ease-out);
+}
+.graph-ed-remove:hover { background: rgba(239, 68, 68, 0.14); color: #f87171; }
+.graph-ed-add {
+  margin-top: 4px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--chat-composer-border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s var(--m-ease-out), color 0.15s var(--m-ease-out);
+}
+.graph-ed-add:hover { border-color: var(--chat-tint); color: var(--chat-tint); }
+
+@media (max-width: 480px) {
+  .graph-card-head { flex-wrap: wrap; }
+  .graph-canvas-wrap { height: 220px; }
+}
+
+/* ── Compact rhythm (ends of file → wins over base theme) ───────
+   Tighter markdown spacing + controls so more conversation fits
+   on screen without the feed feeling cramped. */
+.msg-content p { margin: 0 0 6px; line-height: 1.6; }
+.msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 { margin: 12px 0 6px; }
+.msg-content ul, .msg-content ol { margin: 7px 0; padding-left: 22px; }
+.msg-content li { margin: 3px 0; line-height: 1.6; }
+.msg-content pre { padding: 12px; margin: 9px 0; }
+.msg-content .code-block pre { padding: 12px; }
+.msg-content .code-block-header { padding: 7px 12px; }
+.msg-content blockquote { padding: 8px 13px; margin: 9px 0; }
+.msg-content table, .msg-content .table-wrap { margin: 9px 0; }
+.msg-content hr { margin: 11px 0; }
+.msg-feedback, .msg-user-actions { margin-top: 4px; }
+.thinking-indicator { padding: 6px 0 2px; }
+.streaming-caret { height: 1em; }

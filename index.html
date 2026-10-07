@@ -33,13 +33,7 @@
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
-      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
-      --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
-      --liquid-bg-strong: rgba(10,10,12,0.85);
-    }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
     /* ── CA-style header: flat bar, inline nav ── */
     .header { padding: 0; }
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
@@ -252,22 +246,6 @@
       .price-card:hover, .plan-btn:hover, .plan-btn:active, .price-card li:hover { transform: none; }
     }
     @media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
-    .unified-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 28px; }
-    .unified-col { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 24px; }
-    .unified-col-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--text); letter-spacing: -0.01em; }
-    .unified-steps { display: flex; flex-direction: column; gap: 14px; }
-    .u-step { display: flex; gap: 12px; align-items: flex-start; }
-    .u-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--text); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
-    .u-step b { display: block; font-size: 13.5px; margin-bottom: 2px; }
-    .u-step p { font-size: 12px; color: var(--text-secondary); line-height: 1.55; margin: 0; }
-    .unified-tools { display: flex; flex-direction: column; gap: 10px; }
-    .u-tool { display: flex; gap: 10px; padding: 10px; background: var(--bg-card); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-md); transition: all .2s; }
-    .u-tool:hover { border-color: var(--liquid-border); transform: translateX(2px); }
-    .u-ti { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
-    .u-tool b { display: block; font-size: 12.5px; margin-bottom: 1px; }
-    .u-tool p { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin: 0; }
-    @media (max-width: 1100px) { .unified-grid { grid-template-columns: 1fr; } .steps-col { grid-column: 1 / -1; } }
-    @media (max-width: 760px) { .unified-grid { grid-template-columns: 1fr; } }
     .faq-item { border-bottom: 1px solid var(--border); }
     .faq-q { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 4px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; background: none; border: none; font-family: inherit; }
     .faq-q span:last-child { color: var(--text); font-size: 20px; flex-shrink: 0; }
@@ -435,43 +413,59 @@
       </div>
     </section>
 
-    <!-- UNIFIED: YOUR COMPLETE STUDENT OS -->
-    <section class="section" id="complete" style="padding-top:10px">
+    <!-- WHY STUDENTS CHOOSE ANTEEEMONEE -->
+    <section class="section" id="why" style="padding-top:40px">
       <div class="section-inner">
-        <div class="section-label">Everything you need in one place</div>
-        <h2 class="section-title">9 tools · 4 steps · 1 payment</h2>
-        <p class="section-desc">From first chapter to board day: study, practice, ask, evaluate. No subscriptions, ever.</p>
-        
-        <div class="unified-grid">
-          <!-- STEPS COLUMN -->
-          <div class="unified-col steps-col">
-            <h3 class="unified-col-title">Your 4-Step Loop</h3>
-            <div class="unified-steps">
-              <div class="u-step"><span class="u-num">1</span><div><b>Study</b><p>Board-aligned notes, flashcards & definitions for every chapter.</p></div></div>
-              <div class="u-step"><span class="u-num">2</span><div><b>Practice</b><p>Topical & yearly BISE papers with step-by-step solutions.</p></div></div>
-              <div class="u-step"><span class="u-num">3</span><div><b>Ask</b><p>24/7 AI tutor that knows your class, board & textbooks. Voice or text.</p></div></div>
-              <div class="u-step"><span class="u-num">4</span><div><b>Evaluate</b><p>MCQs with instant checking, streaks & progress tracking.</p></div></div>
+        <div class="section-label">Why students actually stick with Anteemonee</div>
+        <h2 class="section-title">Less panic. More prepared.</h2>
+        <p class="section-desc">Every board topper starts the same way: confused, behind and out of resources. This is how you get ahead.</p>
+
+        <div class="why-grid">
+          <div class="why-item">
+            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
+            <div>
+              <h3>Made for your board, not “science” in general</h3>
+              <p>Chapters, paper patterns and answers match your class, board and group, so nothing you study is wasted.</p>
             </div>
           </div>
-          
-          <!-- TOOLS COLUMN -->
-          <div class="unified-col tools-col">
-            <h3 class="unified-col-title">9 Tools Included</h3>
-            <div class="unified-tools">
-              <div class="u-tool"><span class="u-ti">📖</span><div><b>Board Notes</b><p>Chapter-wise, Punjab/Federal/KPK boards</p></div></div>
-              <div class="u-tool"><span class="u-ti">🃏</span><div><b>Flashcards</b><p>Spaced-repetition, build from chat in one tap</p></div></div>
-              <div class="u-tool"><span class="u-ti">📅</span><div><b>Yearly Past Papers</b><p>Full board papers by year, marking-scheme answers</p></div></div>
-              <div class="u-tool"><span class="u-ti">🤖</span><div><b>AI Tutor</b><p>Answers cite your actual textbook page</p></div></div>
-              <div class="u-tool"><span class="u-ti">✅</span><div><b>MCQ Solver</b><p>Board-pattern MCQs with instant explanations</p></div></div>
-              <div class="u-tool"><span class="u-ti">🎙️</span><div><b>Live Voice Call</b><p>Talk hands-free, interrupt anytime</p></div></div>
-              <div class="u-tool"><span class="u-ti">🔥</span><div><b>Streaks & Progress</b><p>Daily streaks & study-time tracking</p></div></div>
-              <div class="u-tool"><span class="u-ti">📚</span><div><b>eBooks</b><p>Full textbook library inside the app</p></div></div>
-              <div class="u-tool"><span class="u-ti">🧠</span><div><b>AI Memory</b><p>Remembers your weak topics & goals</p></div></div>
+          <div class="why-item">
+            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></span>
+            <div>
+              <h3>An AI tutor that can actually see your book</h3>
+              <p>Ask in English, Urdu or Roman Urdu. Every answer links back to the page and chapter it came from.</p>
+            </div>
+          </div>
+          <div class="why-item">
+            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></span>
+            <div>
+              <h3>6 years of real BISE past papers</h3>
+              <p>Yearly papers from the last six exam sessions, organized board-wise so you can practice the exact pattern.</p>
+            </div>
+          </div>
+          <div class="why-item">
+            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span>
+            <div>
+              <h3>Works on any phone. No app store drama.</h3>
+              <p>Open the link, sign in, study. It runs on every student’s phone, even on low-end Android.</p>
             </div>
           </div>
         </div>
-        
-        <div style="text-align:center;margin-top:32px"><a href="ai-chat/" class="btn-primary">Try the AI Tutor now</a></div>
+
+        <div class="whats-inside">
+          <span class="whats-label">Everything inside one account:</span>
+          <a href="ebooks/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>eBooks</a>
+          <a href="flashcards/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-9 9 9 9 9-9z"/><path d="m16.5 6.5 4 4"/></svg></span>Flashcards</a>
+          <a href="past-papers/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>Past Papers</a>
+          <a href="ai-chat/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></span>AI Tutor</a>
+          <a href="messenger/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Messenger</a>
+        </div>
+
+        <div class="stat-band">
+          <div class="stat-cell"><b>24/7</b><span>AI tutor, day or night</span></div>
+          <div class="stat-cell"><b>6 yrs</b><span>of real exam papers</span></div>
+          <div class="stat-cell"><b>2 min</b><span>to start studying</span></div>
+          <div class="stat-cell"><b>1 payment</b><span>per exam session. Ever.</span></div>
+        </div>
       </div>
     </section>
 
@@ -935,7 +929,7 @@
         }
         if (sel && periods.length) {
           sel.innerHTML = periods.map(function (p) {
-            return '<option value="' + p.id + '">' + p.label + ' — ' + fmtRs(p.price) + '</option>';
+            return '<option value="' + p.id + '">' + p.label + ' · ' + fmtRs(p.price) + '</option>';
           }).join('');
           var perEl = document.getElementById('exam-per');
           sel.addEventListener('change', function () {

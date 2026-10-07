@@ -741,6 +741,7 @@
       if (welcome) welcome.style.display = 'flex';
       var mList = document.getElementById('messages-list');
       if (mList) mList.style.display = 'none';
+      try { syncWelcomeMode(); } catch (_) {}
       // Reload from storage/DB for new subject. Background: the composer stays
       // usable while the list reloads.
       try { initConversationStore().catch(function (e) { console.warn('[AI] store reload failed:', e); }); } catch (_) {}
@@ -960,6 +961,63 @@
   function shouldCreateQuiz(text) {
     if (isQuizRequest(text)) return true;
     return !!(pendingQuizTopic && text && !isInstantGreeting(text));
+  }
+
+  // ── Graph intent (text -> interactive chart) ──────────────────
+  // Trigger on "graph / chart / plot / bar chart / line chart / pie chart"
+  // phrases. "draw a graph" is already a false friend for image generation,
+  // so there is no overlap with the image pipeline.
+  function isGraphRequest(text) {
+    if (!text || isCodingTask(text)) return false;
+    var t = String(text).toLowerCase();
+    if (looksLikeTextOnlyAsk(t) && t.indexOf('graph') === -1 && t.indexOf('chart') === -1 && t.indexOf('plot') === -1) return false;
+    if (/\b(?:bar|line|pie|scatter|area|column|histogram)\s+(?:chart|graph)\b/.test(t)) return true;
+    // Common study phrasing: "speed-time graph", "velocity time graph",
+    // "distance time graph", "make a graph of v = 10+2t", "plot this data".
+    if (/(?:speed|velocity|distance|time|displacement|acceleration|force|position|energy|temperature|momentum)\s*-\s*(?:time|distance|velocity|speed|displacement)\s+graph\b/.test(t)) return true;
+    if (/(?:make|draw|create|plot|generate|show|build)\b[^.?!]{0,40}\bgraph\b/.test(t)) return true;
+    if (/\b(?:chart|graph|plot)\b/.test(t)) {
+      // Skip: "graph theory", "graph of a function y=" follow-ups are still fine,
+      // but "what is a graph" is a definition, not a chart request.
+      if (/what is (?:a |the )?(?:graph|chart)\b/.test(t)) return false;
+      if (/graph theory|theory of graph\b/.test(t)) return false;
+      return true;
+    }
+    return false;
+  }
+
+  function graphProtocolPrompt() {
+    return `
+GRAPH RESPONSE FORMAT - CRITICAL, FOLLOW EXACTLY:
+When the student asks you to create, make, draw or plot a graph, chart or data visualisation
+(for example "draw a graph of v = 10 + 2t", "make a speed-time graph", "plot this data", "bar chart of results"),
+you MUST include exactly ONE fenced code block tagged "graph" containing a single valid JSON object.
+Normal explanatory text may come before and after it, but the graph JSON block itself is REQUIRED.
+Follow this schema exactly:
+
+\`\`\`graph
+{
+  "title": "Chart title",
+  "type": "line",
+  "xLabel": "X axis label",
+  "yLabel": "Y axis label",
+  "labels": ["2019", "2020", "2021"],
+  "datasets": [
+    { "name": "Series name", "data": [10, 25, 40] }
+  ]
+}
+\`\`\`
+
+Rules:
+- "type" is one of: line, bar, pie, scatter, area. Choose the type that best fits the data.
+- For a function or equation, compute at least 5 sensible data points yourself and put them in the dataset.
+- "labels" must have the same length as every "data" array. For pie charts, labels are the slice names.
+- Use the \`\`\`graph\`\`\` fence ONLY for a chart; never for any other JSON.
+- If the student gave raw numbers, use exactly those numbers.
+- If the student asks for a specific range (for example "speed from 0 to 10, time from 10s to 60s"),
+  build sensible data points spanning that range and put them in labels/data.
+- NEVER answer a graph request with text alone. Always include the \`\`\`graph\`\`\` block.
+- Explain briefly below the chart what the graph shows.`;
   }
 
   // ── Image generation intent (text -> image, Qwen primary + Mistral fallback) ──
@@ -1356,6 +1414,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     }
 
     try { renderHistory(); } catch (e) { console.warn('[AI] renderHistory failed:', e); }
+    syncWelcomeMode();
     bindEvents();
     try { setupSubjectDropdown(); } catch (e) { console.warn('[Subject] setup failed', e); }
     try {
@@ -2318,6 +2377,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     messagesList.innerHTML = '';
     welcome.style.display = 'flex';
     messagesList.style.display = 'none';
+    syncWelcomeMode();
     chatInput.value = '';
     chatInput.focus();
     autoResize();
@@ -2394,18 +2454,34 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   // Rebuild the whole message list from `messages`, keeping data-idx in step.
   // One code path for load/edit so the DOM can never drift from the array.
   function renderMessagesFrom() {
+    Object.keys(_graphCharts || {}).forEach(function (id) {
+      try { _graphCharts[id].destroy(); } catch (_) {}
+      delete _graphCharts[id];
+    });
     messagesList.innerHTML = '';
     if (messages.length) {
       welcome.style.display = 'none';
       messagesList.style.display = 'flex';
       messages.forEach((m, i) => appendMessage(m.role, m.content, false, {
         idx: i, quote: m.quote || null, images: m.images || null,
-        quiz: m.quiz || null, generatedImage: m.generatedImage || null,
+        quiz: m.quiz || null, graph: m.graph || null, generatedImage: m.generatedImage || null,
       }));
     } else {
       messagesList.style.display = 'none';
       welcome.style.display = 'flex';
     }
+    syncWelcomeMode();
+  }
+
+  // ChatGPT-style welcome: when no messages exist, the composer sits in the
+  // center of the screen under a time-of-day greeting. The first message
+  // drops it back to the bottom of the feed.
+  function syncWelcomeMode() {
+    try {
+      var active = welcome.style.display !== 'none';
+      document.body.classList.toggle('welcome-center', active);
+      if (active) try { scrollToBottom(); } catch (_) {}
+    } catch (_) {}
   }
 
   // ---------- Edit branches ----------
@@ -2674,6 +2750,17 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     setChatUrlParam(conv.shareCode || conv.id);
     try { updateChatLinkBar(); } catch (_) {}
     messages = conv.messages.map(function(message) {
+      // Older/failed saves may carry the raw ```graph fence in content but no
+      // .graph field yet — extract it here so graphs always re-render.
+      if (!message.graph && message && message.role === 'assistant' && typeof message.content === 'string') {
+        try { message.graph = parseGraphBlock(message.content); } catch (_) {}
+        // Older conversations: the model described the points in prose without
+        // a fence. Read the points straight from that text so the card comes
+        // back even for chats from before the graph feature.
+        if (!message.graph) {
+          try { message.graph = extractGraphFromProse(message.content); } catch (_) {}
+        }
+      }
       if (message && message.role === 'assistant' && typeof message.content === 'string') {
         message.content = stripEmptyReferences(message.content);
       }
@@ -2799,14 +2886,69 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     if (isPremiumTier && currentUserId()) deleteConversationFromDb(id);
     else writeLocalConversations();
     if (activeConversationId === id) {
+      Object.keys(_graphCharts || {}).forEach(function (gid) {
+        try { _graphCharts[gid].destroy(); } catch (_) {}
+        delete _graphCharts[gid];
+      });
       activeConversationId = null;
       messages = [];
       pendingQuizTopic = false;
       messagesList.innerHTML = '';
       messagesList.style.display = 'none';
       welcome.style.display = 'flex';
+      syncWelcomeMode();
     }
     renderHistory();
+  }
+
+  // ── Delete confirmation dialog ────────────────────────────────
+  // Deleting is permanent (no trash), so always ask first and surface the
+  // chat title to make it unambiguous which conversation is going away.
+  function confirmDeleteChat(id) {
+    const conv = conversations.find(c => c.id === id);
+    if (!conv) return;
+    const title = conv.title || 'this chat';
+    // Dismiss any open row menu before the modal appears.
+    closeHistoryMenu();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'delete-confirm-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Delete chat?');
+    overlay.innerHTML =
+      '<div class="delete-confirm-card">' +
+        '<div class="delete-confirm-icon" aria-hidden="true">' + HISTORY_MENU_SVG.delete + '</div>' +
+        '<h3>Delete this chat?</h3>' +
+        '<p class="delete-confirm-title">"' + escapeHtml(title) + '"</p>' +
+        '<p class="delete-confirm-note">This conversation will be permanently removed.</p>' +
+        '<div class="delete-confirm-actions">' +
+          '<button class="delete-confirm-cancel" type="button">Cancel</button>' +
+          '<button class="delete-confirm-ok" type="button">Delete</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    document.body.classList.add('delete-confirm-open');
+
+    function close() {
+      overlay.remove();
+      document.body.classList.remove('delete-confirm-open');
+      document.removeEventListener('keydown', onKey, true);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') close();
+    }
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) close();
+    });
+    overlay.querySelector('.delete-confirm-cancel').addEventListener('click', close);
+    overlay.querySelector('.delete-confirm-ok').addEventListener('click', function () {
+      close();
+      deleteConversation(id);
+    });
+    // Focus the safer action by default.
+    overlay.querySelector('.delete-confirm-cancel').focus();
   }
 
   // ── Chat row "⋮" menu · rename / pin / delete in one popup ──
@@ -2847,7 +2989,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       closeHistoryMenu();
       if (act === 'rename') startRenameChat(id, btn);
       else if (act === 'pin') togglePin(id);
-      else if (act === 'delete') deleteConversation(id);
+      else if (act === 'delete') confirmDeleteChat(id);
     });
 
     // Position next to the ⋮ button, kept inside the viewport.
@@ -2984,6 +3126,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       try {
         displayContent = quiz ? stripQuizBlock(content, true) : content;
         displayContent = stripFileBlocks(displayContent);
+        displayContent = stripGraphBlock(displayContent);
         displayContent = stripRedoxComponent(displayContent);
         displayContent = stripEmptyReferences(displayContent);
       } catch (_) {}
@@ -3008,6 +3151,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (quiz) {
         try { renderQuizCard(div, quiz); } catch (_) {}
       }
+      try {
+        var graphData = opts.graph || parseGraphBlock(content);
+        if (graphData) renderGraphCard(div, graphData);
+      } catch (err) { try { console.warn('[Graph] appendMessage:', err && err.message); } catch (_) {} }
       attachFeedbackButtons(div);
     }
     if (!animate) div.style.animation = 'none';
@@ -3075,6 +3222,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   function updateStreamingMessageImmediate(div, text) {
     const content = div.querySelector('.msg-content');
     var displayText = stripQuizStreamBlock(text);
+    displayText = displayText.replace(/```\s*graph\s*\n[\s\S]*?```/gi, '<span class="graph-stream-placeholder">📊 Building your chart…</span>');
     var renderedText = displayText ? renderStreamingMarkdown(displayText) : '<span class="quiz-stream-placeholder">Preparing your interactive quiz…</span>';
     content.innerHTML = '<div class="streaming-text">' + renderedText + '<span class="streaming-caret"></span></div>';
   }
@@ -3350,6 +3498,228 @@ function parseFileBlocks(text) {
 function stripFileBlocks(text) {
   if (!text) return text;
   return text.replace(/```\s*file-create\s*:[^\n]*\n[\s\S]*?```/g, "").trim();
+}
+
+// ── Graph block: ```graph\n{...json...}\n``` ───────────────────
+function parseGraphBlock(text) {
+  if (!text) return null;
+  var m = text.match(/```\s*graph\s*\n([\s\S]*?)```/i);
+  if (m && m[1]) {
+    try {
+      var data = JSON.parse(m[1].trim());
+      var norm = normalizeGraphData(data);
+      if (norm) return norm;
+    } catch (_) {}
+  }
+  // Fallback: the model sometimes answers with a generic ```json fence that
+  // still contains chart-shaped data (title/labels/datasets). Accept that too.
+  var j = text.match(/```\s*(?:json|javascript)?\s*\n([\s\S]*?)```/i);
+  if (j && j[1]) {
+    try {
+      var candidate = JSON.parse(j[1].trim());
+      var norm2 = normalizeGraphData(candidate);
+      if (norm2) return norm2;
+    } catch (_) {}
+  }
+  return null;
+}
+function stripGraphBlock(text) {
+  if (!text) return text;
+  var out = text.replace(/```\s*graph\s*\n[\s\S]*?```/gi, "").trim();
+  out = out.replace(/```\s*(?:json|javascript)?\s*\n[\s\S]*?\{"title"[\s\S]*?```/gi, "").trim();
+  return out;
+}
+function normalizeGraphData(graph) {
+  if (!graph || typeof graph !== 'object') return null;
+  var labels = Array.isArray(graph.labels) ? graph.labels.map(l => String(l == null ? '' : l)) : [];
+  var rawSets = Array.isArray(graph.datasets) && graph.datasets.length ? graph.datasets : [];
+  if (!labels.length && !rawSets.length) return null;
+  var datasets = rawSets.map(function (s) {
+    var vals = Array.isArray(s && s.data) ? s.data.map(function (v) {
+      var n = parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
+    }) : [];
+    return { name: String((s && s.name) || 'Series'), data: vals };
+  }).filter(function (d) { return d.data.length > 0; });
+  // Allow raw number arrays: datasets:[ [1,2,3], [4,5,6] ]
+  if (!datasets.length) {
+    datasets = rawSets.map(function (s, idx) {
+      var vals = Array.isArray(s) ? s : [];
+      return { name: 'Series ' + (idx + 1), data: vals.map(function (v) { var n = parseFloat(v); return Number.isFinite(n) ? n : 0; }) };
+    });
+  }
+  if (!datasets.length && !labels.length) return null;
+  var types = ['line', 'bar', 'pie', 'scatter', 'area'];
+  var type = types.indexOf(String(graph.type).toLowerCase()) !== -1 ? String(graph.type).toLowerCase() : 'line';
+  // For scatter we need points; fall back to line with x as index if absent.
+  if (type === 'scatter') type = 'line';
+  return {
+    title: String(graph.title || 'Chart'),
+    type: type,
+    xLabel: String(graph.xLabel || ''),
+    yLabel: String(graph.yLabel || ''),
+    labels: labels,
+    datasets: datasets.filter(function (d) { return d.data.length > 0; }),
+  };
+}
+
+// Final safety net: if a graph was requested but the model answered in prose
+// without emitting a ```graph fence, rebuild a graph from the numbers the
+// student gave (e.g. "speed from 0 to 10, time from 10s to 60s").
+function synthesizeGraphFromPrompt(promptText) {
+  try {
+    if (!promptText) return null;
+    var t = String(promptText);
+    // Capture an "X from A to B" pair with optional units, e.g.
+    //   time from 10 s to 60 s
+    //   speed from 0 to 10 m/s
+    var yMatch = t.match(/(?:speed|velocity|value|reading|marks|score|distance|position|force|temperature|count|number|price|population|mass|energy|voltage|current)\s*(?:from|of|=|:)\s*([0-9]+(?:\.[0-9]+)?)[^\d]{0,14}([0-9]+(?:\.[0-9]+)?)/i);
+    var xMatch = t.match(/(?:time|year|day|month|hour|week|t)\s*(?:from|of|=\s*\d|=|:)\s*([0-9]+(?:\.[0-9]+)?)[^\d]{0,14}([0-9]+(?:\.[0-9]+)?)/i);
+    if (xMatch && (yMatch || /(?:speed|velocity|distance|position|force|temperature|value)/i.test(t))) {
+      var x0 = parseFloat(xMatch[1]), x1 = parseFloat(xMatch[2]);
+      var y0 = yMatch ? parseFloat(yMatch[1]) : 0;
+      var y1 = yMatch ? parseFloat(yMatch[2]) : (/\b(0|zero)\b/i.test(t) ? 1 : 10);
+      if (!Number.isFinite(x0) || !Number.isFinite(x1) || x0 === x1) return null;
+      var n = Math.min(11, Math.max(5, Math.ceil(Math.abs(x1 - x0) / 5)));
+      var labels = [], data = [];
+      for (var i = 0; i <= n; i++) {
+        var frac = i / n;
+        labels.push(String(Math.round((x0 + (x1 - x0) * frac) * 100) / 100));
+        data.push(Math.round((y0 + (y1 - y0) * frac) * 100) / 100);
+      }
+      var yName = yMatch ? t.slice(0, Math.max(0, t.indexOf(yMatch[0]))) : 'Value';
+      var unit = t.match(/(m\/s|m s-1|m s⁻¹|km\/h|kmh|m|s|days|years?|months?|newton|n|kg|m s|m\/s²)/i);
+      var xLabel = 'Time' + (x0 === 0 ? '' : ' (start ' + x0 + ')');
+      return {
+        title: (yName ? yName.trim() : 'Value') + ' over ' + 'time',
+        type: 'line',
+        xLabel: 'Time',
+        yLabel: (['speed','velocity'].some(function(w){ return /speed|velocity/i.test(promptText); }) ? 'Speed' : 'Value') + (unit ? ' (' + unit[1] + ')' : ''),
+        labels: labels,
+        datasets: [{ name: 'Data', data: data }],
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Second safety net: the model often describes the exact points in prose
+// without emitting a fence, e.g.
+//   "d = 0 m ⇒ W = 0 J" ... "d = 5 m ⇒ W = 50 J"
+// or "F = 10 N" + "d = 0,1,2,3,4,5 m". Extract those (x, y) pairs and build
+// the chart from them so the card always appears.
+function extractGraphFromProse(text) {
+  try {
+    if (!text) return null;
+    var t = String(text).replace(/\u2013|\u2014|–|—/g, '\u2192').replace(/\u2011|\u207b/g, '-');
+    var labels = [], data = [];
+
+    // Explicit point pairs for any physics pair, e.g.
+    //   "t = 0 s → v = 0 m/s"   "d = 1 m ⇒ W = 10 J"
+    //   "(0, 0) (2, 4)"          "x: 1, 2, 3 → y: 4, 5, 6"
+    var X_VARS = '(?:t|d|v|x|h|m|time|displacement|distance|speed|velocity|position|force|temperature|height|mass|volume|year|day|month|week)';
+    var Y_VARS = '(?:v|W|work|y|speed|velocity|force|temperature|distance|displacement|area|energy|height|reading|value|count|price|population)';
+    var pairRe = new RegExp(
+      X_VARS + '\\s*[=:]\\s*(\\d+(?:\\.\\d+)?)' + // x = 0
+      '\\s*(?:m|m\\/s|m s-1|m s|s|km\\/h|cm|mm|kg|N|l|u)?' +
+      '\\s*(?:=>|->|\\u21d2|\\u2192|gives|is|=|,|\\(|to)' +
+      '\\s*' + Y_VARS + '\\s*[=:]\\s*(\\d+(?:\\.\\d+)?)' +
+      '\\s*(?:J|J|m|m\\/s|m s-1|m s|cm|mm|kg|N|l|s)?',
+      'gi'
+    );
+    var m;
+    while ((m = pairRe.exec(t)) !== null) {
+      labels.push(m[1]);
+      data.push(parseFloat(m[2]));
+    }
+    if (labels.length && labels.length === data.length) {
+      // Keep only the largest sensible run that is truly consecutive.
+      var seen = {}, outLabels = [], outData = [];
+      for (var i = 0; i < labels.length; i++) {
+        if (seen[labels[i]]) continue;
+        seen[labels[i]] = 1;
+        outLabels.push(labels[i]);
+        outData.push(data[i]);
+      }
+      if (outLabels.length >= 2) return buildLine(outLabels, outData);
+    }
+
+    // "v = 2t" / "a = 2" style formula with explicit time values:
+    //   "a = 2 m/s², t = 0,2,4,6,8,10 s"  ->  speed = a*t
+    if (!labels.length) {
+      var formulaM = t.match(/(?:v|speed|y|W|work|distance|force)\s*[=:]\s*(?:u\s*\+?)?(\d+(?:\.\d+)?)[\s·×x*](?:t|d|time|displacement|x)/gi);
+      var accM = t.match(/(?:a|acceleration|constant)\s*[=:]\s*(\d+(?:\.\d+)?)\s*m\/s2|m s-2|m\/s\u00b2|m s\u207b\u00b2/i) ||
+        t.match(/(?:a|acceleration)\s*[=:]\s*(\d+(?:\.\d+)?)/i);
+      var xValsM = t.match(/(?:t|time)\s*[=:]\s*([\d,\s.]+?)\s*s/i) ||
+        t.match(/(?:t|time)\s*[=:]\s*([\d,\s.]+?)(?:\n|, and| and |;|\.)/i);
+      if (accM) {
+        var aVal = parseFloat(accM[1]);
+        var xSrc = null;
+        // Prefer times explicitly listed
+        var times = t.match(/(?:t\s*[=:]\s*)([\d,\s.]{2,40})\s*s/gi);
+        if (times && times.length) {
+          var tt = times[times.length - 1].match(/([\d,\s.]{2,40})/);
+          if (tt) xSrc = tt[1].split(/[,\s]+/).map(parseFloat).filter(function(n){ return Number.isFinite(n); });
+        } else if (xValsM) {
+          xSrc = xValsM[1].split(/[,\s]+/).map(parseFloat).filter(function(n){ return Number.isFinite(n); });
+        }
+        if (xSrc && xSrc.length >= 2 && Number.isFinite(aVal)) {
+          return buildLine(xSrc.map(String), xSrc.map(function(x){ return Math.round(x * aVal * 100) / 100; }), true);
+        }
+      }
+    }
+
+    // Constant-force style: "F = 15 N" with an x list "d = 0,1,2,3 m".
+    if (/(?:work|W)\s*[=:]\s*(?:F|force|constant)\s*[·×xd]\s*(?:d|displacement)/i.test(t) ||
+        /(?:F|force)\s*[=:]\s*(\d+(?:\.\d+)?)\s*N/i.test(t)) {
+      var fM = t.match(/(?:F|force|constant force)\s*[=:]\s*(\d+(?:\.\d+)?)\s*N/i);
+      var xList = t.match(/(?:d|displacement)\s*[=:]\s*([\d,\s.]+?)\s*m/i);
+      if (fM && xList) {
+        var F = parseFloat(fM[1]);
+        var xs = xList[1].split(/[,\s]+/).map(function(s){ return parseFloat(s); }).filter(function(n){ return Number.isFinite(n); });
+        if (xs.length >= 2 && Number.isFinite(F)) {
+          return buildLine(xs.map(String), xs.map(function(x){ return Math.round(x * F * 100) / 100; }));
+        }
+      }
+    }
+  } catch (_) {}
+  return null;
+
+  function buildLine(xs, ys, speed) {
+    var speedGraph = /speed|velocity|t\s*[=:]\s*\d/i.test(t) || speed === true;
+    return {
+      title: speedGraph ? 'Speed vs Time' : (/work|W\s*[=:]/i.test(t) ? 'Work vs Displacement' : 'Graph'),
+      type: 'line',
+      xLabel: speedGraph ? 'Time (s)' : (/work|W\s*[=:]/i.test(t) ? 'Displacement (m)' : 'X'),
+      yLabel: speedGraph ? 'Speed (m/s)' : (/work|W\s*[=:]/i.test(t) ? 'Work (J)' : 'Y'),
+      labels: xs,
+      datasets: [{ name: 'Data', data: ys }],
+    };
+  }
+}
+
+// Last resort: the student asked for a graph but the model produced nothing
+// parseable (e.g. "make a random graph with random values"). Ship a clean
+// demo dataset so a chart card always appears instead of dead text.
+function randomDemoGraph(promptText) {
+  try {
+    var values = [];
+    var labels = [];
+    var base = (promptText && promptText.match(/random graph|random values|random data|random chart/i)) ? 1 : 0;
+    for (var i = 0; i < 6; i++) {
+      labels.push(String(base * 10 + i * 2));
+      values.push(Math.round((20 + Math.sin(i * 1.4) * 14 + (base ? (i % 2 ? 9 : 3) : 0)) * 10) / 10);
+    }
+    return {
+      title: base ? 'Random Data Graph' : 'Sample Graph',
+      type: 'line',
+      xLabel: 'X',
+      yLabel: 'Y',
+      labels: labels,
+      datasets: [{ name: 'Sample', data: values }],
+    };
+  } catch (_) {}
+  return null;
 }
 
 // Legacy cleaner: older answers may still carry a redox-component fence in
@@ -3931,6 +4301,302 @@ function renderQuizCard(div, rawQuiz) {
   return card;
 }
 
+// ── Interactive graph card ───────────────────────────────────────
+// Renders a Chart.js chart from the model's ```graph``` block. The student
+// can edit titles, labels and values, switch the chart type, add/remove rows
+// and download the result as a PNG.
+var _graphCharts = {}; // idx -> Chart instance
+
+function graphChartColors() {
+  var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3B82F6';
+  var text = getComputedStyle(document.body).color || 'rgba(255,255,255,0.8)';
+  var grid = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(255,255,255,0.12)';
+  return { accent: accent, text: text, grid: grid };
+}
+
+function escapeGraphHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function buildGraphEditor(card, chartId, chart) {
+  var grid = document.createElement('div');
+  grid.className = 'graph-editor';
+  var rows = document.createElement('div');
+  rows.className = 'graph-editor-rows';
+  grid.style.setProperty('--graph-cols', Math.max(1, (chart.config.data.datasets || []).length));
+
+  function renderRows() {
+    rows.innerHTML = '';
+    var labels = chart.data.labels || [];
+    var sets = chart.config.data.datasets || [];
+    for (var i = 0; i < labels.length; i++) {
+      (function (rowIdx) {
+        var row = document.createElement('div');
+        row.className = 'graph-editor-row';
+        var labelInput = document.createElement('input');
+        labelInput.className = 'graph-ed-input graph-ed-label';
+        labelInput.value = labels[rowIdx];
+        labelInput.placeholder = 'Label';
+        var valueInputs = [];
+        sets.forEach(function (set, sIdx) {
+          var vi = document.createElement('input');
+          vi.className = 'graph-ed-input graph-ed-value';
+          vi.type = 'number';
+          vi.step = 'any';
+          vi.value = set.data[rowIdx] != null ? set.data[rowIdx] : '';
+          vi.title = set.label || ('Series ' + (sIdx + 1));
+          valueInputs.push(vi);
+        });
+        var remove = document.createElement('button');
+        remove.className = 'graph-ed-remove';
+        remove.type = 'button';
+        remove.setAttribute('aria-label', 'Remove row');
+        remove.innerHTML = '✕';
+        row.appendChild(labelInput);
+        valueInputs.forEach(function (vi) { row.appendChild(vi); });
+        row.appendChild(remove);
+        labelInput.addEventListener('input', function () {
+          chart.data.labels[rowIdx] = labelInput.value;
+          chart.update();
+        });
+        valueInputs.forEach(function (vi, sIdx) {
+          vi.addEventListener('input', function () {
+            var v = parseFloat(vi.value);
+            chart.config.data.datasets[sIdx].data[rowIdx] = Number.isFinite(v) ? v : 0;
+            chart.update();
+          });
+        });
+        remove.addEventListener('click', function () {
+          chart.data.labels.splice(rowIdx, 1);
+          chart.config.data.datasets.forEach(function (set) { set.data.splice(rowIdx, 1); });
+          chart.update();
+          renderRows();
+        });
+        rows.appendChild(row);
+      })(i);
+    }
+  }
+
+  var addRow = document.createElement('button');
+  addRow.className = 'graph-ed-add';
+  addRow.type = 'button';
+  addRow.textContent = '+ Add value';
+  addRow.addEventListener('click', function () {
+    chart.data.labels.push('New');
+    chart.config.data.datasets.forEach(function (set) { set.data.push(0); });
+    chart.update();
+    renderRows();
+  });
+
+  // Value column headers
+  var head = document.createElement('div');
+  head.className = 'graph-ed-head';
+  var headLabel = document.createElement('span');
+  headLabel.textContent = 'Label';
+  head.appendChild(headLabel);
+  (chart.config.data.datasets || []).forEach(function (set) {
+    var hs = document.createElement('span');
+    hs.textContent = set.label || 'Value';
+    hs.title = set.label;
+    head.appendChild(hs);
+  });
+
+  grid.appendChild(head);
+  grid.appendChild(rows);
+  grid.appendChild(addRow);
+  renderRows();
+  return grid;
+}
+
+function renderGraphCard(div, rawGraph) {
+  var graph = normalizeGraphData(rawGraph);
+  if (!graph || typeof Chart === 'undefined') return null;
+  var host = div.querySelector('.msg-body') || div;
+  var existing = host.querySelector('.graph-card');
+  if (existing) existing.remove();
+
+  var card = document.createElement('section');
+  card.className = 'graph-card';
+
+  var head = document.createElement('div');
+  head.className = 'graph-card-head';
+  var title = document.createElement('input');
+  title.className = 'graph-card-title';
+  title.value = graph.title;
+  title.setAttribute('aria-label', 'Chart title');
+
+  var typeSel = document.createElement('select');
+  typeSel.className = 'graph-type-select';
+  ['line', 'bar', 'area', 'pie', 'scatter'].forEach(function (t) {
+    var opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    if (t === graph.type) opt.selected = true;
+    typeSel.appendChild(opt);
+  });
+
+  var download = document.createElement('button');
+  download.className = 'graph-download';
+  download.type = 'button';
+  download.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>PNG</span>';
+  download.setAttribute('aria-label', 'Download chart as PNG');
+
+  var wrap = document.createElement('div');
+  wrap.className = 'graph-canvas-wrap';
+  var canvas = document.createElement('canvas');
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', graph.title + ' chart');
+  wrap.appendChild(canvas);
+
+  head.appendChild(title);
+  head.appendChild(typeSel);
+  head.appendChild(download);
+  card.appendChild(head);
+  card.appendChild(wrap);
+
+  var chartId = 'chrome_' + Math.random().toString(36).slice(2, 10);
+  canvas.id = chartId;
+  var colors = graphChartColors();
+
+  function makeDataset(set, idx) {
+    var palette = ['#3B82F6', '#F59E0B', '#22C55E', '#EF4444', '#8B5CF6', '#06B6D4'];
+    var color = palette[idx % palette.length];
+    var base = {
+      label: set.name || 'Series ' + (idx + 1),
+      data: set.data || [],
+      borderColor: color,
+      backgroundColor: color,
+      pointBackgroundColor: color,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+    };
+    return base;
+  }
+
+  function buildConfig() {
+    var type = typeSel.value;
+    var sets = graph.datasets.map(makeDataset);
+    var config = {
+      type: type === 'area' ? 'line' : (type === 'pie' ? 'doughnut' : type),
+      data: {
+        labels: graph.labels,
+        datasets: sets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 350 },
+        plugins: {
+          legend: { labels: { color: colors.text, font: { size: 11 } } },
+          tooltip: { enabled: true },
+        },
+      },
+    };
+    if (type === 'area') {
+      sets.forEach(function (s) {
+        s.fill = true;
+        s.backgroundColor = colorMix(s.borderColor, 0.22);
+        s.tension = 0.35;
+      });
+      config.options.scales = {
+        x: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 11 } } },
+        y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 11 } } },
+      };
+      config.options.plugins.title = {
+        display: false,
+      };
+    } else if (type === 'line' || type === 'scatter') {
+      sets.forEach(function (s) {
+        s.tension = 0.35;
+        s.borderWidth = 2;
+      });
+      config.options.scales = {
+        x: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 11 } } },
+        y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 11 } } },
+      };
+    } else if (type === 'bar') {
+      sets.forEach(function (s) {
+        s.borderRadius = 6;
+        s.maxBarThickness = 42;
+      });
+      config.options.scales = {
+        x: { grid: { display: false }, ticks: { color: colors.text, font: { size: 11 } } },
+        y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 11 } } },
+      };
+    } else if (type === 'pie') {
+      config.options.plugins.legend.position = 'bottom';
+      sets.forEach(function (s, idx) {
+        var palette = ['#3B82F6', '#F59E0B', '#22C55E', '#EF4444', '#8B5CF6', '#06B6D4'];
+        s.backgroundColor = graph.labels.map(function (_, li) { return shade(palette[(idx + li) % palette.length], li * 0.06); });
+        s.borderColor = colors.text;
+        s.borderWidth = 1;
+      });
+    }
+    return config;
+  }
+
+  function colorMix(hex, alpha) {
+    try {
+      var c = hex.replace('#', '');
+      var n = parseInt(c.length === 3 ? c.split('').map(function (s) { return s + s; }).join('') : c, 16);
+      var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    } catch (_) { return hex; }
+  }
+  function shade(hex, amt) {
+    try {
+      var c = hex.replace('#', '');
+      var n = parseInt(c.length === 3 ? c.split('').map(function (s) { return s + s; }).join('') : c, 16);
+      var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+      r = Math.max(0, Math.min(255, Math.round(r + (255 - r) * amt)));
+      g = Math.max(0, Math.min(255, Math.round(g + (255 - g) * amt)));
+      b = Math.max(0, Math.min(255, Math.round(b + (255 - b) * amt)));
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
+    } catch (_) { return hex; }
+  }
+
+  var chart = new Chart(canvas.getContext('2d'), buildConfig());
+  _graphCharts[chartId] = chart;
+
+  title.addEventListener('input', function () { graph.title = title.value; });
+  typeSel.addEventListener('change', function () {
+    chart.destroy();
+    chart = new Chart(canvas.getContext('2d'), buildConfig());
+    _graphCharts[chartId] = chart;
+  });
+  download.addEventListener('click', function () {
+    try {
+      // Give the animation a beat, then export at 2x for crispness.
+      setTimeout(function () {
+        var url = canvas.toDataURL('image/png');
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = (graph.title || 'chart').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showChatToast('Graph downloaded as PNG');
+      }, 90);
+    } catch (_) {}
+  });
+
+  var editor = buildGraphEditor(card, chartId, chart);
+  card.appendChild(editor);
+  host.appendChild(card);
+  return card;
+}
+
+function destroyGraphsIn(host) {
+  if (!host) return;
+  var canvas = host.querySelector('.graph-card canvas');
+  if (canvas && canvas.id && _graphCharts[canvas.id]) {
+    try { _graphCharts[canvas.id].destroy(); } catch (_) {}
+    delete _graphCharts[canvas.id];
+  }
+}
+
 function getFileIcon(ext) {
   ext = (ext||"").toLowerCase();
   if (ext==="pdf") return "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg>";
@@ -4377,13 +5043,31 @@ function handleFileBlocks(div, text) {
     try {
       quiz = parseQuizBlock(text, !!div.__quizRequested) || div.__quiz || null;
     } catch (_) {}
+    var graphData = null;
+    try { graphData = parseGraphBlock(text); } catch (_) {}
+    // If the model forgot the fence but the student clearly asked for a graph
+    // with numbers, build the chart from their own data so a card still shows.
+    if (!graphData && div.__graphRequested) {
+      try { graphData = synthesizeGraphFromPrompt(div.__graphPromptCt || ''); } catch (_) {}
+    }
+    if (!graphData && div.__graphRequested) {
+      try { graphData = extractGraphFromProse(text); } catch (_) {}
+    }
+    if (!graphData && div.__graphRequested) {
+      try { graphData = randomDemoGraph(text); } catch (_) {}
+    }
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
+    displayText = stripGraphBlock(displayText);
     content.innerHTML = displayText ? renderMarkdown(displayText) : '';
     content.classList.toggle('is-empty', !displayText);
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
     try { handleFileBlocks(div, text); } catch (_) {}
+    destroyGraphsIn(div);
+    if (graphData) {
+      try { renderGraphCard(div, graphData); } catch (_) {}
+    }
     if (quiz) {
       div.__quiz = quiz;
       try { renderQuizCard(div, quiz); } catch (_) {}
@@ -4400,6 +5084,14 @@ function handleFileBlocks(div, text) {
       try { quiz = parseQuizBlock(text, !!(div && div.__quizRequested)); } catch (_) {}
     }
     var message = { role: 'assistant', content: stripEmptyReferences(stripQuizBlock(stripSwitchMarkers(text || ''), !!(div && div.__quizRequested))) };
+    try { message.content = stripGraphBlock(message.content); } catch (_) {}
+    try {
+      var graphData = parseGraphBlock(text);
+      if (!graphData && div && div.__graphRequested) graphData = synthesizeGraphFromPrompt(div.__graphPromptCt || '');
+      if (!graphData && div && div.__graphRequested) graphData = extractGraphFromProse(text);
+      if (!graphData && div && div.__graphRequested) graphData = randomDemoGraph(text);
+      if (graphData) message.graph = graphData;
+    } catch (_) {}
     if (quiz) {
       try { message.quiz = normalizeQuizData(quiz) || quiz; } catch (_) { message.quiz = quiz; }
       if (div) div.__quiz = message.quiz;
@@ -5246,6 +5938,7 @@ function handleFileBlocks(div, text) {
     if (welcome.style.display !== 'none') {
       welcome.style.display = 'none';
       messagesList.style.display = 'flex';
+      syncWelcomeMode();
     }
     appendMessage('user', text || '', true, { idx: messages.length });
     messages.push({ role: 'user', content: text });
@@ -5323,6 +6016,7 @@ function handleFileBlocks(div, text) {
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
     const quizRequested = !hasImages && shouldCreateQuiz(text);
+    const graphRequested = !hasImages && isGraphRequest(text);
     if (!hasImages && isQuizRequest(text) && !hasQuizTopic(text)) pendingQuizTopic = true;
     if ((!text && !hasImages) || isStreaming) return;
     if (!isAuthed()) { refreshAuthGate(); return; }
@@ -5370,6 +6064,7 @@ function handleFileBlocks(div, text) {
     if (welcome.style.display !== 'none') {
       welcome.style.display = 'none';
       messagesList.style.display = 'flex';
+      syncWelcomeMode();
     }
 
     commitEditMessage();
@@ -5391,6 +6086,8 @@ function handleFileBlocks(div, text) {
 
     const streamDiv = createStreamingMessage(null);
     streamDiv.__quizRequested = quizRequested;
+    streamDiv.__graphRequested = graphRequested;
+    streamDiv.__graphPromptCt = text;
     const statusCycle = startStatusCycle(streamDiv, null);
     scrollToBottom();
 
@@ -5431,7 +6128,7 @@ function handleFileBlocks(div, text) {
     // Greetings get a tiny prompt: no system brick, no RAG, no history.
     const systemPrompt = isGreetingMsg
       ? ('You are a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
-      : buildSystemPrompt() + textbookContext + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
+      : buildSystemPrompt() + textbookContext + (graphRequested ? graphProtocolPrompt() : '') + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
 
     // Auth must be set before the vision call below: it hits an edge function
     // that rejects anonymous callers, and the token used to be applied further
@@ -5880,6 +6577,7 @@ function handleFileBlocks(div, text) {
           welcome.style.display = 'none'; messagesList.style.display = 'flex';
           messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, quiz: m.quiz || null, generatedImage: m.generatedImage || null }));
         }
+        syncWelcomeMode();
         try { renderHistory(); } catch (_) {}
         try { scrollToBottom(); } catch (_) {}
       } catch (_) {}

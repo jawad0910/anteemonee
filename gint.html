@@ -1,0 +1,37 @@
+<!DOCTYPE html><html><head><title>gint</title></head><body>
+<script>
+localStorage.setItem('Anteemonee_ai_conversations_anon_physics', JSON.stringify([
+ {id:'gI', title:'G', subject:'Physics', pinned:false, updatedAt:Date.now(), createdAt:Date.now(), messages:[{role:'user',content:'bar chart'},{role:'assistant',content:'Here.',graph:{title:'Marks',type:'bar',labels:['2021','2022'],datasets:[{name:'M',data:[60,80]}]}}], shareCode:'gI'}
+]));
+</script>
+<iframe id="f" src="http://localhost:3000/ai-chat/?chat=gI" style="width:1300px;height:1000px"></iframe>
+<script>
+setTimeout(function(){
+  var d=document.getElementById('f').contentDocument;
+  var card=d.querySelector('.graph-card');
+  if(!card){ document.title='GINT: no card'; return; }
+  var o=['card=y'];
+  // edit a value
+  var v=card.querySelector('.graph-ed-input.graph-ed-value');
+  v.value='95'; v.dispatchEvent(new d.defaultView.Event('input',{bubbles:true}));
+  o.push('editedTo='+v.value);
+  // switch to pie
+  var sel=card.querySelector('.graph-type-select');
+  sel.value='pie'; sel.dispatchEvent(new d.defaultView.Event('change',{bubbles:true}));
+  o.push('type='+sel.value);
+  // add row
+  var add=card.querySelector('.graph-ed-add');
+  add.dispatchEvent(new d.defaultView.MouseEvent('click',{bubbles:true,cancelable:true}));
+  setTimeout(function(){
+    o.push('rows='+card.querySelectorAll('.graph-editor-row').length);
+    o.push('canvasLive='+(card.querySelector('canvas').width>0?'y':'n'));
+    // download click (will attempt PNG)
+    var dl=card.querySelector('.graph-download');
+    var clicked=false;
+    dl.addEventListener('click',function(){clicked=true;});
+    dl.dispatchEvent(new d.defaultView.MouseEvent('click',{bubbles:true,cancelable:true}));
+    o.push('downloadClicked='+(clicked?'y':'n'));
+    document.title='GINT: '+o.join(' | ');
+  },500);
+},10000);
+</script></body></html>

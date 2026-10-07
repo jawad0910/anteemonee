@@ -28,82 +28,67 @@
   --m-base: 0.28s;
   --m-slow: 0.5s;
 
-  /* ── macOS vibrancy ──────────────────────────────────────────── */
-  --m-blur:  saturate(1.8) blur(24px);
-  --m-blur-sm: saturate(1.6) blur(16px);
-  --m-blur-xs: saturate(1.4) blur(10px);
+  /* ── No glass — flat surfaces ────────────────────────────────── */
+  --m-blur:  none;
+  --m-blur-sm: none;
+  --m-blur-xs: none;
 
   /* ── Hairlines (macOS separators) ────────────────────────────── */
-  --m-hairline-strong: rgba(120, 120, 128, 0.36);
-  --m-hairline: rgba(120, 120, 128, 0.22);
-  --m-hairline-soft: rgba(120, 120, 128, 0.14);
+  --m-hairline-strong: rgba(120,120,128,0.4);
+  --m-hairline: rgba(120,120,128,0.25);
+  --m-hairline-soft: rgba(120,120,128,0.15);
 
-  /* ── Dwelling shadows (subtle, layered — no heavy neon) ──────── */
-  --m-sh-1: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
-  --m-sh-2: 0 2px 4px rgba(0, 0, 0, 0.1), 0 16px 40px rgba(0, 0, 0, 0.18);
-  --m-sh-3: 0 4px 12px rgba(0, 0, 0, 0.08), 0 32px 80px rgba(0, 0, 0, 0.28);
+  /* ── No shadows — flat ───────────────────────────────────────── */
+  --m-sh-1: none;
+  --m-sh-2: none;
+  --m-sh-3: none;
 }
 
-/* ── Monochrome (default / light) ────────────────────────────────
-   The site's accent is intentionally monochrome: white on black,
-   black on white. The chat keeps that — depth comes from materials
-   (frost, shadows, hairlines), never from hue. */
+/* ── Light — flat white, blue only as accent ──────────────────── */
 :root,
 :root[data-theme="light"] {
-  --chat-tint: #000;                 /* user bubbles — black ink */
-  --chat-tint-hi: #111;              /* top edge of bubble gradient */
-  --chat-tint-soft: rgba(0, 0, 0, 0.07);   /* subtle fills / hover */
-  --chat-tint-ring: rgba(0, 0, 0, 0.14);   /* focus + bubble shadow */
-  --chat-on-tint: #fff;              /* text on black bubbles */
+  --chat-tint: #2563EB;              /* user bubbles — accent blue */
+  --chat-tint-hi: #3B82F6;
+  --chat-tint-soft: rgba(37,99,235,0.10);
+  --chat-tint-ring: rgba(37,99,235,0.22);
+  --chat-on-tint: #fff;
 
-  /* Assistant bubble — quiet gray card */
-  --chat-bubble: rgba(230, 230, 233, 0.92);
-  --chat-bubble-border: rgba(120, 120, 128, 0.18);
-  --chat-bubble-text: rgba(10, 10, 12, 0.95);
+  /* Assistant bubble — flat neutral */
+  --chat-bubble: #F2F2F5;
+  --chat-bubble-border: rgba(0,0,0,0.10);
+  --chat-bubble-text: #1A1A1A;
 
-  --chat-sidebar: rgba(248, 248, 250, 0.72);
-  --chat-dock: rgba(250, 250, 252, 0.78);
-  --chat-composer: rgba(255, 255, 255, 0.72);
-  --chat-composer-border: rgba(120, 120, 128, 0.22);
-  --chat-field: rgba(245, 245, 247, 0.9);
-  --chat-text-meta: rgba(60, 60, 67, 0.6);
+  --chat-sidebar: #FFFFFF;
+  --chat-dock: #FFFFFF;
+  --chat-composer: #FFFFFF;
+  --chat-composer-border: rgba(0,0,0,0.14);
+  --chat-field: #F4F4F6;
+  --chat-text-meta: rgba(0,0,0,0.5);
+  --chat-wallpaper: #FFFFFF;
 
-  /* Wallpaper — graphite wash over near-white, no hue */
-  --chat-wallpaper:
-    radial-gradient(1100px 560px at 12% -8%, rgba(0, 0, 0, 0.05), transparent 60%),
-    radial-gradient(900px 520px at 108% 6%, rgba(0, 0, 0, 0.04), transparent 55%),
-    radial-gradient(800px 640px at 50% 118%, rgba(0, 0, 0, 0.05), transparent 58%),
-    #f7f7f9;
-
-  --m-focus: 0 0 0 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.6);
+  --m-focus: 0 0 0 3px rgba(37,99,235,0.14), 0 0 0 1px rgba(37,99,235,0.45);
 }
 
-/* ── Dark ──────────────────────────────────────────────────────── */
+/* ── Dark — flat black, blue only as accent ───────────────────── */
 :root[data-theme="dark"] {
-  --chat-tint: #fff;                 /* user bubbles — white on black */
-  --chat-tint-hi: #fff;
-  --chat-tint-soft: rgba(255, 255, 255, 0.1);
-  --chat-tint-ring: rgba(255, 255, 255, 0.2);
-  --chat-on-tint: #000;              /* black text on white bubbles */
+  --chat-tint: #3B82F6;              /* user bubbles — accent blue */
+  --chat-tint-hi: #60A5FA;
+  --chat-tint-soft: rgba(59,130,246,0.16);
+  --chat-tint-ring: rgba(59,130,246,0.28);
+  --chat-on-tint: #FFFFFF;
 
-  /* Assistant bubble — iOS gray family, slightly lifted */
-  --chat-bubble: rgba(60, 60, 64, 0.66);
-  --chat-bubble-border: rgba(255, 255, 255, 0.08);
-  --chat-bubble-text: rgba(255, 255, 255, 0.96);
+  /* Assistant bubble — flat black */
+  --chat-bubble: #000000;
+  --chat-bubble-border: rgba(255,255,255,0.16);
+  --chat-bubble-text: rgba(255,255,255,0.92);
 
-  --chat-sidebar: rgba(18, 18, 22, 0.6);
-  --chat-dock: rgba(22, 22, 26, 0.66);
-  --chat-composer: rgba(40, 40, 46, 0.6);
-  --chat-composer-border: rgba(255, 255, 255, 0.12);
-  --chat-field: rgba(60, 60, 66, 0.5);
-  --chat-text-meta: rgba(152, 152, 160, 0.72);
-
-  /* Wallpaper — graphite wash over black, no hue */
-  --chat-wallpaper:
-    radial-gradient(1100px 560px at 12% -8%, rgba(255, 255, 255, 0.05), transparent 60%),
-    radial-gradient(900px 520px at 108% 6%, rgba(255, 255, 255, 0.04), transparent 55%),
-    radial-gradient(800px 640px at 50% 118%, rgba(255, 255, 255, 0.05), transparent 58%),
-    #000;
+  --chat-sidebar: #000000;
+  --chat-dock: #000000;
+  --chat-composer: #0A0A0A;
+  --chat-composer-border: rgba(255,255,255,0.16);
+  --chat-field: #121212;
+  --chat-text-meta: rgba(255,255,255,0.5);
+  --chat-wallpaper: #000000;
 }
 
 /* ── Selection + scrollbars inherit the tint ───────────────────── */

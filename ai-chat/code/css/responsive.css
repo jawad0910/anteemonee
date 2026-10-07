@@ -19,23 +19,23 @@
   body { background: var(--chat-wallpaper); }
 
   .chat-input-area {
-    padding: 6px 10px 14px;
+    padding: 4px 10px 10px;
     background: var(--chat-dock);
     border-top: 1px solid var(--m-hairline-soft);
   }
   .chat-input-wrapper {
-    border-radius: 20px;
-    padding: 4px 4px 4px 14px;
+    border-radius: 18px;
+    padding: 3px 3px 3px 12px;
   }
-  .messages-list { padding: 12px 10px 4px; }
-  .messages-list > .message { margin-bottom: 10px; }
+  .messages-list { padding: 10px 10px 2px; }
+  .messages-list > .message { margin-bottom: 7px; }
   .messages-list > .message.user .msg-body { max-width: 84%; }
 
   /* Bubbles: slightly tighter for small screens */
   .messages-list > .message.assistant .msg-content,
   .messages-list > .message.user .msg-content {
-    font-size: 14.5px;
-    padding: 9px 13px;
+    font-size: 14px;
+    padding: 8px 12px;
   }
 
   .welcome-action-btn { border-radius: 12px; }
@@ -45,11 +45,11 @@
   .chat-input-row-bottom { padding: 4px 2px 2px; }
   .chat-input-row-left { gap: 2px; }
   .chat-input-row-right { gap: 2px; }
-  .input-btn, .btn-plus, .btn-voice { width: 34px; height: 34px; border-radius: 10px; }
-  .btn-send { width: 34px; height: 34px; }
+  .input-btn, .btn-plus, .btn-voice { width: 32px; height: 32px; border-radius: 10px; }
+  .btn-send { width: 32px; height: 32px; }
 
   /* iOS keyboard: keep floaters clear of the dock */
-  .scroll-down-btn { bottom: 78px; }
+  .scroll-down-btn { bottom: 66px; }
 }
 
 /* Touch devices have no hover — keep message actions visible */
@@ -74,8 +74,7 @@
 
 /* ── Focus visibility ─────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--chat-tint);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* ── Respect reduced motion ───────────────────────────────────── */

@@ -392,8 +392,8 @@ textarea.setting-input {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .settings-modal-overlay.show { display: flex; }
 .settings-modal {
@@ -605,7 +605,7 @@ textarea.setting-input {
 /* Sidebar — compact, clean */
 .settings-sidebar {
   background: var(--liquid-bg-soft);
-  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   border: 1px solid var(--liquid-border-soft);
   border-radius: 16px;
   box-shadow: none;
@@ -626,7 +626,7 @@ textarea.setting-input {
 /* Cards — flat surfaces */
 .settings-card, .settings-profile-card {
   background: var(--liquid-bg-soft);
-  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   border: 1px solid var(--liquid-border-soft);
   border-radius: 16px;
   box-shadow: none;
@@ -688,14 +688,14 @@ textarea.setting-input {
 /* Modal & toast — glass, rounded */
 .settings-modal {
   background: var(--liquid-bg-strong);
-  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   border: 1px solid var(--liquid-border);
   border-radius: var(--radius-xl);
   box-shadow: 0 20px 60px rgba(0,0,0,0.35);
 }
 .settings-toast {
   background: var(--liquid-bg-strong);
-  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   border: 1px solid var(--liquid-border);
   border-radius: var(--radius-pill);
   box-shadow: 0 12px 30px rgba(0,0,0,0.3);
@@ -731,7 +731,7 @@ textarea.setting-input {
     border-radius: 0;
     border: none;
     background: var(--liquid-bg-strong);
-    -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
   }
 }
 

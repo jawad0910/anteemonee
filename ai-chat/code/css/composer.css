@@ -9,7 +9,7 @@
   -webkit-backdrop-filter: var(--m-blur-sm);
   backdrop-filter: var(--m-blur-sm);
   border-top: none;
-  padding: 8px 20px 18px;
+  padding: 4px 18px 12px;
 }
 :root[data-theme="dark"] .chat-input-area {
   background: linear-gradient(180deg, transparent, var(--chat-dock) 30%);
@@ -22,21 +22,21 @@
   -webkit-backdrop-filter: var(--m-blur-sm);
   backdrop-filter: var(--m-blur-sm);
   border: 1px solid var(--chat-composer-border);
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 2px 6px rgba(0, 0, 0, 0.04),
     0 12px 32px rgba(0, 0, 0, 0.08);
-  padding: 6px 6px 6px 18px;
+  padding: 4px 4px 4px 14px;
   transition: border-color var(--m-base) var(--m-ease-out),
               box-shadow var(--m-base) var(--m-ease-out),
               transform var(--m-base) var(--m-ease-out);
 }
 .chat-input-wrapper:focus-within {
-  border-color: var(--chat-tint);
+  border-color: var(--liquid-border, var(--chat-composer-border));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 0 0 3px var(--chat-tint-ring),
+    0 0 0 3px transparent,
     0 2px 6px rgba(0, 0, 0, 0.04),
     0 12px 32px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
@@ -44,33 +44,35 @@
 
 /* ── Textarea — clean, quiet, generous line-height ────────────── */
 .chat-input {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
+  min-height: 21px;
+  max-height: 150px;
   letter-spacing: -0.006em;
   color: var(--text-primary);
   border-radius: 10px;
 }
 .chat-input::placeholder { color: var(--chat-text-meta); }
-.chat-input-row-top { padding: 8px 2px 6px; }
-.chat-input-row-bottom { padding: 6px 2px; }
+.chat-input-row-top { padding: 5px 2px 4px; }
+.chat-input-row-bottom { padding: 3px 2px; }
 
 /* ── Subject pill — tinted capsule ────────────────────────────── */
 .subject-pill {
-  height: 32px;
+  height: 30px;
   padding: 0 10px 0 12px;
   border-radius: 999px;
-  background: var(--chat-tint-soft);
+  background: var(--liquid-bg-soft, rgba(255,255,255,0.08));
   border: 1px solid transparent;
-  color: var(--chat-tint-hi);
+  color: var(--text-secondary);
   font-weight: 600;
   font-size: 13px;
 }
 .subject-pill:hover {
-  background: var(--chat-tint-soft);
-  border-color: var(--chat-tint-ring);
+  background: var(--liquid-bg, rgba(255,255,255,0.12));
+  border-color: transparent;
+  color: var(--text);
 }
-.subject-dot { background: var(--chat-tint); box-shadow: none; }
-.subject-caret { color: var(--chat-tint-hi); }
+.subject-caret { color: var(--text-muted); }
 .subject-dropdown {
   background: var(--chat-sidebar);
   -webkit-backdrop-filter: var(--m-blur);
@@ -80,15 +82,15 @@
   box-shadow: var(--m-sh-2);
   transform-origin: bottom left;
 }
-.subject-item:hover { background: var(--chat-tint-soft); }
-.subject-item.active { background: var(--chat-tint-soft); }
-.subject-item.active .subject-item-check { color: var(--chat-tint); }
+.subject-item:hover { background: var(--liquid-bg-soft, rgba(255,255,255,0.08)); }
+.subject-item.active { background: var(--liquid-bg, rgba(255,255,255,0.12)); }
+.subject-item.active .subject-item-check { color: var(--text-secondary); }
 
 /* ── Toolbar buttons — quiet orbs, tinted on active ───────────── */
 .input-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   color: var(--chat-text-meta);
   transition: background var(--m-fast) var(--m-ease-out),
               color var(--m-fast) var(--m-ease-out),
@@ -99,7 +101,7 @@
 .btn-plus, .btn-voice {
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 .btn-plus.has-images {
   background: var(--chat-tint);
@@ -117,8 +119,8 @@
 
 /* ── Send — solid tinted circle with inset highlight ──────────── */
 .btn-send {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--chat-tint);
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 45%);
@@ -141,11 +143,17 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* ── Mode chips — tinted gradient stays, softened ─────────────── */
+/* ── Mode chips — quiet outline pills (no blue fill) ──────────── */
 .mode-chip {
-  background: linear-gradient(135deg, var(--chat-tint-hi), var(--chat-tint));
-  box-shadow: 0 2px 8px var(--chat-tint-ring);
+  background: var(--liquid-bg-soft, rgba(255,255,255,0.08));
+  border: 1px solid var(--liquid-border-soft, rgba(255,255,255,0.14));
+  color: var(--text-secondary);
+  box-shadow: none;
   border-radius: 999px;
+}
+.mode-chip:hover {
+  color: var(--text);
+  border-color: var(--liquid-border, rgba(255,255,255,0.25));
 }
 
 /* ── Image preview bar — breathing room above the composer ────── */

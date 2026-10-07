@@ -27,7 +27,22 @@ body {
 }
 
 .sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 4px 8px 12px;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .brand-name {
@@ -192,6 +207,98 @@ body.guest .history-section .sidebar-label { display: none; }
   margin: 6px 4px;
   background: var(--m-hairline-soft);
 }
+
+/* ── Delete-confirmation dialog ──────────────────────────────── */
+.delete-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.delete-confirm-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 26px 24px 22px;
+  text-align: center;
+  border-radius: 18px;
+  background: var(--bg);
+  border: 1px solid var(--m-hairline, var(--border));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  animation: dcIn 0.2s var(--m-ease-out, ease);
+}
+@keyframes dcIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.delete-confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--error) 14%, transparent);
+  color: var(--error);
+}
+.delete-confirm-card h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+.delete-confirm-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px;
+  word-break: break-word;
+}
+.delete-confirm-note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+}
+.delete-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+.delete-confirm-actions button {
+  flex: 1;
+  height: 42px;
+  border-radius: 12px;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 0.15s var(--m-ease-out, ease), background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.delete-confirm-actions button:active { transform: scale(0.97); }
+.delete-confirm-cancel {
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--m-hairline, var(--border));
+}
+.delete-confirm-cancel:hover {
+  background: var(--liquid-bg-soft, rgba(255,255,255,0.08));
+}
+.delete-confirm-ok {
+  color: #fff;
+  background: var(--error);
+  border: 1px solid transparent;
+}
+.delete-confirm-ok:hover {
+  filter: brightness(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .delete-confirm-card { animation: none; }
+}
 .history-item {
   padding: 10px 10px;
   border-radius: 10px;
@@ -323,6 +430,64 @@ body.guest .history-section .sidebar-label { display: none; }
   font-weight: 500;
   color: var(--chat-text-meta);
   font-size: 1rem;
+}
+
+/* ── Centered welcome (ChatGPT-style) ───────────────────────────
+   On a fresh/new chat the composer floats in the middle of the
+   screen under a time-of-day greeting; the first message drops it
+   back to the bottom (body.welcome-center is removed then). */
+body.welcome-center .chat-main {
+  justify-content: center;
+}
+body.welcome-center .app-view {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+body.welcome-center #view-chat {
+  flex: 0 0 auto;
+}
+body.welcome-center .chat-content {
+  overflow: visible;
+}
+body.welcome-center #chat-content {
+  overflow: visible;
+  flex: 0 0 auto;
+}
+body.welcome-center .chat-welcome {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  padding: 0 28px 40px;
+}
+body.welcome-center #chat-welcome {
+  flex: 0 0 auto;
+}
+body.welcome-center .welcome-title {
+  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+  margin-bottom: 0;
+}
+
+/* Greeting: italic blue name + a little breathing room before the composer. */
+.welcome-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--accent);
+}
+body.welcome-center .chat-input-area,
+html[data-theme="dark"] body.welcome-center .chat-input-area {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-top: none;
+  padding: 0 20px 4px;
+}
+/* Keep composer centered relative to the greeting in welcome mode. */
+body.welcome-center .chat-input-wrapper:focus-within {
+  box-shadow: none;
+  transform: none;
+}
+body.welcome-center .chat-input-wrapper {
+  border-radius: 22px;
 }
 .welcome-action-btn {
   border-radius: 14px;

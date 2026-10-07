@@ -269,7 +269,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: none;
 }
 .modal-overlay.show { display: flex; }
 
@@ -386,7 +386,7 @@
 .platform-card {
   position: relative; overflow: hidden;
   background: var(--liquid-bg-soft);
-  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   border: 1px solid var(--liquid-border-soft);
   box-shadow: var(--liquid-inset), 0 10px 30px rgba(0,0,0,0.18);
 }
@@ -402,7 +402,7 @@
 }
 .modal-card, .beta-modal {
   background: var(--liquid-bg-strong);
-  -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
   border: 1px solid var(--liquid-border);
   box-shadow: var(--liquid-inset), var(--liquid-shadow);
 }
@@ -429,7 +429,7 @@
   border: 1px solid var(--liquid-border);
   border-radius: var(--radius-pill);
   box-shadow: var(--liquid-inset), 0 4px 14px rgba(0,0,0,0.15);
-  -webkit-backdrop-filter: var(--liquid-blur-sm); backdrop-filter: var(--liquid-blur-sm);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
 }
 .download-page .btn-primary {
   background: linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 50%, var(--accent-hover) 100%);
