@@ -513,3 +513,6 @@
     transition: none !important;
   }
 }
+
+/* Hide Messenger entry points (folder renamed/obfuscated) */
+a[href*="mx-9f2c4e7a"] { display: none !important; }

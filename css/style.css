@@ -1717,3 +1717,6 @@ body { overflow-x: hidden; }
   .mk-overlay, .mk-card, .mk-btn, .mk-close { transition: none; }
   .mk-error.is-shown, .mk-btn.is-loading::after { animation: none; }
 }
+
+/* Hide Messenger entry points (folder renamed/obfuscated) */
+a[href*="mx-9f2c4e7a"] { display: none !important; }
