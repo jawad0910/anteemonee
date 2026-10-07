@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -21,13 +21,7 @@
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; background: var(--bg) !important; }
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
-      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
-      --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
-      --liquid-bg-strong: rgba(10,10,12,0.85);
-    }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
     .header { padding: 0; }
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
@@ -254,7 +248,280 @@
       .atb-actions { flex-direction: column; }
       .atb-wrap { padding-top: 96px; }
     }
+
+    /* ── Test builder — site design system (flat, monochrome + sky blue) ── */
+    #atb-page .tb-root {
+      --tb-primary: var(--accent);
+      --tb-primary-mid: var(--accent-hover);
+      --tb-primary-light: var(--accent-soft);
+      --tb-amber: var(--accent);
+      --tb-amber-light: var(--accent-soft);
+      --tb-green: #25B04C;
+      --tb-green-light: rgba(37, 176, 76, .14);
+      --tb-cream: var(--bg-secondary);
+      --tb-white: var(--bg-card);
+      --tb-border: var(--border-card);
+      --tb-text-dark: var(--text);
+      --tb-text-mid: var(--text-secondary);
+      --tb-text-muted: var(--text-muted);
+      --tb-radius: 16px;
+      --tb-radius-sm: 10px;
+      --tb-shadow-sm: 0 1px 2px rgba(16, 24, 40, .04), 0 12px 32px -24px rgba(16, 24, 40, .16);
+      box-sizing: border-box;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 14px 12px 60px;
+      color: var(--tb-text-dark);
+      font-family: var(--font-ui);
+    }
+    #atb-page { padding-top: 96px; }
+    #atb-page .tb-root * { box-sizing: border-box; }
+
+    .tb-header-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: end; margin-bottom: 18px; }
+    .tb-page-eyebrow { grid-column: 1; margin: 0 0 2px; font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+    .tb-page-title { grid-column: 1; margin: 0 0 4px; font-family: var(--font-display); font-size: clamp(1.45rem, 2.8vw, 1.8rem); font-weight: 700; letter-spacing: -.015em; line-height: 1.2; color: var(--tb-text-dark); }
+    .tb-page-title em { color: var(--accent); font-style: normal; }
+    .tb-page-subtitle { grid-column: 1 / -1; margin: 0; font-size: .92rem; font-weight: 400; color: var(--tb-text-mid); }
+    .tb-top-bar-inline { grid-column: 2; grid-row: 1 / 3; display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: nowrap; }
+    @media (max-width: 700px) {
+      .tb-header-row { grid-template-columns: 1fr; }
+      .tb-top-bar-inline { grid-column: 1; grid-row: auto; justify-content: flex-start; flex-wrap: wrap; }
+    }
+
+    .tb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 999px; padding: 9px 18px; min-width: 0; font-family: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .18s; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+    .tb-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .tb-btn-primary { background: var(--accent); color: var(--on-accent); }
+    .tb-btn-primary:hover:not(:disabled) { background: var(--tb-primary-mid); transform: translateY(-1px); }
+    .tb-btn-outline { background: transparent; color: var(--tb-text-mid); border: 1.5px solid var(--tb-border); }
+    .tb-btn-outline:hover:not(:disabled) { border-color: var(--tb-primary); color: var(--tb-primary); }
+    .tb-btn-big { min-width: 180px; height: 50px; font-size: .95rem; font-weight: 700; }
+    .tb-btn:focus-visible { outline: 2px solid var(--tb-primary); outline-offset: 2px; }
+
+    .tb-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: .78rem; font-weight: 600; white-space: nowrap; }
+    .tb-pill-amber { background: var(--tb-amber-light); color: var(--accent); }
+    .tb-pill-primary { background: var(--tb-primary-light); color: var(--tb-primary); }
+    .tb-pill-green { background: var(--tb-green-light); color: var(--tb-green); }
+
+    .tb-progress-wrap { display: flex; justify-content: center; padding: 6px 0 26px; }
+    .tb-step-indicators { display: flex; align-items: center; gap: 0; }
+    .tb-step-item { display: flex; align-items: center; min-height: 40px; }
+    .tb-step-item-btn { display: flex; align-items: center; gap: 9px; border: none; background: transparent; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+    .tb-step-dot { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; font-size: .82rem; font-weight: 700; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-muted); transition: all .2s; }
+    .tb-step-dot.tb-active, .tb-step-dot.tb-done { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .tb-step-copy { font-size: .82rem; font-weight: 600; color: var(--tb-text-muted); white-space: nowrap; }
+    .tb-step-item.tb-active .tb-step-copy, .tb-step-item.tb-done .tb-step-copy { color: var(--tb-text-dark); }
+    .tb-step-connector { width: 64px; height: 3px; border-radius: 2px; background: var(--tb-border); margin: 0 10px; }
+    .tb-step-connector.tb-done { background: var(--tb-primary); }
+    @media (max-width: 520px) { .tb-step-copy { display: none; } .tb-step-connector { width: 36px; margin: 0 6px; } }
+
+    .tb-pane { display: none; }
+    .tb-pane.tb-pane-active { display: block; }
+    @keyframes tb-fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .tb-panes { position: relative; }
+    .atb-shell.tb-building .tb-header-row,
+    .atb-shell.tb-building .tb-progress-wrap,
+    .atb-shell.tb-building .tb-panes { display: none; }
+
+    .tb-two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+    .tb-two-col .tb-card { display: flex; flex-direction: column; }
+    .tb-two-col .tb-card-body { flex: 1; display: flex; flex-direction: column; }
+    .tb-two-col .tb-card-chapters .tb-card-body > .atb-select-wrap { margin-bottom: 6px; }
+    .tb-two-col .tb-card-chapters .atb-chips { min-height: 64px; align-content: flex-start; }
+    .tb-config-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+    @media (max-width: 900px) { .tb-two-col, .tb-config-grid { grid-template-columns: 1fr; } }
+
+    .tb-card { background: var(--tb-white); border: 1px solid var(--tb-border); border-radius: var(--tb-radius); box-shadow: var(--tb-shadow-sm); overflow: hidden; }
+    .tb-card-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px 13px; border-bottom: 1px solid var(--border); background: transparent; }
+    .tb-card-header-icon { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: .95rem; font-weight: 700; flex-shrink: 0; }
+    .tb-card-title { margin: 0; flex: 1; min-width: 0; font-size: .86rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tb-text-mid); }
+    .tb-card-hint { color: var(--tb-text-muted); font-size: .74rem; font-weight: 600; white-space: nowrap; }
+    .tb-card-body { padding: 18px 20px 22px; }
+
+    .tb-subject-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 460px) { .tb-subject-grid { grid-template-columns: 1fr; } }
+    .tb-subject-item { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; font: inherit; color: inherit; background: transparent; border: 1px solid transparent; border-radius: var(--tb-radius-sm); padding: 11px 12px; cursor: pointer; transition: all .18s; }
+    .tb-subject-item:hover { background: var(--tb-primary-light); }
+    .tb-subject-item.tb-selected { border-color: var(--tb-primary); background: var(--tb-primary-light); }
+    .tb-subject-icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9px; font-size: .9rem; font-weight: 800; flex-shrink: 0; background: var(--accent-soft); color: var(--accent); }
+    .tb-subject-info { flex: 1; min-width: 0; }
+    .tb-subject-name { display: block; font-size: .86rem; font-weight: 600; color: var(--tb-text-dark); line-height: 1.25; }
+    .tb-subject-code { display: block; margin-top: 2px; font-size: .7rem; color: var(--tb-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tb-subject-check { display: flex; align-items: center; justify-content: center; width: 19px; height: 19px; border: 2px solid var(--border); border-radius: 50%; flex-shrink: 0; transition: all .18s; }
+    .tb-subject-item.tb-selected .tb-subject-check { background: var(--accent); border-color: var(--accent); }
+    .tb-subject-check-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--on-accent); }
+
+    .tb-card-chapters .tb-card-header { border-bottom: none; }
+    #atb-page .atb-select-empty { font-family: var(--font-ui); font-size: .78rem; font-style: italic; color: var(--text-muted); }
+
+    .tb-mode-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .tb-radio-chip { padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--border); color: var(--tb-text-mid); font-size: .82rem; font-weight: 600; cursor: default; background: var(--bg-card); }
+    .tb-radio-chip-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+    .tb-build-row { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .tb-build-row .atb-err { width: 100%; text-align: center; }
+
+    /* Shared controls, recolored for the site theme */
+    #atb-page .atb-select { height: 48px; border-radius: 12px; padding: 0 14px; font-size: .86rem; background: var(--tb-white); border: 1.5px solid var(--border); color: var(--tb-text-dark); display: flex; align-items: center; justify-content: space-between; }
+    #atb-page .atb-select:hover { border-color: var(--accent); }
+    #atb-page .atb-select-wrap.open > .atb-select { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    #atb-page .atb-select-menu { background: var(--tb-white); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 18px 48px -16px rgba(16, 24, 40, .3); }
+    #atb-page .atb-select-opt { color: var(--tb-text-dark); }
+    #atb-page .atb-select-opt:hover { background: var(--accent-soft); }
+    #atb-page .atb-select-opt.selected { background: var(--accent-soft); color: var(--accent); }
+    #atb-page .atb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; background: var(--surface-recessed); padding: 10px; border-radius: 12px; }
+    #atb-page .atb-chip { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); font-weight: 600; }
+    #atb-page .atb-chip .atb-chip-x { background: var(--border); color: var(--text-secondary); }
+    #atb-page .atb-topics-box { border-radius: 12px; border: 1px solid var(--border); background: var(--surface-recessed); }
+    #atb-page .atb-topics-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    #atb-page .atb-topics-input { color: var(--tb-text-dark); font-size: .88rem; }
+    #atb-page .atb-panel { border: 1px solid var(--border); border-radius: 14px; margin-top: 16px; background: var(--surface-recessed); }
+    #atb-page .atb-panel h3 { color: var(--text-secondary); }
+    #atb-page .atb-toggle { border: 1px solid var(--border); border-radius: 12px; background: var(--tb-white); }
+    #atb-page .tb-card-toggles .atb-toggle + .atb-toggle { margin-top: 10px; }
+    #atb-page .atb-marks-grid input[type="number"] { height: 48px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text); font-size: 1rem; font-weight: 700; }
+    #atb-page .atb-marks-grid input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+    #atb-page .atb-total { background: var(--accent-soft); color: var(--accent); }
+    #atb-page .atb-total b { color: var(--accent); }
+    #atb-page .atb-eta { color: var(--text-secondary); }
+    #atb-page .atb-tag-label { margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 10.5px; font-weight: 650; vertical-align: 2px; }
+    #atb-page .atb-field-title { margin-bottom: 14px; }
+    #atb-page .atb-field-title label { display: block; font-size: .8rem; font-weight: 650; color: var(--text); margin-bottom: 7px; }
+    #atb-page .atb-field-title input[type="text"] { width: 100%; height: 46px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .9rem; }
+    #atb-page .atb-field-title input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+    #atb-page .hint { font-family: var(--font-ui); font-size: .78rem; font-weight: 400; font-style: italic; letter-spacing: .01em; line-height: 1.5; color: var(--text-muted); }
+    #atb-page .hint.tb-hint-error { color: #e07070; font-weight: 600; }
+    #atb-page .atb-err { background: rgba(224, 112, 112, .12); border: 1px solid rgba(224, 112, 112, .35); color: #e07070; border-radius: 12px; padding: 10px 14px; font-size: .82rem; }
+
+    #atb-page .switch .slider { background: var(--border); }
+    #atb-page .switch input:checked + .slider { background: var(--accent); }
+
+    .atb-card#atb-progress, .atb-card#atb-done { border-radius: 16px; border: 1px solid var(--border-card); background: var(--bg-card); box-shadow: var(--tb-shadow-sm); }
+    .atb-card#atb-done h2, .atb-card#atb-progress .atb-stage { font-family: var(--font-display); }
+
+    /* History popup */
+    .tb-modal { position: fixed; top: 74px; left: 0; right: 0; bottom: 0; z-index: 980; display: flex; align-items: center; justify-content: center; padding: 4px 16px 20px; }
+    .tb-modal-scrim { position: absolute; inset: 0; background: rgba(2, 6, 12, .5); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .tb-modal-card { position: relative; width: min(800px, 100%); height: min(640px, calc(100vh - 110px)); max-height: calc(100vh - 110px); display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 18px; box-shadow: var(--tb-shadow-sm); overflow: hidden; animation: tb-fadeUp .22s ease; }
+    .tb-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .tb-modal-head h3 { margin: 0; font-family: var(--font-display); font-size: 1.05rem; }
+    .tb-modal-close { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 15px; }
+    .tb-modal-close:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-modal-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 20px 20px; }
+    .tb-modal-empty { padding: 30px 16px; text-align: center; color: var(--text-muted); font-size: .86rem; }
+    .atb-hist-item { border: 1px solid var(--border-card); background: var(--surface-recessed); }
+    #atb-history-list .atb-hist-view, #atb-history-list .atb-hist-dl, #atb-history-list .atb-hist-del { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: .75rem; font-weight: 650; font-family: var(--font-ui); cursor: pointer; text-decoration: none; transition: all .18s; }
+    #atb-history-list .atb-hist-view, #atb-history-list .atb-hist-dl { background: var(--surface-recessed); color: var(--text); border: 1px solid var(--border); }
+    #atb-history-list .atb-hist-view:hover, #atb-history-list .atb-hist-dl:hover { border-color: var(--accent); color: var(--accent); }
+    #atb-history-list .atb-hist-del { background: rgba(224, 112, 112, .08); color: #e07070; border: 1px solid rgba(224, 112, 112, .3); }
+    #atb-history-list .atb-hist-del:hover { background: rgba(224, 112, 112, .16); }
+    #atb-history-list .atb-hist-del:disabled { opacity: .55; cursor: wait; }
+    .tb-modal-toast { text-align: center; padding: 8px 14px; margin-bottom: 10px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: .8rem; font-weight: 600; opacity: 0; transform: translateY(-4px); transition: all .25s ease; pointer-events: none; }
+    .tb-modal-toast.show { opacity: 1; transform: none; }
+    .atb-hist-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; background: var(--surface-recessed); border: 1px solid var(--border-card); margin-bottom: 10px; }
+    .atb-hist-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .atb-hist-main b { font-size: .9rem; font-weight: 650; color: var(--text); line-height: 1.35; overflow-wrap: break-word; }
+    .atb-hist-sub { font-size: .74rem; color: var(--text-muted); }
+    .atb-hist-status { font-size: .7rem; font-weight: 650; color: var(--text-muted); }
+    .atb-hist-priority { color: var(--accent); }
+    .atb-hist-expiring { color: #e07070; }
+    .atb-hist-menu-wrap { position: relative; flex-shrink: 0; }
+    .atb-hist-kebab { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 1.05rem; line-height: 1; letter-spacing: 1px; }
+    .atb-hist-kebab:hover { border-color: var(--accent); color: var(--accent); }
+    .atb-hist-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 200px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px; box-shadow: 0 14px 36px -14px rgba(0, 0, 0, .35); padding: 6px; display: none; z-index: 30; }
+    .atb-hist-menu.up { top: auto; bottom: calc(100% + 8px); }
+    .atb-hist-menu.open { display: block; }
+    .atb-hist-menu button { display: flex; width: 100%; padding: 9px 12px; border: none; background: transparent; color: var(--text); font: inherit; font-size: .84rem; font-weight: 550; text-align: left; border-radius: 8px; cursor: pointer; }
+    .atb-hist-menu button:hover { background: var(--accent-soft); color: var(--accent); }
+    .atb-hist-menu button.danger { color: #e07070; }
+    .atb-hist-menu button.danger:hover { background: rgba(224, 112, 112, .12); }
+
+    /* History loading indicator */
+    .atb-hist-progress { display: block; height: 3px; border-radius: 2px; background: var(--accent-soft); overflow: hidden; position: relative; margin-bottom: 14px; }
+    .atb-hist-progress::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; background: var(--accent); border-radius: 2px; animation: atb-indeterminate 1.1s ease-in-out infinite; }
+    @keyframes atb-indeterminate { 0% { left: -40%; } 100% { left: 100%; } }
+    .atb-hist-skel { height: 64px; border-radius: 12px; border: 1px solid var(--border-card); background: var(--surface-recessed); margin-bottom: 10px; padding: 12px 14px; }
+    .atb-hist-skel i { display: block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, transparent, var(--accent-soft), transparent); background-size: 200% 100%; animation: atb-skelshimmer 1.2s linear infinite; margin-bottom: 8px; }
+    .atb-hist-skel i:last-child { width: 55%; height: 9px; margin-bottom: 0; }
+    @keyframes atb-skelshimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Auth gates become opaque overlays so the unpainted builder never peeks */
+    #atb-not-auth, #atb-paywall { position: fixed; inset: 0; z-index: 60; width: 100%; max-width: none; margin: 0; background: var(--bg); overflow-y: auto; }
+    #atb-not-auth { padding: 120px 22px 60px; }
+    #atb-paywall { padding: 120px 22px 60px; }
+
+    /* ── Mobile responsiveness ────────────────────────────────────── */
+    @media (max-width: 640px) {
+      #atb-page { padding-top: 84px; }
+      .tb-root { padding: 8px 10px 48px; }
+      .tb-header-row { gap: 8px; margin-bottom: 14px; }
+      .tb-page-title { font-size: 1.4rem; }
+      .tb-page-subtitle { font-size: .84rem; }
+      .tb-top-bar-inline { flex-wrap: wrap; gap: 8px; }
+      .tb-top-bar-inline .tb-btn { min-height: 44px; padding: 0 16px; }
+      .tb-step-connector { width: 26px; margin: 0 4px; }
+      .tb-step-dot { width: 26px; height: 26px; font-size: .74rem; }
+      .tb-card-header { padding: 13px 14px 11px; }
+      .tb-card-body { padding: 14px 14px 18px; }
+      .tb-two-col, .tb-config-grid { gap: 14px; }
+      .atb-marks-grid { grid-template-columns: 1fr; }
+      .tb-build-row { width: 100%; }
+      .tb-build-row .tb-btn-big, .tb-build-row .atb-err { width: 100%; }
+      .tb-btn-big { min-width: 0; height: 50px; }
+      .tb-modal { top: 64px; padding: 6px 10px 10px; align-items: flex-end; }
+      .tb-modal-card { width: 100%; height: calc(100vh - 74px); max-height: calc(100vh - 74px); border-radius: 18px 18px 0 0; }
+      .tb-modal-body { padding: 12px 14px 18px; }
+      .atb-hist-item { flex-wrap: wrap; gap: 10px; }
+      #atb-not-auth, #atb-paywall { padding: 104px 18px 48px; }
+    }
+    @media (max-width: 420px) {
+      .tb-top-bar-inline .tb-pill { order: -1; width: 100%; justify-content: center; }
+      .tb-top-bar-inline .tb-btn { flex: 1 1 auto; }
+      .tb-step-copy { display: none; }
+      .tb-page-title { font-size: 1.3rem; }
+      .tb-subject-grid { grid-template-columns: 1fr; }
+      .atb-panel, .atb-toggle { padding-left: 12px; padding-right: 12px; }
+    }
+
+    /* ── Build-in-progress state ───────────────────────────────────── */
+    #atb-progress { padding: 26px 26px 22px; }
+    .tb-build-state-head { display: flex; align-items: center; gap: 16px; }
+    .tb-build-spinner { position: relative; width: 46px; height: 46px; border-radius: 14px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tb-build-spinner::before { content: ''; position: absolute; inset: 0; border-radius: 14px; border: 2px solid var(--accent); opacity: .3; animation: tb-pulse 1.7s ease-out infinite; }
+    .tb-build-spinner i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--accent); border-top-color: transparent; animation: atb-spin .8s linear infinite; }
+    @keyframes tb-pulse { 0% { transform: scale(.75); opacity: .5; } 100% { transform: scale(1.3); opacity: 0; } }
+    .tb-build-state-copy { min-width: 0; }
+    .tb-build-stage { margin: 0 0 2px; font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .tb-build-eta { margin: 0; font-size: .8rem; color: var(--text-muted); }
+    .tb-build-pct { margin-left: auto; font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+    #atb-progress .atb-bar { height: 8px; margin: 20px 0 0; background: var(--surface-recessed); border: 1px solid var(--border); }
+    #atb-progress .atb-bar > i { background: linear-gradient(90deg, var(--accent), var(--accent-hover)); transition: width .55s cubic-bezier(.2, .8, .2, 1); }
+    .tb-build-phases { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .tb-phase { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--border); font-size: .66rem; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+    .tb-phase.tb-phase-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .tb-build-actions { margin-top: 18px; display: flex; justify-content: flex-end; }
+    @media (max-width: 640px) {
+      #atb-progress { padding: 20px 18px 18px; }
+      .tb-build-pct { font-size: 1.1rem; }
+      .tb-build-actions { justify-content: stretch; }
+      .tb-build-actions .tb-btn { width: 100%; }
+    }
+
+    /* ── Test-ready state ──────────────────────────────────────────── */
+    #atb-done { text-align: center; padding: 36px 26px 32px; }
+    .tb-done-check { width: 60px; height: 60px; margin: 0 auto 16px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+    #atb-done h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; color: var(--text); }
+    #atb-done .tb-done-title { font-size: .95rem; color: var(--text-secondary); margin: 0 0 6px; }
+    #atb-done .tb-done-meta { font-size: .78rem; font-style: italic; color: var(--text-muted); margin: 0 auto 22px; max-width: 540px; line-height: 1.6; }
+    .tb-done-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .tb-btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid transparent; }
+    .tb-btn-ghost:hover { color: var(--accent); border-color: transparent; }
+    @media (max-width: 640px) {
+      #atb-done { padding: 26px 18px 24px; }
+      .tb-done-actions { flex-direction: column; }
+      .tb-done-actions .tb-btn { width: 100%; }
+    }
   </style>
+  <link rel="stylesheet" href="../css/header.css?v=1">
 </head>
 <body>
   <header class="header" id="site-header">
@@ -311,22 +578,6 @@
     </div>
   </div>
 
-  <div id="atb-loading" aria-label="Loading">
-    <div class="atb-skel-hero">
-      <div class="atb-skel-badge atb-shimmer"></div>
-      <div class="atb-skel-title atb-shimmer"></div>
-      <div class="atb-skel-sub atb-shimmer"></div>
-    </div>
-    <div class="atb-skel-card">
-      <div class="atb-skel-line short atb-shimmer"></div>
-      <div class="atb-skel-box atb-shimmer"></div>
-      <div class="atb-skel-line short atb-shimmer"></div>
-      <div class="atb-skel-box atb-shimmer"></div>
-      <div class="atb-skel-btn atb-shimmer"></div>
-    </div>
-    <div class="atb-spin"><span class="atb-spinner"></span>Loading test builder...</div>
-  </div>
-
   <div id="atb-not-auth" class="atb-gate" style="display:none">
     <div class="atb-gate-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
     <b>Sign in to build AI Tests</b>
@@ -347,164 +598,245 @@
     </div>
   </div>
 
-  <main id="atb-page" style="display:none">
-    <div class="atb-wrap">
-      <div class="atb-hero">
-        <div class="atb-badge">AI Tool</div>
-        <h1>AI Test Builder</h1>
-        <p>Class 11 practice tests from your topics, optionally styled from real board papers.</p>
-      </div>
+  <main id="atb-page">
+    <div class="tb-root atb-shell">
+      <div id="atb-warn"></div>
 
-      <div class="atb-card" id="atb-form-card">
-        <div id="atb-warn"></div>
-
-        <div class="atb-field">
-          <label for="atb-subject-btn">Subject</label>
-          <select id="atb-subject" style="display:none" aria-hidden="true" tabindex="-1">
-            <option value="">Choose subject…</option>
-            <option>Physics</option>
-            <option>Chemistry</option>
-            <option>Biology</option>
-            <option>Mathematics</option>
-            <option>Computer Science</option>
-          </select>
-          <div class="atb-select-wrap" id="atb-subject-wrap">
-            <button type="button" class="atb-select" id="atb-subject-btn" aria-haspopup="listbox" aria-expanded="false">
-              <span id="atb-subject-text" class="atb-select-placeholder">Choose subject…</span>
-              <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="atb-select-menu" id="atb-subject-menu" role="listbox" aria-label="Subject">
-              <button type="button" class="atb-select-opt" data-value="Physics" role="option"><span class="atb-select-dot" style="background:var(--text)"></span>Physics<svg class="tick" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-              <button type="button" class="atb-select-opt" data-value="Chemistry" role="option"><span class="atb-select-dot" style="background:var(--text)"></span>Chemistry<svg class="tick" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-              <button type="button" class="atb-select-opt" data-value="Biology" role="option"><span class="atb-select-dot" style="background:var(--text)"></span>Biology<svg class="tick" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-              <button type="button" class="atb-select-opt" data-value="Mathematics" role="option"><span class="atb-select-dot" style="background:var(--text)"></span>Mathematics<svg class="tick" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-              <button type="button" class="atb-select-opt" data-value="Computer Science" role="option"><span class="atb-select-dot" style="background:var(--text)"></span>Computer Science<svg class="tick" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-            </div>
+      <div class="tb-header-row">
+        <div class="tb-page-header">
+          <p class="tb-page-eyebrow" id="tb-eyebrow">Step 1 of 3</p>
+          <div class="tb-page-title-row">
+            <h1 class="tb-page-title"><span id="tb-title">Choose your <em>subject &amp; chapters</em></span></h1>
           </div>
-          <div class="hint">Class 11 only</div>
+          <p class="tb-page-subtitle" id="tb-subtitle">Pick one subject, then mark up to three chapters to keep the AI inside those pages.</p>
         </div>
-
-        <div class="atb-field">
-          <label for="atb-topics-input">Topics</label>
-          <textarea id="atb-topics" style="display:none" aria-hidden="true" tabindex="-1"></textarea>
-          <div class="atb-topics-box" id="atb-topics-box">
-            <div id="atb-topics-chips" style="display:contents"></div>
-            <input id="atb-topics-input" class="atb-topics-input" type="text" placeholder="Type a topic, then comma..." autocomplete="off" enterkeyhint="done">
-          </div>
-          <div class="hint" id="atb-topics-hint">Comma-separated · up to 10 topics</div>
-        </div>
-
-        <div class="atb-panel" id="atb-weight-panel">
-          <h3>Topic weightage</h3>
-          <div id="atb-weight-list"></div>
-          <div class="atb-eta">Star up to 3 topics to mark them important. Starred topics get extra weight in the paper.</div>
-        </div>
-
-        <div class="atb-toggle" id="atb-pp-label">
-          <div>
-            <b>Use past paper</b>
-            <span>Base questions on recent board papers</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="atb-pp">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="atb-toggle" id="atb-concept-label">
-          <div>
-            <b>Conceptual mix</b>
-            <span>Blend conceptual questions with internet research</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="atb-conceptual" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="atb-toggle" id="atb-answerkey-label">
-          <div>
-            <b>Answer key</b>
-            <span>Include marking scheme in the PDF</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="atb-answerkey" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="atb-panel" id="atb-pp-panel">
-          <h3>Past paper setup</h3>
-          <div class="atb-field">
-            <label for="atb-board-btn">Board</label>
-            <select id="atb-board" style="display:none" aria-hidden="true" tabindex="-1"><option value="">Choose board…</option></select>
-            <div class="atb-select-wrap" id="atb-board-wrap">
-              <button type="button" class="atb-select" id="atb-board-btn" aria-haspopup="listbox" aria-expanded="false">
-                <span id="atb-board-text" class="atb-select-placeholder">Choose board…</span>
-                <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              <div class="atb-select-menu atb-select-menu-scroll" id="atb-board-menu" role="listbox" aria-label="Board"></div>
-            </div>
-          </div>
-          <div class="atb-eta" id="atb-eta-static">Expected time: ~2-4 minutes</div>
-        </div>
-
-        <div class="atb-panel open" id="atb-marks-panel">
-          <h3>Marks</h3>
-          <div class="atb-marks-grid">
-            <div class="atb-field">
-              <label for="atb-mcq">MCQs</label>
-              <input type="number" id="atb-mcq" min="0" max="50" value="10" inputmode="numeric">
-              <div class="hint">1 mark each</div>
-            </div>
-            <div class="atb-field">
-              <label for="atb-short">Short</label>
-              <input type="number" id="atb-short" min="0" max="80" step="2" value="12" inputmode="numeric">
-              <div class="hint">Even numbers only</div>
-            </div>
-            <div class="atb-field">
-              <label for="atb-long">Long</label>
-              <input type="number" id="atb-long" min="0" max="60" value="9" inputmode="numeric">
-              <div class="hint">9 = full Q (4+5)</div>
-            </div>
-          </div>
-          <div class="atb-total"><span>Total marks</span><b id="atb-total-marks">25</b></div>
-          <div class="atb-eta" id="atb-time-allowed">Time allowed: 60 min</div>
-          <div class="atb-eta" id="atb-eta-concept">Expected time: ~45-90 seconds</div>
-        </div>
-
-        <button class="atb-btn" id="atb-start" type="button">Build Test</button>
-        <div class="atb-err" id="atb-err"></div>
-      </div>
-
-      <div class="atb-card" id="atb-progress" style="margin-top:16px">
-        <div class="atb-stage" id="atb-stage">Starting…</div>
-        <div class="atb-bar"><i id="atb-bar-fill"></i></div>
-        <div class="atb-meta">
-          <span id="atb-pct">0%</span>
-          <span id="atb-eta-live"></span>
-        </div>
-        <div class="atb-actions" style="margin-top:16px">
-          <button class="atb-btn danger" id="atb-cancel" type="button">Cancel</button>
+        <div class="tb-top-bar-inline">
+          <span class="tb-pill tb-pill-amber" id="tb-selected-pill">Nothing chosen yet</span>
+          <button type="button" class="tb-btn tb-btn-outline" id="tb-history-btn">History</button>
+          <button type="button" class="tb-btn tb-btn-outline" id="tb-back" disabled>Back</button>
+          <button type="button" class="tb-btn tb-btn-primary" id="tb-next">Continue</button>
         </div>
       </div>
 
-      <div class="atb-card" id="atb-done" style="margin-top:16px">
-        <h2>Test ready</h2>
-        <p id="atb-done-title">Your practice test PDF is ready.</p>
-        <div class="atb-actions">
-          <button class="atb-btn ghost" id="atb-view" type="button">View</button>
-          <a class="atb-btn" id="atb-download" href="#">Download PDF</a>
-          <button class="atb-btn ghost" id="atb-finish" type="button">Done</button>
+      <div class="tb-progress-wrap">
+        <div class="tb-step-indicators" role="tablist" aria-label="Build steps">
+          <div class="tb-step-item tb-active" id="tb-si-1">
+            <button type="button" class="tb-step-item-btn"><span class="tb-step-dot tb-active" id="tb-sdot-1">1</span><span class="tb-step-copy" id="tb-scopy-1">Syllabus</span></button>
+          </div>
+          <div class="tb-step-connector" id="tb-conn-1"></div>
+          <div class="tb-step-item tb-inactive" id="tb-si-2">
+            <button type="button" class="tb-step-item-btn"><span class="tb-step-dot tb-inactive" id="tb-sdot-2">2</span><span class="tb-step-copy" id="tb-scopy-2">Topics</span></button>
+          </div>
+          <div class="tb-step-connector" id="tb-conn-2"></div>
+          <div class="tb-step-item tb-inactive" id="tb-si-3">
+            <button type="button" class="tb-step-item-btn"><span class="tb-step-dot tb-inactive" id="tb-sdot-3">3</span><span class="tb-step-copy" id="tb-scopy-3">Build</span></button>
+          </div>
         </div>
       </div>
 
-      <div id="atb-history">
-        <h2>History</h2>
-        <div id="atb-history-list"></div>
+      <div class="tb-panes" id="tb-panes">
+        <section class="tb-pane tb-pane-active" id="pane-step1" data-step="1">
+          <div class="tb-two-col">
+            <div class="tb-card tb-card-chapters">
+              <div class="tb-card-header">
+                <span class="tb-card-header-icon">✦</span>
+                <h2 class="tb-card-title">Subject</h2>
+                <span class="tb-card-hint">Class 11</span>
+              </div>
+              <div class="tb-card-body">
+                <select id="atb-subject" style="display:none" aria-hidden="true" tabindex="-1">
+                  <option value="">Choose subject…</option>
+                  <option>Physics</option>
+                  <option>Chemistry</option>
+                  <option>Biology</option>
+                  <option>Mathematics</option>
+                  <option>Computer Science</option>
+                </select>
+                <div class="tb-subject-grid" id="atb-subject-grid">
+                  <button type="button" class="tb-subject-item" data-value="Physics"><span class="tb-subject-icon" style="">P</span><span class="tb-subject-info"><span class="tb-subject-name">Physics</span><span class="tb-subject-code">Motion, forces, electricity</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
+                  <button type="button" class="tb-subject-item" data-value="Chemistry"><span class="tb-subject-icon" style="">C</span><span class="tb-subject-info"><span class="tb-subject-name">Chemistry</span><span class="tb-subject-code">Moles, reactions, organic</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
+                  <button type="button" class="tb-subject-item" data-value="Biology"><span class="tb-subject-icon" style="">B</span><span class="tb-subject-info"><span class="tb-subject-name">Biology</span><span class="tb-subject-code">Cells, genetics, systems</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
+                  <button type="button" class="tb-subject-item" data-value="Mathematics"><span class="tb-subject-icon" style="">M</span><span class="tb-subject-info"><span class="tb-subject-name">Mathematics</span><span class="tb-subject-code">Algebra, trig, calculus</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
+                  <button type="button" class="tb-subject-item" data-value="Computer Science"><span class="tb-subject-icon" style="">CS</span><span class="tb-subject-info"><span class="tb-subject-name">Computer Science</span><span class="tb-subject-code">Hardware, software, programming</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
+                </div>
+                <div class="hint" id="tb-subject-hint">One subject per paper.</div>
+              </div>
+            </div>
+
+            <div class="tb-card">
+              <div class="tb-card-header">
+                <span class="tb-card-header-icon">☰</span>
+                <h2 class="tb-card-title">Chapters</h2>
+                <span class="tb-card-hint" id="tb-ch-hint">0 of 3</span>
+              </div>
+              <div class="tb-card-body">
+                <div class="atb-select-wrap" id="atb-chapter-wrap">
+                  <button type="button" class="atb-select tb-select" id="atb-chapter-btn" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="atb-chapter-text" class="atb-select-placeholder">Select up to 3 chapters…</span>
+                    <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div class="atb-select-menu atb-select-menu-scroll" id="atb-chapter-menu" role="listbox" aria-multiselectable="true" aria-label="Chapters"></div>
+                </div>
+                <div id="atb-chapter-chips" class="atb-chips"></div>
+                <div class="hint" id="atb-chapter-hint">Choose at least one chapter — the AI only writes questions from these pages.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tb-pane" id="pane-step2" data-step="2">
+          <div class="tb-card">
+            <div class="tb-card-header">
+              <span class="tb-card-header-icon">◈</span>
+              <h2 class="tb-card-title">Topics</h2>
+              <span class="tb-card-hint" id="tb-topics-hint-count">Optional</span>
+            </div>
+            <div class="tb-card-body">
+              <div class="tb-mode-row" id="tb-mode-row">
+                <span class="tb-radio-chip tb-radio-chip-active" id="tb-mode-chapters">Full chapters</span>
+                <span class="tb-radio-chip" id="tb-mode-topics">Specific topics</span>
+              </div>
+              <textarea id="atb-topics" style="display:none" aria-hidden="true" tabindex="-1"></textarea>
+              <div class="atb-topics-box" id="atb-topics-box">
+                <div id="atb-topics-chips" style="display:contents"></div>
+                <input id="atb-topics-input" class="atb-topics-input" type="text" placeholder="Add a topic, press comma…" autocomplete="off" enterkeyhint="done">
+              </div>
+              <div class="hint" id="atb-topics-hint">Separate topics with commas · max 10</div>
+              <div class="atb-panel" id="atb-weight-panel">
+                <h3>Topic weightage</h3>
+                <div id="atb-weight-list"></div>
+                <div class="atb-eta">Star up to 3 topics to mark them important. Starred topics get extra weight in the paper.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tb-pane" id="pane-step3" data-step="3">
+          <div class="tb-config-grid">
+            <div class="tb-card">
+              <div class="tb-card-header">
+                <span class="tb-card-header-icon">✎</span>
+                <h2 class="tb-card-title">Paper style</h2>
+                <span class="tb-card-hint">Board or conceptual</span>
+              </div>
+              <div class="tb-card-body tb-card-toggles">
+                <div class="atb-field atb-field-title">
+                  <label>Paper title <span class="atb-tag-label">optional</span></label>
+                  <input type="text" id="atb-test-name" maxlength="120" placeholder="e.g. Force &amp; Motion — Chapter Test" autocomplete="off">
+                </div>
+                <div class="atb-toggle" id="atb-pp-label">
+                  <div><b>Follow a past paper</b><span>Match the style of recent board papers</span></div>
+                  <label class="switch"><input type="checkbox" id="atb-pp"><span class="slider"></span></label>
+                </div>
+                <div class="atb-toggle" id="atb-concept-label">
+                  <div><b>Conceptual mix</b><span>Blend conceptual questions with internet research</span></div>
+                  <label class="switch"><input type="checkbox" id="atb-conceptual" checked><span class="slider"></span></label>
+                </div>
+                <div class="atb-toggle" id="atb-answerkey-label">
+                  <div><b>Answer key</b><span>Print the marking scheme at the end</span></div>
+                  <label class="switch"><input type="checkbox" id="atb-answerkey" checked><span class="slider"></span></label>
+                </div>
+                <div class="atb-panel" id="atb-pp-panel">
+                  <h3>Past paper setup</h3>
+                  <div class="atb-field">
+                    <label for="atb-board-btn">Board</label>
+                    <select id="atb-board" style="display:none" aria-hidden="true" tabindex="-1"><option value="">Choose board…</option></select>
+                    <div class="atb-select-wrap" id="atb-board-wrap">
+                      <button type="button" class="atb-select" id="atb-board-btn" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="atb-board-text" class="atb-select-placeholder">Choose board…</span>
+                        <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </button>
+                      <div class="atb-select-menu atb-select-menu-scroll" id="atb-board-menu" role="listbox" aria-label="Board"></div>
+                    </div>
+                  </div>
+                  <div class="atb-eta" id="atb-eta-static">Expected time: calculating…</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tb-card">
+              <div class="tb-card-header">
+                <span class="tb-card-header-icon">#</span>
+                <h2 class="tb-card-title">Marks &amp; time</h2>
+                <span class="tb-card-hint">Distribution</span>
+              </div>
+              <div class="tb-card-body">
+                <div class="atb-marks-grid">
+                  <div class="atb-field"><label for="atb-mcq">MCQs</label><input type="number" id="atb-mcq" min="0" max="50" value="10" inputmode="numeric"><div class="hint">1 mark each</div></div>
+                  <div class="atb-field"><label for="atb-short">Short</label><input type="number" id="atb-short" min="0" max="80" step="2" value="12" inputmode="numeric"><div class="hint">Even numbers only</div></div>
+                  <div class="atb-field"><label for="atb-long">Long</label><input type="number" id="atb-long" min="0" max="60" value="9" inputmode="numeric"><div class="hint">9 = full Q (4+5)</div></div>
+                </div>
+                <div class="atb-total"><span>Total marks</span><b id="atb-total-marks">25</b></div>
+                <div class="atb-eta" id="atb-time-allowed">Time allowed: 60 min</div>
+                <div class="atb-eta" id="atb-eta-concept">Expected time: calculating…</div>
+              </div>
+            </div>
+          </div>
+          <div class="tb-build-row">
+            <button class="tb-btn tb-btn-primary tb-btn-big" id="atb-start" type="button">Build Test</button>
+            <div class="atb-err" id="atb-err"></div>
+          </div>
+        </section>
       </div>
     </div>
+
+      <div class="tb-card tb-build-state" id="atb-progress">
+        <div class="tb-build-state-head">
+          <span class="tb-build-spinner" aria-hidden="true"><i></i></span>
+          <div class="tb-build-state-copy">
+            <p class="tb-build-stage" id="atb-stage">Starting…</p>
+            <p class="tb-build-eta" id="atb-eta-live"></p>
+          </div>
+          <span class="tb-build-pct" id="atb-pct">0%</span>
+        </div>
+        <div class="atb-bar"><i id="atb-bar-fill"></i></div>
+        <div class="tb-build-phases" aria-hidden="true">
+          <span class="tb-phase tb-phase-active">Reading textbook</span>
+          <span class="tb-phase">Writing questions</span>
+          <span class="tb-phase">Compiling PDF</span>
+        </div>
+        <div class="tb-build-actions">
+          <button class="tb-btn tb-btn-outline" id="atb-cancel" type="button">Cancel build</button>
+        </div>
+      </div>
+
+      <div class="tb-card tb-done-card" id="atb-done">
+        <div class="tb-done-check" aria-hidden="true">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Test ready</h2>
+        <p class="tb-done-title" id="atb-done-title">Your practice test PDF is ready.</p>
+        <p class="tb-done-meta" id="atb-done-meta"></p>
+        <div class="tb-done-actions">
+          <button class="tb-btn tb-btn-outline" id="atb-view" type="button">Preview</button>
+          <a class="tb-btn tb-btn-primary" id="atb-download" href="#">Download PDF</a>
+          <button class="tb-btn tb-btn-ghost" id="atb-finish" type="button">New test</button>
+        </div>
+      </div>
+
+    </div>
   </main>
+
+  <div id="atb-history-modal" class="tb-modal" style="display:none" role="dialog" aria-modal="true" aria-label="Build history">
+    <div class="tb-modal-scrim" data-history-close></div>
+    <div class="tb-modal-card">
+      <div class="tb-modal-head">
+        <h3>Your built tests</h3>
+        <button type="button" class="tb-modal-close" id="atb-history-close" aria-label="Close history">✕</button>
+      </div>
+      <div class="tb-modal-body">
+        <div id="atb-history-loading" style="display:none" aria-hidden="true">
+          <span class="atb-hist-progress"></span>
+          <div class="atb-hist-skel"><i></i><i></i></div>
+          <div class="atb-hist-skel"><i></i><i></i></div>
+          <div class="atb-hist-skel"><i></i><i></i></div>
+        </div>
+        <div id="atb-history-toast" class="tb-modal-toast" aria-live="polite"></div>
+        <div id="atb-history-list"></div>
+        <div class="tb-modal-empty" id="atb-history-empty" style="display:none">No tests built yet — your papers will appear here.</div>
+      </div>
+    </div>
+  </div>
 
   <div id="pdf-modal">
     <div class="pdf-shell" role="dialog" aria-modal="true" aria-label="PDF viewer">
@@ -513,7 +845,7 @@
           <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex-shrink:0">A</div>
           <div style="min-width:0">
             <div id="pdf-title" class="pdf-bar-title">Practice Test</div>
-            <div id="pdf-subtitle" class="pdf-bar-sub">PDF • AI Test</div>
+            <div id="pdf-subtitle" class="pdf-bar-sub">PDF</div>
           </div>
         </div>
         <div class="pdf-bar-actions">
@@ -565,8 +897,8 @@
           </div>
           <div class="footer-col">
             <h4>Legal</h4>
-            <a href="/privacy/">Privacy Policy</a>
-            <a href="/terms/">Terms of Service</a>
+            <a href="../privacy/">Privacy Policy</a>
+            <a href="../terms/">Terms of Service</a>
           </div>
         </div>
       </div>
@@ -574,9 +906,9 @@
     </div>
   </footer>
 
-  <script src="https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }</script>
+  <script src="../assets/js/vendor/supabase.min.js"></script>
+  <script src="../assets/js/vendor/pdf.min.js"></script>
+  <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = '../assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=31"></script>
 <script src="../js/login-modal.js?v=5"></script>
@@ -850,19 +1182,37 @@
     return Math.round(t / 5) * 5;
   }
 
+  // Live estimate of how long the build itself takes, based on the real
+  // inputs: topics to research, marks to generate, chapter reads, past papers.
+  function estimateBuildSeconds() {
+    var topics = parseTopics();
+    var marks = totalMarks();
+    var pp = $('atb-pp') ? $('atb-pp').checked : false;
+    var conceptual = $('atb-conceptual') ? $('atb-conceptual').checked : true;
+    var ch = selectedChapters.length > 0;
+    var s = 30;               // job queue + auth + polling overhead
+    if (marks > 0) s += marks * 1.6;         // question generation (MCQ/short/long)
+    if (topics.length) s += 14 * topics.length; // research depth
+    if (conceptual && topics.length) s += 16;   // internet search call
+    if (pp) s += 75;                             // paper download + OCR
+    if (ch) s += 8;                              // chapter page read
+    return Math.round(s);
+  }
+
+  function formatEstimate(secs) {
+    if (!secs || secs <= 0) return '';
+    var min = secs / 60;
+    if (min < 1) return '~' + Math.max(1, Math.round(secs / 5) * 5) + ' seconds';
+    return '~' + (Math.round(min * 2) / 2) + ' minutes';
+  }
+
   function refreshTotal() {
     $('atb-total-marks').textContent = String(totalMarks());
     $('atb-time-allowed').textContent = 'Time allowed: ' + suggestedTime() + ' min';
-    var pp = $('atb-pp').checked;
-    var conceptual = $('atb-conceptual').checked;
-    $('atb-eta-static').textContent = 'Expected time: ~2-4 minutes';
-    if (pp) {
-      $('atb-eta-concept').textContent = 'Expected time: ~2-4 minutes';
-    } else if (conceptual) {
-      $('atb-eta-concept').textContent = 'Expected time: ~45-90 seconds';
-    } else {
-      $('atb-eta-concept').textContent = 'Expected time: ~45-90 seconds';
-    }
+    var est = formatEstimate(estimateBuildSeconds());
+    var label = est ? ('Expected time: ' + est) : 'Expected time: calculating…';
+    $('atb-eta-static').textContent = label;
+    $('atb-eta-concept').textContent = label;
   }
 
   function updatePanels() {
@@ -904,7 +1254,7 @@
     var d = getDb();
     if (subject && d) {
       try {
-        var sid = subjectIdFor(subject);
+        var sid = await resolveSubjectId(subject);
         var q = d.from('past_papers').select('board_id').eq('status', 'published').eq('class_level_id', 1).limit(500);
         if (sid) q = q.eq('subject_id', sid);
         var pr = await q;
@@ -1046,6 +1396,396 @@
     syncBoardBtn();
   }
 
+  // ── Chapter selector: multi-select, chapters come from the DB per subject ──
+  var chapterList = [];
+  var selectedChapters = [];
+  var MAX_CHAPTERS = 3;
+  var subjectIdCache = {};
+
+  function listChapterLabel(c) {
+    return (c.number ? c.number + '. ' : '') + c.name;
+  }
+
+  function chapterSelected(id) {
+    for (var i = 0; i < selectedChapters.length; i++) {
+      if (String(selectedChapters[i].id) === String(id)) return true;
+    }
+    return false;
+  }
+
+  function removeChapter(id) {
+    var out = [];
+    for (var i = 0; i < selectedChapters.length; i++) {
+      if (String(selectedChapters[i].id) !== String(id)) out.push(selectedChapters[i]);
+    }
+    selectedChapters = out;
+    syncChapterUi();
+  }
+
+  function toggleChapter(id) {
+    if (chapterSelected(id)) { removeChapter(id); return; }
+    if (selectedChapters.length >= MAX_CHAPTERS) {
+      showErr('You can select up to ' + MAX_CHAPTERS + ' chapters.');
+      return;
+    }
+    var c = null;
+    for (var i = 0; i < chapterList.length; i++) {
+      if (String(chapterList[i].id) === String(id)) { c = chapterList[i]; break; }
+    }
+    if (!c) return;
+    selectedChapters.push(c);
+    showErr('');
+    syncChapterUi();
+  }
+
+  function syncChapterUi() {
+    var txt = $('atb-chapter-text');
+    if (txt) {
+      if (selectedChapters.length === 0) {
+        txt.textContent = 'Select up to ' + MAX_CHAPTERS + ' chapters…';
+        txt.classList.add('atb-select-placeholder');
+      } else {
+        txt.textContent = selectedChapters.length + ' of ' + MAX_CHAPTERS + ' selected';
+        txt.classList.remove('atb-select-placeholder');
+      }
+    }
+    var menu = $('atb-chapter-menu');
+    if (menu) {
+      var opts = menu.querySelectorAll('.atb-select-opt');
+      for (var k = 0; k < opts.length; k++) {
+        var on = chapterSelected(opts[k].getAttribute('data-value'));
+        opts[k].classList.toggle('selected', on);
+        opts[k].setAttribute('aria-selected', on ? 'true' : 'false');
+      }
+    }
+    renderChapterChips();
+    try { refreshTotal(); } catch (_) {}
+    try { updateScopeUi(); } catch (_) {}
+  }
+
+  function renderChapterChips() {
+    var host = $('atb-chapter-chips');
+    if (!host) return;
+    host.innerHTML = '';
+    for (var i = 0; i < selectedChapters.length; i++) {
+      (function (c) {
+        var chip = document.createElement('span');
+        chip.className = 'atb-chip';
+        var label = document.createElement('span');
+        label.textContent = listChapterLabel(c);
+        var x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'atb-chip-x';
+        x.setAttribute('aria-label', 'Remove ' + c.name);
+        x.textContent = '\u00d7';
+        x.addEventListener('click', function (e) {
+          e.stopPropagation();
+          removeChapter(c.id);
+        });
+        chip.appendChild(label);
+        chip.appendChild(x);
+        host.appendChild(chip);
+      })(selectedChapters[i]);
+    }
+  }
+
+  function tickSvg() {
+    var tick = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    tick.setAttribute('class', 'tick');
+    tick.setAttribute('width', '15');
+    tick.setAttribute('height', '15');
+    tick.setAttribute('viewBox', '0 0 24 24');
+    tick.setAttribute('fill', 'none');
+    tick.setAttribute('stroke', 'currentColor');
+    tick.setAttribute('stroke-width', '3');
+    tick.setAttribute('stroke-linecap', 'round');
+    tick.setAttribute('stroke-linejoin', 'round');
+    var pl = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    pl.setAttribute('points', '20 6 9 17 4 12');
+    tick.appendChild(pl);
+    return tick;
+  }
+
+  function closeChapterMenu() {
+    var wrap = $('atb-chapter-wrap');
+    var btn = $('atb-chapter-btn');
+    if (wrap) wrap.classList.remove('open');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function wireChapterDropdown() {
+    var wrap = $('atb-chapter-wrap');
+    var btn = $('atb-chapter-btn');
+    if (!wrap || !btn) return;
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var willOpen = !wrap.classList.contains('open');
+      document.querySelectorAll('.atb-select-wrap.open').forEach(function (w) { w.classList.remove('open'); });
+      wrap.classList.toggle('open', willOpen);
+      btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) closeChapterMenu();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeChapterMenu();
+    });
+    rebuildChapterMenu();
+  }
+
+  function rebuildChapterMenu() {
+    var menu = $('atb-chapter-menu');
+    if (!menu) return;
+    menu.innerHTML = '';
+    if (!chapterList.length) {
+      var empty = document.createElement('div');
+      empty.className = 'atb-select-empty';
+      empty.textContent = 'Pick a subject to load its chapters.';
+      menu.appendChild(empty);
+      return;
+    }
+    for (var i = 0; i < chapterList.length; i++) {
+      (function (c) {
+        var b = document.createElement('button');
+        var sel = chapterSelected(c.id);
+        b.type = 'button';
+        b.className = 'atb-select-opt' + (sel ? ' selected' : '');
+        b.setAttribute('role', 'option');
+        b.setAttribute('data-value', c.id);
+        b.setAttribute('aria-selected', sel ? 'true' : 'false');
+        var num = document.createElement('span');
+        num.className = 'atb-ch-num';
+        num.textContent = c.number != null ? c.number : '\u00b7';
+        var label = document.createElement('span');
+        label.className = 'atb-ch-name';
+        label.textContent = c.name;
+        b.appendChild(num);
+        b.appendChild(label);
+        var tick = tickSvg();
+        b.appendChild(tick);
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleChapter(c.id);
+        });
+        menu.appendChild(b);
+      })(chapterList[i]);
+    }
+  }
+
+  // Reliable Class 11 subject id (subjects have duplicate names, e.g. Physics
+  // appears 3 times). Resolved once and cached so boards + chapters agree.
+  async function resolveSubjectId(name) {
+    var key = String(name || '').trim().toLowerCase();
+    if (subjectIdCache[key]) return subjectIdCache[key];
+    var d = getDb();
+    var fallback = subjectIdFor(name);
+    if (!d) return fallback;
+    try {
+      var res = await d.rpc('resolve_class11_subject', { p_name: name });
+      var row = (res && res.data && res.data[0]) || null;
+      if (row && row.subject_id) {
+        subjectIdCache[key] = Number(row.subject_id);
+        subjectIdByName[key] = Number(row.subject_id);
+        return subjectIdCache[key];
+      }
+    } catch (_) {}
+    return fallback;
+  }
+
+  async function fillChapters() {
+    var subject = $('atb-subject').value;
+    chapterList = [];
+    if (subject) {
+      var d = getDb();
+      if (d) {
+        try {
+          var res = await d.rpc('list_chapters_by_subject_name', { p_subject_name: subject });
+          var rows = (res && res.data) || [];
+          for (var i = 0; i < rows.length; i++) {
+            var c = rows[i];
+            chapterList.push({ id: String(c.id), number: c.number, name: c.name, start_page: c.start_page, end_page: c.end_page });
+          }
+        } catch (_) {}
+      }
+    }
+    // Drop chapters that no longer exist for this subject.
+    var keep = [];
+    for (var j = 0; j < selectedChapters.length; j++) {
+      for (var k = 0; k < chapterList.length; k++) {
+        if (String(selectedChapters[j].id) === String(chapterList[k].id)) { keep.push(selectedChapters[j]); break; }
+      }
+    }
+    selectedChapters = keep;
+    rebuildChapterMenu();
+    syncChapterUi();
+  }
+
+  // ── Wizard: 3 steps (subject & chapters → topics → configure) ──
+  var tbStep = 1;
+  var TB_STEPS = {
+    1: ['Step 1 of 3', 'Choose your <em>subject &amp; chapters</em>', 'Pick one subject, then mark up to three chapters to keep the AI inside those pages.'],
+    2: ['Step 2 of 3', 'Choose the <em>topics</em>', 'Cover your chapters as-is, or narrow the test to specific topics.'],
+    3: ['Step 3 of 3', 'Set the <em>paper details</em>', 'Name it, pick a style, set the marks and time, then generate your test.'],
+  };
+
+  function goStep(step) {
+    tbStep = Math.max(1, Math.min(3, step));
+    for (var i = 1; i <= 3; i++) {
+      var pane = $('pane-step' + i);
+      if (pane) pane.classList.toggle('tb-pane-active', i === tbStep);
+      var si = $('tb-si-' + i);
+      if (si) {
+        si.classList.remove('tb-active', 'tb-done', 'tb-inactive');
+        if (i < tbStep) si.classList.add('tb-done');
+        else if (i === tbStep) si.classList.add('tb-active');
+        else si.classList.add('tb-inactive');
+      }
+      var sd = $('tb-sdot-' + i);
+      if (sd) {
+        sd.classList.remove('tb-active', 'tb-done', 'tb-inactive');
+        if (i < tbStep) sd.classList.add('tb-done');
+        else if (i === tbStep) sd.classList.add('tb-active');
+        else sd.classList.add('tb-inactive');
+      }
+      var conn = $('tb-conn-' + i);
+      if (conn) conn.classList.toggle('tb-done', i < tbStep);
+      var sc = $('tb-scopy-' + i);
+      if (sc) sc.textContent = SC_LABELS[i];
+    }
+    var meta = TB_STEPS[tbStep];
+    var ey = $('tb-eyebrow');
+    var tt = $('tb-title');
+    var sub = $('tb-subtitle');
+    if (ey) ey.textContent = meta[0];
+    if (tt) tt.innerHTML = meta[1];
+    if (sub) sub.textContent = meta[2];
+    var back = $('tb-back');
+    var next = $('tb-next');
+    if (back) back.disabled = tbStep === 1;
+    if (next) next.style.display = tbStep === 3 ? 'none' : '';
+    try { scrollToTopish(); } catch (_) {}
+  }
+  var SC_LABELS = { 1: 'Syllabus', 2: 'Topics', 3: 'Build' };
+
+  function scrollToTopish() {
+    var w = document.getElementById('atb-page');
+    if (w) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function wireWizard() {
+    var back = $('tb-back');
+    var next = $('tb-next');
+    if (back) back.addEventListener('click', function () { goStep(tbStep - 1); });
+    if (next) next.addEventListener('click', function () {
+      if (tbStep === 1) {
+        var subj = $('atb-subject').value;
+        if (!subj) { showWizardHint('Choose a subject first.'); return; }
+        if (!selectedChapters.length) { flashChapterHint('Select at least one chapter to continue.'); return; }
+        showWizardHint('');
+        restoreChapterHint();
+      }
+      if (tbStep === 2) {
+        // Topics or chapters required is checked at build time.
+      }
+      goStep(tbStep + 1);
+    });
+    for (var i = 1; i <= 3; i++) {
+      (function (n) {
+        var btn = document.querySelector('#tb-si-' + n + ' .tb-step-item-btn');
+        if (btn) btn.addEventListener('click', function () {
+          // Only allow jumping back to a completed/earlier step, or forward
+          // if the previous gating passes.
+          if (n < tbStep) { goStep(n); return; }
+          if (n === tbStep) return;
+          if (n === tbStep + 1 && tbStep === 1) {
+            var subj = $('atb-subject').value;
+            if (!subj) { showWizardHint('Choose a subject first.'); return; }
+            if (!selectedChapters.length) { flashChapterHint('Select at least one chapter to continue.'); return; }
+            showWizardHint('');
+            restoreChapterHint();
+          }
+          goStep(n);
+        });
+      })(i);
+    }
+    goStep(1);
+  }
+
+  function flashChapterHint(msg) {
+    var h = $('atb-chapter-hint');
+    if (h) {
+      h.textContent = msg;
+      h.classList.add('tb-hint-error');
+      setTimeout(restoreChapterHint, 2600);
+    }
+  }
+
+  function restoreChapterHint() {
+    var h = $('atb-chapter-hint');
+    if (h) {
+      h.textContent = 'Choose at least one chapter — the AI only writes questions from these pages.';
+      h.classList.remove('tb-hint-error');
+    }
+  }
+
+  function showWizardHint(msg) {
+    var h = $('tb-subject-hint');
+    if (h) {
+      h.textContent = msg || 'One subject per paper.';
+      h.classList.toggle('tb-hint-error', !!msg);
+    }
+  }
+
+  // ── Subject grid (list-style cards mirroring the hidden select) ──
+  function syncSubjectGrid() {
+    var val = $('atb-subject') ? $('atb-subject').value : '';
+    var items = document.querySelectorAll('#atb-subject-grid .tb-subject-item');
+    for (var i = 0; i < items.length; i++) {
+      var on = items[i].getAttribute('data-value') === val;
+      items[i].classList.toggle('tb-selected', on);
+      items[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+
+  function wireSubjectGrid() {
+    var items = document.querySelectorAll('#atb-subject-grid .tb-subject-item');
+    for (var i = 0; i < items.length; i++) {
+      (function (el) {
+        el.addEventListener('click', function () {
+          var sel = $('atb-subject');
+          if (sel) {
+            sel.value = el.getAttribute('data-value') || '';
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          syncSubjectGrid();
+          updateScopeUi();
+        });
+      })(items[i]);
+    }
+    syncSubjectGrid();
+  }
+
+  // Selected pill + scope indicators, refreshed on any chapter/topic change.
+  function updateScopeUi() {
+    var pill = $('tb-selected-pill');
+    var topics = parseTopics();
+    if (pill) {
+      var bits = [];
+      if (selectedChapters.length) bits.push(selectedChapters.length + (selectedChapters.length === 1 ? ' chapter' : ' chapters'));
+      if (topics.length) bits.push(topics.length + (topics.length === 1 ? ' topic' : ' topics'));
+      pill.textContent = bits.length ? bits.join(' · ') : 'Nothing selected';
+    }
+    var chHint = $('tb-ch-hint');
+    if (chHint) chHint.textContent = selectedChapters.length + ' of 3';
+    var mc = $('tb-mode-chapters');
+    var mt = $('tb-mode-topics');
+    if (mc && mt) {
+      var custom = topics.length > 0;
+      mc.classList.toggle('tb-radio-chip-active', !custom && selectedChapters.length > 0);
+      mt.classList.toggle('tb-radio-chip-active', custom);
+    }
+  }
+
   async function loadBoards() {
     var d = getDb();
     if (!d) return;
@@ -1081,8 +1821,26 @@
     }
     return {
       subject: subject,
+      paper_title: ($('atb-test-name') ? $('atb-test-name').value : '').trim() || null,
       topics: topics,
       important: important,
+      chapters: selectedChapters.map(function (c) {
+        return {
+          id: Number(c.id),
+          number: c.number,
+          name: c.name,
+          start_page: c.start_page,
+          end_page: c.end_page,
+        };
+      }),
+      chapter: selectedChapters.length === 1 ? {
+        id: Number(selectedChapters[0].id),
+        number: selectedChapters[0].number,
+        name: selectedChapters[0].name,
+        start_page: selectedChapters[0].start_page,
+        end_page: selectedChapters[0].end_page,
+      } : null,
+      whole_chapter: !!(selectedChapters.length && !topics.length),
       weightage: computeWeightage(topics, important),
       use_past_paper: usePp,
       conceptual: conceptual,
@@ -1101,7 +1859,8 @@
 
   function validate(cfg) {
     if (!cfg.subject) return 'Choose a subject.';
-    if (!cfg.topics.length) return 'Add at least one topic.';
+    if (!(cfg.chapters && cfg.chapters.length)) return 'Select at least one chapter.';
+    if (cfg.chapters && cfg.chapters.length > 3) return 'You can select up to 3 chapters.';
     if (cfg.topics.length > 10) return 'Maximum 10 topics.';
     if (cfg.important && cfg.important.length > 3) return 'You can mark up to 3 important topics.';
     if (cfg.use_past_paper && !cfg.board_id) return 'Choose a board for past paper mode.';
@@ -1116,7 +1875,8 @@
   }
 
   function setUiState(state) {
-    $('atb-form-card').style.display = state === 'form' ? 'block' : 'none';
+    var shell = document.querySelector('.atb-shell');
+    if (shell) shell.classList.toggle('tb-building', state !== 'form');
     $('atb-progress').style.display = state === 'progress' ? 'block' : 'none';
     $('atb-done').style.display = state === 'done' ? 'block' : 'none';
     if (state !== 'progress' && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -1155,6 +1915,19 @@
       setUiState('done');
       var res = job.result || {};
       $('atb-done-title').textContent = res.title || 'Your practice test PDF is ready.';
+      var metaEl = $('atb-done-meta');
+      if (metaEl) {
+        var metaBits = [];
+        var cfgSrc = (res && res.config) || (job && job.config) || {};
+        var chList = Array.isArray(cfgSrc.chapters) ? cfgSrc.chapters : (cfgSrc.chapter ? [cfgSrc.chapter] : []);
+        if (chList.length && chList[0].name) {
+          metaBits.push('Chapters: ' + chList.map(function (c) { return (c.number ? c.number + '. ' : '') + c.name; }).join(', '));
+        }
+        var top = cfgSrc.topics || [];
+        if (Array.isArray(top) && top.length) metaBits.push('Topics: ' + top.join(', '));
+        else if (chList.length) metaBits.push('Scope: whole chapter(s)');
+        metaEl.textContent = metaBits.join('  \u00b7  ');
+      }
       var url = res.pdf_url || '';
       $('atb-download').href = url || '#';
       currentPdfUrl = url;
@@ -1334,29 +2107,199 @@
     } catch (_) {}
   }
 
+  var SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function escAttr(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function historyStatusHtml(r) {
+    if (r.priority) return '<span class="atb-hist-status atb-hist-priority">\u2605 Saved forever</span>';
+    var leftMs = (new Date(r.created_at || Date.now()).getTime() + SEVEN_DAYS_MS) - Date.now();
+    if (leftMs <= 0) return '<span class="atb-hist-status atb-hist-expiring">Expiring soon</span>';
+    var days = Math.floor(leftMs / 86400000);
+    var hours = Math.floor((leftMs % 86400000) / 3600000);
+    var label = days >= 1
+      ? (days + (days === 1 ? ' day' : ' days') + ' left')
+      : (Math.max(1, hours) + (hours === 1 ? ' hour' : ' hours') + ' left');
+    return '<span class="atb-hist-status' + (days < 1 ? ' atb-hist-expiring' : '') + '">' + label + '</span>';
+  }
+
+  // History now comes from the edge function, which also prunes anything
+  // older than 7 days (unless it's pinned to the priority list).
   async function loadHistory() {
-    var d = getDb();
-    var host = $('atb-history');
     var list = $('atb-history-list');
-    if (!d) return;
+    var empty = $('atb-history-empty');
+    if (!list) return;
+    var hadContent = list.childElementCount > 0;
+    showHistoryLoading(!hadContent);
+    var session = await getSession();
+    if (!session) { list.innerHTML = ''; if (empty) empty.style.display = 'block'; showHistoryLoading(false); return; }
     try {
-      var res = await d.from('ai_test_history').select('id,title,subject,board_name,created_at,pdf_path,pdf_url').order('created_at', { ascending: false }).limit(30);
-      var rows = (res && res.data) || [];
-      if (!rows.length) { host.style.display = 'none'; return; }
-      host.style.display = 'block';
-      list.innerHTML = rows.map(function (r) {
+      var data = await invokeFn({ action: 'list' }, session.access_token);
+      var tests = (data && data.tests) || [];
+      if (empty) empty.style.display = tests.length ? 'none' : 'block';
+      showHistoryLoading(false);
+      list.innerHTML = tests.map(function (r) {
         var url = r.pdf_url || (SUPA_URL + '/storage/v1/object/public/ai-tests/' + r.pdf_path);
         var when = '';
-        try { when = new Date(r.created_at).toLocaleDateString(); } catch (_) {}
+        try { when = new Date(r.created_at || Date.now()).toLocaleDateString(); } catch (_) {}
         var sub = [r.subject, r.board_name, when].filter(Boolean).join(' · ');
-        var title = String(r.title || 'Test');
-        var escTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        var escUrl = String(url).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-        return '<div class="atb-hist-item"><div><b>' + title.replace(/</g, '&lt;') + '</b><span>' + String(sub).replace(/</g, '&lt;') + '</span></div>' +
-          '<div class="atb-hist-actions"><button type="button" class="atb-hist-view" data-url="' + escUrl + '" data-title="' + escTitle + '">View</button>' +
-          '<a href="' + escUrl + '" class="atb-hist-dl" data-url="' + escUrl + '" data-title="' + escTitle + '">Download</a></div></div>';
+        var custom = (r.config && r.config.paper_title) || null;
+        var title = String((custom || r.title) || 'Test');
+        var escTitle = escAttr(title);
+        var escUrl = escAttr(url);
+        var escId = escAttr(String(r.id));
+        return '<div class="atb-hist-item" data-id="' + escId + '">' +
+          '<div class="atb-hist-main">' +
+            '<b>' + escAttr(title) + '</b>' +
+            '<span class="atb-hist-sub">' + escAttr(sub) + '</span>' +
+            historyStatusHtml(r) +
+          '</div>' +
+          '<div class="atb-hist-menu-wrap">' +
+            '<button type="button" class="atb-hist-kebab" aria-label="More options" aria-expanded="false">\u22ef</button>' +
+            '<div class="atb-hist-menu" role="menu">' +
+              '<button type="button" role="menuitem" data-act="view" data-url="' + escUrl + '" data-title="' + escTitle + '">View</button>' +
+              '<button type="button" role="menuitem" data-act="download" data-url="' + escUrl + '" data-title="' + escTitle + '">Download</button>' +
+              '<button type="button" role="menuitem" data-act="rename" data-title="' + escTitle + '">Rename</button>' +
+              '<button type="button" role="menuitem" data-act="priority" data-priority="' + (r.priority ? '1' : '0') + '" data-title="' + escTitle + '">' + (r.priority ? 'Unpin from priority list' : 'Pin to keep forever') + '</button>' +
+              '<button type="button" role="menuitem" class="danger" data-act="delete" data-title="' + escTitle + '">Delete</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
       }).join('');
-    } catch (_) {}
+    } catch (_) {
+      list.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      showHistoryLoading(false);
+    }
+  }
+
+  function showHistoryLoading(on) {
+    var el = $('atb-history-loading');
+    if (el) el.style.display = on ? 'block' : 'none';
+  }
+
+  function openHistoryModal() {
+    var m = $('atb-history-modal');
+    if (!m) return;
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    closeAllHistoryMenus();
+    loadHistory();
+    if (historyRefreshTimer) clearInterval(historyRefreshTimer);
+    historyRefreshTimer = setInterval(function () {
+      var mm = $('atb-history-modal');
+      if (mm && mm.style.display === 'flex') loadHistory();
+    }, 60000);
+  }
+
+  var historyRefreshTimer = null;
+
+  async function deleteHistoryItem(id, title) {
+    var label = String(title || 'this test').slice(0, 60);
+    if (!window.confirm('Delete "' + label + '"? This permanently removes the test and its PDF.')) return;
+    var session = await getSession();
+    if (!session) return;
+    try {
+      await invokeFn({ action: 'delete', history_id: id }, session.access_token);
+      historyToast('Test deleted.');
+      loadHistory();
+    } catch (e) {
+      historyToast('Could not delete \u2014 ' + (e.message || 'try again'));
+    }
+  }
+
+  async function renameHistoryItem(id, oldTitle) {
+    var current = (oldTitle && oldTitle !== 'Test') ? oldTitle : '';
+    var name = window.prompt('Rename this test', current);
+    if (name === null) return;
+    name = String(name || '').trim();
+    if (!name) { historyToast('Name cannot be empty.'); return; }
+    var session = await getSession();
+    if (!session) return;
+    try {
+      await invokeFn({ action: 'rename', history_id: id, title: name }, session.access_token);
+      historyToast('Renamed.');
+      loadHistory();
+    } catch (e) {
+      historyToast('Could not rename \u2014 ' + (e.message || 'try again'));
+    }
+  }
+
+  async function togglePriority(id, current) {
+    var want = !current;
+    var session = await getSession();
+    if (!session) return;
+    try {
+      await invokeFn({ action: 'set_priority', history_id: id, priority: want }, session.access_token);
+      historyToast(want ? 'Pinned \u2014 this test will never expire.' : 'Unpinned from the priority list.');
+      loadHistory();
+    } catch (e) {
+      historyToast(e.message || 'Could not update priority.');
+    }
+  }
+
+  var historyToastTimer = null;
+  function historyToast(msg) {
+    var t = $('atb-history-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    if (historyToastTimer) clearTimeout(historyToastTimer);
+    historyToastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  function closeHistoryModal() {
+    var m = $('atb-history-modal');
+    if (!m) return;
+    m.style.display = 'none';
+    document.body.style.overflow = '';
+    closeAllHistoryMenus();
+    if (historyRefreshTimer) { clearInterval(historyRefreshTimer); historyRefreshTimer = null; }
+  }
+
+  function closeAllHistoryMenus() {
+    var menus = document.querySelectorAll('.atb-hist-menu');
+    for (var i = 0; i < menus.length; i++) {
+      menus[i].classList.remove('open');
+      var k = menus[i].parentNode ? menus[i].parentNode.querySelector('.atb-hist-kebab') : null;
+      if (k) k.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function openHistoryMenuFor(kebab) {
+    closeAllHistoryMenus();
+    var wrap = kebab && kebab.parentNode;
+    if (!wrap) return;
+    var menu = wrap.querySelector('.atb-hist-menu');
+    if (!menu) return;
+    menu.classList.add('open');
+    kebab.setAttribute('aria-expanded', 'true');
+    // Flip the dropdown upward when it would overflow the popup's list area.
+    var body = kebab.closest('.tb-modal-body');
+    if (body) {
+      var mb = body.getBoundingClientRect();
+      var row = wrap.getBoundingClientRect();
+      var estH = Math.min(240, menu.scrollHeight || 230);
+      if (row.bottom + estH > mb.bottom) menu.classList.add('up');
+      else menu.classList.remove('up');
+    } else {
+      menu.classList.remove('up');
+    }
+  }
+
+  function wireHistoryModal() {
+    var btn = $('tb-history-btn');
+    var close = $('atb-history-close');
+    var scrim = document.querySelector('[data-history-close]');
+    if (btn) btn.addEventListener('click', openHistoryModal);
+    if (close) close.addEventListener('click', closeHistoryModal);
+    if (scrim) scrim.addEventListener('click', closeHistoryModal);
+    document.addEventListener('keydown', function (e) {
+      var m = $('atb-history-modal');
+      if (e.key === 'Escape' && m && m.style.display === 'flex') closeHistoryModal();
+    });
   }
 
   async function resumeActiveJob() {
@@ -1393,8 +2336,7 @@
   }
 
   function hideLoading() {
-    var l = $('atb-loading');
-    if (l) l.style.display = 'none';
+    // No loading screen any more — the wizard fades in via CSS animation.
   }
 
   async function init() {
@@ -1429,28 +2371,17 @@
         input.dispatchEvent(new Event('change', { bubbles: true }));
       });
     });
-    function wireToggleRow(rowId, inputId) {
-      var row = $(rowId);
-      if (!row) return;
-      row.addEventListener('click', function (e) {
-        if (e.target.closest && e.target.closest('label.switch')) return;
-        var input = $(inputId);
-        if (!input) return;
-        e.preventDefault();
-        input.checked = !input.checked;
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    }
-    wireToggleRow('atb-pp-label', 'atb-pp');
-    wireToggleRow('atb-concept-label', 'atb-conceptual');
-    wireToggleRow('atb-answerkey-label', 'atb-answerkey');
     ['atb-mcq', 'atb-short', 'atb-long'].forEach(function (id) {
       $(id).addEventListener('input', refreshTotal);
     });
-    $('atb-subject').addEventListener('change', function () { syncSubjectBtn(); fillBoards(); });
-    wireSubjectDropdown();
+    $('atb-subject').addEventListener('change', function () { syncSubjectBtn(); fillBoards(); fillChapters(); syncSubjectGrid(); updateScopeUi(); });
+    wireSubjectGrid();
     wireBoardDropdown();
+    wireChapterDropdown();
     wireTopicsChips();
+    wireWizard();
+    wireHistoryModal();
+    updateScopeUi();
     $('atb-start').addEventListener('click', startBuild);
     $('atb-cancel').addEventListener('click', cancelBuild);
     $('atb-finish').addEventListener('click', finishDone);
@@ -1464,23 +2395,35 @@
     });
     var histList = $('atb-history-list');
     if (histList) histList.addEventListener('click', function (e) {
-      var dl = e.target && e.target.closest ? e.target.closest('.atb-hist-dl') : null;
-      if (dl) {
-        e.preventDefault();
-        var du = dl.getAttribute('data-url') || dl.getAttribute('href') || '';
-        var dt = dl.getAttribute('data-title') || 'Practice Test';
-        if (du && du !== '#') downloadPdf(du, dt, dl);
-        return;
-      }
-      var btn = e.target && e.target.closest ? e.target.closest('.atb-hist-view') : null;
-      if (!btn) return;
-      var u = btn.getAttribute('data-url') || '';
-      var t = btn.getAttribute('data-title') || 'Practice Test';
-      if (u) openPdf(u, t);
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var kebab = t.closest('.atb-hist-kebab');
+      if (kebab) { e.stopPropagation(); openHistoryMenuFor(kebab); return; }
+      var item = t.closest('.atb-hist-item');
+      if (!item) return;
+      var actBtn = t.closest('.atb-hist-menu button');
+      if (!actBtn) return;
+      e.stopPropagation();
+      var act = actBtn.getAttribute('data-act') || '';
+      var id = item.getAttribute('data-id') || '';
+      var url = actBtn.getAttribute('data-url') || '';
+      var title = actBtn.getAttribute('data-title') || 'Practice Test';
+      var priority = actBtn.getAttribute('data-priority') === '1';
+      closeAllHistoryMenus();
+      if (act === 'view' && url) openPdf(url, title);
+      else if (act === 'download' && url) downloadPdf(url, title, actBtn);
+      else if (act === 'rename') renameHistoryItem(id, title);
+      else if (act === 'priority') togglePriority(id, priority);
+      else if (act === 'delete') deleteHistoryItem(id, title);
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target && e.target.closest && e.target.closest('.atb-hist-menu-wrap')) return;
+      closeAllHistoryMenus();
     });
     wirePdfViewer();
     updatePanels();
     await loadBoards();
+    await fillChapters();
     await loadHistory();
     await resumeActiveJob();
   }
@@ -1565,6 +2508,7 @@
       hint.textContent = n ? (n + '/10 topics') : 'Comma-separated · up to 10 topics';
     }
     renderWeightage();
+    try { updateScopeUi(); } catch (_) {}
   }
 
   function addTopicChip(raw) {
@@ -1681,7 +2625,7 @@
     if (!m) { if (url) window.open(url, '_blank', 'noopener'); return; }
     var tt = $('pdf-title'), sub = $('pdf-subtitle');
     if (tt) tt.textContent = title || 'Practice Test';
-    if (sub) sub.textContent = 'PDF • AI Test';
+    if (sub) sub.textContent = 'PDF';
     m.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     if (!url || url === '#') return;
