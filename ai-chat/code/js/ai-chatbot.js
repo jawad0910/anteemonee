@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  try { console.info('[Anteemonee AI] js build v98 (segment-graph parser active)'); } catch (_) {}
+  try { console.info('[Anteemonee AI] js build v100 (graph sync + axis labels)'); } catch (_) {}
 
   // â”€â”€ State â”€â”€
   const api = new AiApiService();
@@ -42,7 +42,7 @@
       if (!c.shareCode) { c.shareCode = makeShareCode(); changed = true; }
     });
     if (changed) {
-      if (isPremiumTier && currentUserId()) {
+      if (currentUserId()) {
         conversations.forEach(function(c) { saveConversationToDb(c).catch(function() {}); });
       } else {
         writeLocalConversations();
@@ -210,7 +210,7 @@
     savePinnedMap(map);
     renderHistory();
     try { showChatToast(next ? 'Pinned' : 'Unpinned'); } catch (_) {}
-    if (isPremiumTier && currentUserId()) {
+    if (currentUserId()) {
       try {
         var res = await db.from('chat_conversations').update({ pinned: !!next }).eq('id', conv.id);
         if (res && res.error && /pinned|column/i.test(res.error.message||'')) {
@@ -337,7 +337,7 @@
     try {
       if (extraIds && extraIds.length) extraIds.forEach(function (id) { pendingDbUploads.add(id); });
       if (!pendingDbUploads.size) return;
-      if (!(isPremiumTier && currentUserId())) { pendingDbUploads.clear(); return; }
+      if (!currentUserId()) { pendingDbUploads.clear(); return; }
       var ids = Array.from(pendingDbUploads);
       pendingDbUploads.clear();
       for (const id of ids) {
@@ -358,13 +358,30 @@
       if (pendingId) pendingDbUploads.add(pendingId);
       return;
     }
-    if (isPremiumTier && currentUserId()) {
+    if (currentUserId()) {
       const conv = conversations.find(c => c.id === (convId || activeConversationId));
       if (conv) saveConversationToDb(conv).catch(() => {});
     } else {
       writeLocalConversations();
     }
   }
+
+  // Live graph edits (title, values, type, rows) are written back into the
+  // owning message so they survive reloads AND sync to other devices through
+  // the DB. `div.dataset.idx` (set on every render) indexes into `messages`.
+  function __graphEdited(idx, data) {
+    try {
+      var i = parseInt(idx, 10);
+      if (!messages || !Number.isFinite(i) || i < 0 || i >= messages.length) return;
+      var m = messages[i];
+      if (!m || m.role !== 'assistant') return;
+      var normalized = normalizeGraphData(data);
+      if (!normalized) return;
+      m.graph = normalized;
+      persistConversation(activeConversationId);
+    } catch (_) {}
+  }
+  window.__anteemoneeGraphEdited = __graphEdited;
 
   // ── 10-day chat TTL: chats older than 10 days are deleted automatically ──
   var CHAT_TTL_MS = 10 * 24 * 60 * 60 * 1000;
@@ -448,7 +465,7 @@
     chatStoreReady = false;
     try { renderHistory(); } catch (_) {}
     var queued = [];
-    if (isPremiumTier && uid) {
+    if (uid) {
       try {
         await pruneDbConversations(uid);
         const rows = await loadConversationsFromDb(uid);
@@ -483,7 +500,7 @@
         const legacyArr = JSON.parse(legacy);
         if (Array.isArray(legacyArr) && legacyArr.length > 0 && conversations.length === 0) {
           conversations = legacyArr;
-          if (isPremiumTier && uid) {
+          if (uid) {
             for (const c of conversations.slice(0, 50)) { await saveConversationToDb(c); }
           } else {
             writeLocalConversations();
@@ -494,7 +511,7 @@
     } catch (_) {}
     try { applyPinnedState(); } catch (_) {}
     // Free-tier path: drop chats older than 10 days on every load.
-    if (!(isPremiumTier && uid)) pruneLocalConversations();
+    if (!uid) pruneLocalConversations();
     // Chats written during the wait are in localStorage; fold them in.
     try {
       var late = [];
@@ -2888,7 +2905,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     conversations.splice(idx, 1);
     try { var m=loadPinnedMap(); if(m[id]){ delete m[id]; savePinnedMap(m);} } catch(_){}
     try { removeMappedConvSubject(id); } catch (_) {}
-    if (isPremiumTier && currentUserId()) deleteConversationFromDb(id);
+    if (currentUserId()) deleteConversationFromDb(id);
     else writeLocalConversations();
     if (activeConversationId === id) {
       Object.keys(_graphCharts || {}).forEach(function (gid) {
@@ -3136,7 +3153,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         displayContent = stripEmptyReferences(displayContent);
       } catch (_) {}
       div.innerHTML = `
-        <div class="msg-avatar assistant-avatar"><img src="/assets/anteemonee.png" alt="Anteemonee"></div>
+        <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
         <div class="msg-body">${quoteHtml}${generatedHtml}<div class="msg-content${displayContent ? '' : ' is-empty'}">${displayContent ? renderMarkdown(displayContent) : ''}</div></div>
       `;
     } else {
@@ -3175,7 +3192,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     const statusLabel = '';
     const statusClass = mode === 'think' ? 'thinking' : '';
     div.innerHTML = `
-      <div class="msg-avatar assistant-avatar"><img src="/assets/anteemonee.png" alt="Anteemonee"></div>
+      <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
       <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span class="thinking-status ${statusClass}" id="streaming-status">${statusLabel}</span></div></div></div>
     `;
     messagesList.appendChild(div);
@@ -3558,11 +3575,16 @@ function normalizeGraphData(graph) {
   var type = types.indexOf(String(graph.type).toLowerCase()) !== -1 ? String(graph.type).toLowerCase() : 'line';
   // For scatter we need points; fall back to line with x as index if absent.
   if (type === 'scatter') type = 'line';
+  // When a parser forgets the axis names, guess them from the title
+  // ("Speed vs Time" -> X = Time, Y = Speed) and default to X/Y otherwise.
+  var axisGuess = ['X', 'Y'];
+  var titleAxis = String(graph.title || '').match(/([A-Za-z][A-Za-z ]*?)\s*(?:vs\.?|versus|–|—|-)\s*([A-Za-z][A-Za-z ]*)/i);
+  if (titleAxis) axisGuess = [titleAxis[2].trim(), titleAxis[1].trim()];
   return {
     title: String(graph.title || 'Chart'),
     type: type,
-    xLabel: String(graph.xLabel || ''),
-    yLabel: String(graph.yLabel || ''),
+    xLabel: String(graph.xLabel || axisGuess[0]),
+    yLabel: String(graph.yLabel || axisGuess[1]),
     labels: labels,
     datasets: datasets.filter(function (d) { return d.data.length > 0; }),
   };
@@ -4381,6 +4403,7 @@ function renderQuizCard(div, rawQuiz) {
 // can edit titles, labels and values, switch the chart type, add/remove rows
 // and download the result as a PNG.
 var _graphCharts = {}; // idx -> Chart instance
+try { window.__anteemoneeGraphCharts = _graphCharts; } catch (_) {}
 
 function graphChartColors() {
   var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3B82F6';
@@ -4395,7 +4418,7 @@ function escapeGraphHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function buildGraphEditor(card, chartId, chart) {
+function buildGraphEditor(card, chartId, chart, onEdit) {
   var grid = document.createElement('div');
   grid.className = 'graph-editor';
   var rows = document.createElement('div');
@@ -4435,12 +4458,14 @@ function buildGraphEditor(card, chartId, chart) {
         labelInput.addEventListener('input', function () {
           chart.data.labels[rowIdx] = labelInput.value;
           chart.update();
+          if (onEdit) onEdit();
         });
         valueInputs.forEach(function (vi, sIdx) {
           vi.addEventListener('input', function () {
             var v = parseFloat(vi.value);
             chart.config.data.datasets[sIdx].data[rowIdx] = Number.isFinite(v) ? v : 0;
             chart.update();
+            if (onEdit) onEdit();
           });
         });
         remove.addEventListener('click', function () {
@@ -4448,6 +4473,7 @@ function buildGraphEditor(card, chartId, chart) {
           chart.config.data.datasets.forEach(function (set) { set.data.splice(rowIdx, 1); });
           chart.update();
           renderRows();
+          if (onEdit) onEdit();
         });
         rows.appendChild(row);
       })(i);
@@ -4463,6 +4489,7 @@ function buildGraphEditor(card, chartId, chart) {
     chart.config.data.datasets.forEach(function (set) { set.data.push(0); });
     chart.update();
     renderRows();
+    if (onEdit) onEdit();
   });
 
   // Value column headers
@@ -4489,6 +4516,7 @@ function renderGraphCard(div, rawGraph) {
   var graph = normalizeGraphData(rawGraph);
   if (!graph || typeof Chart === 'undefined') return null;
   var host = div.querySelector('.msg-body') || div;
+  var msgIdx = (div && div.dataset && div.dataset.idx != null) ? parseInt(div.dataset.idx, 10) : null;
   var existing = host.querySelector('.graph-card');
   if (existing) existing.remove();
 
@@ -4530,6 +4558,10 @@ function renderGraphCard(div, rawGraph) {
   head.appendChild(download);
   card.appendChild(head);
   card.appendChild(wrap);
+  var axisCap = document.createElement('div');
+  axisCap.className = 'graph-axis-caption';
+  axisCap.textContent = 'X-axis: ' + (graph.xLabel || 'X') + '   \u00b7   Y-axis: ' + (graph.yLabel || 'Y');
+  card.appendChild(axisCap);
 
   var chartId = 'chrome_' + Math.random().toString(36).slice(2, 10);
   canvas.id = chartId;
@@ -4609,6 +4641,16 @@ function renderGraphCard(div, rawGraph) {
         s.borderWidth = 1;
       });
     }
+    if (type !== 'pie' && config.options.scales) {
+      [['x', graph.xLabel || 'X'], ['y', graph.yLabel || 'Y']].forEach(function (pair) {
+        config.options.scales[pair[0]].title = {
+          display: true,
+          text: pair[1],
+          color: colors.text,
+          font: { size: 12, weight: 'bold' },
+        };
+      });
+    }
     return config;
   }
 
@@ -4635,11 +4677,31 @@ function renderGraphCard(div, rawGraph) {
   var chart = new Chart(canvas.getContext('2d'), buildConfig());
   _graphCharts[chartId] = chart;
 
-  title.addEventListener('input', function () { graph.title = title.value; });
+  function commitGraphEdits() {
+    try {
+      if (msgIdx === null || !window.__anteemoneeGraphEdited) return;
+      window.__anteemoneeGraphEdited(msgIdx, {
+        title: graph.title || title.value,
+        type: typeSel.value,
+        xLabel: graph.xLabel || 'X',
+        yLabel: graph.yLabel || 'Y',
+        labels: (chart.data.labels || []).slice(),
+        datasets: (chart.config.data.datasets || []).map(function (s) {
+          return { name: s.label || 'Data', data: (s.data || []).slice() };
+        }),
+      });
+    } catch (_) {}
+  }
+
+  title.addEventListener('input', function () {
+    graph.title = title.value;
+    commitGraphEdits();
+  });
   typeSel.addEventListener('change', function () {
     chart.destroy();
     chart = new Chart(canvas.getContext('2d'), buildConfig());
     _graphCharts[chartId] = chart;
+    commitGraphEdits();
   });
   download.addEventListener('click', function () {
     try {
@@ -4657,7 +4719,7 @@ function renderGraphCard(div, rawGraph) {
     } catch (_) {}
   });
 
-  var editor = buildGraphEditor(card, chartId, chart);
+  var editor = buildGraphEditor(card, chartId, chart, commitGraphEdits);
   card.appendChild(editor);
   host.appendChild(card);
   return card;
