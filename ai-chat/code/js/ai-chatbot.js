@@ -5,6 +5,8 @@
 (function () {
   'use strict';
 
+  try { console.info('[Anteemonee AI] js build v98 (segment-graph parser active)'); } catch (_) {}
+
   // â”€â”€ State â”€â”€
   const api = new AiApiService();
   let conversations = [];
@@ -2760,6 +2762,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         if (!message.graph) {
           try { message.graph = extractGraphFromProse(message.content); } catch (_) {}
         }
+        if (!message.graph) {
+          try { message.graph = extractGraphFromSegments(message.content); } catch (_) {}
+        }
       }
       if (message && message.role === 'assistant' && typeof message.content === 'string') {
         message.content = stripEmptyReferences(message.content);
@@ -3717,6 +3722,76 @@ function randomDemoGraph(promptText) {
       yLabel: 'Y',
       labels: labels,
       datasets: [{ name: 'Sample', data: values }],
+    };
+  } catch (_) {}
+  return null;
+}
+
+// Third safety net: the model describes the graph via time-segments, e.g.
+//   "From 0 s to 2 s the speed rises from 0 to 5 m s⁻¹"
+//   "Between 2 s and 4 s ... speed jumps to 12 m s⁻¹"
+//   "From 8 s to 10 s the line is slightly descending (speed falls to 10)"
+// plus a worked example like "½ × (5+12) × 2" whose trapezium endpoints are
+// the sequential (time, speed) points. Rebuild the point list from these.
+function extractGraphFromSegments(text) {
+  try {
+    if (!text) return null;
+    var t = String(text).replace(/\u00d7|x|×/g, ' x ').replace(/\u2013|\u2014|–|—/g, '\u2192');
+    var times = [];
+    var st = {};
+    function pushT(v) { if (Number.isFinite(v) && !(st['t' + v])) { st['t' + v] = 1; times.push(v); } }
+    var segRe = /(?:from|between)\s+(\d+(?:\.\d+)?)\s*s?\s*(?:to|and|\u2192|:|->|[,\-])\s*(\d+(?:\.\d+)?)\s*s/gi;
+    var m;
+    while ((m = segRe.exec(t)) !== null) { pushT(parseFloat(m[1])); pushT(parseFloat(m[2])); }
+    if (!times.length) return null;
+    times.sort(function(a, b) { return a - b; });
+
+    // Endpoint speeds from segment text, in order of appearance.
+    var speeds = [];
+    function pushS(v) { if (Number.isFinite(v)) speeds.push(v); }
+    // "rises from A to B" -> A then B  |  "jumps to B"/"drops to B"/"falls to B" -> B
+    var riseRe = /(?:rises?|increases?|climbs?|accelerates?)\s+(?:from|at)?\s*(\d+(?:\.\d+)?)\s*(?:to|and|up\s+to|reaches)\s*(\d+(?:\.\d+)?)/gi;
+    while ((m = riseRe.exec(t)) !== null) { pushS(parseFloat(m[1])); pushS(parseFloat(m[2])); }
+    var jumpRe = /(?:jumps?|shoots?|goes?\s+up|climbs?\s+back|rises?\s+to)\s*(?:up\s+to|to|by)?\s*(\d+(?:\.\d+)?)/gi;
+    while ((m = jumpRe.exec(t)) !== null) { pushS(parseFloat(m[1])); }
+    var dropRe = /(?:drops?|falls?|decreases?|goes?\s+down|descends?|slows?|decelerat(?:es|ing)?)\s*(?:down\s+to|to|by|from)?\s*(\d+(?:\.\d+)?)/gi;
+    while ((m = dropRe.exec(t)) !== null) { pushS(parseFloat(m[1])); }
+
+    // Worked example trapezium endpoints give the exact ordered speed points:
+    //   "½ × (5+12) × 2" -> speeds 5, 12  ...  sequence: 5,12,8,15,10
+    var trapEnds = [];
+    var trapRe = /\(\s*(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)\s*\)/gi;
+    while ((m = trapRe.exec(t)) !== null) {
+      var a = parseFloat(m[1]), b = parseFloat(m[2]);
+      if (!trapEnds.length) trapEnds.push(a);
+      trapEnds.push(b);
+    }
+
+    // Prefer the dense worked-example sequence; fall back to segment endpoints.
+    var bestSpeeds = trapEnds.length >= 2 ? trapEnds : speeds;
+
+    // Time 0 usually starts from rest (0 m/s); the model gives one speed per
+    // time after that.
+    var full = [];
+    if (times[0] === 0) {
+      full = [0];
+      for (var i = 0; i < times.length - 1; i++) full.push(bestSpeeds[i] != null ? bestSpeeds[i] : 0);
+    } else {
+      full = bestSpeeds.slice(0, times.length);
+    }
+    if (full.length < times.length) {
+      while (full.length < times.length) full.push(0);
+    }
+    if (times.length < 2 || full.length < 2) return null;
+    var pts = [];
+    for (var j = 0; j < times.length; j++) pts.push([times[j], full[j]]);
+    return {
+      title: /velocity|speed|speed-time/i.test(t) ? 'Speed vs Time' : (/work|W\s*[=:]/i.test(t) ? 'Work vs Displacement' : 'Graph'),
+      type: 'line',
+      xLabel: /velocity|speed|speed-time/i.test(t) ? 'Time (s)' : 'X',
+      yLabel: /velocity|speed|speed-time/i.test(t) ? 'Speed (m/s)' : 'Y',
+      labels: pts.map(function(p){ return String(p[0]); }),
+      datasets: [{ name: 'Data', data: pts.map(function(p){ return p[1]; }) }],
     };
   } catch (_) {}
   return null;
@@ -5054,6 +5129,9 @@ function handleFileBlocks(div, text) {
       try { graphData = extractGraphFromProse(text); } catch (_) {}
     }
     if (!graphData && div.__graphRequested) {
+      try { graphData = extractGraphFromSegments(text); } catch (_) {}
+    }
+    if (!graphData && div.__graphRequested) {
       try { graphData = randomDemoGraph(text); } catch (_) {}
     }
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
@@ -5089,6 +5167,7 @@ function handleFileBlocks(div, text) {
       var graphData = parseGraphBlock(text);
       if (!graphData && div && div.__graphRequested) graphData = synthesizeGraphFromPrompt(div.__graphPromptCt || '');
       if (!graphData && div && div.__graphRequested) graphData = extractGraphFromProse(text);
+      if (!graphData && div && div.__graphRequested) graphData = extractGraphFromSegments(text);
       if (!graphData && div && div.__graphRequested) graphData = randomDemoGraph(text);
       if (graphData) message.graph = graphData;
     } catch (_) {}
