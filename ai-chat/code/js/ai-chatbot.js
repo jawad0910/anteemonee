@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  try { console.info('[Anteemonee AI] js build v101 (graph bubble trim)'); } catch (_) {}
+  try { console.info('[Anteemonee AI] js build v102 (slash commands + tests)'); } catch (_) {}
 
   // â”€â”€ State â”€â”€
   const api = new AiApiService();
@@ -1526,7 +1526,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
   }
 
   function updateSendButton() {
-    btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0;
+    btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef;
   }
 
   function clearPendingImages() {
@@ -1538,6 +1538,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
   function bindEvents() {
     btnSend.addEventListener('click', handleSend);
     btnStop.addEventListener('click', handleStop);
+    wireSlashMenu();
 
     // Scroll-to-bottom button: show only when the user scrolled up.
     if (chatContent) {
@@ -1568,7 +1569,8 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     chatInput.addEventListener('input', () => {
       autoResize();
-      btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0;
+      handleSlashTrigger();
+      btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef;
     });
 
     chatInput.addEventListener('keydown', (e) => {
@@ -2482,7 +2484,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       welcome.style.display = 'none';
       messagesList.style.display = 'flex';
       messages.forEach((m, i) => appendMessage(m.role, m.content, false, {
-        idx: i, quote: m.quote || null, images: m.images || null,
+        idx: i, quote: m.quote || null, images: m.images || null, test: m.testRef || null,
         quiz: m.quiz || null, graph: m.graph || null, generatedImage: m.generatedImage || null,
       }));
     } else {
@@ -2722,7 +2724,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     chatInput.value = original;
     autoResize();
     // Mirror the composer state: a disabled composer must not get a live send button.
-    btnSend.disabled = chatInput.disabled || (!chatInput.value.trim() && pendingImages.length === 0);
+    btnSend.disabled = chatInput.disabled || (!chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef);
     showEditBanner();
     chatInput.focus();
     try { chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length); } catch (_) {}
@@ -3119,6 +3121,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     div.className = `message ${role}`;
     if (opts.idx !== undefined && opts.idx !== null) div.dataset.idx = opts.idx;
     const quoteHtml = quoteBlockHtml(opts.quote || null);
+    const testHtml = (role === 'user' && opts.test) ? testChipHtml(opts.test) : '';
 
     // Build image thumbnails HTML if images were sent
     let imagesHtml = '';
@@ -3169,7 +3172,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         : `<div class="avatar-fallback-msg">${escapeHtml(initial)}</div>`;
       div.innerHTML = `
         <div class="msg-avatar user-avatar">${avatarHtml}</div>
-        <div class="msg-body">${quoteHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
+        <div class="msg-body">${quoteHtml}${testHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
       `;
       attachUserActions(div);
     }
@@ -5271,6 +5274,7 @@ function handleFileBlocks(div, text) {
 
   // â”€â”€ Text Selection: Reply + Flashcard â”€â”€
   let pendingQuote = null; // { role: 'assistant'|'user', text }
+  let pendingTestRef = null; // test attached via the /-menu
   // Edit-and-resend. `backup` keeps the discarded tail so Cancel can undo.
   let pendingEdit = null; // { idx, text, backup, hadImages }
   let pendingSel = null;
@@ -5504,6 +5508,258 @@ function handleFileBlocks(div, text) {
     chip.querySelector('.reply-chip-label').textContent =
       'Replying to ' + (pendingQuote.role === 'assistant' ? 'AI' : 'you');
     chip.querySelector('.reply-chip-text').textContent = pendingQuote.text;
+  }
+
+  // ── Slash commands: type "/" in an empty composer to attach a built test ──
+  let slashOpen = false;
+
+  function handleSlashTrigger() {
+    if (chatInput && chatInput.value === '/') openSlashMenu('commands');
+    else closeSlashMenu();
+  }
+
+  function openSlashMenu(view) {
+    const m = document.getElementById('slash-menu');
+    if (!m) return;
+    slashOpen = true;
+    m.style.display = 'flex';
+    const title = document.getElementById('slash-menu-title');
+    if (title) title.textContent = view === 'tests' ? 'Your built tests' : 'Slash commands';
+    const body = document.getElementById('slash-menu-body');
+    if (!body) return;
+    if (view === 'tests') {
+      showSlashLoading('Loading your tests…');
+      loadTestsIntoSlash(body);
+    } else {
+      renderSlashCommands(body);
+    }
+  }
+
+  function closeSlashMenu() {
+    slashOpen = false;
+    const m = document.getElementById('slash-menu');
+    if (m) m.style.display = 'none';
+  }
+
+  function showSlashLoading(msg) {
+    const body = document.getElementById('slash-menu-body');
+    if (body) body.innerHTML = '<div class="slash-loading">' + escapeHtml(msg || 'Loading…') + '</div>';
+  }
+
+  function renderSlashCommands(body) {
+    body.innerHTML = '';
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'slash-item';
+    item.innerHTML = '<span class="slash-item-ic">\u{1F4C4}</span><span><b>Tests</b><small>Attach a test you built in the Test Builder</small></span>';
+    item.addEventListener('click', function () { openSlashMenu('tests'); });
+    body.appendChild(item);
+  }
+
+  async function loadTestsIntoSlash(body) {
+    if (!getAccessToken()) {
+      body.innerHTML = '<div class="slash-empty">Sign in to load your built tests.</div>';
+      return;
+    }
+    const tests = await fetchMyTests();
+    body.innerHTML = '';
+    if (!tests.length) {
+      body.innerHTML =
+        '<div class="slash-empty">No tests here yet.<br>' +
+        '<a class="slash-empty-cta" href="../ai-test-builder/" target="_blank" rel="noopener">Open the AI Test Builder</a></div>';
+      return;
+    }
+    tests.forEach(function (t) {
+      const title = (t.config && t.config.paper_title) || t.title || 'Test';
+      const sub = [t.subject, t.board_name].filter(Boolean).join(' \u00b7 ');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slash-test-item';
+      btn.innerHTML =
+        '<span class="slash-test-star">' + (t.priority ? '\u2605' : '') + '</span>' +
+        '<span class="slash-test-t">' + escapeHtml(title) + '</span>' +
+        '<span class="slash-test-sub">' + escapeHtml(sub) + '</span>';
+      btn.addEventListener('click', function () { selectTestForChat(t); });
+      body.appendChild(btn);
+    });
+  }
+
+  async function fetchMyTests() {
+    try {
+      const token = getAccessToken();
+      if (!token) return [];
+      const base = (typeof api !== 'undefined' && api && api.supabaseUrl) || 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+      const ctrl = new AbortController();
+      const timeout = setTimeout(function () { try { ctrl.abort(); } catch (_) {} }, 12000);
+      const res = await fetch(base + '/functions/v1/ai-test-builder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+        },
+        body: JSON.stringify({ action: 'list' }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) return fallbackFetchMyTests();
+      const data = await res.json();
+      if (data && Array.isArray(data.tests)) return data.tests;
+      return fallbackFetchMyTests();
+    } catch (e) {
+      console.warn('[Tests] list failed:', e && (e.message || e));
+      return fallbackFetchMyTests();
+    }
+  }
+
+  async function fallbackFetchMyTests() {
+    try {
+      const d = (typeof db !== 'undefined') ? db : null;
+      if (!d) return [];
+      const res = await d.from('ai_test_history')
+        .select('id,title,subject,board_name,pdf_url,pdf_path,priority,config,created_at')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      return (res && Array.isArray(res.data)) ? res.data : [];
+    } catch (e) {
+      console.warn('[Tests] fallback list failed:', e && (e.message || e));
+      return [];
+    }
+  }
+
+  function selectTestForChat(t) {
+    pendingTestRef = {
+      id: String((t && t.id) || ''),
+      title: ((t && t.config && t.config.paper_title) || (t && t.title) || 'Test'),
+      subject: (t && t.subject) || 'Subject',
+      pdfUrl: (t && t.pdf_url) || null,
+      pdfPath: (t && t.pdf_path) || null,
+      chapters: (t && t.config && Array.isArray(t.config.chapters)) ? t.config.chapters : [],
+    };
+    closeSlashMenu();
+    chatInput.value = '';
+    autoResize();
+    renderTestChip();
+    refreshSendState();
+    chatInput.focus();
+  }
+
+  function renderTestChip() {
+    let chip = document.getElementById('test-chip');
+    if (!pendingTestRef) { if (chip) chip.remove(); return; }
+    if (!chip) {
+      chip = document.createElement('div');
+      chip.id = 'test-chip';
+      chip.className = 'test-chip';
+      chip.innerHTML =
+        '<span class="test-chip-ic">\u{1F4C4}</span>' +
+        '<div class="test-chip-body"><div class="test-chip-label">Attached test</div><div class="test-chip-text"></div></div>' +
+        '<button class="test-chip-cancel" type="button" aria-label="Remove test">\u00d7</button>';
+      const area = document.querySelector('.chat-input-area');
+      const wrapper = document.querySelector('.chat-input-wrapper');
+      if (area && wrapper) area.insertBefore(chip, wrapper);
+      chip.querySelector('.test-chip-cancel').addEventListener('click', function (e) {
+        e.stopPropagation();
+        pendingTestRef = null;
+        renderTestChip();
+        refreshSendState();
+        chatInput.focus();
+      });
+    }
+    chip.querySelector('.test-chip-text').textContent = pendingTestRef.title;
+  }
+
+  function refreshSendState() {
+    try {
+      btnSend.disabled = chatInput.disabled || (!chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef);
+    } catch (_) {}
+  }
+
+  function refreshSendStateFromText() {
+    autoResize();
+    btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef;
+  }
+
+  // Guard: "not a good prompt" when a test is attached but the question is
+  // missing or basically empty. The model should ask what the student wants.
+  function testAttachmentNeedsPromptNotice(text, testRef) {
+    if (!testRef) return '';
+    if (String(text || '').trim().length >= 6) return '';
+    return ' The student attached a practice test they built, but has not yet asked anything specific about it. ' +
+      'Ask, in one short paragraph ending with a question, what they would like to do with the test \u2014 e.g. ' +
+      'get the answers from the book, check or explain specific questions, discuss the topic, or mark their answers ' +
+      'against the marking scheme. Do not answer for them until they say what they want.';
+  }
+
+  // Keep attached tests "in memory": re-supply the most recent ones' text on
+  // every subsequent turn so the model never loses access to them.
+  function buildAttachedTestContext() {
+    const seen = {};
+    const blocks = [];
+    for (let i = Math.max(0, messages.length - 40); i < messages.length - 1; i++) {
+      const ref = messages[i] && messages[i].testRef;
+      if (!ref || !ref.id || seen[ref.id]) continue;
+      seen[ref.id] = 1;
+      if (blocks.length >= 2) break;
+      const chLine = (Array.isArray(ref.chapters) && ref.chapters.length)
+        ? ref.chapters.map(function (c) { return ('Ch. ' + (c && c.number != null ? c.number : '') + ' ' + ((c && c.name) || '')).trim(); }).join(', ')
+        : '';
+      const text = ref.pdfText || '';
+      blocks.push(
+        'Previously attached to this chat — test "' + (ref.title || 'Test') +
+        '" (subject: ' + (ref.subject || 'Subject') + (chLine ? ', chapters: ' + chLine : '') + '). ' +
+        (text
+          ? 'The student may ask anything about it — answers, explanations, discussion, marking. Test content:\n[START OF TEST]\n' + text + '\n[END OF TEST]'
+          : '[No stored test text for this attachment. Ask what they need.]')
+      );
+    }
+    return blocks.length ? '\n\n' + blocks.join('\n\n') : '';
+  }
+
+  async function extractPdfText(url) {
+    try {
+      if (!url || !window.pdfjsLib) return '';
+      const pdf = await window.pdfjsLib.getDocument({
+        url: url,
+        isEvalSupported: false,
+        disableFontFace: true,
+        useSystemFonts: true,
+      }).promise;
+      const maxPages = Math.min(pdf.numPages, 6);
+      const parts = [];
+      for (let i = 1; i <= maxPages; i++) {
+        try {
+          const page = await pdf.getPage(i);
+          const tc = await page.getTextContent();
+          parts.push((tc.items || []).map(function (it) { return it.str || ''; }).join(' '));
+          try { await page.cleanup(); } catch (_) {}
+        } catch (_) {}
+      }
+      try { await pdf.destroy(); } catch (_) {}
+      const text = parts.join('\n').replace(/[ \t]+/g, ' ').trim();
+      return text.slice(0, 16000);
+    } catch (e) {
+      console.warn('[Tests] pdf extract failed:', e && (e.message || e));
+      return '';
+    }
+  }
+
+  function testChipHtml(ref) {
+    if (!ref || !ref.title) return '';
+    return '<div class="msg-test-chip">\u{1F4C4} <span>' + escapeHtml(ref.title) + '</span></div>';
+  }
+
+  function wireSlashMenu() {
+    document.addEventListener('click', function (e) {
+      if (!slashOpen) return;
+      // Ignore clicks on nodes that were just removed by re-rendering the menu
+      // (e.g. clicking "Tests"), otherwise the popup closes itself instantly.
+      if (!e.target || !e.target.isConnected) return;
+      if (e.target.closest && e.target.closest('#slash-menu')) return;
+      closeSlashMenu();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && slashOpen) closeSlashMenu();
+    });
   }
 
   function quoteBlockHtml(quote) {
@@ -6185,10 +6441,11 @@ function handleFileBlocks(div, text) {
   async function handleSend() {
     const text = chatInput.value.trim();
     const hasImages = pendingImages.length > 0;
+    const testRef = pendingTestRef;
     const quizRequested = !hasImages && shouldCreateQuiz(text);
     const graphRequested = !hasImages && isGraphRequest(text);
     if (!hasImages && isQuizRequest(text) && !hasQuizTopic(text)) pendingQuizTopic = true;
-    if ((!text && !hasImages) || isStreaming) return;
+    if ((!text && !hasImages && !testRef) || isStreaming) return;
     if (!isAuthed()) { refreshAuthGate(); return; }
     try { if (typeof Access !== 'undefined' && Access.state.ready && !Access.state.access) { refreshAuthGate(); return; } } catch (_) {}
 
@@ -6204,6 +6461,7 @@ function handleFileBlocks(div, text) {
     }
     const quote = pendingQuote;
     const imagesToSend = [...pendingImages]; // snapshot before clearing
+    if (pendingTestRef) { pendingTestRef = null; renderTestChip(); }
     hideSelToolbar();
 
     // Refresh AI preferences in case user changed them mid-session
@@ -6238,8 +6496,10 @@ function handleFileBlocks(div, text) {
     }
 
     commitEditMessage();
-    appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null });
-    messages.push(quote ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null } : { role: 'user', content: text, images: hasImages ? imagesToSend : null });
+    appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null, test: testRef || null });
+    messages.push(quote
+      ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null, testRef: testRef || null }
+      : { role: 'user', content: text, images: hasImages ? imagesToSend : null, testRef: testRef || null });
     bumpCounters(['total_messages', 'user_messages']);
     hideAllFeedbackButtons();
     pendingQuote = null;
@@ -6359,17 +6619,47 @@ function handleFileBlocks(div, text) {
       try { updateStreamingStatus(streamDiv, 'Answering without the image', 'analyzing'); } catch (_) {}
     }
 
+    // ── Test attachment context: pull the PDF text so the AI can discuss it ──
+    let testContext = '';
+    if (testRef) {
+      try { updateStreamingStatus(streamDiv, 'Reading your test…', 'analyzing'); } catch (_) {}
+      let pdfText = '';
+      if (testRef.pdfUrl) pdfText = await extractPdfText(testRef.pdfUrl);
+      // Persist the text on the message so follow-up turns keep "memory" of it.
+      testRef.pdfText = pdfText;
+      const chLine = (Array.isArray(testRef.chapters) && testRef.chapters.length)
+        ? testRef.chapters.map(function (c) { return ('Ch. ' + (c && c.number != null ? c.number : '') + ' ' + ((c && c.name) || '')).trim(); }).join(', ')
+        : '';
+      testContext =
+        'The student attached one of their AI-built practice tests as reference material. ' +
+        'Test title: ' + (testRef.title || 'Practice Test') + '. ' +
+        'Subject: ' + (testRef.subject || 'Subject') + (chLine ? '. Chapter(s): ' + chLine + '.' : '') + '\n\n' +
+        (pdfText
+          ? 'Here is the full text of that test:\n[START OF TEST]\n' + pdfText + '\n[END OF TEST]'
+          : '[The test PDF could not be read from this browser; only its title and subject are available. Ask what they want or answer from the title/subject if that is enough.]');
+      const notice = testAttachmentNeedsPromptNotice(text, testRef);
+      if (notice) testContext += '\n\n' + notice;
+    }
+
+    const promptBase = imageAwarePrompt + (testContext ? '\n\n' + testContext : '') + buildAttachedTestContext();
+    const userContent = text || (testRef
+      ? 'The student attached a practice test (details are in the system instructions above) but has not typed anything yet.'
+      : '');
+
+    const historyMessages = messages.slice(-6).map(m => ({
+      role: m.role,
+      content: (m.quote
+        ? `[Replying to ${m.quote.role === 'assistant' ? 'AI' : 'you'}: "${m.quote.text}"]\n${m.content}`
+        : m.content) + (m.quiz ? '\n[Interactive quiz context: ' + quizForModel(m.quiz) + ']' : ''),
+    }));
+    const lastUser = historyMessages[historyMessages.length - 1];
+    if (testRef && lastUser && lastUser.role === 'user' && !lastUser.content) {
+      lastUser.content = userContent;
+    }
+
     const apiMessages = isGreetingMsg
-      ? [{ role: 'system', content: imageAwarePrompt }, { role: 'user', content: text }]
-      : [
-      { role: 'system', content: imageAwarePrompt },
-      ...messages.slice(-6).map(m => ({
-        role: m.role,
-        content: (m.quote
-          ? `[Replying to ${m.quote.role === 'assistant' ? 'AI' : 'you'}: "${m.quote.text}"]\n${m.content}`
-          : m.content) + (m.quiz ? '\n[Interactive quiz context: ' + quizForModel(m.quiz) + ']' : ''),
-      })),
-    ];
+      ? [{ role: 'system', content: promptBase }, { role: 'user', content: userContent }]
+      : [{ role: 'system', content: promptBase }, ...historyMessages];
     // Snapshot what this request actually bills (system + textbook + history).
     lastPromptTokens = estimatePromptTokens(apiMessages);
     lastApiMessages = apiMessages;
@@ -6745,7 +7035,7 @@ function handleFileBlocks(div, text) {
         if (!messages.length) { welcome.style.display = 'flex'; messagesList.style.display = 'none'; }
         else {
           welcome.style.display = 'none'; messagesList.style.display = 'flex';
-          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, quiz: m.quiz || null, generatedImage: m.generatedImage || null }));
+          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, test: m.testRef || null, quiz: m.quiz || null, generatedImage: m.generatedImage || null }));
         }
         syncWelcomeMode();
         try { renderHistory(); } catch (_) {}

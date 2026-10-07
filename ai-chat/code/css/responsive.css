@@ -97,3 +97,80 @@
   .chat-input-area { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
   .mobile-sidebar { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
+
+/* ── Mobile layout (authoritative overrides — desktop rail off) ── */
+@media (max-width: 768px) {
+  .chatbot-layout {
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar,
+  #sidebar-reopen {
+    display: none !important;
+  }
+  .chat-history-btn {
+    display: flex !important;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .chat-topbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    height: 54px;
+    padding: 0 12px;
+    flex-shrink: 0;
+  }
+  .chat-main {
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: flex-start !important;
+  }
+  .app-view,
+  #view-chat {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .app-view,
+  #view-chat,
+  #view-chat > .chat-content,
+  .chat-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+  .messages-list {
+    flex: 1;
+  }
+  .chat-welcome {
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-sidebar {
+    top: 0;
+    height: 100dvh;
+  }
+  .mobile-sidebar,
+  .mobile-sidebar-overlay {
+    z-index: 1200 !important;
+  }
+  .slash-menu {
+    bottom: calc(100% + 8px);
+    max-height: min(280px, 42vh);
+  }
+}

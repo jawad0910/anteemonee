@@ -212,6 +212,18 @@
 .reply-chip-label { color: var(--chat-tint); }
 .msg-quote { border-left-color: var(--chat-tint); }
 .msg-quote-label { color: var(--chat-tint); }
+.msg-test-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  margin: 0 0 6px;
+  border-radius: 999px;
+  background: var(--chat-tint-soft, var(--accent-soft));
+  color: var(--chat-tint, var(--accent));
+  font-size: 12px;
+  font-weight: 600;
+}
 
 /* ── Chat disclaimer — quiet meta ─────────────────────────────── */
 .chat-disclaimer { color: var(--chat-text-meta); font-size: 11.5px; }
