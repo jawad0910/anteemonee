@@ -309,6 +309,9 @@
   text-align: center;
   letter-spacing: 0.02em;
 }
+.messages-list > .message.assistant .msg-content.is-empty {
+  display: none;
+}
 .graph-editor {
   border-top: 1px solid var(--chat-composer-border);
   padding: 10px 12px 12px;

@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  try { console.info('[Anteemonee AI] js build v100 (graph sync + axis labels)'); } catch (_) {}
+  try { console.info('[Anteemonee AI] js build v101 (graph bubble trim)'); } catch (_) {}
 
   // â”€â”€ State â”€â”€
   const api = new AiApiService();
@@ -3144,6 +3144,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (!quiz) {
         try { quiz = parseQuizBlock(content, false); } catch (_) {}
       }
+      var graphData = null;
+      try { graphData = opts.graph || parseGraphBlock(content); } catch (_) {}
       var displayContent = content;
       try {
         displayContent = quiz ? stripQuizBlock(content, true) : content;
@@ -3152,6 +3154,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         displayContent = stripRedoxComponent(displayContent);
         displayContent = stripEmptyReferences(displayContent);
       } catch (_) {}
+      // A graph card is showing: keep the bubble to one tiny caption line
+      // (or nothing). The full explanation stays in the stored message.
+      if (graphData && !quiz) displayContent = shortGraphCaption(graphData);
       div.innerHTML = `
         <div class="msg-avatar assistant-avatar"><img src="../assets/anteemonee.png" alt="Anteemonee"></div>
         <div class="msg-body">${quoteHtml}${generatedHtml}<div class="msg-content${displayContent ? '' : ' is-empty'}">${displayContent ? renderMarkdown(displayContent) : ''}</div></div>
@@ -3174,7 +3179,6 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         try { renderQuizCard(div, quiz); } catch (_) {}
       }
       try {
-        var graphData = opts.graph || parseGraphBlock(content);
         if (graphData) renderGraphCard(div, graphData);
       } catch (err) { try { console.warn('[Graph] appendMessage:', err && err.message); } catch (_) {} }
       attachFeedbackButtons(div);
@@ -3244,8 +3248,13 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   function updateStreamingMessageImmediate(div, text) {
     const content = div.querySelector('.msg-content');
     var displayText = stripQuizStreamBlock(text);
+    var graphExpected = !!(div && div.__graphRequested) || /```\s*graph\s*\n/i.test(text);
+    if (graphExpected) displayText = '';
     displayText = displayText.replace(/```\s*graph\s*\n[\s\S]*?```/gi, '<span class="graph-stream-placeholder">📊 Building your chart…</span>');
-    var renderedText = displayText ? renderStreamingMarkdown(displayText) : '<span class="quiz-stream-placeholder">Preparing your interactive quiz…</span>';
+    var renderedText;
+    if (displayText) renderedText = renderStreamingMarkdown(displayText);
+    else if (graphExpected) renderedText = '<span class="graph-stream-placeholder">📊 Building your chart…</span>';
+    else renderedText = '<span class="quiz-stream-placeholder">Preparing your interactive quiz…</span>';
     content.innerHTML = '<div class="streaming-text">' + renderedText + '<span class="streaming-caret"></span></div>';
   }
 
@@ -3588,6 +3597,23 @@ function normalizeGraphData(graph) {
     labels: labels,
     datasets: datasets.filter(function (d) { return d.data.length > 0; }),
   };
+}
+
+// When a chart card is present the bubble text is collapsed to one short
+// caption line (e.g. "Speed vs Time · X: Time (s) · Y: Speed (m/s)"). Returns
+// '' when there is nothing worth showing, so the bubble can hide entirely.
+function shortGraphCaption(graph) {
+  try {
+    var g = normalizeGraphData(graph);
+    if (!g) return '';
+    var bits = [];
+    if (g.title && g.title !== 'Chart') bits.push(g.title);
+    if (g.xLabel && g.yLabel && g.xLabel !== 'X' && g.yLabel !== 'Y') {
+      bits.push('X: ' + g.xLabel + ' \u00b7 Y: ' + g.yLabel);
+    }
+    return bits.join(' \u00b7 ');
+  } catch (_) {}
+  return '';
 }
 
 // Final safety net: if a graph was requested but the model answered in prose
@@ -5198,6 +5224,9 @@ function handleFileBlocks(div, text) {
     }
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
     displayText = stripGraphBlock(displayText);
+    // A graph card is showing: collapse the bubble to one tiny caption line
+    // (or nothing). Full explanation remains in the stored message content.
+    if (graphData && !quiz) displayText = shortGraphCaption(graphData);
     content.innerHTML = displayText ? renderMarkdown(displayText) : '';
     content.classList.toggle('is-empty', !displayText);
     try {
