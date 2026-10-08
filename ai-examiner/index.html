@@ -781,6 +781,7 @@
         LD.done(4, data.results ? 'Checked ' + data.results.length + ' answer' + (data.results.length === 1 ? '' : 's') + ' against the book' : 'Checked your answers');
 
         LD.pick(5, 'Preparing your detailed result\u2026');
+        $('ex-input-card').style.display = 'none';
         renderResults(data, { scroll: true });
         saveCheck(items, data);
         renderHistory();
