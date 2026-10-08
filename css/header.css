@@ -590,6 +590,15 @@
   cursor: pointer;
 }
 .notif-item-btn:hover { background: var(--accent-soft); }
+.notif-item-img {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: var(--surface);
+  border: 1px solid var(--m-hairline, var(--border));
+}
 .notif-dot {
   flex-shrink: 0;
   width: 7px;

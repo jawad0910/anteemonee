@@ -36,8 +36,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=35">
-  <link rel="stylesheet" href="../css/header.css?v=3">
-  <script src="../js/header-notifications.js?v=1" defer></script>
+  <link rel="stylesheet" href="../css/header.css?v=4">
+  <script src="../js/header-notifications.js?v=3" defer></script>
   <style>
     body { overflow-x: hidden; background: var(--bg) !important; font-family: var(--font-ui); margin: 0; }
 
@@ -120,11 +120,41 @@
     .ex-add-row { width: 100%; padding: 10px; margin-top: 4px; border: 1.5px dashed var(--border); border-radius: 12px; background: transparent; color: var(--accent); font: inherit; font-size: .84rem; font-weight: 650; cursor: pointer; }
     .ex-add-row:hover { border-color: var(--accent); background: var(--accent-soft); }
     #ex-bottom-actions { display: none; }
+    #ex-test-bottom-actions { display: none; }
     @media (max-width: 768px) {
-      #ex-bottom-actions:not(:empty) { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
-      #ex-bottom-actions .ex-sum { align-self: flex-start; }
-      #ex-bottom-actions .ex-check-btn { width: 100%; }
+      #ex-bottom-actions:not(:empty), #ex-test-bottom-actions:not(:empty) { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+      #ex-bottom-actions .ex-sum, #ex-test-bottom-actions .ex-sum { align-self: flex-start; }
+      #ex-bottom-actions .ex-check-btn, #ex-test-bottom-actions .ex-check-btn { width: 100%; }
     }
+
+    /* ── Built test (MCQ / short / long) ─────────────────────────── */
+    .ex-test-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; padding: 10px 16px; border-radius: 11px; border: 1px dashed var(--border); background: var(--bg-card); color: var(--text-secondary); font: inherit; font-size: .84rem; font-weight: 650; cursor: pointer; }
+    .ex-test-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .ex-test-clear { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 15px; line-height: 1; }
+    .ex-test-clear:hover { color: #e07070; border-color: rgba(224,112,112,.4); }
+    .ex-test-sec { margin-bottom: 18px; }
+    .ex-test-sec:last-child { margin-bottom: 0; }
+    .ex-test-sec-h { display: flex; align-items: center; gap: 8px; margin: 0 0 9px; font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+    .ex-test-sec-h span { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 2px 8px; font-size: .68rem; }
+    .ex-t-item { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-recessed); margin-bottom: 10px; }
+    .ex-t-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .ex-t-top { display: flex; gap: 8px; align-items: flex-start; }
+    .ex-t-q { flex: 1; min-width: 0; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .84rem; padding: 9px 11px; resize: vertical; min-height: 52px; box-sizing: border-box; }
+    .ex-t-q:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .ex-t-marks { width: 66px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .84rem; padding: 6px 8px; text-align: center; box-sizing: border-box; margin-top: 12px; }
+    .ex-t-marks:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .ex-t-anslabel { font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+    .ex-t-ans { width: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .84rem; padding: 9px 11px; resize: vertical; min-height: 56px; box-sizing: border-box; }
+    .ex-t-ans:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .ex-opts { display: flex; flex-direction: column; gap: 6px; }
+    .ex-opt { display: flex; align-items: center; gap: 9px; }
+    .ex-opt > input[type="radio"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+    .ex-opt-l { width: 19px; height: 19px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: .68rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ex-opt-t { flex: 1; min-width: 0; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .82rem; padding: 7px 10px; box-sizing: border-box; }
+    .ex-opt-t:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .ex-res-sec { margin-bottom: 18px; }
+    .ex-res-sec-h { display: flex; align-items: center; justify-content: space-between; font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .ex-res-sec-h b { color: var(--accent); font-size: .8rem; }
 
     .ex-progress { display: none; align-items: center; gap: 12px; margin-top: 14px; }
     .ex-progress.on { display: flex; }
@@ -155,6 +185,16 @@
     .ex-modal-primary:hover { background: var(--accent-hover); }
     .ex-modal-ghost { flex: 1; min-width: 120px; height: 44px; border-radius: 11px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font: inherit; font-weight: 600; font-size: .86rem; cursor: pointer; }
     .ex-modal-ghost:hover { color: var(--text); background: var(--surface); }
+    .ex-modal-card-list { width: min(480px, 100%); max-height: min(72vh, 560px); display: flex; flex-direction: column; }
+    .ex-tests-list { flex: 1; min-height: 60px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .ex-test-row { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--bg-card); cursor: pointer; text-align: left; font: inherit; color: var(--text); width: 100%; box-sizing: border-box; }
+    .ex-test-row:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .ex-test-row:disabled { opacity: .55; cursor: not-allowed; }
+    .ex-test-row svg { flex-shrink: 0; color: var(--accent); }
+    .ex-test-row b { display: block; font-size: .86rem; font-weight: 650; color: var(--text); }
+    .ex-test-row small { display: block; color: var(--text-muted); font-size: .72rem; margin-top: 2px; }
+    .ex-tests-state { padding: 22px 10px; text-align: center; color: var(--text-muted); font-size: .82rem; line-height: 1.6; }
+    .ex-tests-state a { color: var(--accent); font-weight: 650; text-decoration: none; }
 
     .ex-results { display: none; }
     .ex-results.on { display: block; }
@@ -400,6 +440,10 @@
               Attach paper (image or PDF)
             </button>
             <input type="file" id="ex-attach-input" accept="image/*,.pdf,application/pdf" style="display:none">
+            <button type="button" class="ex-test-btn" id="ex-test-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+              Attach built test (PDF)
+            </button>
             <div class="ex-attach-preview" id="ex-attach-preview"></div>
             <div class="ex-attach-actions">
               <button type="button" class="ex-confirm" id="ex-confirm" aria-label="Read paper" title="Read paper">&#10003;</button>
@@ -412,9 +456,22 @@
           <button type="button" class="ex-add-row" id="ex-add-row">+ Add row</button>
           <div id="ex-bottom-actions"></div>
           <div class="ex-progress" id="ex-progress"><span class="ex-spin"></span><p class="ex-stage" id="ex-stage">Marking&#8230;</p></div>
-          <div class="ex-err" id="ex-err"></div>
         </div>
       </section>
+
+      <section class="ex-card" id="ex-test-card" hidden>
+        <div class="ex-card-head">
+          <span class="ex-card-title">Built test</span>
+          <span class="ex-card-hint" id="ex-test-title"></span>
+          <button type="button" class="ex-test-clear" id="ex-test-clear" aria-label="Remove test" title="Remove test">&#215;</button>
+        </div>
+        <div class="ex-card-body">
+          <div id="ex-test-sections"></div>
+          <div id="ex-test-bottom-actions"></div>
+        </div>
+      </section>
+
+      <div class="ex-err" id="ex-err"></div>
 
       <section class="ex-results" id="ex-results">
         <div class="ex-card">
@@ -454,6 +511,17 @@
         <div class="ex-modal-actions">
           <button type="button" class="ex-modal-primary" id="ex-reuse-yes">Keep &amp; reuse</button>
           <button type="button" class="ex-modal-ghost" id="ex-reuse-no">Start fresh</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex-modal" id="ex-tests-modal">
+      <div class="ex-modal-card ex-modal-card-list">
+        <h3>Select a built test</h3>
+        <p>Choose one of the tests you built with the AI Test Builder - its questions will be attached to this check.</p>
+        <div class="ex-tests-list" id="ex-tests-list"></div>
+        <div class="ex-modal-actions">
+          <button type="button" class="ex-modal-ghost" id="ex-tests-close">Cancel</button>
         </div>
       </div>
     </div>
@@ -500,6 +568,8 @@
     var subject = 'Physics';
     var focus = 'feedback';
     var lastCheckItems = null; // Q&A of the check currently on screen (results view)
+    var testState = null;      // attached built-test while it is being answered
+    var lastCheckTest = null;  // test of the check currently on screen (results view)
 
     function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -568,6 +638,276 @@
     function flash(msg) {
       var e = $('ex-err'); e.textContent = msg; e.classList.add('show');
       setTimeout(function () { e.classList.remove('show'); }, 3500);
+    }
+
+    // ── Built test: local PDF parse + MCQ/short/long sections ──────────
+    function clone(o) { try { return JSON.parse(JSON.stringify(o || {})); } catch (_) { return {}; } }
+
+    // Reads the PDF text locally with pdf.js - no vision model involved.
+    async function pdfText(file) {
+      if (!window.pdfjsLib) throw new Error('PDF reader not loaded.');
+      var data = await file.arrayBuffer();
+      var pdf = await pdfjsLib.getDocument({ data: data, isEvalSupported: false, disableFontFace: true, useSystemFonts: true }).promise;
+      var out = [];
+      for (var i = 1; i <= Math.min(pdf.numPages, 20); i++) {
+        var page = await pdf.getPage(i);
+        var tc = await page.getTextContent();
+        var lines = {};
+        for (var k = 0; k < tc.items.length; k++) {
+          var it = tc.items[k];
+          var y = Math.round(((it.transform && it.transform[5]) || 0) / 3) * 3;
+          if (!lines[y]) lines[y] = [];
+          lines[y].push(it.str);
+        }
+        var ys = Object.keys(lines).map(Number).sort(function (a, b) { return b - a; });
+        var pageTxt = ys.map(function (y) { return lines[y].join(' ').replace(/\s+/g, ' ').trim(); }).filter(Boolean).join('\n');
+        out.push('[PAGE ' + i + ']\n' + pageTxt);
+      }
+      try { await pdf.destroy(); } catch (_) {}
+      return out.join('\n\n');
+    }
+
+    // The user's built tests (from the AI Test Builder), listed in a popup.
+    async function fetchBuiltTests(token) {
+      try {
+        var ctrl = new AbortController();
+        var to = setTimeout(function () { try { ctrl.abort(); } catch (_) {} }, 15000);
+        var res = await fetch(SUPA_URL + '/functions/v1/ai-test-builder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ action: 'list' }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        var d = await res.json().catch(function () { return {}; });
+        if (res.ok && d && Array.isArray(d.tests)) return d.tests;
+      } catch (_) {}
+      try {
+        var d2 = await getDb().from('ai_test_history')
+          .select('id,title,subject,board_name,pdf_url,pdf_path,priority,config,created_at')
+          .order('created_at', { ascending: false })
+          .limit(30);
+        return (d2 && Array.isArray(d2.data)) ? d2.data : [];
+      } catch (_) { return []; }
+    }
+
+    function openTestsModal() {
+      if (busy) return;
+      var modal = $('ex-tests-modal');
+      modal.classList.add('on');
+      var host = $('ex-tests-list');
+      host.innerHTML = '<div class="ex-tests-state">Loading your tests\u2026</div>';
+      getToken().then(function (token) {
+        if (!token) { modal.classList.remove('on'); showNotAuth(); return; }
+        fetchBuiltTests(token).then(renderTestsList);
+      }).catch(function () {
+        host.innerHTML = '<div class="ex-tests-state">Could not load your tests. Please try again.</div>';
+      });
+    }
+
+    function renderTestsList(tests) {
+      var host = $('ex-tests-list');
+      host.innerHTML = '';
+      if (!tests.length) {
+        host.innerHTML = '<div class="ex-tests-state">No built tests yet.<br><a href="../ai-test-builder/">Build one in the AI Test Builder &rarr;</a></div>';
+        return;
+      }
+      tests.forEach(function (t) {
+        var row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'ex-test-row';
+        if (!t.pdf_url) row.disabled = true;
+        var when = t.created_at ? new Date(t.created_at).toLocaleDateString() : '';
+        var subj = t.subject || (t.config && t.config.subject) || '';
+        var meta = [subj, when, t.pdf_url ? '' : 'no PDF yet'].filter(Boolean).join(' \u00b7 ');
+        row.innerHTML =
+          '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>' +
+          '<span><b>' + esc(t.title || 'Test') + '</b><small>' + esc(meta) + '</small></span>';
+        row.addEventListener('click', function () { selectBuiltTest(t); });
+        host.appendChild(row);
+      });
+    }
+
+    async function selectBuiltTest(t) {
+      $('ex-tests-modal').classList.remove('on');
+      if (busy) return;
+      if (!t || !t.pdf_url) { flash('This test has no PDF yet - rebuild it in the AI Test Builder.'); return; }
+      busy = true;
+      var err = $('ex-err'); err.classList.remove('show');
+      setLoad(true, 'Downloading test PDF\u2026');
+      try {
+        var subj = t.subject || (t.config && t.config.subject);
+        if (subj) { subject = subj; try { var sel = $('ex-subject'); if (sel) sel.value = subj; } catch (_) {} }
+        var r = await fetch(t.pdf_url, { cache: 'no-store' });
+        if (!r.ok) throw new Error('Could not download the test PDF.');
+        var blob = await r.blob();
+        await attachBuiltTest(blob, t.title || 'Test');
+      } catch (e) {
+        err.textContent = (e && e.message) || 'Could not open this test.'; err.classList.add('show');
+      } finally {
+        busy = false; setLoad(false);
+        if (testState) refreshTestCount(); else refreshCount();
+      }
+    }
+
+    // Local pdf.js parse + AI structuring - shared by every attach path.
+    async function attachBuiltTest(source, fallbackTitle) {
+      setLoad(true, 'Reading test PDF\u2026');
+      var text = await pdfText(source);
+      if (!text.replace(/[\[\s*PAGE[^\]]*\]/g, '').trim()) throw new Error('No readable text found in this PDF.');
+      setLoad(true, 'Structuring MCQs, short & long answers\u2026');
+      var token = await getToken();
+      if (!token) { showNotAuth(); return; }
+      var res = await postFn(token, 'parse_test', { text: text, subject: subject });
+      var t = { title: res.title || fallbackTitle || 'Built test', mcqs: res.mcqs || [], shorts: res.shorts || [], longs: res.longs || [] };
+      if (!t.mcqs.length && !t.shorts.length && !t.longs.length) throw new Error('No questions found in this PDF.');
+      renderTest(t);
+    }
+
+    function testSection(title, kind, list) {
+      var sec = document.createElement('div');
+      sec.className = 'ex-test-sec';
+      var h = document.createElement('div');
+      h.className = 'ex-test-sec-h';
+      h.innerHTML = esc(title) + ' <span>' + list.length + '</span>';
+      sec.appendChild(h);
+      list.forEach(function (it, i) { sec.appendChild(testItem(kind, it, i)); });
+      return sec;
+    }
+
+    function testItem(kind, it, i) {
+      var el = document.createElement('div');
+      el.className = 'ex-t-item';
+      el.setAttribute('data-kind', kind);
+      var num = document.createElement('span');
+      num.className = 'ex-row-num';
+      num.textContent = String(i + 1);
+      el.appendChild(num);
+      var body = document.createElement('div');
+      body.className = 'ex-t-body';
+      var top = document.createElement('div');
+      top.className = 'ex-t-top';
+      var q = document.createElement('textarea');
+      q.className = 'ex-t-q';
+      q.value = it.q || '';
+      q.placeholder = 'Question ' + (i + 1);
+      var marks = document.createElement('input');
+      marks.type = 'number'; marks.min = '1'; marks.max = '50';
+      marks.className = 'ex-t-marks';
+      marks.value = String(it.marks || 1);
+      marks.setAttribute('aria-label', 'Marks');
+      top.appendChild(q); top.appendChild(marks);
+      body.appendChild(top);
+      if (kind === 'mcq') {
+        var opts = document.createElement('div');
+        opts.className = 'ex-opts';
+        (it.options || []).forEach(function (o, oi) {
+          var row = document.createElement('div');
+          row.className = 'ex-opt';
+          var radio = document.createElement('input');
+          radio.type = 'radio'; radio.name = 'exmcq' + i; radio.value = String(oi);
+          if (it.chosen !== null && it.chosen !== undefined && Number(it.chosen) === oi) radio.checked = true;
+          var letter = document.createElement('span');
+          letter.className = 'ex-opt-l';
+          letter.textContent = String.fromCharCode(97 + oi);
+          var txt = document.createElement('input');
+          txt.className = 'ex-opt-t'; txt.value = o; txt.setAttribute('aria-label', 'Option');
+          row.appendChild(radio); row.appendChild(letter); row.appendChild(txt);
+          opts.appendChild(row);
+        });
+        body.appendChild(opts);
+      } else {
+        var lbl = document.createElement('div');
+        lbl.className = 'ex-t-anslabel';
+        lbl.textContent = 'Your answer';
+        var ta = document.createElement('textarea');
+        ta.className = 'ex-t-ans';
+        ta.value = it.a || '';
+        ta.placeholder = 'Your answer';
+        body.appendChild(lbl); body.appendChild(ta);
+      }
+      var rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'ex-row-remove';
+      rm.setAttribute('aria-label', 'Remove'); rm.textContent = '\u00d7';
+      el.appendChild(body);
+      el.appendChild(rm);
+      return el;
+    }
+
+    function renderTest(t) {
+      testState = clone(t);
+      var card = $('ex-test-card');
+      card.hidden = false;
+      $('ex-test-title').textContent = testState.title || 'Built test';
+      var host = $('ex-test-sections');
+      host.innerHTML = '';
+      if (testState.mcqs && testState.mcqs.length) host.appendChild(testSection('MCQs', 'mcq', testState.mcqs));
+      if (testState.shorts && testState.shorts.length) host.appendChild(testSection('Short answers', 'short', testState.shorts));
+      if (testState.longs && testState.longs.length) host.appendChild(testSection('Long answers', 'long', testState.longs));
+      $('ex-input-card').style.display = 'none';
+      $('ex-err').classList.remove('show');
+      layoutMobileActions();
+      refreshTestCount();
+    }
+
+    function testItems() {
+      var out = { mcqs: [], shorts: [], longs: [] };
+      var host = $('ex-test-sections');
+      if (!host) return out;
+      var els = host.querySelectorAll('.ex-t-item');
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i], kind = el.getAttribute('data-kind');
+        var qEl = el.querySelector('.ex-t-q'), mEl = el.querySelector('.ex-t-marks');
+        var q = qEl ? qEl.value.trim() : '';
+        var marks = parseInt(mEl && mEl.value, 10) || 1;
+        if (kind === 'mcq') {
+          var txts = el.querySelectorAll('.ex-opt-t');
+          var options = [];
+          for (var o = 0; o < txts.length; o++) options.push(txts[o].value.trim());
+          var checked = el.querySelector('input[type="radio"]:checked');
+          if (q) out.mcqs.push({ q: q, options: options, marks: marks, chosen: checked ? parseInt(checked.value, 10) : null });
+        } else {
+          var ta = el.querySelector('.ex-t-ans');
+          var a = ta ? ta.value.trim() : '';
+          if (q) (kind === 'short' ? out.shorts : out.longs).push({ q: q, marks: marks, a: a });
+        }
+      }
+      return out;
+    }
+
+    function refreshTestCount() {
+      var it = testItems();
+      var all = it.mcqs.concat(it.shorts, it.longs);
+      setSummary(all);
+      var answered = it.mcqs.some(function (m) { return m.chosen !== null; }) ||
+        it.shorts.some(function (s) { return s.a; }) ||
+        it.longs.some(function (l) { return l.a; });
+      $('ex-check').disabled = busy || !all.length || !answered;
+    }
+
+    function renumberTest() {
+      var els = $('ex-test-sections').querySelectorAll('.ex-t-item');
+      for (var i = 0; i < els.length; i++) {
+        var n = els[i].querySelector('.ex-row-num'); if (n) n.textContent = String(i + 1);
+        var ta = els[i].querySelector('.ex-t-q'); if (ta) ta.placeholder = 'Question ' + (i + 1);
+      }
+    }
+
+    function clearTestInternal() {
+      testState = null;
+      var host = $('ex-test-sections'); if (host) host.innerHTML = '';
+      $('ex-test-card').hidden = true;
+    }
+    function clearTest() {
+      clearTestInternal();
+      $('ex-input-card').style.display = '';
+      layoutMobileActions();
+      refreshCount();
+    }
+    function snapshotCurrentTest() {
+      var it = testItems();
+      if (!it.mcqs.length && !it.shorts.length && !it.longs.length) return null;
+      return { title: (testState && testState.title) || 'Built test', mcqs: it.mcqs, shorts: it.shorts, longs: it.longs };
     }
 
     function th(data, label) {
@@ -667,20 +1007,60 @@
       chapterEl.innerHTML = data.chapter ? '<b>Chapter:</b> ' + esc(data.chapter) + (data.bookTitle ? ' - ' + esc(data.bookTitle) : '') :
         (ov.grade ? '<b>No chapter detected</b>' : '');
       var list = $('ex-results-list'); list.innerHTML = '';
-      (data.results || []).forEach(function (r) {
-        var ok = r.correct || (r.score > 0 && r.score >= r.max);
-        var item = document.createElement('div');
-        item.className = 'ex-item';
-        item.innerHTML =
-          '<div class="ex-item-top"><span class="ex-badge ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct' : 'Needs work') + '</span><span class="ex-score">' + r.score + '/' + r.max + '</span></div>' +
-          (r.notInBook ? '<div class="ex-notinbook">Not in this textbook &middot; marked generally</div>' : '') +
-          '<p class="ex-item-q">Q' + r.idx + '. ' + esc(r.q) + '</p>' +
-          (r.a ? '<label>Your answer</label><p>' + esc(r.a) + '</p>' : '') +
-          (r.feedback ? '<label>Feedback</label><p>' + esc(r.feedback) + '</p>' : '') +
-          (r.modelAnswer ? '<label>Model answer (from the book)</label><p>' + esc(r.modelAnswer) + '</p>' : '');
-        list.appendChild(item);
-      });
+      var res = data.results;
+      if (res && !Array.isArray(res) && (res.mcqs || res.shorts || res.longs)) {
+        if (res.mcqs && res.mcqs.length) list.appendChild(groupBlock('MCQs', res.mcqs, 'mcq'));
+        if (res.shorts && res.shorts.length) list.appendChild(groupBlock('Short answers', res.shorts, 'text'));
+        if (res.longs && res.longs.length) list.appendChild(groupBlock('Long answers', res.longs, 'text'));
+      } else {
+        (res || []).forEach(function (r) { list.appendChild(resultItem(r)); });
+      }
       if (opts && opts.scroll) $('ex-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function resultItem(r) {
+      var ok = r.correct || (r.score > 0 && r.score >= r.max);
+      var item = document.createElement('div');
+      item.className = 'ex-item';
+      item.innerHTML =
+        '<div class="ex-item-top"><span class="ex-badge ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct' : 'Needs work') + '</span><span class="ex-score">' + r.score + '/' + r.max + '</span></div>' +
+        (r.notInBook ? '<div class="ex-notinbook">Not in this textbook &middot; marked generally</div>' : '') +
+        '<p class="ex-item-q">' + esc(r.idx != null ? 'Q' + r.idx + '. ' : '') + esc(r.q) + '</p>' +
+        (r.a ? '<label>Your answer</label><p>' + esc(r.a) + '</p>' : '') +
+        (r.feedback ? '<label>Feedback</label><p>' + esc(r.feedback) + '</p>' : '') +
+        (r.modelAnswer ? '<label>Model answer (from the book)</label><p>' + esc(r.modelAnswer) + '</p>' : '');
+      return item;
+    }
+
+    function mcqResultItem(r) {
+      var ok = !!r.correct;
+      var letter = function (i) { return (i === null || i === undefined) ? '\u2014' : String.fromCharCode(97 + Number(i)); };
+      var optText = function (i) {
+        if (i === null || i === undefined) return 'Not answered';
+        return (r.options && r.options[i]) ? r.options[i] : 'Option ' + letter(i);
+      };
+      var item = document.createElement('div');
+      item.className = 'ex-item';
+      item.innerHTML =
+        '<div class="ex-item-top"><span class="ex-badge ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct' : 'Wrong') + '</span><span class="ex-score">' + r.score + '/' + r.marks + '</span></div>' +
+        '<p class="ex-item-q">' + esc(r.idx != null ? r.idx + '. ' : '') + esc(r.q) + '</p>' +
+        '<label>Your answer</label><p>' + esc(letter(r.chosen) + '. ' + optText(r.chosen)) + '</p>' +
+        '<label>Correct answer</label><p>' + esc(letter(r.correctOption) + '. ' + optText(r.correctOption)) + '</p>' +
+        (r.note ? '<label>Why</label><p>' + esc(r.note) + '</p>' : '');
+      return item;
+    }
+
+    function groupBlock(title, arr, kind) {
+      var wrap = document.createElement('div');
+      wrap.className = 'ex-res-sec';
+      var score = 0, max = 0;
+      arr.forEach(function (r) { score += Number(r.score) || 0; max += Number(kind === 'mcq' ? r.marks : r.max) || 0; });
+      var h = document.createElement('div');
+      h.className = 'ex-res-sec-h';
+      h.innerHTML = '<span>' + esc(title) + ' (' + arr.length + ')</span><b>' + score + '/' + max + '</b>';
+      wrap.appendChild(h);
+      arr.forEach(function (r) { wrap.appendChild(kind === 'mcq' ? mcqResultItem(r) : resultItem(r)); });
+      return wrap;
     }
 
     function postFn(token, action, body) {
@@ -734,6 +1114,7 @@
     function ldClose() { $('ex-loading').classList.remove('on'); }
 
     async function check() {
+      if (!$('ex-test-card').hidden || lastCheckTest) return checkTest();
       var items = typedItems();
       if (!items.length) { flash('Add at least one question and answer.'); return; }
       busy = true; $('ex-check').disabled = true;
@@ -801,11 +1182,84 @@
       }
     }
 
-    function saveCheck(rows, data) {
+    async function checkTest() {
+      var t = testItems();
+      var totalQ = t.mcqs.length + t.shorts.length + t.longs.length;
+      if (!totalQ) { flash('Attach a built test first.'); return; }
+      var answered = t.mcqs.filter(function (m) { return m.chosen !== null; }).length +
+        t.shorts.filter(function (s) { return s.a; }).length +
+        t.longs.filter(function (l) { return l.a; }).length;
+      if (!answered) { flash('Answer at least one question first.'); return; }
+      busy = true; $('ex-check').disabled = true;
+      var err = $('ex-err'); err.classList.remove('show');
+      ldOpen();
+      LD.set([
+        'Reading your answers\u2026',
+        'Test loaded\u2026',
+        'Reading the whole ' + subject + ' book\u2026',
+        'Finding the chapter of your questions\u2026',
+        'Checking answers strictly against the book\u2026',
+        'Preparing your detailed result\u2026',
+      ]);
+      try {
+        var token = await getToken();
+        if (!token) { showNotAuth(); return; }
+        LD.done(0, 'Read your answers (' + answered + ' of ' + totalQ + ' answered)');
+        LD.done(1, (testState && testState.title ? testState.title : 'Built test') + ' \u00b7 ' +
+          t.mcqs.length + ' MCQ \u00b7 ' + t.shorts.length + ' short \u00b7 ' + t.longs.length + ' long');
+
+        LD.pick(2, 'Reading the whole ' + subject + ' book\u2026');
+        var ctx = null;
+        var qs = t.mcqs.concat(t.shorts, t.longs).map(function (x) { return { q: x.q, marks: x.marks }; });
+        try {
+          var pr = await postFn(token, 'prep', { typed: qs, subject: subject });
+          ctx = (pr && pr.pages) ? pr : null;
+          if (pr && pr.pages) {
+            LD.done(2, 'Read the ' + subject + ' textbook (' + pr.pages + ' page' + (pr.pages > 1 ? 's' : '') + ')');
+            LD.done(3, pr.chapter ? 'Your questions are from: ' + pr.chapter : 'No single chapter matched - using the whole book');
+          } else {
+            LD.done(2, 'No ' + subject + ' textbook found - grading against standard concepts');
+            LD.done(3, 'Chapter lookup skipped');
+          }
+        } catch (e) {
+          LD.done(2, 'Could not open the ' + subject + ' book - grading against standard concepts');
+          LD.done(3, 'Chapter lookup skipped');
+        }
+
+        LD.pick(4, 'Checking answers strictly against the book\u2026');
+        var data = await postFn(token, 'mark_test', {
+          subject: subject,
+          focus: focus,
+          test: t,
+          bookContext: ctx ? { chapter: ctx.chapter, bookTitle: ctx.bookTitle, content: ctx.content, pages: ctx.pages } : null,
+        });
+        LD.done(4, 'Checked ' + totalQ + ' question' + (totalQ === 1 ? '' : 's') + ' against the book');
+
+        LD.pick(5, 'Preparing your detailed result\u2026');
+        $('ex-test-card').hidden = true;
+        renderResults(data, { scroll: true });
+        var snap = { title: (testState && testState.title) || data.title || 'Built test', mcqs: t.mcqs, shorts: t.shorts, longs: t.longs };
+        lastCheckTest = snap;
+        lastCheckItems = null;
+        saveCheck([], data, snap);
+        renderHistory();
+        setSummary(t.mcqs.concat(t.shorts, t.longs));
+        if (data.code) setCheckUrl(subject, data.code, false);
+        LD.done(5, 'Detailed result ready');
+      } catch (e) {
+        err.textContent = (e && e.message) || 'Something went wrong. Try again.'; err.classList.add('show');
+      } finally {
+        busy = false;
+        if (!$('ex-test-card').hidden) refreshTestCount(); else $('ex-check').disabled = true;
+        setTimeout(ldClose, 650);
+      }
+    }
+
+    function saveCheck(rows, data, test) {
       var list = readHistory();
       var code = (data && String(data.code || '')) || '';
       var id = code || Date.now().toString(36);
-      list.unshift({ id: id, code: code, title: subject + ' \u00b7 ' + new Date().toLocaleDateString(), created: Date.now(), subject: subject, data: data, rows: rows });
+      list.unshift({ id: id, code: code, title: subject + ' \u00b7 ' + new Date().toLocaleDateString(), created: Date.now(), subject: subject, data: data, rows: rows, kind: test ? 'test' : 'typed', test: test || null });
       localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
     }
     function readHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') || []; } catch (_) { return []; } }
@@ -841,11 +1295,23 @@
       $('ex-toolbar-title').textContent = c.title;
       $('ex-results-list').innerHTML = '';
       $('ex-results').classList.remove('on');
-      $('ex-input-card').style.display = 'none';
-      var fromRows = (c.rows && c.rows.length) ? c.rows : null;
-      var fromResults = (c.data && c.data.results) ? c.data.results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }) : [];
-      lastCheckItems = fromRows || (fromResults.length ? fromResults : null);
-      setSummary(lastCheckItems || []);
+      if (c.kind === 'test' && c.test && c.test.mcqs) {
+        renderTest(c.test);
+        $('ex-test-card').hidden = true; // results-only view; state kept for reuse
+        lastCheckTest = clone(c.test);
+        lastCheckItems = null;
+        layoutMobileActions();
+        refreshTestCount();
+      } else {
+        clearTestInternal();
+        $('ex-input-card').style.display = 'none';
+        var fromRows = (c.rows && c.rows.length) ? c.rows : null;
+        var fromResults = (c.data && c.data.results && Array.isArray(c.data.results))
+          ? c.data.results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }) : [];
+        lastCheckItems = fromRows || (fromResults.length ? fromResults : null);
+        lastCheckTest = null;
+        setSummary(lastCheckItems || []);
+      }
       if (c.data) renderResults(c.data);
       setCheckUrl(c.subject || subject, c.code || '');
       closeSide();
@@ -856,31 +1322,41 @@
       ldClose();
       $('ex-reuse-modal').classList.remove('on');
       $('ex-toolbar-title').textContent = 'Check answers';
-      $('ex-input-card').style.display = '';
       $('ex-results').classList.remove('on');
-      if (reuse) {
-        // Copy the questions & answers into the fresh check - editable/addable.
+      var set = reuse ? (window.__exReuse || {}) : {};
+      if (reuse && set.test) {
+        renderTest(set.test); // sections back with the previous answers
+      } else if (reuse) {
+        clearTestInternal();
+        $('ex-input-card').style.display = '';
         var items = typedItems();
-        if (!items.length && window.__exReuseItems && window.__exReuseItems.length) items = window.__exReuseItems;
+        if (!items.length && set.items && set.items.length) items = set.items;
         fillRows(items.map(function (it) { return { q: it.q, a: it.a, marks: it.marks }; }));
       } else {
+        clearTestInternal();
+        $('ex-input-card').style.display = '';
         fillRows([{}]);
         attachments = [];
         renderAttach();
       }
       lastCheckItems = null;
-      window.__exReuseItems = null;
+      lastCheckTest = null;
+      window.__exReuse = null;
       setCheckUrl('', '');
       closeSide();
-      var card = $('ex-input-card');
+      layoutMobileActions();
+      var card = (reuse && set.test) ? $('ex-test-card') : $('ex-input-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function newCheck() {
       $('ex-reuse-modal').classList.remove('on');
+      var activeTest = $('ex-test-card').hidden ? null : snapshotCurrentTest();
+      var testToReuse = activeTest ||
+        (lastCheckTest && (lastCheckTest.mcqs.length || lastCheckTest.shorts.length || lastCheckTest.longs.length) ? clone(lastCheckTest) : null);
       var items = typedItems();
       if (!items.length && lastCheckItems && lastCheckItems.length) items = lastCheckItems;
-      if (items.length) {
-        window.__exReuseItems = items;
+      if (items.length || testToReuse) {
+        window.__exReuse = { items: items, test: testToReuse };
         $('ex-reuse-modal').classList.add('on');
       } else finalizeNewCheck(false);
     }
@@ -937,17 +1413,29 @@
         .then(function (res) {
           if (res.error || !res.data) return false;
           var row = res.data;
-          var results = (row.detail && row.detail.results) || [];
-          var items = results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; });
-          fillRows(items);
-          lastCheckItems = items.length ? items : null;
-          setSummary(items);
-          $('ex-input-card').style.display = 'none';
+          var d = row.detail || {};
           $('ex-toolbar-title').textContent = row.subject + ' \u00b7 ' + new Date(row.created_at).toLocaleDateString();
           try { subject = row.subject; var sel = $('ex-subject'); if (sel) sel.value = row.subject; } catch (_) {}
+          var results = d.results || [];
+          if (d.kind === 'test' && d.test && d.test.mcqs) {
+            renderTest(d.test);
+            $('ex-test-card').hidden = true; // results-only view; state kept for reuse
+            lastCheckTest = clone(d.test);
+            lastCheckItems = null;
+            layoutMobileActions();
+            refreshTestCount();
+          } else {
+            clearTestInternal();
+            var items = (Array.isArray(results) ? results : []).map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; });
+            fillRows(items);
+            lastCheckItems = items.length ? items : null;
+            lastCheckTest = null;
+            setSummary(items);
+            $('ex-input-card').style.display = 'none';
+          }
           renderResults({
             results: results,
-            overall: (row.detail && row.detail.overall) || { score: row.score, total: row.total, percent: row.percent, grade: row.grade },
+            overall: d.overall || { score: row.score, total: row.total, percent: row.percent, grade: row.grade },
             chapter: row.chapter,
             bookTitle: row.book_title,
             usedUserKey: false,
@@ -979,9 +1467,14 @@
       var bottom = $('ex-bottom-actions'); if (!bottom) return;
       var sum = $('ex-sum'), chk = $('ex-check'), toolbar = $('ex-toolbar'); if (!sum || !chk || !toolbar) return;
       var onMobile = window.matchMedia('(max-width: 768px)').matches;
-      var inBottom = chk.parentNode === bottom;
-      if (onMobile && !inBottom) { bottom.appendChild(sum); bottom.appendChild(chk); }
-      else if (!onMobile && inBottom) { toolbar.appendChild(sum); toolbar.appendChild(chk); }
+      if (onMobile) {
+        var tc = $('ex-test-card');
+        var testVisible = tc && !tc.hidden && tc.style.display !== 'none';
+        var slot = (testVisible && $('ex-test-bottom-actions')) ? $('ex-test-bottom-actions') : bottom;
+        if (chk.parentNode !== slot) { slot.appendChild(sum); slot.appendChild(chk); }
+      } else if (chk.parentNode !== toolbar) {
+        toolbar.appendChild(sum); toolbar.appendChild(chk);
+      }
     }
     window.addEventListener('resize', layoutMobileActions);
 
@@ -1087,6 +1580,20 @@
       $('ex-reuse-yes').addEventListener('click', function () { finalizeNewCheck(true); });
       $('ex-reuse-no').addEventListener('click', function () { finalizeNewCheck(false); });
       $('ex-reuse-modal').addEventListener('click', function (e) { if (e.target === $('ex-reuse-modal')) $('ex-reuse-modal').classList.remove('on'); });
+      // Built test: attach, edit, remove.
+      $('ex-test-btn').addEventListener('click', openTestsModal);
+      $('ex-tests-close').addEventListener('click', function () { $('ex-tests-modal').classList.remove('on'); });
+      $('ex-tests-modal').addEventListener('click', function (e) { if (e.target === $('ex-tests-modal')) $('ex-tests-modal').classList.remove('on'); });
+      $('ex-test-clear').addEventListener('click', clearTest);
+      $('ex-test-sections').addEventListener('input', function () { if (!busy) refreshTestCount(); });
+      $('ex-test-sections').addEventListener('change', function (e) { if (e.target && e.target.type === 'radio' && !busy) refreshTestCount(); });
+      $('ex-test-sections').addEventListener('click', function (e) {
+        var t = e.target;
+        var btn = (t && t.closest) ? t.closest('.ex-row-remove') : null;
+        if (!btn) return;
+        var it = btn.closest('.ex-t-item');
+        if (it) { it.remove(); renumberTest(); refreshTestCount(); }
+      });
     }
 
     (function bootProfile() {
