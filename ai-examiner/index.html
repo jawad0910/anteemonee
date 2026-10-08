@@ -554,12 +554,16 @@
       if (!list || !list.length) addRow();
       refreshCount();
     }
-    function refreshCount() {
-      var items = typedItems(); var n = items.length; var m = 0;
-      items.forEach(function (it) { m += it.marks; });
+    function setSummary(list) {
+      var n = list.length, m = 0;
+      list.forEach(function (it) { m += Number(it.marks) || 0; });
       $('ex-count').textContent = n + ' question' + (n === 1 ? '' : 's');
       $('ex-sum').innerHTML = n + ' answer' + (n === 1 ? '' : 's') + ' \u00b7 <b>' + m + '</b> marks';
-      $('ex-check').disabled = n === 0 || busy;
+    }
+    function refreshCount() {
+      var items = typedItems();
+      setSummary(items);
+      $('ex-check').disabled = items.length === 0 || busy;
     }
     function flash(msg) {
       var e = $('ex-err'); e.textContent = msg; e.classList.add('show');
@@ -787,6 +791,7 @@
         saveCheck(items, data);
         renderHistory();
         lastCheckItems = items.slice();
+        setSummary(items);
         if (data && data.code) setCheckUrl(subject, data.code, false);
         LD.done(5, 'Detailed result ready');
       } catch (e) {
@@ -840,6 +845,7 @@
       var fromRows = (c.rows && c.rows.length) ? c.rows : null;
       var fromResults = (c.data && c.data.results) ? c.data.results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }) : [];
       lastCheckItems = fromRows || (fromResults.length ? fromResults : null);
+      setSummary(lastCheckItems || []);
       if (c.data) renderResults(c.data);
       setCheckUrl(c.subject || subject, c.code || '');
       closeSide();
@@ -932,8 +938,10 @@
           if (res.error || !res.data) return false;
           var row = res.data;
           var results = (row.detail && row.detail.results) || [];
-          fillRows(results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }));
-          lastCheckItems = results.length ? results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }) : null;
+          var items = results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; });
+          fillRows(items);
+          lastCheckItems = items.length ? items : null;
+          setSummary(items);
           $('ex-input-card').style.display = 'none';
           $('ex-toolbar-title').textContent = row.subject + ' \u00b7 ' + new Date(row.created_at).toLocaleDateString();
           try { subject = row.subject; var sel = $('ex-subject'); if (sel) sel.value = row.subject; } catch (_) {}
