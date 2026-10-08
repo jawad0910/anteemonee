@@ -843,6 +843,7 @@
     }
     function finalizeNewCheck(reuse) {
       ldClose();
+      $('ex-reuse-modal').classList.remove('on');
       $('ex-toolbar-title').textContent = 'Check answers';
       $('ex-input-card').style.display = '';
       $('ex-results').classList.remove('on');
