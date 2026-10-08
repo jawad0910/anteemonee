@@ -154,7 +154,7 @@
     .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
     .logo-img { object-fit: cover; display: block; flex-shrink: 0; background: #14141a; }
     .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; border-radius: 0; padding: 0; box-shadow: none; }
-    .landing-nav a { font-size: 14px; font-weight: 500; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; white-space: nowrap; transition: color .15s, background-color .15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+    .landing-nav a { font-size: 14px; font-weight: 500; color: var(--text-secondary); padding: 8px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s, background-color .15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
     .landing-nav a:hover, .landing-nav a.is-current { color: var(--text); background: var(--accent-soft); }
     .landing-nav a .caret { font-size: 10px; opacity: .6; }
     .nav-drop { position: relative; }
@@ -162,9 +162,9 @@
     .nav-drop:hover::before, .nav-drop.open::before { display: block; }
     .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 212px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 60; }
     .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; align-items: center; gap: 9px; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 10px; text-decoration: none; }
+    .nav-menu a { display: flex; align-items: center; gap: 9px; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text-secondary); border-radius: 10px; text-decoration: none; }
     .nav-menu a svg { flex-shrink: 0; opacity: .85; }
-    .nav-menu a:hover { background: var(--accent-soft); color: var(--accent); }
+    .nav-menu a:hover { background: var(--accent-soft); color: var(--text); }
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
     .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; }
     .icon-btn:hover { background: var(--surface); color: var(--text); }
@@ -197,7 +197,8 @@
     .mobile-nav-link:hover { background: var(--surface); }
     .mobile-acc-toggle { display: flex; align-items: center; gap: 6px; }
     .mobile-acc-chevron { font-size: 11px; color: var(--text-muted); }
-    .mobile-acc-list { display: flex; flex-direction: column; gap: 2px; padding: 4px 0 2px 12px; }
+    .mobile-acc-list { display: none; flex-direction: column; gap: 2px; padding: 4px 0 2px 12px; }
+    .mobile-acc-dropdown.open .mobile-acc-list { display: flex; }
     @media (max-width: 1100px) { .landing-nav { display: none; } .mobile-menu-toggle { display: flex; } }
     @media (max-width: 768px) { .header-inner { height: 64px; padding: 0 14px; } .ex-layout { height: calc(100dvh - 64px); margin-top: 64px; } }
 
@@ -245,9 +246,9 @@
         <div class="nav-drop">
           <a href="#">Library <span class="caret">▾</span></a>
           <div class="nav-menu">
-            <a href="../ebooks/">eBooks</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../past-papers/">Past Papers</a>
+            <a href="../ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
+            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
+            <a href="../past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
           </div>
         </div>
         <div class="nav-drop">
@@ -277,16 +278,18 @@
     </div>
   </header>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="../index.html" class="mobile-nav-link">Home</a>
-    <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
-    <div class="mobile-acc-list" id="mobile-acc">
-      <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
-      <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
-      <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
     </div>
     <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
     <a href="../ai-examiner/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    <a href="../ai-test-builder/" class="mobile-nav-link">AI Test Builder</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
   </div>
 
@@ -406,6 +409,9 @@
     }
     var $ = function (id) { return document.getElementById(id); };
     var HISTORY_KEY = 'ae_checks';
+
+    // app.js's setupMobileMenu wires the hamburger AND the Library accordion
+    // (`.mobile-acc-toggle` -> `.mobile-acc-dropdown.open`). No custom wiring.
 
     var typedCount = 0;
     var attachments = [];
@@ -746,13 +752,6 @@
 
     function wire() {
       // Passive UI must work even before auth resolves.
-      document.getElementById('menu-toggle').addEventListener('click', function () {
-        document.getElementById('mobile-menu').classList.toggle('open');
-      });
-      document.querySelector('.mobile-acc-toggle').addEventListener('click', function () {
-        var acc = document.getElementById('mobile-acc');
-        acc.style.display = acc.style.display === 'flex' ? '' : 'flex';
-      });
       $('ex-new').addEventListener('click', newCheck);
       $('ex-mobile-hist').addEventListener('click', openSide);
       $('ex-side-overlay').addEventListener('click', closeSide);
@@ -771,14 +770,20 @@
       $('ex-check').addEventListener('click', check);
     }
 
-    renderLandingAuth();
-    var lTries = 0;
-    var lTimer = setInterval(function () {
-      lTries++;
-      renderLandingAuth();
-      if (lTries > 40) clearInterval(lTimer);
-      if (window.__authReady === true) clearInterval(lTimer);
-    }, 300);
+    (function bootProfile() {
+      try { renderLandingAuth(); } catch (e) { window.__exBoot = String(e && e.message || e); }
+      var lTries = 0;
+      var lTimer = setInterval(function () {
+        try {
+          lTries++;
+          renderLandingAuth();
+          if (window.__authReady === true) clearInterval(lTimer);
+        } catch (e) {
+          window.__exBoot = String(e && e.message || e);
+          clearInterval(lTimer);
+        }
+      }, 300);
+    })();
 
     document.addEventListener('DOMContentLoaded', function () {
       try { checkAuth(); } catch (_) {}
