@@ -17,7 +17,7 @@
   <meta name="description" content="Build custom AI practice tests for FSc and intermediate prep.">
   <meta name="robots" content="index, follow">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=33">
+  <link rel="stylesheet" href="../css/style.css?v=35">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; background: var(--bg) !important; }
@@ -249,7 +249,7 @@
       .atb-wrap { padding-top: 96px; }
     }
 
-    /* ── Test builder — site design system (flat, monochrome + sky blue) ── */
+    /* ── Test builder - site design system (flat, monochrome + sky blue) ── */
     #atb-page .tb-root {
       --tb-primary: var(--accent);
       --tb-primary-mid: var(--accent-hover);
@@ -521,7 +521,7 @@
       .tb-done-actions .tb-btn { width: 100%; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=1">
+  <link rel="stylesheet" href="../css/header.css?v=2">
 </head>
 <body>
   <header class="header" id="site-header">
@@ -531,7 +531,6 @@
         <span class="logo-text">Anteemonee</span>
       </a>
       <nav class="landing-nav" aria-label="Primary">
-  <a href="../dashboard/">Dashboard</a>
   <div class="nav-drop">
     <a href="#">Library <span class="caret">▾</span></a>
     <div class="nav-menu">
@@ -540,11 +539,18 @@
       <a href="../past-papers/">Past Papers</a>
     </div>
   </div>
-  <a href="../ai-chat/">AI Assistant</a>
+  <div class="nav-drop">
+    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    </div>
+  </div>
+  <a href="../ai-test-builder/">AI Test Builder</a>
   <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
-        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </a>
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
@@ -569,9 +575,11 @@
         <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
       </div>
     </div>
-    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link">AI Test Builder</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-        <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+        <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
       <a href="../pages/login.html" class="btn-login">Log in</a>
       <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
@@ -678,7 +686,7 @@
                   <div class="atb-select-menu atb-select-menu-scroll" id="atb-chapter-menu" role="listbox" aria-multiselectable="true" aria-label="Chapters"></div>
                 </div>
                 <div id="atb-chapter-chips" class="atb-chips"></div>
-                <div class="hint" id="atb-chapter-hint">Choose at least one chapter — the AI only writes questions from these pages.</div>
+                <div class="hint" id="atb-chapter-hint">Choose at least one chapter - the AI only writes questions from these pages.</div>
               </div>
             </div>
           </div>
@@ -722,7 +730,7 @@
               <div class="tb-card-body tb-card-toggles">
                 <div class="atb-field atb-field-title">
                   <label>Paper title <span class="atb-tag-label">optional</span></label>
-                  <input type="text" id="atb-test-name" maxlength="120" placeholder="e.g. Force &amp; Motion — Chapter Test" autocomplete="off">
+                  <input type="text" id="atb-test-name" maxlength="120" placeholder="e.g. Force &amp; Motion - Chapter Test" autocomplete="off">
                 </div>
                 <div class="atb-toggle" id="atb-pp-label">
                   <div><b>Follow a past paper</b><span>Match the style of recent board papers</span></div>
@@ -833,7 +841,7 @@
         </div>
         <div id="atb-history-toast" class="tb-modal-toast" aria-live="polite"></div>
         <div id="atb-history-list"></div>
-        <div class="tb-modal-empty" id="atb-history-empty" style="display:none">No tests built yet — your papers will appear here.</div>
+        <div class="tb-modal-empty" id="atb-history-empty" style="display:none">No tests built yet - your papers will appear here.</div>
       </div>
     </div>
   </div>
@@ -885,7 +893,7 @@
           <div class="footer-col">
             <h4>Explore</h4>
             <a href="../index.html">Home</a>
-            <a href="../ai-chat/">AI Assistant</a>
+            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
             <a href="../flashcards/">Flashcards</a>
             <a href="../pages/download.html">Download App</a>
           </div>
@@ -949,8 +957,8 @@
                     '</div>' +
                   '</div>' +
                   '<div class="dropdown-divider"></div>' +
-                  '<a href="../account/" class="dropdown-item">Account</a>' +
-                  '<a href="../settings/" class="dropdown-item">Settings</a>' +
+                  '<a href="../account/" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Account</a>' +
+                  '<a href="../settings/" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</a>' +
                   '<div class="dropdown-divider"></div>' +
                   '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Logout</button>' +
                 '</div>' +
@@ -1723,7 +1731,7 @@
   function restoreChapterHint() {
     var h = $('atb-chapter-hint');
     if (h) {
-      h.textContent = 'Choose at least one chapter — the AI only writes questions from these pages.';
+      h.textContent = 'Choose at least one chapter - the AI only writes questions from these pages.';
       h.classList.remove('tb-hint-error');
     }
   }
@@ -2336,7 +2344,7 @@
   }
 
   function hideLoading() {
-    // No loading screen any more — the wizard fades in via CSS animation.
+    // No loading screen any more - the wizard fades in via CSS animation.
   }
 
   async function init() {

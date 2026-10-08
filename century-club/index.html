@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=33">
+  <link rel="stylesheet" href="../css/style.css?v=35">
   <style>
     /* ── Tokens local to this page ── */
     :root {
@@ -35,11 +35,7 @@
 
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; font-family: var(--cc-font); }
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f; --bg-card-hover: #141416;
-      --surface: #111113; --surface-recessed: #08080a; --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,.04); --liquid-bg-soft: rgba(255,255,255,.05); --liquid-bg-strong: rgba(10,10,12,.85);
-    }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
 
     /* ── Site header (matches all pages) ── */
     .header { padding: 0; }
@@ -240,6 +236,7 @@
       .cc-card, .cc-card::after, .cc-btn, .cc-stat { transition: none !important; }
     }
   </style>
+  <link rel="stylesheet" href="../css/header.css?v=2">
 </head>
 <body>
   <header class="header" id="site-header">
@@ -249,7 +246,6 @@
         <span class="logo-text">Anteemonee</span>
       </a>
       <nav class="landing-nav" aria-label="Primary">
-        <a href="../dashboard/">Dashboard</a>
         <div class="nav-drop">
           <a href="#">Library <span class="caret">▾</span></a>
           <div class="nav-menu">
@@ -258,11 +254,18 @@
             <a href="../past-papers/">Past Papers</a>
           </div>
         </div>
-        <a href="../ai-chat/">AI Assistant</a>
-        <a href="../century-club/" class="is-current" aria-current="page">Century Club</a>
+        <div class="nav-drop">
+    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    </div>
+  </div>
+        <a href="../ai-test-builder/">AI Test Builder</a>
+  <a href="../century-club/" class="is-current" aria-current="page">Century Club</a>
       </nav>
       <div class="header-actions">
-        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </a>
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
@@ -279,7 +282,6 @@
   </header>
 
   <div class="mobile-menu" id="mobile-menu">
-    <a href="../dashboard/" class="mobile-nav-link">Dashboard</a>
     <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
     <div class="mobile-acc-dropdown">
       <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
@@ -289,9 +291,11 @@
         <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
       </div>
     </div>
-    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link">AI Test Builder</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-    <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+    <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
       <a href="../pages/login.html" class="btn-login">Log in</a>
       <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
@@ -434,7 +438,7 @@
           <div class="footer-col">
             <h4>Explore</h4>
             <a href="../index.html">Home</a>
-            <a href="../ai-chat/">AI Assistant</a>
+            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
             <a href="../flashcards/">Flashcards</a>
             <a href="../century-club/">Century Club</a>
           </div>
@@ -455,7 +459,7 @@
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=31"></script>
   <script src="../js/login-modal.js?v=5"></script>

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Examiner - Anteemonee</title>
+  <meta name="description" content="Type or upload your answers and get instant marking and feedback.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=35">
+  <link rel="stylesheet" href="../css/header.css?v=2">
+  <style>
+    body { overflow-x: hidden; background: var(--bg) !important; font-family: var(--font-ui); margin: 0; }
+
+    /* ── Dashboard layout ───────────────────────────────────────── */
+    .ex-layout { display: flex; height: calc(100vh - 72px); margin-top: 72px; }
+    .ex-side {
+      width: 262px; min-width: 262px; background: var(--bg-card); border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 16px 12px 24px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .ex-main { flex: 1; min-width: 0; overflow-y: auto; padding: 24px 26px 60px; }
+    .ex-side-brand { display: flex; align-items: center; gap: 9px; padding: 2px 6px 14px; }
+    .ex-side-logo { width: 32px; height: 32px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; }
+    .ex-side-title { margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); }
+    .ex-new { width: 100%; height: 44px; border-radius: 11px; border: none; background: var(--accent); color: var(--on-accent); font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .ex-side-label { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); padding: 16px 6px 6px; }
+    .ex-hist-item { display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; }
+    .ex-hist-item:hover, .ex-hist-item.active { background: var(--accent-soft); border-color: var(--border-card); }
+    .ex-hist-info { flex: 1; min-width: 0; }
+    .ex-hist-title { font-size: .82rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ex-hist-sub { font-size: .72rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .ex-hist-score { font-size: .72rem; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+    .ex-hist-del { width: 22px; height: 22px; border-radius: 7px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; line-height: 1; flex-shrink: 0; }
+    .ex-hist-del:hover { color: #e07070; background: rgba(224,112,112,.12); }
+    .ex-side-empty { font-size: .76rem; color: var(--text-muted); text-align: center; padding: 22px 10px; line-height: 1.5; }
+    .ex-side-foot { margin-top: auto; font-size: .72rem; color: var(--text-muted); text-align: center; padding: 12px 6px 0; border-top: 1px solid var(--border); }
+    #ex-not-auth { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 20px; }
+    #ex-not-auth .ex-ina { max-width: 420px; text-align: center; }
+    #ex-not-auth b { color: var(--text); font-size: 17px; }
+    #ex-not-auth p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+    .ex-ina-actions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+
+    .ex-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .ex-toolbar-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 0; margin-right: auto; }
+    .ex-chipbar { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ex-chip { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font: inherit; font-size: .76rem; font-weight: 600; cursor: pointer; }
+    .ex-chip.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .ex-sum { font-size: .78rem; color: var(--text-secondary); background: var(--surface-recessed); border: 1px solid var(--border); padding: 8px 14px; border-radius: 999px; }
+    .ex-sum b { color: var(--accent); }
+    .ex-check-btn { min-width: 150px; height: 44px; padding: 0 18px; border-radius: 11px; border: none; background: var(--accent); color: var(--on-accent); font: inherit; font-size: .86rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .ex-check-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .ex-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 10px 28px -22px rgba(16,24,40,.2); margin-bottom: 16px; overflow: hidden; }
+    .ex-card-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px 11px; border-bottom: 1px solid var(--border); }
+    .ex-card-title { margin: 0; flex: 1; font-size: .82rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); }
+    .ex-card-hint { color: var(--text-muted); font-size: .74rem; }
+    .ex-card-body { padding: 16px 18px 18px; }
+
+    .ex-attach-bar { border: 1.5px dashed var(--border); border-radius: 14px; padding: 14px; background: var(--surface-recessed); }
+    .ex-attach-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 11px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .84rem; font-weight: 650; cursor: pointer; }
+    .ex-attach-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .ex-attach-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .ex-thumb { position: relative; width: 66px; height: 66px; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+    .ex-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ex-thumb em { position: absolute; bottom: 0; left: 0; right: 0; font-style: normal; font-size: 10px; text-align: center; background: rgba(0,0,0,.5); color: #fff; }
+    .ex-attach-actions { display: none; gap: 8px; margin-top: 12px; margin-left: auto; justify-content: flex-end; }
+    .ex-confirm, .ex-clear { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--border); font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .ex-confirm { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .ex-confirm:disabled { opacity: .45; cursor: not-allowed; }
+    .ex-clear { background: var(--bg-card); color: var(--text-secondary); }
+    .ex-clear:hover { color: #e07070; border-color: rgba(224,112,112,.4); }
+    .ex-loadbar { display: none; align-items: center; gap: 10px; margin-top: 12px; }
+    .ex-loadbar.on { display: flex; }
+    .ex-loadbar i { position: relative; flex: 1; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .ex-loadbar i::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: ex-load 1.1s ease-in-out infinite; }
+    @keyframes ex-load { 0% { left: -40%; } 100% { left: 100%; } }
+    .ex-loadbar span { font-size: .76rem; color: var(--text-muted); white-space: nowrap; }
+    .ex-field-label { display: block; font-size: .78rem; font-weight: 650; color: var(--text); margin: 0 0 8px; }
+    .ex-hint { font-size: .76rem; font-style: italic; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+
+    .ex-typed-row { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-recessed); margin-bottom: 10px; position: relative; }
+    .ex-row-num { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: .78rem; display: inline-flex; align-items: center; justify-content: center; }
+    .ex-row-fields { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .ex-row-fields textarea, .ex-row-marks { width: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font: inherit; font-size: .84rem; padding: 9px 11px; resize: vertical; min-height: 52px; box-sizing: border-box; }
+    .ex-row-fields textarea:focus, .ex-row-marks:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .ex-row-remove { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; line-height: 1; }
+    .ex-row-remove:hover { color: #e07070; border-color: rgba(224,112,112,.4); }
+    .ex-row-marks { width: 72px !important; min-height: 0 !important; padding: 6px 9px; }
+    .ex-row-marks-w { position: absolute; bottom: 10px; right: 10px; }
+    .ex-row-label { font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+    .ex-add-row { width: 100%; padding: 10px; margin-top: 4px; border: 1.5px dashed var(--border); border-radius: 12px; background: transparent; color: var(--accent); font: inherit; font-size: .84rem; font-weight: 650; cursor: pointer; }
+    .ex-add-row:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+    .ex-progress { display: none; align-items: center; gap: 12px; margin-top: 14px; }
+    .ex-progress.on { display: flex; }
+    .ex-spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: ex-spin .8s linear infinite; }
+    @keyframes ex-spin { to { transform: rotate(360deg); } }
+    .ex-stage { margin: 0; font-weight: 650; font-size: .86rem; color: var(--text); }
+    .ex-err { margin-top: 12px; padding: 10px 14px; border-radius: 12px; background: rgba(224,112,112,.12); border: 1px solid rgba(224,112,112,.35); color: #e07070; font-size: .82rem; display: none; }
+    .ex-err.show { display: block; }
+
+    .ex-results { display: none; }
+    .ex-results.on { display: block; }
+    .ex-overall { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-recessed); margin-bottom: 16px; flex-wrap: wrap; }
+    .ex-big-score { font-family: var(--font-display); font-size: 1.9rem; font-weight: 800; color: var(--accent); }
+    .ex-bar { flex: 1; min-width: 160px; height: 10px; border-radius: 999px; background: var(--border); overflow: hidden; }
+    .ex-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); transition: width .5s; }
+    .ex-item { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; background: var(--bg-card); }
+    .ex-item-top { display: flex; align-items: center; gap: 10px; }
+    .ex-badge { padding: 3px 10px; border-radius: 999px; font-size: .7rem; font-weight: 700; }
+    .ex-badge.ok { background: rgba(37,170,80,.14); color: #24a34c; }
+    .ex-badge.no { background: rgba(224,112,112,.14); color: #e07070; }
+    .ex-item-q { font-weight: 650; margin: 8px 0 4px; line-height: 1.45; }
+    .ex-item label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin: 10px 0 4px; }
+    .ex-item p { margin: 0; font-size: .84rem; color: var(--text-secondary); line-height: 1.55; white-space: pre-wrap; }
+    .ex-score { margin-left: auto; font-weight: 800; color: var(--text); }
+
+    #ex-mobile-hist { display: none; }
+    .ex-side-overlay { display: none; }
+    @media (max-width: 900px) {
+      .ex-layout { height: calc(100dvh - 64px); }
+      .ex-side { position: fixed; top: 64px; left: 0; bottom: 0; z-index: 300; transform: translateX(-110%); transition: transform .3s; }
+      .ex-side.open { transform: translateX(0); }
+      .ex-side-overlay { position: fixed; inset: 0; z-index: 299; background: rgba(0,0,0,.5); }
+      .ex-side-overlay.on { display: block; }
+      #ex-mobile-hist { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; }
+      .ex-main { padding: 16px 14px 60px; }
+    }
+
+    @media (max-width: 520px) {
+      .ex-typed-row { grid-template-columns: 1fr; }
+      .ex-row-marks-w { position: static; margin-top: 4px; }
+      .ex-toolbar { gap: 8px; }
+      .ex-chipbar { order: 3; width: 100%; }
+    }
+
+    /* ── Site header (exact homepage look) ───────────────────────── */
+    .header { padding: 0; }
+    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
+    .header-inner::before { display: none; }
+    .logo-link { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .logo-img { object-fit: cover; display: block; flex-shrink: 0; background: #14141a; }
+    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; border-radius: 0; padding: 0; box-shadow: none; }
+    .landing-nav a { font-size: 14px; font-weight: 500; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; white-space: nowrap; transition: color .15s, background-color .15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+    .landing-nav a:hover, .landing-nav a.is-current { color: var(--text); background: var(--accent-soft); }
+    .landing-nav a .caret { font-size: 10px; opacity: .6; }
+    .nav-drop { position: relative; }
+    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
+    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
+    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 212px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 60; }
+    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
+    .nav-menu a { display: flex; align-items: center; gap: 9px; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 10px; text-decoration: none; }
+    .nav-menu a svg { flex-shrink: 0; opacity: .85; }
+    .nav-menu a:hover { background: var(--accent-soft); color: var(--accent); }
+    .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; }
+    .icon-btn:hover { background: var(--surface); color: var(--text); }
+    .btn-login { text-decoration: none; color: var(--text); font-weight: 600; font-size: 14px; padding: 8px 16px; border-radius: 999px; }
+    .btn-login:hover { background: var(--surface); }
+    .btn-signup { text-decoration: none; background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 14px; padding: 9px 18px; border-radius: 999px; }
+    .landing-profile-dropdown { position: relative; }
+    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px 4px 4px; cursor: pointer; color: var(--text); font-family: inherit; }
+    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
+    .landing-profile-dropdown .profile-dropdown.open { display: block; }
+    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
+    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
+    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; }
+    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
+    .landing-profile-dropdown .dropdown-logout { color: var(--error); }
+    .mobile-menu-toggle { display: none; flex-direction: column; gap: 4px; margin-left: 4px; cursor: pointer; background: none; border: none; color: var(--text); }
+    .mobile-menu-toggle span, .mobile-menu-toggle span::before, .mobile-menu-toggle span::after { display: block; width: 20px; height: 2px; background: currentColor; border-radius: 2px; content: ''; }
+    .mobile-menu { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--bg-elevated); border-bottom: 1px solid var(--border); padding: 16px 24px; z-index: 190; flex-direction: column; gap: 4px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-nav-link { padding: 11px 4px; color: var(--text); text-decoration: none; font-weight: 600; font-size: 15px; border-radius: 8px; background: none; border: none; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 8px; }
+    .mobile-nav-link:hover { background: var(--surface); }
+    .mobile-acc-toggle { display: flex; align-items: center; gap: 6px; }
+    .mobile-acc-chevron { font-size: 11px; color: var(--text-muted); }
+    .mobile-acc-list { display: flex; flex-direction: column; gap: 2px; padding: 4px 0 2px 12px; }
+    @media (max-width: 1100px) { .landing-nav { display: none; } .mobile-menu-toggle { display: flex; } }
+    @media (max-width: 768px) { .header-inner { height: 64px; padding: 0 14px; } .ex-layout { height: calc(100dvh - 64px); margin-top: 64px; } }
+
+    /* ── Mobile-first refinements ────────────────────────────────── */
+    @media (max-width: 768px) {
+      .ex-main { padding: 14px 10px 70px; }
+      .ex-side { width: min(82vw, 300px); top: 64px; padding: 14px 12px 24px; }
+      .ex-toolbar { align-items: stretch; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+      .ex-toolbar-title { margin: 0; font-size: 1.05rem; }
+      #ex-mobile-hist { align-self: flex-start; }
+      .ex-sum { align-self: flex-start; }
+      .ex-chipbar { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .ex-chip { width: 100%; text-align: left; }
+      .ex-check-btn { width: 100%; }
+      .ex-card-head { padding: 12px 14px 10px; }
+      .ex-card-body { padding: 13px 12px 15px; }
+      .ex-attach-btn { width: 100%; justify-content: center; }
+      .ex-thumb { width: 58px; height: 58px; }
+      .ex-row-fields textarea { min-height: 44px; }
+      .ex-overall { gap: 12px; }
+      .ex-big-score { font-size: 1.6rem; }
+    }
+    @media (max-width: 480px) {
+      .header-inner { padding: 0 10px; }
+      .logo-img { height: 34px; }
+      .logo-text { font-size: 18px; }
+      .ex-side-label { font-size: .62rem; }
+      .ex-typed-row { padding: 11px; }
+      .ex-row-marks-w { position: static; margin-top: 4px; }
+      .ex-row-marks { width: 100% !important; }
+      .ex-attach-actions { margin-left: 0; justify-content: flex-start; }
+      .ex-item { padding: 12px 13px; }
+      .ex-card-hint { font-size: .7rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="logo-text">Anteemonee</span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <div class="nav-drop">
+          <a href="#">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ebooks/">eBooks</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../past-papers/">Past Papers</a>
+          </div>
+        </div>
+        <div class="nav-drop">
+          <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+            <a href="../ai-examiner/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+          </div>
+        </div>
+        <a href="../ai-test-builder/">AI Test Builder</a>
+        <a href="../century-club/">Century Club</a>
+      </nav>
+      <div class="header-actions">
+        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </a>
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="../index.html" class="mobile-nav-link">Home</a>
+    <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+    <div class="mobile-acc-list" id="mobile-acc">
+      <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+      <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+      <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link">AI Test Builder</a>
+    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
+  </div>
+
+  <div class="ex-layout">
+    <aside class="ex-side" id="ex-side">
+      <div class="ex-side-brand">
+        <span class="ex-side-logo">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </span>
+        <h2 class="ex-side-title">AI Examiner</h2>
+      </div>
+      <button class="ex-new" id="ex-new" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New check
+      </button>
+      <div class="ex-side-label">Previous checks</div>
+      <div id="ex-history"></div>
+      <div class="ex-side-foot"></div>
+    </aside>
+    <div class="ex-side-overlay" id="ex-side-overlay"></div>
+
+    <main class="ex-main">
+      <div class="ex-toolbar">
+        <h1 class="ex-toolbar-title" id="ex-toolbar-title">Check answers</h1>
+        <button type="button" id="ex-mobile-hist">History</button>
+        <span class="ex-sum" id="ex-sum">0 answers</span>
+        <div class="ex-chipbar">
+          <select class="ex-chip" id="ex-subject" aria-label="Subject">
+            <option>Physics</option><option>Chemistry</option><option>Biology</option>
+            <option>Mathematics</option><option>Computer Science</option><option>English</option>
+          </select>
+          <select class="ex-chip" id="ex-focus" aria-label="Focus">
+            <option value="feedback">Marks + feedback</option>
+            <option value="score_only">Score only</option>
+          </select>
+        </div>
+        <button class="ex-check-btn" id="ex-check" type="button" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Check answers
+        </button>
+      </div>
+
+      <section class="ex-card" id="ex-input-card">
+        <div class="ex-card-head">
+          <span class="ex-card-title">Questions &amp; answers</span>
+          <span class="ex-card-hint" id="ex-count">0 questions</span>
+        </div>
+        <div class="ex-card-body">
+          <div class="ex-attach-bar">
+            <button type="button" class="ex-attach-btn" id="ex-attach-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Attach paper (image or PDF)
+            </button>
+            <input type="file" id="ex-attach-input" accept="image/*,.pdf,application/pdf" style="display:none">
+            <div class="ex-attach-preview" id="ex-attach-preview"></div>
+            <div class="ex-attach-actions">
+              <button type="button" class="ex-confirm" id="ex-confirm" aria-label="Read paper" title="Read paper">&#10003;</button>
+              <button type="button" class="ex-clear" id="ex-clear" aria-label="Clear" title="Clear">&#215;</button>
+            </div>
+            <div class="ex-loadbar" id="ex-loadbar"><i></i><span id="ex-loadtext">Reading paper&#8230;</span></div>
+          </div>
+          <label class="ex-field-label" style="margin-top:16px">Questions &amp; answers</label>
+          <div id="ex-rows"></div>
+          <button type="button" class="ex-add-row" id="ex-add-row">+ Add row</button>
+          <div class="ex-progress" id="ex-progress"><span class="ex-spin"></span><p class="ex-stage" id="ex-stage">Marking&#8230;</p></div>
+          <div class="ex-err" id="ex-err"></div>
+        </div>
+      </section>
+
+      <section class="ex-results" id="ex-results">
+        <div class="ex-card">
+          <div class="ex-card-head">
+            <span class="ex-card-title">Results</span>
+            <span class="ex-card-hint" id="ex-used-key"></span>
+          </div>
+          <div class="ex-card-body">
+            <div class="ex-overall">
+              <div class="ex-big-score" id="ex-overall-score">0/0</div>
+              <div class="ex-bar"><i id="ex-overall-bar" style="width:0%"></i></div>
+              <div style="font-weight:700" id="ex-overall-pct">0%</div>
+            </div>
+            <div id="ex-results-list"></div>
+          </div>
+        </div>
+      </section>
+  </main>
+
+  <div id="ex-not-auth" style="display:none">
+    <div class="ex-ina">
+      <b>Sign in to check answers</b>
+      <p>You need an account to use the AI Examiner. It takes a minute.</p>
+      <div class="ex-ina-actions">
+        <a href="../pages/login.html" class="btn-login">Log in</a>
+        <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script src="../assets/js/vendor/supabase.min.js"></script>
+  <script src="../assets/js/vendor/pdf.min.js"></script>
+  <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = '../assets/js/vendor/pdf.worker.min.js'; }</script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/plans.js?v=1"></script>
+  <script src="../js/app.js?v=35"></script>
+  <script src="../js/login-modal.js?v=5"></script>
+  <script src="../js/forgot-modal.js?v=2"></script>
+  <script src="../js/signup-modal.js?v=3"></script>
+  <script>
+    var SUPA_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+    var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+    var sdb = null;
+    function getDb() {
+      if (typeof db !== 'undefined' && db) return db;
+      if (sdb) return sdb;
+      try { sdb = supabase.createClient(SUPA_URL, SUPA_ANON); return sdb; } catch (e) { return null; }
+    }
+    var $ = function (id) { return document.getElementById(id); };
+    var HISTORY_KEY = 'ae_checks';
+
+    var typedCount = 0;
+    var attachments = [];
+    var busy = false;
+    var subject = 'Physics';
+    var focus = 'feedback';
+
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    function authOk() { try { return !!(typeof currentUser !== 'undefined' && currentUser && currentUser.id); } catch (_) { return false; } }
+    function showNotAuth() { var el = $('ex-not-auth'); if (el) el.style.display = 'flex'; }
+    async function getToken() {
+      var d = getDb(); if (!d) return '';
+      try { var s = await d.auth.getSession(); return (s && s.data && s.data.session && s.data.session.access_token) || ''; } catch (_) { return ''; }
+    }
+
+    function addRow(prefill) {
+      if (typedCount >= 30) { flash('Maximum 30 questions.'); return; }
+      typedCount++;
+      var host = $('ex-rows');
+      var row = document.createElement('div');
+      row.className = 'ex-typed-row';
+      var q = (prefill && prefill.q) || '', a = (prefill && prefill.a) || '', m = (prefill && prefill.marks) || 1;
+      row.innerHTML = '<span class="ex-row-num">' + typedCount + '</span>' +
+        '<div class="ex-row-fields">' +
+          '<div><label class="ex-row-label">Question</label><textarea placeholder="Question ' + typedCount + '">' + esc(q) + '</textarea></div>' +
+          '<div><label class="ex-row-label">Your answer</label><textarea placeholder="Your answer for question ' + typedCount + '">' + esc(a) + '</textarea></div>' +
+        '</div>' +
+        '<button type="button" class="ex-row-remove" aria-label="Remove">\u00d7</button>' +
+        '<div class="ex-row-marks-w"><input type="number" min="1" max="20" value="' + (m || 1) + '" class="ex-row-marks" aria-label="Marks"></div>';
+      row.addEventListener('input', refreshCount);
+      row.querySelector('.ex-row-remove').addEventListener('click', function () { row.remove(); typedCount--; renumber(); refreshCount(); });
+      host.appendChild(row);
+      refreshCount();
+    }
+    function renumber() {
+      var rows = $('ex-rows').children;
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].querySelector('.ex-row-num').textContent = (i + 1);
+        var t = rows[i].querySelectorAll('textarea');
+        t[0].placeholder = 'Question ' + (i + 1);
+        t[1].placeholder = 'Your answer for question ' + (i + 1);
+      }
+    }
+    function typedItems() {
+      var rows = $('ex-rows').children, out = [];
+      for (var i = 0; i < rows.length; i++) {
+        var t = rows[i].querySelectorAll('textarea');
+        var q = t[0].value.trim(), a = t[1].value.trim();
+        var mk = parseInt(rows[i].querySelector('.ex-row-marks').value, 10) || 1;
+        if (q || a) out.push({ q: q, a: a, marks: mk });
+      }
+      return out;
+    }
+    function fillRows(list) {
+      $('ex-rows').innerHTML = ''; typedCount = 0;
+      (list && list.length ? list : [{}]).slice(0, 30).forEach(addRow);
+      if (!list || !list.length) addRow();
+      refreshCount();
+    }
+    function refreshCount() {
+      var items = typedItems(); var n = items.length; var m = 0;
+      items.forEach(function (it) { m += it.marks; });
+      $('ex-count').textContent = n + ' question' + (n === 1 ? '' : 's');
+      $('ex-sum').innerHTML = n + ' answer' + (n === 1 ? '' : 's') + ' \u00b7 <b>' + m + '</b> marks';
+      $('ex-check').disabled = n === 0 || busy;
+    }
+    function flash(msg) {
+      var e = $('ex-err'); e.textContent = msg; e.classList.add('show');
+      setTimeout(function () { e.classList.remove('show'); }, 3500);
+    }
+
+    function th(data, label) {
+      var w = document.createElement('div'); w.className = 'ex-thumb';
+      var img = document.createElement('img'); img.src = data;
+      if (label) { var em = document.createElement('em'); em.textContent = label; w.appendChild(em); }
+      w.insertBefore(img, w.firstChild);
+      return w;
+    }
+    function renderAttach() {
+      var host = $('ex-attach-preview'); host.innerHTML = '';
+      attachments.forEach(function (at) {
+        var t = th(at.data, at.label);
+        t.addEventListener('click', function () { attachments.splice(attachments.indexOf(at), 1); renderAttach(); });
+        host.appendChild(t);
+      });
+      var actions = document.querySelector('.ex-attach-actions');
+      if (actions) actions.style.display = attachments.length ? 'flex' : 'none';
+      $('ex-confirm').disabled = attachments.length === 0 || busy;
+      host.style.display = attachments.length ? 'flex' : 'none';
+    }
+    function attachImage(file) {
+      return new Promise(function (res) {
+        var reader = new FileReader();
+        reader.onload = function () { attachments.push({ kind: 'img', data: reader.result, label: '' }); res(); };
+        reader.readAsDataURL(file);
+      });
+    }
+    async function attachPdf(file) {
+      if (!window.pdfjsLib) { flash('PDF reader not loaded - try images.'); return; }
+      try {
+        var data = await file.arrayBuffer();
+        var pdf = await window.pdfjsLib.getDocument({ data: data, isEvalSupported: false, disableFontFace: true, useSystemFonts: true }).promise;
+        for (var i = 1; i <= Math.min(pdf.numPages, 6); i++) {
+          var page = await pdf.getPage(i);
+          var scale = Math.min(1.8, 1200 / page.getViewport({ scale: 1 }).width);
+          var vp = page.getViewport({ scale: scale });
+          var c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+          var ctx = c.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+          attachments.push({ kind: 'pdf', data: c.toDataURL('image/png'), label: 'p' + i });
+        }
+        try { await pdf.destroy(); } catch (_) {}
+        renderAttach();
+      } catch (e) { flash('Could not read the PDF: ' + (e && e.message ? e.message : 'unknown error')); }
+    }
+    async function attachFiles(files) {
+      var list = Array.prototype.slice.call(files || []);
+      for (var i = 0; i < list.length; i++) {
+        var f = list[i];
+        if (f.type && f.type.indexOf('pdf') !== -1) await attachPdf(f);
+        else if (/^image\/(png|jpe?g|webp)/.test(f.type || '')) await attachImage(f);
+      }
+      renderAttach();
+    }
+    function setLoad(on, msg) {
+      var bar = $('ex-loadbar');
+      if (on) { bar.classList.add('on'); $('ex-loadtext').textContent = msg || 'Reading paper\u2026'; }
+      else bar.classList.remove('on');
+    }
+    async function confirmExtract() {
+      if (!attachments.length || busy) return;
+      busy = true; $('ex-confirm').disabled = true; $('ex-check').disabled = true;
+      renderAttach();
+      setLoad(true, 'Reading paper with vision\u2026');
+      var err = $('ex-err'); err.classList.remove('show');
+      try {
+        var token = await getToken();
+        if (!token) { showNotAuth(); return; }
+        var res = await fetch(SUPA_URL + '/functions/v1/ai-examiner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ action: 'extract', images: attachments.slice(0, 9).map(function (at) { return at.data; }), subject: subject }),
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || ('Request failed (' + res.status + ')'));
+        fillRows((data.items || []).map(function (it) { return { q: it.q, a: it.a, marks: it.marks }; }));
+        if (!(data.items || []).length) throw new Error('No questions found - try again or type them.');
+      } catch (e) {
+        err.textContent = e && e.message ? e.message : 'Could not read the paper. Try again.'; err.classList.add('show');
+      } finally {
+        busy = false; setLoad(false); renderAttach(); refreshCount();
+      }
+    }
+
+    function setStage(s) { $('ex-stage').textContent = s; }
+    function renderResults(data, opts) {
+      $('ex-results').classList.add('on');
+      var ov = data.overall || { score: 0, total: 0, percent: 0 };
+      $('ex-overall-score').textContent = ov.score + '/' + ov.total;
+      $('ex-overall-pct').textContent = ov.percent + '%';
+      $('ex-overall-bar').style.width = ov.percent + '%';
+      $('ex-used-key').textContent = data.usedUserKey ? 'Your Mistral key' : 'Shared key';
+      var list = $('ex-results-list'); list.innerHTML = '';
+      (data.results || []).forEach(function (r) {
+        var ok = r.correct || (r.score > 0 && r.score >= r.max);
+        var item = document.createElement('div');
+        item.className = 'ex-item';
+        item.innerHTML =
+          '<div class="ex-item-top"><span class="ex-badge ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct' : 'Needs work') + '</span><span class="ex-score">' + r.score + '/' + r.max + '</span></div>' +
+          '<p class="ex-item-q">Q' + r.idx + '. ' + esc(r.q) + '</p>' +
+          (r.a ? '<label>Your answer</label><p>' + esc(r.a) + '</p>' : '') +
+          (r.feedback ? '<label>Feedback</label><p>' + esc(r.feedback) + '</p>' : '') +
+          (r.modelAnswer ? '<label>Model answer</label><p>' + esc(r.modelAnswer) + '</p>' : '');
+        list.appendChild(item);
+      });
+      if (opts && opts.scroll) $('ex-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function check() {
+      var items = typedItems();
+      if (!items.length) { flash('Add at least one question and answer.'); return; }
+      busy = true; $('ex-check').disabled = true;
+      $('ex-progress').classList.add('on'); setStage('Marking your answers\u2026');
+      var err = $('ex-err'); err.classList.remove('show');
+      try {
+        var token = await getToken();
+        if (!token) { showNotAuth(); return; }
+        var res = await fetch(SUPA_URL + '/functions/v1/ai-examiner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ action: 'mark', typed: items, subject: subject, focus: focus }),
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || ('Request failed (' + res.status + ')'));
+        setStage('Finishing up\u2026');
+        renderResults(data, { scroll: true });
+        saveCheck(items, data);
+        renderHistory();
+      } catch (e) {
+        err.textContent = e && e.message ? e.message : 'Something went wrong. Try again.'; err.classList.add('show');
+      } finally {
+        busy = false; $('ex-progress').classList.remove('on'); $('ex-check').disabled = true; refreshCount();
+      }
+    }
+
+    function saveCheck(rows, data) {
+      var list = readHistory();
+      var id = Date.now().toString(36);
+      list.unshift({ id: id, title: subject + ' \u00b7 ' + new Date().toLocaleDateString(), created: Date.now(), subject: subject, data: data, rows: rows });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
+    }
+    function readHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') || []; } catch (_) { return []; } }
+    function renderHistory() {
+      var host = $('ex-history'); host.innerHTML = '';
+      var list = readHistory();
+      if (!list.length) {
+        var empty = document.createElement('div'); empty.className = 'ex-side-empty';
+        empty.innerHTML = 'No checks yet.<br>Your marked papers will show here.';
+        host.appendChild(empty);
+        return;
+      }
+      list.forEach(function (c) {
+        var item = document.createElement('div');
+        item.className = 'ex-hist-item';
+        var ov = c.data && c.data.overall;
+        item.innerHTML =
+          '<div class="ex-hist-info"><div class="ex-hist-title">' + esc(c.title) + '</div>' +
+          '<div class="ex-hist-sub">' + (ov ? '<b>' + ov.score + '/' + ov.total + '</b>' : '') + '</div></div>' +
+          '<span class="ex-hist-score">' + (ov ? ov.percent + '%' : '') + '</span>' +
+          '<button type="button" class="ex-hist-del" aria-label="Delete check">\u00d7</button>';
+        item.addEventListener('click', function () { openCheck(c); });
+        item.querySelector('.ex-hist-del').addEventListener('click', function (e) {
+          e.stopPropagation();
+          var list2 = readHistory().filter(function (x) { return x.id !== c.id; });
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(list2));
+          renderHistory();
+        });
+        host.appendChild(item);
+      });
+    }
+    function openCheck(c) {
+      $('ex-toolbar-title').textContent = c.title;
+      $('ex-results-list').innerHTML = '';
+      $('ex-results').classList.remove('on');
+      if (c.data) renderResults(c.data);
+      closeSide();
+    }
+    function newCheck() {
+      $('ex-toolbar-title').textContent = 'Check answers';
+      $('ex-results').classList.remove('on');
+      fillRows([{}]);
+      attachments = [];
+      renderAttach();
+      closeSide();
+    }
+    function openSide() { $('ex-side').classList.add('open'); $('ex-side-overlay').classList.add('on'); }
+    function closeSide() { $('ex-side').classList.remove('open'); $('ex-side-overlay').classList.remove('on'); }
+
+    // ── Landing profile dropdown (copied from the other pages) ──
+    function renderLandingAuth() {
+      try {
+        var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+        var loggedOut = document.getElementById('landing-auth');
+        var loggedIn = document.getElementById('landing-auth-in');
+        if (!loggedOut || !loggedIn) return;
+        if (user) {
+          loggedOut.style.display = 'none';
+          var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+          var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+          var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+          var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+          var dropdownHtml =
+            '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+              '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                '<div class="avatar-wrapper">' +
+                  (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                '</div>' +
+              '</button>' +
+              '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                '<div class="dropdown-header">' +
+                  '<div class="dropdown-avatar">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                  '<div class="dropdown-info">' +
+                    '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                    '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="dropdown-divider"></div>' +
+                '<a href="../account/" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Account</a>' +
+                '<a href="../settings/" class="dropdown-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</a>' +
+                '<div class="dropdown-divider"></div>' +
+                '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Logout</button>' +
+              '</div>' +
+            '</div>';
+          loggedIn.innerHTML = dropdownHtml;
+          loggedIn.style.display = 'flex';
+          setupLandingProfileDropdown();
+        } else {
+          loggedIn.style.display = 'none';
+          loggedOut.style.display = 'flex';
+        }
+      } catch (_) {}
+    }
+    function setupLandingProfileDropdown() {
+      var dropdown = document.getElementById('landing-profile-dropdown-menu');
+      var container = document.getElementById('landing-profile-dropdown');
+      if (!dropdown || !container) return;
+      var hideTimer = null;
+      function scheduleHide() { hideTimer = setTimeout(function () { dropdown.classList.remove('open'); }, 150); }
+      function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+      container.addEventListener('mouseenter', cancelHide);
+      container.addEventListener('mouseleave', scheduleHide);
+      dropdown.addEventListener('mouseenter', cancelHide);
+      dropdown.addEventListener('mouseleave', scheduleHide);
+    }
+    if (!window._landingDropdownClickHandlerEx) {
+      document.addEventListener('click', function (e) {
+        var container = document.getElementById('landing-profile-dropdown');
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
+      });
+      window._landingDropdownClickHandlerEx = true;
+    }
+    function toggleLandingProfileDropdown() {
+      var dropdown = document.getElementById('landing-profile-dropdown-menu');
+      if (dropdown) dropdown.classList.toggle('open');
+    }
+    window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+    function handleLandingLogout() {
+      try {
+        if (typeof handleLogout === 'function') handleLogout();
+        else { localStorage.removeItem('Anteemonee_theme_mode'); window.location.href = '../index.html'; }
+      } catch (_) { window.location.href = '../index.html'; }
+    }
+    window.handleLandingLogout = handleLandingLogout;
+
+    function wire() {
+      // Passive UI must work even before auth resolves.
+      document.getElementById('menu-toggle').addEventListener('click', function () {
+        document.getElementById('mobile-menu').classList.toggle('open');
+      });
+      document.querySelector('.mobile-acc-toggle').addEventListener('click', function () {
+        var acc = document.getElementById('mobile-acc');
+        acc.style.display = acc.style.display === 'flex' ? '' : 'flex';
+      });
+      $('ex-new').addEventListener('click', newCheck);
+      $('ex-mobile-hist').addEventListener('click', openSide);
+      $('ex-side-overlay').addEventListener('click', closeSide);
+      renderHistory();
+      renderLandingAuth();
+
+      if (!authOk()) { showNotAuth(); return; }
+      $('ex-add-row').addEventListener('click', function () { addRow(); });
+      fillRows([{}]);
+      $('ex-attach-btn').addEventListener('click', function () { $('ex-attach-input').click(); });
+      $('ex-attach-input').addEventListener('change', function () { attachFiles(this.files); this.value = ''; });
+      $('ex-confirm').addEventListener('click', confirmExtract);
+      $('ex-clear').addEventListener('click', function () { attachments = []; renderAttach(); });
+      $('ex-subject').addEventListener('change', function () { subject = this.value; });
+      $('ex-focus').addEventListener('change', function () { focus = this.value; });
+      $('ex-check').addEventListener('click', check);
+    }
+
+    renderLandingAuth();
+    var lTries = 0;
+    var lTimer = setInterval(function () {
+      lTries++;
+      renderLandingAuth();
+      if (lTries > 40) clearInterval(lTimer);
+      if (window.__authReady === true) clearInterval(lTimer);
+    }, 300);
+
+    document.addEventListener('DOMContentLoaded', function () {
+      try { checkAuth(); } catch (_) {}
+      setTimeout(wire, 400);
+    });
+  </script>
+</body>
+</html>
