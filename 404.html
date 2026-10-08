@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Not found - Anteemonee</title>
+  <script>
+    // Static hosts (e.g. GitHub Pages) cannot serve /ai-examiner/<subject>/<CODE>/
+    // directly, so stash the deep link here and hand the user to the app, which
+    // restores the URL and loads the check (owner-only via the database).
+    (function () {
+      var p = location.pathname || "/";
+      var m = p.match(/(?:^|\/)ai-examiner\/([a-z0-9\-]+)\/([A-Z0-9]{6,})\/?$/i);
+      if (m) {
+        try { sessionStorage.setItem("ex_pending", p); } catch (_) {}
+        var i = p.lastIndexOf("/ai-examiner/");
+        var appDir = i > -1 ? p.slice(0, i) + "/ai-examiner/" : "/ai-examiner/";
+        location.replace(appDir);
+      } else {
+        var paint = function () {
+          if (!document.body) return;
+          document.body.style.cssText = "display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0b0b10;color:#e8e8ee;font-family:system-ui,sans-serif";
+          document.body.innerHTML =
+            '<div style="text-align:center;padding:24px"><h1 style="font-size:44px;margin:0 0 8px">404</h1>' +
+            '<p style="opacity:.75">This page does not exist.</p>' +
+            '<a href="/" style="color:#3B82F6;font-weight:600">Go home</a></div>';
+        };
+        if (document.body) paint();
+        else document.addEventListener("DOMContentLoaded", paint);
+      }
+    })();
+  </script>
+</head>
+<body></body>
+</html>

@@ -3,6 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <script>
+    // Deep links like /ai-examiner/physics/CODE/ must still resolve ../ assets
+    // relative to this app's own folder, so pin <base> to the app directory.
+    (function () {
+      try {
+        var p = location.pathname || "/";
+        var i = p.lastIndexOf("/ai-examiner/");
+        var appDir = i > -1 ? p.slice(0, i + 1) + "ai-examiner/" : null;
+        if (appDir) {
+          var b = document.createElement("base");
+          b.setAttribute("href", appDir);
+          document.head.insertBefore(b, document.head.firstChild);
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
     (function () {
       try {
         var m = null;
@@ -20,7 +36,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=35">
-  <link rel="stylesheet" href="../css/header.css?v=2">
+  <link rel="stylesheet" href="../css/header.css?v=3">
+  <script src="../js/header-notifications.js?v=1" defer></script>
   <style>
     body { overflow-x: hidden; background: var(--bg) !important; font-family: var(--font-ui); margin: 0; }
 
@@ -767,6 +784,7 @@
         renderResults(data, { scroll: true });
         saveCheck(items, data);
         renderHistory();
+        if (data && data.code) setCheckUrl(subject, data.code, false);
         LD.done(5, 'Detailed result ready');
       } catch (e) {
         err.textContent = e && e.message ? e.message : 'Something went wrong. Try again.'; err.classList.add('show');
@@ -777,8 +795,9 @@
 
     function saveCheck(rows, data) {
       var list = readHistory();
-      var id = Date.now().toString(36);
-      list.unshift({ id: id, title: subject + ' \u00b7 ' + new Date().toLocaleDateString(), created: Date.now(), subject: subject, data: data, rows: rows });
+      var code = (data && String(data.code || '')) || '';
+      var id = code || Date.now().toString(36);
+      list.unshift({ id: id, code: code, title: subject + ' \u00b7 ' + new Date().toLocaleDateString(), created: Date.now(), subject: subject, data: data, rows: rows });
       localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
     }
     function readHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') || []; } catch (_) { return []; } }
@@ -816,6 +835,7 @@
       $('ex-results').classList.remove('on');
       $('ex-input-card').style.display = 'none';
       if (c.data) renderResults(c.data);
+      setCheckUrl(c.subject || subject, c.code || '');
       closeSide();
       var r = $('ex-results');
       if (c.data) r.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -834,6 +854,7 @@
         attachments = [];
         renderAttach();
       }
+      setCheckUrl('', '');
       closeSide();
       var card = $('ex-input-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -846,6 +867,92 @@
     }
     function openSide() { $('ex-side').classList.add('open'); $('ex-side-overlay').classList.add('on'); }
     function closeSide() { $('ex-side').classList.remove('open'); $('ex-side-overlay').classList.remove('on'); }
+
+    // ── Deep links: /ai-examiner/<subject>/<CODE>/ ────────────────
+    function appBase() {
+      var p = location.pathname || '/';
+      var i = p.lastIndexOf('/ai-examiner/');
+      return i > -1 ? p.slice(0, i + 1) + 'ai-examiner/' : '/ai-examiner/';
+    }
+    function makeSlug(name) {
+      return String(name || 'subject').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+    function setCheckUrl(subjectName, code, replace) {
+      try {
+        if (!code) {
+          if (location.pathname !== appBase()) history.replaceState({}, '', appBase());
+          return;
+        }
+        var href = appBase() + makeSlug(subjectName) + '/' + String(code) + '/';
+        if (location.pathname === href) return;
+        if (replace === false) history.pushState({}, '', href);
+        else history.replaceState({}, '', href);
+      } catch (_) {}
+    }
+    function parseCheckPath() {
+      var p = location.pathname || '';
+      var m = p.match(/(?:^|\/)ai-examiner\/([a-z0-9\-]+)\/([A-Z0-9]{6,})\/?$/i);
+      if (m) return { subject: m[1].toLowerCase(), code: m[2].toUpperCase() };
+      var pending = '';
+      try { pending = sessionStorage.getItem('ex_pending') || ''; } catch (_) {}
+      if (pending) {
+        var m2 = pending.match(/(?:^|\/)ai-examiner\/([a-z0-9\-]+)\/([A-Z0-9]{6,})\/?$/i);
+        if (m2) return { subject: m2[1].toLowerCase(), code: m2[2].toUpperCase() };
+      }
+      return null;
+    }
+    function clearPendingPath() { try { sessionStorage.removeItem('ex_pending'); } catch (_) {} }
+    function redirectToApp() {
+      clearPendingPath();
+      try { location.replace(appBase()); } catch (_) {}
+    }
+    // Only the check's owner can load it (exam_checks RLS), so a foreign or
+    // unknown code simply fails and falls back to a fresh new-check page.
+    function loadCheckByCode(code) {
+      var d = getDb();
+      if (!d) return Promise.resolve(false);
+      return d.from('exam_checks')
+        .select('subject,chapter,book_title,score,total,percent,grade,detail,created_at')
+        .eq('code', code)
+        .maybeSingle()
+        .then(function (res) {
+          if (res.error || !res.data) return false;
+          var row = res.data;
+          var results = (row.detail && row.detail.results) || [];
+          fillRows(results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }));
+          $('ex-input-card').style.display = 'none';
+          $('ex-toolbar-title').textContent = row.subject + ' \u00b7 ' + new Date(row.created_at).toLocaleDateString();
+          try { subject = row.subject; var sel = $('ex-subject'); if (sel) sel.value = row.subject; } catch (_) {}
+          renderResults({
+            results: results,
+            overall: (row.detail && row.detail.overall) || { score: row.score, total: row.total, percent: row.percent, grade: row.grade },
+            chapter: row.chapter,
+            bookTitle: row.book_title,
+            usedUserKey: false,
+          }, { scroll: false });
+          return true;
+        })
+        .catch(function () { return false; });
+    }
+    function handleDeepRoute(attempt) {
+      var m = parseCheckPath();
+      if (!m) { clearPendingPath(); return; }
+      if (!window.__authReady && (attempt || 0) < 20) {
+        setTimeout(function () { handleDeepRoute((attempt || 0) + 1); }, 500);
+        return;
+      }
+      if (!authOk()) { redirectToApp(); return; }
+      loadCheckByCode(m.code).then(function (ok) {
+        if (!ok) { redirectToApp(); return; }
+        try {
+          var target = appBase() + m.subject + '/' + m.code + '/';
+          if (location.pathname !== target) history.replaceState({}, '', target);
+        } catch (_) {}
+        clearPendingPath();
+      }).catch(function () { redirectToApp(); });
+    }
+    window.addEventListener('popstate', function () { handleDeepRoute(); });
+
     function layoutMobileActions() {
       var bottom = $('ex-bottom-actions'); if (!bottom) return;
       var sum = $('ex-sum'), chk = $('ex-check'), toolbar = $('ex-toolbar'); if (!sum || !chk || !toolbar) return;
@@ -977,7 +1084,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       try { checkAuth(); } catch (_) {}
-      setTimeout(wire, 400);
+      setTimeout(function () { wire(); handleDeepRoute(); }, 400);
     });
   </script>
 </body>
