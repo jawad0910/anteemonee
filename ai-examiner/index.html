@@ -499,6 +499,7 @@
     var busy = false;
     var subject = 'Physics';
     var focus = 'feedback';
+    var lastCheckItems = null; // Q&A of the check currently on screen (results view)
 
     function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -785,6 +786,7 @@
         renderResults(data, { scroll: true });
         saveCheck(items, data);
         renderHistory();
+        lastCheckItems = items.slice();
         if (data && data.code) setCheckUrl(subject, data.code, false);
         LD.done(5, 'Detailed result ready');
       } catch (e) {
@@ -835,6 +837,9 @@
       $('ex-results-list').innerHTML = '';
       $('ex-results').classList.remove('on');
       $('ex-input-card').style.display = 'none';
+      var fromRows = (c.rows && c.rows.length) ? c.rows : null;
+      var fromResults = (c.data && c.data.results) ? c.data.results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }) : [];
+      lastCheckItems = fromRows || (fromResults.length ? fromResults : null);
       if (c.data) renderResults(c.data);
       setCheckUrl(c.subject || subject, c.code || '');
       closeSide();
@@ -850,12 +855,15 @@
       if (reuse) {
         // Copy the questions & answers into the fresh check - editable/addable.
         var items = typedItems();
+        if (!items.length && window.__exReuseItems && window.__exReuseItems.length) items = window.__exReuseItems;
         fillRows(items.map(function (it) { return { q: it.q, a: it.a, marks: it.marks }; }));
       } else {
         fillRows([{}]);
         attachments = [];
         renderAttach();
       }
+      lastCheckItems = null;
+      window.__exReuseItems = null;
       setCheckUrl('', '');
       closeSide();
       var card = $('ex-input-card');
@@ -864,8 +872,11 @@
     function newCheck() {
       $('ex-reuse-modal').classList.remove('on');
       var items = typedItems();
-      if (items.length) $('ex-reuse-modal').classList.add('on');
-      else finalizeNewCheck(false);
+      if (!items.length && lastCheckItems && lastCheckItems.length) items = lastCheckItems;
+      if (items.length) {
+        window.__exReuseItems = items;
+        $('ex-reuse-modal').classList.add('on');
+      } else finalizeNewCheck(false);
     }
     function openSide() { $('ex-side').classList.add('open'); $('ex-side-overlay').classList.add('on'); }
     function closeSide() { $('ex-side').classList.remove('open'); $('ex-side-overlay').classList.remove('on'); }
@@ -922,6 +933,7 @@
           var row = res.data;
           var results = (row.detail && row.detail.results) || [];
           fillRows(results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }));
+          lastCheckItems = results.length ? results.map(function (r) { return { q: r.q, a: r.a, marks: Number(r.max) || 1 }; }) : null;
           $('ex-input-card').style.display = 'none';
           $('ex-toolbar-title').textContent = row.subject + ' \u00b7 ' + new Date(row.created_at).toLocaleDateString();
           try { subject = row.subject; var sel = $('ex-subject'); if (sel) sel.value = row.subject; } catch (_) {}
