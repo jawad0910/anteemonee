@@ -1,7 +1,8 @@
 ﻿/* ==========================================
    Anteemonee - Triple API Failover Service
-   Routes through Supabase Edge Function
-   Detects incomplete streams and auto-falls back
+   Priority engine: GPT-6 Astra (free, called straight from the browser).
+   Everything after that routes through the Supabase Edge Function
+   (Groq → Qwen → Mistral). Detects incomplete streams and auto-falls back.
    ========================================== */
 
 class AiApiService {
@@ -15,11 +16,31 @@ class AiApiService {
     this._sessionId = null;
     this.totalProviders = 3;
     this._lastFinishReason = null; // finish_reason of the latest completed attempt ('stop' | 'length' | ...)
+    // ── Priority engine: GPT-6 Astra (Flagship Router tunnel) ──
+    // Astra is tried first for every request. On ANY failure — network error,
+    // HTTP error, hung stream, empty reply — we fall through to the Supabase
+    // edge function and its Groq → Qwen → Mistral chain, so the student never
+    // sees an outage because of the free tunnel.
+    this.astraUrl = 'https://rmwit9z.abc-tunnel.us/v1/chat/completions';
+    this.astraModel = 'gpt-6-astra';
+    this.astraKey = 'sk-1af196978a75d6af-d5608e-c0e8ab59';
+    this._astraFails = 0;         // consecutive Astra failures
+    this._astraCooldownUntil = 0; // skip Astra until this timestamp
+    this._abortRequested = false; // user tapped Stop — never fail over after that
+    this._lastStreamModel = null; // `model` id seen on the latest streamed chunks
+    this.lastServed = null;       // { engine, provider, model } of the reply in flight
   }
 
   get currentProvider() {
+    if (this.lastServed && this.lastServed.engine === 'astra') {
+      return { name: 'GPT-6 Astra', model: this.lastServed.model };
+    }
     const names = ['Groq', 'Qwen', 'Mistral'];
-    return { name: names[this.activeProvider] || 'AI' };
+    return { name: names[this.activeProvider] || 'AI', model: this._lastStreamModel };
+  }
+
+  _providerName(index) {
+    return ['Groq', 'Qwen', 'Mistral'][index] || 'AI';
   }
 
   /**
@@ -142,8 +163,27 @@ class AiApiService {
    * it throws an IncompleteStreamError so the caller can retry with fallback.
    */
   async *streamChat(messages, providerIndex = null, images = null) {
-    const startIndex = providerIndex !== null ? providerIndex : this.activeProvider;
     this._lastFinishReason = null;
+    this._lastStreamModel = null;
+    this.lastServed = null;
+    this._abortRequested = false;
+
+    // ── Priority attempt: GPT-6 Astra. Any failure drops to the chain below. ──
+    if (this._astraAvailable()) {
+      try {
+        yield* this._streamAstra(messages);
+        this._noteAstraSuccess();
+        return;
+      } catch (error) {
+        if (this._abortRequested) throw error;
+        this._noteAstraFailure(error);
+        // Partial text was already streamed to the UI, so the caller's
+        // continuation path owns it — same contract as the edge providers.
+        if (error instanceof IncompleteStreamError) throw error;
+      }
+    }
+
+    const startIndex = providerIndex !== null ? providerIndex : this.activeProvider;
     let lastError = null;
 
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -152,8 +192,17 @@ class AiApiService {
       try {
         this.activeProvider = idx;
         yield* this._streamFromEdge(messages, idx, images);
+        this.lastServed = {
+          engine: 'edge',
+          provider: this._providerName(idx),
+          model: this._lastStreamModel,
+          at: Date.now(),
+        };
+        console.info('[AI] Served by fallback chain: ' + this.lastServed.provider +
+          (this.lastServed.model ? ' (' + this.lastServed.model + ')' : ''));
         return; // success
       } catch (error) {
+        if (this._abortRequested) throw error; // user tapped Stop — stop immediately
         console.warn(`[AI] Provider ${idx} failed:`, error.message);
         lastError = error;
         // If incomplete stream, the caller already has partial text.
@@ -282,10 +331,16 @@ class AiApiService {
             if (json.error) {
               throw new Error(json.error);
             }
+            if (json.model) this._lastStreamModel = json.model;
             const fr = json.choices?.[0]?.finish_reason;
             if (fr) this._lastFinishReason = fr;
             const content = json.choices?.[0]?.delta?.content;
-            if (content) yield content;
+            if (content) {
+              if (!this.lastServed) {
+                this.lastServed = { engine: 'edge', provider: this._providerName(this.activeProvider), model: json.model || null, at: Date.now() };
+              }
+              yield content;
+            }
           } catch (e) {
             if (e instanceof IncompleteStreamError) throw e;
             if (e.message && !e.message.startsWith('Unexpected')) throw e;
@@ -308,8 +363,14 @@ class AiApiService {
               } else if (json.error) {
                 throw new Error(json.error);
               } else {
+                if (json.model) this._lastStreamModel = json.model;
                 const content = json.choices?.[0]?.delta?.content;
-                if (content) yield content;
+                if (content) {
+                  if (!this.lastServed) {
+                    this.lastServed = { engine: 'edge', provider: this._providerName(this.activeProvider), model: json.model || null, at: Date.now() };
+                  }
+                  yield content;
+                }
               }
             } catch (e) {
               if (e.message && !e.message.startsWith('Unexpected')) throw e;
@@ -331,7 +392,161 @@ class AiApiService {
     }
   }
 
+  /** True unless Astra is inside its post-failure cool-down window. */
+  _astraAvailable() {
+    return Date.now() >= this._astraCooldownUntil;
+  }
+
+  _noteAstraSuccess() {
+    this._astraFails = 0;
+    console.info('[AI] Served by GPT-6 Astra (' +
+      ((this.lastServed && this.lastServed.model) || this.astraModel) + ')');
+  }
+
+  _noteAstraFailure(error) {
+    this._astraFails += 1;
+    console.warn('[AI] GPT-6 Astra failed: ' + ((error && error.message) || error) +
+      ' — falling back to Groq → Qwen → Mistral');
+    // Two misses in a row means the tunnel is down for now: stop paying its
+    // latency on every message, and try it again in a minute.
+    if (this._astraFails >= 2) {
+      this._astraCooldownUntil = Date.now() + 60000;
+      console.warn('[AI] GPT-6 Astra cooling down for 60s after ' + this._astraFails +
+        ' consecutive failures');
+    }
+  }
+
+  /**
+   * Priority attempt: stream straight from GPT-6 Astra. The tunnel is
+   * OpenAI-compatible and sends CORS headers, so the browser calls it
+   * directly — no edge function sits in front of it.
+   *
+   * The prompt never tells the model what to call itself, so when a student
+   * asks "which model are you?" the answer comes from the real model.
+   *
+   * Any throw here means "fall back to the normal chain".
+   */
+  async *_streamAstra(messages) {
+    const controller = new AbortController();
+    this._currentAbort = controller;
+    // One budget for connect + reasoning + generation. Astra is a reasoning
+    // model, so the first visible token can take a while — stay generous.
+    const timeoutId = setTimeout(() => {
+      try { controller.abort(); } catch (_) {}
+    }, 90000);
+    let reader = null;
+
+    try {
+      let res;
+      try {
+        res = await fetch(this.astraUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.astraKey}`,
+          },
+          // Reasoning tokens are billed against max_tokens, so leave plenty of
+          // headroom: a tight budget can finish a reply with no visible text.
+          body: JSON.stringify({ model: this.astraModel, messages, stream: true, max_tokens: 4096 }),
+          signal: controller.signal,
+        });
+      } catch (e) {
+        if (e && e.name === 'AbortError' && this._abortRequested) throw e;
+        if (e && e.name === 'AbortError') throw new Error('Astra request timed out');
+        throw e; // DNS / connection refused / offline — fail over right away
+      }
+
+      if (!res.ok) {
+        let detail = 'HTTP ' + res.status;
+        try {
+          const text = await res.text();
+          try {
+            const parsed = JSON.parse(text);
+            detail = (parsed.error && (parsed.error.message || parsed.error)) || detail;
+          } catch (_) {
+            detail = String(text).slice(0, 200) || detail;
+          }
+        } catch (_) {}
+        throw new Error('Astra ' + res.status + ': ' + detail);
+      }
+
+      // The tunnel may ignore `stream` and answer with a single JSON body.
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data && data.error) throw new Error('Astra: ' + (data.error.message || data.error));
+        const choice = data && data.choices && data.choices[0];
+        const content = choice && choice.message && choice.message.content;
+        if (!content) throw new Error('GPT-6 Astra returned an empty response');
+        if (data.model) this._lastStreamModel = data.model;
+        this.lastServed = { engine: 'astra', provider: 'GPT-6 Astra', model: data.model || this.astraModel, at: Date.now() };
+        yield content;
+        return;
+      }
+
+      reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let receivedDone = false;
+      let receivedContent = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+          const data = trimmed.slice(6);
+          if (data === '[DONE]') {
+            receivedDone = true;
+            break;
+          }
+
+          try {
+            const json = JSON.parse(data);
+            if (json.error) throw new Error('Astra: ' + (json.error.message || json.error));
+            if (json.model) this._lastStreamModel = json.model;
+            const fr = json.choices?.[0]?.finish_reason;
+            if (fr) this._lastFinishReason = fr;
+            const content = json.choices?.[0]?.delta?.content;
+            if (content) {
+              receivedContent = true;
+              if (!this.lastServed) {
+                this.lastServed = { engine: 'astra', provider: 'GPT-6 Astra', model: json.model || this.astraModel, at: Date.now() };
+              }
+              yield content;
+            }
+          } catch (e) {
+            if (e && e.message && e.message.startsWith('Astra:')) throw e;
+            // Malformed frames and keep-alive pings are ignored.
+          }
+        }
+
+        if (receivedDone) break;
+      }
+
+      if (!receivedContent) {
+        // The connection died before any text, or thinking tokens consumed the
+        // whole budget and the reply finished empty. Either way: fall back.
+        throw new Error('GPT-6 Astra produced no usable content');
+      }
+      if (!receivedDone) {
+        throw new IncompleteStreamError('GPT-6 Astra response was cut off. Retrying with fallback model...');
+      }
+    } finally {
+      try { clearTimeout(timeoutId); } catch (_) {}
+      try { if (reader) reader.releaseLock(); } catch (_) {}
+      if (this._currentAbort === controller) this._currentAbort = null;
+    }
+  }
+
   abort() {
+    this._abortRequested = true;
     if (this._currentAbort) {
       this._currentAbort.abort();
       this._currentAbort = null;

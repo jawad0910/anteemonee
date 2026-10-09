@@ -1258,6 +1258,18 @@ Use this context if the student refers to the quiz, an answer, or a question num
   // â”€â”€ AI Memory (durable facts remembered from past chats) â”€â”€
   let aiMemories = [];
 
+  // ── AI Memory extraction ──
+  // Whenever this runs, that many chat replies have been finished since the last
+  // time we asked the tutor to remember anything. A burst of a few turns is sent
+  // as one request: it costs one cheap call instead of one per message, the
+  // extractor sees enough conversation to tell a new fact from a restated one,
+  // and a student who asks one quick question never triggers it at all.
+  let turnsSinceMemoryScan = 0;
+  const MEMORY_SCAN_EVERY_TURNS = 3;
+  // Only the tail is useful (older turns are already stored); the server caps
+  // this as well, so a long chat cannot make the request unbounded.
+  const MEMORY_SCAN_TAIL = 8;
+
   async function loadAiMemories() {
     aiMemories = [];
     try {
@@ -1270,6 +1282,54 @@ Use this context if the student refers to the quiz, an answer, or a question num
         .limit(30);
       if (!error && Array.isArray(data)) {
         aiMemories = data.map(r => r && r.fact).filter(Boolean);
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Ask the tutor to remember what just happened, without ever getting in the
+   * student's way: runs in the background after the reply has been painted, and
+   * every failure is swallowed. The whole feature is a nicety — a failed
+   * extraction must never surface as an error or delay the next message.
+   */
+  async function extractMemoriesFromChat() {
+    try {
+      if (!aiPrefs.memoryEnabled) return;
+      if (typeof currentUser === 'undefined' || !currentUser) return;
+      const token = getAccessToken();
+      if (!token) return;
+      // Uploaded photos are sent to the chat as image data; the extractor reads
+      // text only, so those turns are dropped rather than shipped for nothing.
+      const tail = messages
+        .slice(-MEMORY_SCAN_TAIL)
+        .filter(m => m && (m.role === 'user' || m.role === 'assistant') && m.content && !m.images)
+        .map(m => ({ role: m.role, content: String(m.content) }));
+      if (!tail.some(m => m.role === 'user')) return;
+
+      // Same resolution order the other edge-function callers use: the shared
+      // service instance first, then the page globals.
+      const base = (typeof api !== 'undefined' && api && api.supabaseUrl) || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
+      const anonKey = (typeof api !== 'undefined' && api && api.supabaseKey) || (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '');
+      if (!base) return;
+      const res = await fetch(base + '/functions/v1/ai-memory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({
+          messages: tail,
+          session_id: activeSession ? activeSession.id : null,
+          subject: (typeof selectedSubject !== 'undefined' && selectedSubject) ? selectedSubject : null,
+          source: 'chat',
+        }),
+      });
+      const data = await res.json().catch(function () { return null; });
+      if (data && data.ok && (data.stored || data.forgotten)) {
+        // Fold the new facts in immediately: the next reply in this same chat can
+        // already use them, instead of catching up on the next reload.
+        await loadAiMemories();
       }
     } catch (_) {}
   }
@@ -3214,6 +3274,41 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     }
   }
 
+  /**
+   * Which accounts may see the engine text ("GPT-6 Astra" / "Groq fallback").
+   * It is a verification aid for the Astra rollout, not product chrome, so it
+   * stays invisible to everyone else — matching is case-insensitive.
+   */
+  const ENGINE_BADGE_EMAILS = [
+    'jawadshafaqat0910@gmail.com',
+  ];
+
+  function canSeeEngineBadge() {
+    try {
+      var email = '';
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        email = currentUser.email ||
+          (currentUser.user_metadata && currentUser.user_metadata.email) || '';
+      }
+      email = String(email || '').trim().toLowerCase();
+      return !!email && ENGINE_BADGE_EMAILS.indexOf(email) !== -1;
+    } catch (_) { return false; }
+  }
+
+  /**
+   * Name of the engine that is actually serving the reply in flight.
+   * `api.lastServed` is written by the API service from the live stream itself
+   * (it reads the `model` id off the chunks), so this reflects the real route:
+   * GPT-6 Astra when the priority tunnel answers, otherwise the fallback model.
+   */
+  function getServingEngineLabel() {
+    try {
+      var served = (typeof api !== 'undefined' && api && api.lastServed) ? api.lastServed : null;
+      if (!served) return null;
+      return served.engine === 'astra' ? 'GPT-6 Astra' : (served.provider || 'AI');
+    } catch (_) { return null; }
+  }
+
   // Cycle through real status messages while waiting for first chunk
   function startStatusCycle(div, mode) {
     let idx = 0;
@@ -3460,6 +3555,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       body.appendChild(wrap);
       var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
       wrap.dataset.voteKey = key;
+      attachEngineBadge(body, idx);
       if (getVotes()[key]) hideVoteBtns(wrap);
       wrap.querySelector('.fb-like').addEventListener('click', function () { onVote(wrap, key, 'like'); });
       wrap.querySelector('.fb-dislike').addEventListener('click', function () { onVote(wrap, key, 'dislike'); });
@@ -3474,6 +3570,33 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
           }
         });
       }
+    } catch (_) {}
+  }
+
+  /**
+   * Small "which model answered this" chip under a reply. It is rendered from
+   * the engine recorded on the message, which the API service took from the
+   * real streamed response — so the chip can never claim Astra when Astra was
+   * not the one that answered. That makes a silent fallback visible.
+   */
+  function attachEngineBadge(body, idx) {
+    try {
+      if (!canSeeEngineBadge()) return;
+      if (!body || body.querySelector('.msg-engine')) return;
+      var message = (typeof messages !== 'undefined' && messages && messages[idx]) ? messages[idx] : null;
+      var engine = message && message.engine;
+      if (!engine || !engine.engine) return;
+      var badge = document.createElement('span');
+      if (engine.engine === 'astra') {
+        badge.className = 'msg-engine msg-engine-astra';
+        badge.textContent = 'GPT-6 Astra';
+        badge.title = 'Answered by the priority model GPT-6 Astra' + (engine.model ? ' (' + engine.model + ')' : '');
+      } else {
+        badge.className = 'msg-engine msg-engine-fallback';
+        badge.textContent = (engine.provider || 'AI') + ' fallback';
+        badge.title = 'GPT-6 Astra was unavailable — answered by ' + (engine.provider || 'the fallback model') + (engine.model ? ' (' + engine.model + ')' : '');
+      }
+      body.appendChild(badge);
     } catch (_) {}
   }
 
@@ -5257,6 +5380,13 @@ function handleFileBlocks(div, text) {
     }
     var message = { role: 'assistant', content: stripEmptyReferences(stripQuizBlock(stripSwitchMarkers(text || ''), !!(div && div.__quizRequested))) };
     try { message.content = stripGraphBlock(message.content); } catch (_) {}
+    // Record which engine produced this reply (GPT-6 Astra, or the Groq → Qwen
+    // → Mistral chain after a fallback) so the UI can show it honestly.
+    try {
+      message.engine = (typeof api !== 'undefined' && api && api.lastServed)
+        ? { engine: api.lastServed.engine || null, provider: api.lastServed.provider || null, model: api.lastServed.model || null }
+        : null;
+    } catch (_) { message.engine = null; }
     try {
       var graphData = parseGraphBlock(text);
       if (!graphData && div && div.__graphRequested) graphData = synthesizeGraphFromPrompt(div.__graphPromptCt || '');
@@ -6451,6 +6581,9 @@ function handleFileBlocks(div, text) {
 
     // Lock immediately — prevent double-send during any async gap
     isStreaming = true;
+    // Tracks whether an answer actually landed, so the memory scan below never
+    // runs off the back of a failed or stopped turn.
+    let assistantReplied = false;
     chatInput.disabled = true;
     btnSend.disabled = true;
     // Text -> image bypasses the text chat pipeline entirely.
@@ -6691,7 +6824,12 @@ function handleFileBlocks(div, text) {
         if (firstChunk) {
           firstChunk = false;
           stopStatusCycle(statusCycle);
-          updateStreamingStatus(streamDiv, 'Generating response...', 'analyzing');
+          // Name the live engine while the reply streams — the fastest way to
+          // see whether Astra answered or the request fell back. Only the
+          // allowlisted accounts get told the name; everyone else sees the
+          // generic status.
+          var servingEngine = canSeeEngineBadge() ? getServingEngineLabel() : null;
+          updateStreamingStatus(streamDiv, servingEngine ? servingEngine + ' is generating\u2026' : 'Generating response...', 'analyzing');
         }
         updateStreamingMessageThrottled(streamDiv, fullResponse);
         if (userNearBottom) scrollToBottom();
@@ -6882,6 +7020,7 @@ function handleFileBlocks(div, text) {
         attachFeedbackButtons(streamDiv);
         bumpCounters(['total_messages', 'ai_messages']);
         updateTokensAfterResponse(text, fullResponse);
+        assistantReplied = true;
         try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(messages[messages.length - 1].content); } catch (_) {}
       } else if (error && (error.name === 'AbortError' || /aborted|abort/i.test(error.message || ''))) {
         // User tapped Stop: keep whatever streamed so far, no error text.
@@ -6896,6 +7035,9 @@ function handleFileBlocks(div, text) {
         attachFeedbackButtons(streamDiv);
         updateTokensAfterResponse(text, stoppedText);
       } else {
+        // Nothing usable was streamed, so this bubble is an error notice: drop
+        // the engine tag so the error text is never attributed to a model.
+        try { if (typeof api !== 'undefined' && api) api.lastServed = null; } catch (_) {}
         // An expired session is recoverable and needs a specific instruction,
         // not a status code the student cannot act on.
         const expired = error && (error.code === 'session_expired' || /\b(401|403)\b/.test(error.message || ''));
@@ -6930,6 +7072,16 @@ function handleFileBlocks(div, text) {
 
     // Long outputs: keep streaming follow-up segments into the same message.
     await maybeAutoContinue(streamDiv, text);
+
+    // Background memory extraction, every few turns and only after a real reply:
+    // deliberately not awaited, so remembering something never delays the chat.
+    if (assistantReplied && aiPrefs.memoryEnabled) {
+      turnsSinceMemoryScan++;
+      if (turnsSinceMemoryScan >= MEMORY_SCAN_EVERY_TURNS) {
+        turnsSinceMemoryScan = 0;
+        extractMemoriesFromChat();
+      }
+    }
 
     const isFirstExchange = !activeConversationId;
     const firstUserText = messages.length ? messages[0].content : '';
