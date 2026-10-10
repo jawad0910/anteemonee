@@ -1808,9 +1808,9 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     if (searchQuery.length < 3) return [];
 
-    try {
+    async function runSearch(q) {
       const searchParams = {
-        p_query: searchQuery,
+        p_query: q,
         p_book_id: null,
         p_limit: 8,
         p_class_level_id: studentContext?.classLevelId || null,
@@ -1821,16 +1821,73 @@ if (idx >= 0 && idx < PERSONAS.length) {
       }
       if (result.error) {
         console.warn('[AI] Textbook RPC error:', result.error.message);
-        const legacyParams = { p_query: searchQuery, p_book_id: null, p_limit: 8 };
+        const legacyParams = { p_query: q, p_book_id: null, p_limit: 8 };
         const retry = await db.rpc('search_textbook_pages_with_chapters', legacyParams);
         const legacyRetry = retry.error ? await db.rpc('search_textbook_pages', legacyParams) : retry;
         return prioritizeSubjectPages(legacyRetry.data || [], subj);
       }
       if (!result.data || result.data.length === 0) return [];
       return prioritizeSubjectPages(result.data, subj);
+    }
+
+    try {
+      var pages = await runSearch(searchQuery);
+      if (pages.length) return pages;
+      // Empty result: the full-text AND-match missed (e.g. "name of first
+      // chapter" needs words the pages never contain). Retry with only the
+      // subject plus content words so the model gets something real.
+      var fallbackQuery = (subj + ' ' + query)
+        .replace(/\b(explain|explains|what|whats|which|is|are|was|were|the|a|an|of|in|on|for|to|name|names|first|chapter|chapters|ch|list|lists|me|my|us|tell|tells|give|gives|about|how|does|do|did|can|could|please|kind|types|type|mean|means|meaning|called|known|define|defines|describe|describes|help|helps|with)\b/gi, '')
+        .replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (fallbackQuery.length >= 3 && fallbackQuery.toLowerCase() !== searchQuery.toLowerCase()) {
+        console.log('[AI] Textbook search empty, retrying broader: "' + fallbackQuery + '"');
+        pages = await runSearch(fallbackQuery);
+        if (pages.length) return pages;
+      }
+      return [];
     } catch (e) {
       console.warn('[AI] Textbook search failed:', e);
       return [];
+    }
+  }
+
+  // Questions about chapter names/order ("first chapter of Biology") can
+  // never match page text, because pages rarely contain the words "first"
+  // or "chapter". Answer those from the official chapter list instead.
+  function isChapterListQuestion(text) {
+    var t = String(text || '');
+    if (!/\bchapters?\b|\bch\b/i.test(t)) return false;
+    return /\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|\d+\s*(st|nd|rd|th)?|list|lists|names?|how many|number of|order|sequence|start|starts|begin|begins)\b/i.test(t);
+  }
+
+  async function fetchChapterListContext(text) {
+    if (!isChapterListQuestion(text)) return '';
+    var subj = selectedSubject || 'Physics';
+    try {
+      var res = await db.rpc('list_chapters_by_subject_name', { p_subject_name: subj });
+      if (res.error || !res.data || !res.data.length) return '';
+      var books = {};
+      var order = [];
+      res.data.forEach(function (c) {
+        var key = (c.book_id !== null && c.book_id !== undefined) ? String(c.book_id) : 'book';
+        if (!books[key]) { books[key] = []; order.push(key); }
+        books[key].push(c);
+      });
+      var lines = [];
+      order.slice(0, 2).forEach(function (key) {
+        lines.push('BOOK (' + subj + ' textbook, book id ' + key + ') - official chapter list:');
+        books[key].slice(0, 20).forEach(function (c) {
+          var num = (c.number !== null && c.number !== undefined) ? c.number : '?';
+          lines.push('- Chapter ' + num + ': ' + (c.name || ''));
+        });
+      });
+      if (!lines.length) return '';
+      return 'OFFICIAL CHAPTER LIST from our library - use these EXACT chapter names and numbers. ' +
+        'When asked for the first chapter, it is Chapter 1 in the list below:\n' +
+        lines.join('\n') + '\n\n';
+    } catch (e) {
+      console.warn('[AI] Chapter list lookup failed:', e);
+      return '';
     }
   }
 
@@ -6702,8 +6759,12 @@ function handleFileBlocks(div, text) {
           console.warn('[AI] Textbook search failed:', err);
           return [];
         });
+    const chapterListPromise = (isCodingAgent || isGreetingMsg || isGenerationTask)
+      ? Promise.resolve('')
+      : fetchChapterListContext(text).catch(function () { return ''; });
     const memoriesPromise = loadAiMemories().catch(function () {});
     const textbookPages = await textbookPromise;
+    const chapterListBlock = await chapterListPromise;
     await memoriesPromise;
     let textbookContext = '';
     try {
@@ -6713,6 +6774,10 @@ function handleFileBlocks(div, text) {
         textbookContext = formatTextbookContext(textbookPages);
       } else if (!isCodingAgent) {
         console.log(`[AI] No textbook pages found for: "${text}"`);
+      }
+      if (chapterListBlock) {
+        console.log('[AI] Chapter-list context attached');
+        textbookContext = chapterListBlock + textbookContext;
       }
     } catch (e) {
       console.warn('[AI] Textbook search failed:', e);
