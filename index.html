@@ -312,11 +312,17 @@
           <div class="call-mock">
             <div class="call-mock-head">
               <img src="assets/anteemonee.png" alt="Anteemonee">
-              <div><b>Anteemonee AI Tutor</b><span>Knows your board, class & group</span></div>
+              <div><b>What are you studying today?</b><span>Pick a subject — tutor opens ready</span></div>
             </div>
-            <div class="mock-bubble user" id="hero-last-user">Explain enzyme action, FSc Biology Ch 3</div>
-            <div class="mock-bubble ai" id="hero-last-ai">Enzymes lower activation energy without being consumed. Think lock-and-key: substrate fits the active site… <b>References:</b> Biology XII, p. 42</div>
-            <div class="mock-voice"><span class="pulse-dot"></span> Live voice call: ask out loud, interrupt anytime</div>
+            <div class="subjgrid">
+              <a class="subj-chip" href="ai-chat/?subject=Physics"><span class="subj-dot" style="background:#2E7D32"></span>Physics</a>
+              <a class="subj-chip" href="ai-chat/?subject=Chemistry"><span class="subj-dot" style="background:#C49557"></span>Chemistry</a>
+              <a class="subj-chip" href="ai-chat/?subject=Biology"><span class="subj-dot" style="background:#8E44AD"></span>Biology</a>
+              <a class="subj-chip" href="ai-chat/?subject=Mathematics"><span class="subj-dot" style="background:#8E44AD"></span>Mathematics</a>
+              <a class="subj-chip" href="ai-chat/?subject=Computer%20Science"><span class="subj-dot" style="background:#2980B9"></span>Computer Science</a>
+              <a class="subj-chip" href="ai-chat/?subject=English"><span class="subj-dot" style="background:#F39C12"></span>English</a>
+            </div>
+            <div class="mock-voice"><span class="pulse-dot"></span> Answers cite your exact book + page</div>
           </div>
         </div>
       </div>
@@ -928,5 +934,6 @@
     })();
   </script>
   <script src="js/header-ai-dropdown.js?v=7"></script>
+  </script>
 </body>
 </html>
