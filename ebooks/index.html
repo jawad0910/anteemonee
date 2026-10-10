@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -20,17 +20,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=33">
+  <link rel="stylesheet" href="../css/style.css?v=35">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
-      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
-      --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
-      --liquid-bg-strong: rgba(10,10,12,0.85);
-    }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
     .header { padding: 0; }
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
@@ -70,6 +64,8 @@
     .section { padding: 70px 24px; }
     .section-inner { max-width: 1280px; margin: 0 auto; }
   </style>
+  <link rel="stylesheet" href="../css/header.css?v=4">
+  <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <header class="header" id="site-header">
@@ -79,20 +75,26 @@
         <span class="logo-text">Anteemonee</span>
       </a>
       <nav class="landing-nav" aria-label="Primary">
-  <a href="../dashboard/">Dashboard</a>
   <div class="nav-drop">
     <a href="#">Library <span style="font-size:10px;opacity:.6">▾</span></a>
     <div class="nav-menu">
-      <a href="../ebooks/">eBooks</a>
-      <a href="../flashcards/">Flashcards</a>
-      <a href="../past-papers/">Past Papers</a>
+      <a href="../ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
+      <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
+      <a href="../past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
     </div>
   </div>
-  <a href="../ai-chat/">AI Assistant</a>
+  <div class="nav-drop">
+    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    </div>
+  </div>
+  <a href="../ai-test-builder/">AI Test Builder</a>
   <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
-        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </a>
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
@@ -108,8 +110,8 @@
     </div>
   </header>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="../index.html" class="mobile-nav-link">Home</a>
-    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+
+
     <div class="mobile-acc-dropdown">
       <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
       <div class="mobile-acc-list">
@@ -118,9 +120,11 @@
         <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
       </div>
     </div>
-    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-        <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+        <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
       <a href="../pages/login.html" class="btn-login">Log in</a>
       <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
@@ -233,7 +237,7 @@
           <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">◐</div>
           <div style="min-width:0">
             <div id="pdf-title" class="pdf-bar-title">eBook</div>
-            <div id="pdf-subtitle" class="pdf-bar-sub">PDF • ebooks-pdf</div>
+            <div id="pdf-subtitle" class="pdf-bar-sub">PDF</div>
           </div>
         </div>
         <div class="pdf-bar-actions">
@@ -273,15 +277,14 @@
           <div class="footer-col">
             <h4>Explore</h4>
             <a href="../index.html">Home</a>
-            <a href="../ai-chat/">AI Assistant</a>
-            <a href="../flashcards/">Flashcards</a>
+            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
             <a href="../pages/download.html">Download App</a>
           </div>
           <div class="footer-col">
             <h4>Features</h4>
             <a href="../ai-chat/">AI Tutor</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../payment/index.html?plan=lifetime">Lifetime Access</a>
+            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
           </div>
           <div class="footer-col">
             <h4>Legal</h4>
@@ -294,9 +297,9 @@
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }</script>
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="/assets/js/vendor/pdf.min.js"></script>
+  <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='/assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=31"></script>
 <script src="../js/login-modal.js?v=5"></script>
@@ -393,6 +396,25 @@
     function boardName(id){ let b=boards.find(x=>String(x.id)===String(id)); return b?b.name:'—'; }
     function subjectName(id){ let s=subjects.find(x=>String(x.id)===String(id)); return s?s.name:'—'; }
     function className(id){ let c=classes.find(x=>String(x.id)===String(id)); if(!c) return '—'; if(c.value===11) return '11th'; if(c.value===12) return '12th'; return c.label||'—'; }
+    function isPdfLink(url){ return /^https?:\/\/\S+$/i.test(String(url||'').trim()); }
+    // Reader-bar caption. Storage/CDN hostnames (res.cloudinary.com,
+    // supabase.co, drive.google.com) are deliberately never shown - they are
+    // implementation detail, not something a student needs. The page count is
+    // filled in once pdf.js has loaded the document.
+    const PDF_SUBTITLE='PDF document';
+    // Several rows can describe the same book (one per upload batch, plus the
+    // odd duplicate subject/class pair). Same subject + class + board = the same
+    // book, so keep a single card — the newest row that actually has a link.
+    function dedupeBooks(rows){
+      let rank=b=>(Date.parse(b.created_at||'')||0);
+      let keep=new Map();
+      rows.forEach(b=>{
+        let key=[subjectName(b.subject_id), className(b.class_level_id), boardName(b.board_id)].join('|').toLowerCase();
+        let prev=keep.get(key);
+        if(!prev || rank(b)>rank(prev) || (rank(b)===rank(prev) && Number(b.id)>Number(prev.id))) keep.set(key,b);
+      });
+      return [...keep.values()];
+    }
     async function init(){
       let db=getDb(); if(!db){ document.getElementById('eb-count').textContent='Database not ready'; document.getElementById('eb-loading').style.display='none'; return; }
       for(let i=0;i<10 && !db;i++){ await new Promise(r=>setTimeout(r,200)); db=getDb(); }
@@ -415,8 +437,12 @@
         if(bkR.error) console.warn('books fetch',bkR.error);
         let booksData=bkR.data||[];
         let files=(!stR.error && Array.isArray(stR.data))? stR.data : [];
-        // Primary source: storage bucket ebooks-pdf — this is where uploads go
-        if(files.length){
+        // eBooks are served by link: any http(s) source_url on a published row
+        // plays in the viewer (Cloudinary, Drive, the old storage bucket, ...).
+        let linked=booksData.filter(b=> isPdfLink(b.source_url) && b.is_verified!==false && b.is_active!==false);
+        all=dedupeBooks(linked);
+        if(!all.length && files.length){
+          // legacy fallback: PDFs still sitting in the ebooks-pdf bucket
           let pdfFiles=files.filter(f=>f.name && /\.pdf$/i.test(f.name));
           all=pdfFiles.map(f=>{
             let pub=db.storage.from('ebooks-pdf').getPublicUrl(f.name);
@@ -425,9 +451,6 @@
             if(book) return {...book, source_url:url};
             return {id:'file-'+f.name, title:f.name.replace(/\.pdf$/i,'').replace(/[-_]+/g,' '), subject_id:null, board_id:null, class_level_id:null, edition:'', total_pages:null, source_url:url, is_verified:true};
           });
-        } else {
-          // fallback to books table filtered to pdf bucket
-          all=booksData.filter(b=> (b.source_url||'').toLowerCase().includes('ebooks-pdf'));
         }
         // random order, not newest first
         for(let i=all.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
@@ -604,13 +627,14 @@
       if(!m) return;
       pdfUrl=url||''; pdfTitle=title||'eBook';
       if(tt) tt.textContent=pdfTitle;
-      if(sub) sub.textContent=(pdfUrl.includes('ebooks-pdf')?'PDF • ebooks-pdf':'PDF');
+      if(sub) sub.textContent=PDF_SUBTITLE;
       if(!pdfUrl || !pdfUrl.startsWith('http')){ m.style.display='flex'; document.body.style.overflow='hidden'; return; }
       m.style.display='flex'; document.body.style.overflow='hidden';
       showLoader(true);
       try{
         if(!window.pdfjsLib) throw new Error('PDF engine not loaded');
         pdfDoc=await pdfjsLib.getDocument({url: pdfUrl}).promise;
+        if(sub) sub.textContent=PDF_SUBTITLE+' • '+pdfDoc.numPages+' pages';
         pdfPageNum=1; pdfScale=1.0;
         let lbl=document.getElementById('pdf-zoom-label'); if(lbl) lbl.textContent=Math.round(pdfScale*100)+'%';
         await renderPage(1);
