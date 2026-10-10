@@ -1812,7 +1812,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       const searchParams = {
         p_query: q,
         p_book_id: null,
-        p_limit: 8,
+        p_limit: TEXTBOOK_MAX_PAGES + 3,
         p_class_level_id: studentContext?.classLevelId || null,
       };
       let result = await db.rpc('search_textbook_pages_with_chapters', searchParams);
@@ -1821,7 +1821,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       }
       if (result.error) {
         console.warn('[AI] Textbook RPC error:', result.error.message);
-        const legacyParams = { p_query: q, p_book_id: null, p_limit: 8 };
+        const legacyParams = { p_query: q, p_book_id: null, p_limit: TEXTBOOK_MAX_PAGES + 3 };
         const retry = await db.rpc('search_textbook_pages_with_chapters', legacyParams);
         const legacyRetry = retry.error ? await db.rpc('search_textbook_pages', legacyParams) : retry;
         return prioritizeSubjectPages(legacyRetry.data || [], subj);
@@ -1890,6 +1890,46 @@ if (idx >= 0 && idx < PERSONAS.length) {
       return '';
     }
   }
+
+  // "Explain page 7" can never match full-text search (page text rarely
+  // contains its own page number). Fetch the exact printed page instead.
+  function parsePageNumberQuestion(text) {
+    var m = String(text || '').match(/\b(?:pages?|pg|p\.?)\s*(?:no\.?|number|#)?\s*(\d{1,4})\b/i);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  async function fetchTextbookPageContext(text) {
+    var n = parsePageNumberQuestion(text);
+    if (!n) return '';
+    var subj = selectedSubject || 'Physics';
+    try {
+      var res = await db.rpc('get_textbook_page_by_number', {
+        p_subject_name: subj,
+        p_printed_page: n,
+        p_class_level_id: studentContext?.classLevelId || null,
+      });
+      if (res.error || !res.data || !res.data.length) return '';
+      var parts = res.data.slice(0, 2).map(function (p) {
+        var title = p.book_title || (subj + ' textbook');
+        var ch = (p.chapter_number !== null && p.chapter_number !== undefined)
+          ? ', Chapter ' + p.chapter_number + (p.chapter_name ? ': ' + p.chapter_name : '')
+          : (p.chapter_name ? ', Chapter: ' + p.chapter_name : '');
+        var pg = ', PRINTED PAGE: ' + p.printed_page_number;
+        if (p.page_number !== null && p.page_number !== undefined && String(p.page_number) !== String(p.printed_page_number)) {
+          pg += ' (PDF p. ' + p.page_number + ')';
+        }
+        return '[BOOK: "' + title + '"' + ch + pg + ']\n' + String(p.full_text || '').slice(0, 2500);
+      });
+      if (!parts.length) return '';
+      return 'The student asked about printed page ' + n + ' - the EXACT page text from our library is below. ' +
+        'Explain THIS page (do not ask for a photo; you already have the text):\n' +
+        parts.join('\n\n') + '\n\n';
+    } catch (e) {
+      console.warn('[AI] Page lookup failed:', e);
+      return '';
+    }
+  }
+
 
   function prioritizeSubjectPages(pages, subj) {
     if (!pages || !pages.length) return pages || [];
@@ -6753,6 +6793,10 @@ function handleFileBlocks(div, text) {
     const isGreetingMsg = !hasImages && !pendingQuote && isInstantGreeting(text);
     // Pure writing tasks are composed from knowledge — retrieval only burns tokens.
     const isGenerationTask = /\b(write|writes|writing|compose|draft|generate|create|make|prepare)\b[^.?!]{0,50}\b(essay|story|stories|poem|poems|poetry|speech|speeches|letter|letters|paragraph|paragraphs|precis|dialogue|dialogues|novel|autobiography)\b/i.test(text);
+    var lightRag = !isCodingAgent && !isGreetingMsg && !isGenerationTask &&
+      text.length < 150 && /^(what is|what are|what was|define|name|list|which|who|when|where|how many)\b/i.test(text.trim());
+    TEXTBOOK_MAX_PAGES = lightRag ? 2 : 5;
+    TEXTBOOK_PAGE_CHARS = lightRag ? 1200 : 1800;
     const textbookPromise = (isCodingAgent || isGreetingMsg || isGenerationTask)
       ? Promise.resolve([])
       : searchTextbooks(text).catch(function (err) {
@@ -6762,9 +6806,13 @@ function handleFileBlocks(div, text) {
     const chapterListPromise = (isCodingAgent || isGreetingMsg || isGenerationTask)
       ? Promise.resolve('')
       : fetchChapterListContext(text).catch(function () { return ''; });
+    const pagePromise = (isCodingAgent || isGreetingMsg || isGenerationTask)
+      ? Promise.resolve('')
+      : fetchTextbookPageContext(text).catch(function () { return ''; });
     const memoriesPromise = loadAiMemories().catch(function () {});
     const textbookPages = await textbookPromise;
     const chapterListBlock = await chapterListPromise;
+    const pageBlock = await pagePromise;
     await memoriesPromise;
     let textbookContext = '';
     try {
@@ -6778,6 +6826,10 @@ function handleFileBlocks(div, text) {
       if (chapterListBlock) {
         console.log('[AI] Chapter-list context attached');
         textbookContext = chapterListBlock + textbookContext;
+      }
+      if (pageBlock) {
+        console.log('[AI] Exact-page context attached');
+        textbookContext = pageBlock + textbookContext;
       }
     } catch (e) {
       console.warn('[AI] Textbook search failed:', e);
