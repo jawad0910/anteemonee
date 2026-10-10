@@ -30,7 +30,7 @@ class AiApiService {
     // ── Flagship Router tunnel: the one and only route. ──
     // Any failure surfaces to the student as an error (no silent fallback),
     // except user aborts, quota refusals and dead sessions, which rethrow.
-    this.astraModel = 'oc/space-bunny-free';
+    this.astraModel = 'oc/muse-spark-1.3-contributor-free';
     // The Astra API key used to live here in cleartext. Anyone who opened
     // devtools could read it and call the tunnel directly, entirely
     // bypassing the site and its quota. It now lives in the gateway's
