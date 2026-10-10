@@ -307,9 +307,6 @@
             <div class="hero-chip">🎙️<span>Voice Call</span></div>
             <div class="hero-chip">📊<span>Test Builder</span></div>
           </div>
-          <div class="hero-trust" id="hero-trust">
-            <div class="trust-text">Free forever · Unlimited AI · No card required</div>
-          </div>
         </div>
         <div class="landing-hero-visual">
           <div class="call-mock">
@@ -325,71 +322,251 @@
       </div>
     </section>
 
-    <!-- WHY STUDENTS CHOOSE ANTEEEMONEE -->
-    <section class="section" id="why" style="padding-top:40px">
+    <!-- SEE IT IN ACTION -->
+    <section class="section" id="demo" style="padding-top:40px">
       <div class="section-inner">
-        <div class="section-label">Why students actually stick with Anteemonee</div>
-        <h2 class="section-title">Less panic. More prepared.</h2>
-        <p class="section-desc">Every board topper starts the same way: confused, behind and out of resources. This is how you get ahead.</p>
-
-        <div class="why-grid">
-          <div class="why-item">
-            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
-            <div>
-              <h3>Made for your board, not “science” in general</h3>
-              <p>Chapters, paper patterns and answers match your class, board and group, so nothing you study is wasted.</p>
+        <p class="tv-simple">Watch how it works.</p>
+        <div class="tv-wrap">
+          <div class="tv" id="demo-tv">
+            <div class="tv-topbar">
+              <span class="tv-brand">ANTEEMONEE</span>
+              <span class="tv-channel" id="tv-channel">CH 01 · AI TUTOR</span>
+              <span class="tv-led" title="On"></span>
             </div>
-          </div>
-          <div class="why-item">
-            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></span>
-            <div>
-              <h3>An AI tutor that can actually see your book</h3>
-              <p>Ask in English, Urdu or Roman Urdu. Every answer links back to the page and chapter it came from.</p>
+            <div class="tv-screen">
+              <div class="tv-scene" data-scene="0">
+                <div class="tv-chat">
+                  <div class="tv-bubble user"><span>YOU</span><p>Explain Newton&apos;s second law, Physics Ch 3</p></div>
+                  <div class="tv-bubble ai"><span>AI TUTOR</span><p><span class="tv-type" data-text="Force equals mass times acceleration: F = ma. Your book introduces it in Chapter 3, page 48 — the net force on a body equals its mass times acceleration. Worked example: a 2 kg cart pushed with a 10 N force accelerates at 5 m/s². Common mistake: mixing mass (kg) with weight (N). Key idea: bigger force or smaller mass means bigger acceleration."></span><span class="tv-caret"></span></p></div>
+                  <div class="tv-ref" data-ref>📖 Physics Class 11 · Chapter 3 · p. 48</div>
+                  <div class="tv-bubble user tv-reveal" data-follow-q hidden><span>YOU</span><p>Give one exam tip for this</p></div>
+                  <div class="tv-bubble ai tv-reveal" data-follow-a hidden><span>AI TUTOR</span><p>Always write the formula first, then substitute values with units — the formula alone earns a mark.</p></div>
+                </div>
+              </div>
+              <div class="tv-scene" data-scene="1" hidden>
+                <div class="tv-build">
+                  <div class="tv-step" data-step>✓ Subject: Physics Class 11</div>
+                  <div class="tv-step" data-step>✓ Chapters: Force &amp; Motion · Work &amp; Energy</div>
+                  <div class="tv-step" data-step>✓ 10 MCQs + 5 short questions</div>
+                  <div class="tv-step" data-step>✓ Board pattern: BISE Lahore · Answer key included</div>
+                  <div class="tv-progress" data-progress><i></i></div>
+                  <div class="tv-paper" data-paper hidden>
+                    <b>Physics Practice Test</b>
+                    <p>Q1. SI unit of force? <em>(b) Newton ✓</em></p>
+                    <p>Q2. Work done = <em>force × displacement</em></p>
+                    <p>Q3. Define power. <em>(2 marks)</em></p>
+                    <p>Q4. A 5 kg box moves 4 m. Work? <em>196 J ✓</em></p>
+                    <span class="tv-dl">⬇ Download PDF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tv-scene" data-scene="2" hidden>
+                <div class="tv-chat">
+                  <div class="tv-bubble user"><span>YOU</span><p>Q1: SI unit of force? — Newton · Q2: first equation of motion? — v = u + at (no unit)</p></div>
+                  <div class="tv-check" data-check><span class="tv-spin"></span>Checking 2 answers against the book…</div>
+                  <div class="tv-grade" data-grade hidden><b>2 / 2</b><span>Q1 Correct ✓ — matches Physics Ch 3, p. 48</span></div>
+                  <div class="tv-grade" data-grade2 hidden><b>1 / 2</b><span>Q2 Partial — right formula, missing unit</span></div>
+                  <div class="tv-overall" data-overall hidden>Physics check · Grade <b>B</b> · 3/4</div>
+                </div>
+              </div>
+              <div class="tv-scan"></div>
+              <div class="tv-static" id="tv-static"></div>
             </div>
-          </div>
-          <div class="why-item">
-            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></span>
-            <div>
-              <h3>6 years of real BISE past papers</h3>
-              <p>Yearly papers from the last six exam sessions, organized board-wise so you can practice the exact pattern.</p>
+            <div class="tv-controls">
+              <button class="tv-btn" id="tv-prev" aria-label="Previous channel">CH−</button>
+              <div class="tv-dots" id="tv-dots"></div>
+              <button class="tv-btn" id="tv-next" aria-label="Next channel">CH+</button>
             </div>
-          </div>
-          <div class="why-item">
-            <span class="wi-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span>
-            <div>
-              <h3>Works on any phone. No app store drama.</h3>
-              <p>Open the link, sign in, study. It runs on every student’s phone, even on low-end Android.</p>
-            </div>
+            <div class="tv-stand"></div>
           </div>
         </div>
-
-        <div class="whats-inside">
-          <span class="whats-label">Everything inside one account:</span>
-          <a href="ebooks/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>eBooks</a>
-          <a href="flashcards/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-9 9 9 9 9-9z"/><path d="m16.5 6.5 4 4"/></svg></span>Flashcards</a>
-          <a href="past-papers/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>Past Papers</a>
-          <a href="ai-chat/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></span>AI Tutor</a>
-          <a href="mx-9f2c4e7a/"><span class="wi-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Messenger</a>
-        </div>
-
-        <div class="stat-band">
-          <div class="stat-cell"><b>24/7</b><span>AI tutor, day or night</span></div>
-          <div class="stat-cell"><b>6 yrs</b><span>of real exam papers</span></div>
-          <div class="stat-cell"><b>2 min</b><span>to start studying</span></div>
-          <div class="stat-cell"><b>1 payment</b><span>per exam session. Ever.</span></div>
+        <div class="tv-cta-row">
+          <a href="ai-chat/" class="plan-btn plan-btn-primary">Try the AI tutor →</a>
+          <a href="pages/signup.html" class="plan-btn plan-btn-ghost" id="tv-signup">Create free account</a>
         </div>
       </div>
     </section>
+    <script>
+    (function () {
+      var tv = document.getElementById('demo-tv');
+      if (!tv) return;
+      var scenes = Array.prototype.slice.call(tv.querySelectorAll('.tv-scene'));
+      var label = document.getElementById('tv-channel');
+      var staticEl = document.getElementById('tv-static');
+      var dotsWrap = document.getElementById('tv-dots');
+      var names = ['AI TUTOR', 'TEST BUILDER', 'AI EXAMINER'];
+      var cur = 0, gen = 0, timers = [];
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function later(fn, ms) {
+        var g = gen;
+        var id = setTimeout(function () { if (g === gen) fn(); }, ms);
+        timers.push(id);
+      }
+      function clearTimers() { timers.forEach(clearTimeout); timers = []; gen++; }
+      names.forEach(function (_, k) {
+        var d = document.createElement('button');
+        d.className = 'tv-dot' + (k === 0 ? ' on' : '');
+        d.setAttribute('aria-label', 'Channel ' + (k + 1) + ': ' + names[k]);
+        d.addEventListener('click', function () { show(k); });
+        dotsWrap.appendChild(d);
+      });
+      function setDots() {
+        var dots = dotsWrap.children;
+        for (var k = 0; k < dots.length; k++) dots[k].classList.toggle('on', k === cur);
+      }
+      function typeInto(el, full, ref) {
+        el.textContent = '';
+        var n = 0;
+        (function tick() {
+          n += 4;
+          el.textContent = full.slice(0, n);
+          if (n < full.length) later(tick, 16);
+          else if (ref) ref.classList.add('show');
+        })();
+      }
+      function animateScene(i) {
+        if (i === 0) {
+          var typeEl = scenes[0].querySelector('.tv-type');
+          var ref = scenes[0].querySelector('[data-ref]');
+          var fQ = scenes[0].querySelector('[data-follow-q]');
+          var fA = scenes[0].querySelector('[data-follow-a]');
+          var full = typeEl.getAttribute('data-text');
+          ref.classList.remove('show');
+          if (fQ) { fQ.hidden = true; fQ.classList.remove('show'); }
+          if (fA) { fA.hidden = true; fA.classList.remove('show'); }
+          if (reduceMotion) {
+            typeEl.textContent = full; ref.classList.add('show');
+            if (fQ) { fQ.hidden = false; fQ.classList.add('show'); }
+            if (fA) { fA.hidden = false; fA.classList.add('show'); }
+            return;
+          }
+          typeInto(typeEl, full, ref);
+          var typeMs = Math.ceil(full.length / 4) * 16 + 900;
+          later(function () { if (fQ) { fQ.hidden = false; void fQ.offsetWidth; fQ.classList.add('show'); } }, typeMs);
+          later(function () { if (fA) { fA.hidden = false; void fA.offsetWidth; fA.classList.add('show'); } }, typeMs + 1400);
+        } else if (i === 1) {
+          var steps = scenes[1].querySelectorAll('[data-step]');
+          var bar = scenes[1].querySelector('[data-progress]');
+          var fill = bar.querySelector('i');
+          var paper = scenes[1].querySelector('[data-paper]');
+          for (var a = 0; a < steps.length; a++) steps[a].classList.remove('show', 'done');
+          bar.classList.remove('show'); fill.style.width = '0';
+          paper.hidden = true; paper.classList.remove('show');
+          if (reduceMotion) {
+            for (var b = 0; b < steps.length; b++) steps[b].classList.add('show', 'done');
+            bar.classList.add('show'); fill.style.width = '100%';
+            paper.hidden = false; paper.classList.add('show');
+            return;
+          }
+          steps.forEach(function (st, k) {
+            later(function () { st.classList.add('show'); }, 350 * (k + 1));
+            later(function () { st.classList.add('done'); }, 350 * (k + 1) + 260);
+          });
+          later(function () { bar.classList.add('show'); fill.style.width = '100%'; }, 350 * (steps.length + 1));
+          later(function () { paper.hidden = false; void paper.offsetWidth; paper.classList.add('show'); }, 350 * (steps.length + 1) + 1300);
+        } else {
+          var check = scenes[2].querySelector('[data-check]');
+          var grade = scenes[2].querySelector('[data-grade]');
+          var grade2 = scenes[2].querySelector('[data-grade2]');
+          var overall = scenes[2].querySelector('[data-overall]');
+          grade.hidden = true; grade.classList.remove('show');
+          if (grade2) { grade2.hidden = true; grade2.classList.remove('show'); }
+          overall.hidden = true; overall.classList.remove('show');
+          check.hidden = false;
+          if (reduceMotion) {
+            check.hidden = true;
+            grade.hidden = false; overall.hidden = false;
+            grade.classList.add('show'); overall.classList.add('show');
+            if (grade2) { grade2.hidden = false; grade2.classList.add('show'); }
+            return;
+          }
+          later(function () {
+            check.hidden = true;
+            grade.hidden = false; void grade.offsetWidth; grade.classList.add('show');
+          }, 1100);
+          later(function () {
+            if (grade2) { grade2.hidden = false; void grade2.offsetWidth; grade2.classList.add('show'); }
+          }, 1950);
+          later(function () { overall.hidden = false; void overall.offsetWidth; overall.classList.add('show'); }, 2800);
+        }
+      }
+      function show(i, instant) {
+        cur = ((i % scenes.length) + scenes.length) % scenes.length;
+        clearTimers();
+        label.textContent = 'CH 0' + (cur + 1) + ' · ' + names[cur];
+        setDots();
+        var run = function () {
+          scenes.forEach(function (s, k) { s.hidden = (k !== cur); });
+          animateScene(cur);
+        };
+        if (instant || reduceMotion) { run(); return; }
+        staticEl.classList.add('on');
+        later(function () { staticEl.classList.remove('on'); run(); }, 320);
+      }
+      document.getElementById('tv-prev').addEventListener('click', function () { show(cur - 1); });
+      document.getElementById('tv-next').addEventListener('click', function () { show(cur + 1); });
+      function syncCta() {
+        try {
+          var u = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var btn = document.getElementById('tv-signup');
+          if (btn) btn.style.display = (u && u.id) ? 'none' : '';
+        } catch (_) {}
+      }
+      syncCta();
+      setInterval(syncCta, 1500);
+      show(0, true);
+      setInterval(function () {
+        if (!document.hidden && !reduceMotion) show(cur + 1);
+      }, 14000);
+    })();
+    </script>
 
-    <!-- FREE FOREVER -->
-    <section class="section" id="pricing" style="padding-top:10px">
+    <!-- ROADMAP TO 90+ -->
+    <section class="section" id="roadmap" style="padding-top:40px">
       <div class="section-inner">
-        <div class="section-label">Free forever</div>
-        <h2 class="section-title">Everything is free. No plans, no limits.</h2>
-        <p class="section-desc">The whole library plus unlimited AI tutor, test builder and examiner — free forever, no card required.</p>
-        <div style="margin-top:22px">
-          <a href="pages/signup.html" class="plan-btn plan-btn-primary" id="free-cta">Start free →</a>
-        </div>
+        <p class="tv-simple">Your roadmap to 90+.</p>
+        <div class="roadmap">
+          <a class="rstep" style="--sc:#6366f1" href="ai-chat/">
+            <span class="rstep-num">01</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+            <span class="rstep-tx"><b>Learn from your book</b><small>AI Tutor teaches from your exact board textbook</small></span>
+            <span class="rstep-go">→</span>
+          </a>
+          <a class="rstep" style="--sc:#0ea5e9" href="flashcards/">
+            <span class="rstep-num">02</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 22h8"/></svg></span>
+            <span class="rstep-tx"><b>Memorize the facts</b><small>Flashcards drill definitions, formulas, diagrams</small></span>
+            <span class="rstep-go">→</span>
+          </a>
+          <a class="rstep" style="--sc:#f59e0b" href="past-papers/">
+            <span class="rstep-num">03</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></span>
+            <span class="rstep-tx"><b>Master the paper pattern</b><small>6 years of real BISE papers, board-wise</small></span>
+            <span class="rstep-go">→</span>
+          </a>
+          <a class="rstep" style="--sc:#f43f5e" href="ai-test-builder/">
+            <span class="rstep-num">04</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+            <span class="rstep-tx"><b>Test yourself weekly</b><small>Board-pattern papers with answer key</small></span>
+            <span class="rstep-go">→</span>
+          </a>
+          <a class="rstep" style="--sc:#10b981" href="ai-examiner/">
+            <span class="rstep-num">05</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></span>
+            <span class="rstep-tx"><b>Fix every mistake</b><small>Strict marking with scores and model answers</small></span>
+            <span class="rstep-go">→</span>
+          </a>
+          <a class="rstep" style="--sc:#3b82f6" href="ebooks/">
+            <span class="rstep-num">06</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></span>
+            <span class="rstep-tx"><b>Revise the weak spots</b><small>Re-read flagged pages, re-test to A+</small></span>
+            <span class="rstep-go">→</span>
+          </a>
+          <div class="rstep trophy">
+            <span class="rstep-ic">🏆</span>
+            <span class="rstep-tx"><b>90%+ in boards</b><small>Learn it · Memorize it · Practice it · Test it · Fix it · Repeat it</small></span>
+          </div>
+        </div>        </div>
       </div>
     </section>
 
