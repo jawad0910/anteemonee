@@ -31,12 +31,20 @@
   .messages-list > .message { margin-bottom: 7px; }
   .messages-list > .message.user .msg-body { max-width: 84%; }
 
-  /* Bubbles: slightly tighter for small screens */
-  .messages-list > .message.assistant .msg-content,
-  .messages-list > .message.user .msg-content {
-    font-size: 14px;
-    padding: 8px 12px;
+  /* Reply: no padding to tighten — only the type steps down a notch.
+     The pill keeps the padding it needs to look like a bubble. */
+  .messages-list > .message.assistant .msg-content {
+    font-size: 15px;
+    padding: 0;
+    max-width: 100%;
   }
+  .messages-list > .message.user .msg-content {
+    font-size: 14.5px;
+    padding: 8px 13px;
+  }
+  .messages-list > .message { margin-bottom: 13px; }
+  .messages-list > .message.user + .message.assistant,
+  .messages-list > .message.assistant + .message.user { margin-top: 15px; }
 
   .welcome-action-btn { border-radius: 12px; }
   .welcome-action-icon { width: 28px; height: 28px; border-radius: 9px; }

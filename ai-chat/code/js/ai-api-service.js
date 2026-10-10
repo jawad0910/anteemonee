@@ -1,32 +1,36 @@
 ﻿/* ==========================================
-   Anteemonee - Triple API Failover Service
-   Priority engine: Muse Spark (free, called straight from the browser).
-   Everything after that routes through the Supabase Edge Function
-   (Groq → Qwen → Mistral). Detects incomplete streams and auto-falls back.
+   Anteemonee - Flagship-only chat service.
+   Every message streams from the FlagshipRouter tunnel
+   (oc/space-bunny-free) via the ai-chat-gateway edge function, which
+   holds the tunnel key server-side. There is no fallback chain: if the
+   tunnel fails, the error surfaces so the student can retry.
    ========================================== */
+
+function tunnelDisplayName(model) {
+  var m = String(model || '').toLowerCase();
+  if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
+  if (m.indexOf('muse-spark') !== -1) return 'Muse Spark';
+  if (m.indexOf('gpt-6') !== -1 || m.indexOf('astra') !== -1 || m.indexOf('big-pickle') !== -1) return 'GPT-6 Astra';
+  return null;
+}
 
 class AiApiService {
   constructor() {
     this.supabaseUrl = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
     this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
-    this.edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/ai-chat`;
     // Every student message now goes through the gateway, which holds the
     // Astra key server-side and enforces the 15/day free quota. The browser
     // no longer talks to Astra or to ai-chat directly, so neither the key
     // nor the cap can be bypassed from devtools.
     this.gatewayUrl = `${this.supabaseUrl}/functions/v1/ai-chat-gateway`;
-    this.activeProvider = 0;
     this._currentAbort = null;
     this._accessToken = null;
     this._sessionId = null;
-    this.totalProviders = 3;
     this._lastFinishReason = null; // finish_reason of the latest completed attempt ('stop' | 'length' | ...)
-    // ── Priority engine: Muse Spark (Flagship Router tunnel) ──
-    // Astra is tried first for every request. On ANY failure — network error,
-    // HTTP error, hung stream, empty reply — we fall through to the Supabase
-    // edge function and its Groq → Qwen → Mistral chain, so the student never
-    // sees an outage because of the free tunnel.
-    this.astraModel = 'oc/muse-spark-1.3-contributor-free';
+    // ── Flagship Router tunnel: the one and only route. ──
+    // Any failure surfaces to the student as an error (no silent fallback),
+    // except user aborts, quota refusals and dead sessions, which rethrow.
+    this.astraModel = 'oc/space-bunny-free';
     // The Astra API key used to live here in cleartext. Anyone who opened
     // devtools could read it and call the tunnel directly, entirely
     // bypassing the site and its quota. It now lives in the gateway's
@@ -39,15 +43,7 @@ class AiApiService {
   }
 
   get currentProvider() {
-    if (this.lastServed && this.lastServed.engine === 'astra') {
-      return { name: 'Muse Spark', model: this.lastServed.model };
-    }
-    const names = ['Groq', 'Qwen', 'Mistral'];
-    return { name: names[this.activeProvider] || 'AI', model: this._lastStreamModel };
-  }
-
-  _providerName(index) {
-    return ['Groq', 'Qwen', 'Mistral'][index] || 'AI';
+    return { name: tunnelDisplayName(this._lastStreamModel) || 'Flagship', model: this._lastStreamModel };
   }
 
   /**
@@ -178,9 +174,10 @@ class AiApiService {
 
 
   /**
-   * Stream chat with auto-failover.
-   * If the primary provider's stream cuts off mid-response (no [DONE]),
-   * it throws an IncompleteStreamError so the caller can retry with fallback.
+   * Stream chat via the Flagship tunnel only. There is no fallback chain:
+   * if the tunnel fails, the error surfaces so the student can retry.
+   * A mid-stream drop still throws IncompleteStreamError so the caller can
+   * retry the same tunnel from the partial text it already showed.
    */
   async *streamChat(messages, providerIndex = null, images = null) {
     this._lastFinishReason = null;
@@ -188,244 +185,23 @@ class AiApiService {
     this.lastServed = null;
     this._abortRequested = false;
 
-    // One id for this whole message, shared by the Astra attempt and every
-    // edge fallback below. The gateway treats it as an idempotency key, so
-    // a failover — or a replay after a session refresh — is charged once
-    // against the 15/day free quota rather than twice.
+    // One id for this message; the gateway treats it as an idempotency key.
     this._currentRequestId = this._newRequestId();
 
-    // ── Priority attempt: Muse Spark. Any failure drops to the chain below. ──
-    // Note: Astra has no vision support (verified 2026-10-09 with tests/
-    // astra-vision-probe.mjs — it accepts image parts but answers "I can't see
-    // the image"). Images must therefore be turned into text by the caller
-    // before they reach here, which is what the chatbot already does.
-    if (this._astraAvailable()) {
-      try {
-        yield* this._streamAstra(messages);
-        this._noteAstraSuccess();
-        return;
-      } catch (error) {
-        if (this._abortRequested) throw error;
-        // A quota refusal is final, not an Astra outage: do not count it as
-        // an Astra failure and do not spend every fallback on the same
-        // refusal. Surface it to the caller with its reset time attached.
-        if (error && error.code === 'FREE_DAILY_LIMIT') throw error;
-        // Same for a session that is gone: every fallback needs the same JWT,
-        // so retrying the whole chain would only produce the same refusal.
-        if (error && error.code === 'session_expired') throw error;
-        this._noteAstraFailure(error);
-        // Partial text was already streamed to the UI, so the caller's
-        // continuation path owns it — same contract as the edge providers.
-        if (error instanceof IncompleteStreamError) throw error;
-      }
+    if (!this._astraAvailable()) {
+      throw new Error('Flagship tunnel is cooling down after failures. Please try again in a minute.');
     }
-
-    const startIndex = providerIndex !== null ? providerIndex : this.activeProvider;
-    let lastError = null;
-
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const idx = (startIndex + attempt) % this.totalProviders;
-
-      try {
-        this.activeProvider = idx;
-        yield* this._streamFromEdge(messages, idx, images);
-        this.lastServed = {
-          engine: 'edge',
-          provider: this._providerName(idx),
-          model: this._lastStreamModel,
-          at: Date.now(),
-        };
-        console.info('[AI] Served by fallback chain: ' + this.lastServed.provider +
-          (this.lastServed.model ? ' (' + this.lastServed.model + ')' : ''));
-        return; // success
-      } catch (error) {
-        if (this._abortRequested) throw error; // user tapped Stop — stop immediately
-        console.warn(`[AI] Provider ${idx} failed:`, error.message);
-        lastError = error;
-        // If incomplete stream, the caller already has partial text.
-        // Re-throw so the chatbot can decide whether to retry.
-        if (error instanceof IncompleteStreamError) {
-          throw error;
-        }
-      }
-    }
-
-    throw new Error(lastError?.message || 'All AI providers are currently unavailable. Please try again.');
-  }
-
-  async *_streamFromEdge(messages, providerIndex, images = null) {
-    const controller = new AbortController();
-    this._currentAbort = controller;
-    let timeoutId = null;
-
-    // Use user's JWT if available, fall back to anon key
-    const authHeader = this._accessToken
-      ? `Bearer ${this._accessToken}`
-      : `Bearer ${this.supabaseKey}`;
-
-    // Idempotency key: lets the server treat network retries as one request.
-    // Display-only concern client-side; the SERVER decides replay vs. new.
-    let requestId = null;
     try {
-      requestId = (window.crypto && window.crypto.randomUUID)
-        ? window.crypto.randomUUID()
-        : 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
-    } catch (_) {
-      requestId = 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
-    }
-
-    const body = { mode: 'edge', messages, providerIndex };
-    if (this._sessionId) body.sessionId = this._sessionId;
-    if (requestId) body.requestId = this._currentRequestId || requestId;
-    if (images && images.length > 0) {
-      body.images = images;
-      console.log('[Edge] Sending', images.length, 'images, sizes:', images.map(i => i.length));
-    } else {
-      console.log('[Edge] No images to send');
-    }
-
-    const res = await this._postWithAuthRetry(this.gatewayUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) {
-      let detail = '';
-      try { detail = await res.text(); } catch (_) {}
-      let msg = detail;
-      let code = '';
-      let retryAfter = 0;
-      try {
-        const parsed = JSON.parse(detail);
-        msg = parsed.error || detail;
-        code = parsed.code || parsed.reason || '';
-        retryAfter = parsed.retry_after_seconds || 0;
-      } catch (_) {}
-      // A 401 here means the session is gone even after a refresh attempt, so
-      // say so instead of leaking the raw status.
-      if (res.status === 401 || res.status === 403) {
-        const err = new Error('Your session expired. Please sign in again.');
-        err.code = 'session_expired';
-        err.status = res.status;
-        throw err;
-      }
-      const err = new Error(`Error ${res.status}: ${String(msg).slice(0, 300)}${code ? ' [' + code + ']' : ''}`);
-      err.code = code;
-      err.retryAfter = retryAfter;
-      err.status = res.status;
-      throw err;
-    }
-
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await res.json();
-      throw new Error(data.error || 'Edge function returned an error');
-    }
-
-    const reader = res.body.getReader();
-
-    // Per-attempt timeout: a hung provider aborts so streamChat can fail
-    // over to the next provider instead of hanging forever. 90s is generous
-    // for slow coding models but still bounds the worst case.
-    timeoutId = setTimeout(() => {
-      try { controller.abort(); } catch (_) {}
-    }, 90000);
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let receivedDone = false;
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data: ')) continue;
-          const data = trimmed.slice(6);
-          if (data === '[DONE]') {
-            receivedDone = true;
-            return;
-          }
-
-          try {
-            const json = JSON.parse(data);
-            // Yield streak events directly (for chatbot to parse)
-            if (json.type === 'streak') {
-              yield data;
-              continue;
-            }
-            // Detect error responses from edge function (all models failed, etc.)
-            if (json.error) {
-              throw new Error(json.error);
-            }
-            if (json.model) this._lastStreamModel = json.model;
-            const fr = json.choices?.[0]?.finish_reason;
-            if (fr) this._lastFinishReason = fr;
-            const content = json.choices?.[0]?.delta?.content;
-            if (content) {
-              if (!this.lastServed) {
-                this.lastServed = { engine: 'edge', provider: this._providerName(this.activeProvider), model: json.model || null, at: Date.now() };
-              }
-              yield content;
-            }
-          } catch (e) {
-            if (e instanceof IncompleteStreamError) throw e;
-            if (e.message && !e.message.startsWith('Unexpected')) throw e;
-          }
-        }
-      }
-
-      // Process remaining buffer
-      if (buffer.trim()) {
-        const trimmed = buffer.trim();
-        if (trimmed.startsWith('data: ')) {
-          const data = trimmed.slice(6);
-          if (data === '[DONE]') {
-            receivedDone = true;
-          } else {
-            try {
-              const json = JSON.parse(data);
-              if (json.type === 'streak') {
-                yield data;
-              } else if (json.error) {
-                throw new Error(json.error);
-              } else {
-                if (json.model) this._lastStreamModel = json.model;
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  if (!this.lastServed) {
-                    this.lastServed = { engine: 'edge', provider: this._providerName(this.activeProvider), model: json.model || null, at: Date.now() };
-                  }
-                  yield content;
-                }
-              }
-            } catch (e) {
-              if (e.message && !e.message.startsWith('Unexpected')) throw e;
-            }
-          }
-        }
-      }
-
-      // Stream ended without [DONE] â€” likely truncated by token limit or error
-      if (!receivedDone) {
-        throw new IncompleteStreamError(
-          'Response was cut off (likely hit token limit). Retrying with fallback model...'
-        );
-      }
-    } finally {
-      try { clearTimeout(timeoutId); } catch (_) {}
-      reader.releaseLock();
-      this._currentAbort = null;
+      yield* this._streamAstra(messages);
+      this._noteAstraSuccess();
+      return;
+    } catch (error) {
+      if (this._abortRequested) throw error;
+      if (error && error.code === 'FREE_DAILY_LIMIT') throw error;
+      if (error && error.code === 'session_expired') throw error;
+      this._noteAstraFailure(error);
+      if (error instanceof IncompleteStreamError) throw error;
+      throw new Error('Flagship tunnel failed: ' + ((error && error.message) || error) + '. Please try again.');
     }
   }
 
@@ -443,7 +219,7 @@ class AiApiService {
   _noteAstraFailure(error) {
     this._astraFails += 1;
     console.warn('[AI] Muse Spark failed: ' + ((error && error.message) || error) +
-      ' — falling back to Groq → Qwen → Mistral');
+      ' — no fallback configured; surfacing the error.');
     // Two misses in a row means the tunnel is down for now: stop paying its
     // latency on every message, and try it again in a minute.
     if (this._astraFails >= 2) {
@@ -570,7 +346,7 @@ class AiApiService {
         const content = choice && choice.message && choice.message.content;
         if (!content) throw new Error('Muse Spark returned an empty response');
         if (data.model) this._lastStreamModel = data.model;
-        this.lastServed = { engine: 'astra', provider: 'Muse Spark', model: data.model || this.astraModel, at: Date.now() };
+        this.lastServed = { engine: 'astra', provider: tunnelDisplayName(data.model) || 'Flagship', model: data.model || this.astraModel, at: Date.now() };
         yield content;
         return;
       }
@@ -624,7 +400,7 @@ class AiApiService {
             if (content) {
               receivedContent = true;
               if (!this.lastServed) {
-                this.lastServed = { engine: 'astra', provider: 'Muse Spark', model: json.model || this.astraModel, at: Date.now() };
+                this.lastServed = { engine: 'astra', provider: tunnelDisplayName(json.model) || 'Flagship', model: json.model || this.astraModel, at: Date.now() };
               }
               yield content;
             }
@@ -642,9 +418,12 @@ class AiApiService {
         // whole budget and the reply finished empty. Either way: fall back.
         throw new Error('Muse Spark produced no usable content');
       }
-      if (!receivedDone) {
-        throw new IncompleteStreamError('Muse Spark response was cut off. Retrying with fallback model...');
-      }
+      // NOTE: this tunnel ends a clean, complete reply by simply closing the
+      // stream — it never sends OpenAI's [DONE] marker (and reports
+      // finish_reason "in_progress" instead of "stop"). A clean close with
+      // content is therefore a COMPLETE reply, not a truncation: only a
+      // mid-stream read error (thrown above) means cut off. A "length"
+      // finish is still honored by the continuation logic downstream.
     } finally {
       try { clearTimeout(timeoutId); } catch (_) {}
       try { clearTimeout(hardCeilingId); } catch (_) {}

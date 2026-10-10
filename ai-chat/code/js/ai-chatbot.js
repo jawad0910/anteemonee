@@ -3303,8 +3303,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
-   * Which accounts may see the engine text ("GPT-6 Astra" / "Groq fallback").
-   * It is a verification aid for the Astra rollout, not product chrome, so it
+   * Which accounts may see the engine text ("Muse Spark" / "Groq fallback").
+   * It is a verification aid for the tunnel rollout, not product chrome, so it
    * stays invisible to everyone else — matching is case-insensitive.
    */
   const ENGINE_BADGE_EMAILS = [
@@ -3324,16 +3324,30 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
+   * Friendly name for the model id the tunnel actually served. The router
+   * sometimes answers via an internal fallback model, so the pill must read
+   * the real id — never a hardcoded name.
+   */
+  function tunnelModelLabel(model) {
+    var m = String(model || '').toLowerCase();
+    if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
+    if (m.indexOf('muse-spark') !== -1) return 'Muse Spark';
+    if (m.indexOf('gpt-6') !== -1 || m.indexOf('astra') !== -1) return 'GPT-6 Astra';
+    return null;
+  }
+
+  /**
    * Name of the engine that is actually serving the reply in flight.
    * `api.lastServed` is written by the API service from the live stream itself
    * (it reads the `model` id off the chunks), so this reflects the real route:
-   * GPT-6 Astra when the priority tunnel answers, otherwise the fallback model.
+   * the tunnel model name when the priority tunnel answers, otherwise the fallback model.
    */
   function getServingEngineLabel() {
     try {
       var served = (typeof api !== 'undefined' && api && api.lastServed) ? api.lastServed : null;
       if (!served) return null;
-      return served.engine === 'astra' ? 'GPT-6 Astra' : (served.provider || 'AI');
+      if (served.engine !== 'astra') return served.provider || 'AI';
+      return tunnelModelLabel(served.model) || served.provider || 'Muse Spark';
     } catch (_) { return null; }
   }
 
@@ -3616,13 +3630,14 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (!engine || !engine.engine) return;
       var badge = document.createElement('span');
       if (engine.engine === 'astra') {
+        var tLabel = tunnelModelLabel(engine.model) || 'Muse Spark';
         badge.className = 'msg-engine msg-engine-astra';
-        badge.textContent = 'GPT-6 Astra';
-        badge.title = 'Answered by the priority model GPT-6 Astra' + (engine.model ? ' (' + engine.model + ')' : '');
+        badge.textContent = tLabel;
+        badge.title = 'Answered by the priority tunnel model ' + tLabel + (engine.model ? ' (' + engine.model + ')' : '');
       } else {
         badge.className = 'msg-engine msg-engine-fallback';
         badge.textContent = (engine.provider || 'AI') + ' fallback';
-        badge.title = 'GPT-6 Astra was unavailable — answered by ' + (engine.provider || 'the fallback model') + (engine.model ? ' (' + engine.model + ')' : '');
+        badge.title = 'Priority tunnel was unavailable — answered by ' + (engine.provider || 'the fallback model') + (engine.model ? ' (' + engine.model + ')' : '');
       }
       body.appendChild(badge);
     } catch (_) {}
@@ -5408,8 +5423,8 @@ function handleFileBlocks(div, text) {
     }
     var message = { role: 'assistant', content: stripEmptyReferences(stripQuizBlock(stripSwitchMarkers(text || ''), !!(div && div.__quizRequested))) };
     try { message.content = stripGraphBlock(message.content); } catch (_) {}
-    // Record which engine produced this reply (GPT-6 Astra, or the Groq → Qwen
-    // → Mistral chain after a fallback) so the UI can show it honestly.
+    // Record which engine produced this reply (tunnel model id, or the
+    // Groq → Qwen → Mistral chain after a fallback) so the UI can show it honestly.
     try {
       message.engine = (typeof api !== 'undefined' && api && api.lastServed)
         ? { engine: api.lastServed.engine || null, provider: api.lastServed.provider || null, model: api.lastServed.model || null }
