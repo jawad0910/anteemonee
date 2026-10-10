@@ -537,14 +537,6 @@ textarea.setting-input {
   margin-bottom: 6px;
 }
 
-/* --- Coupon Input â€” neomorphic --- */
-.coupon-input-group {
-  display: flex;
-  gap: 8px;
-  padding: 16px 20px;
-}
-.coupon-input-group .setting-input { flex: 1; max-width: none; }
-
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
   .settings-page { padding: 24px 16px 60px; }
@@ -583,9 +575,6 @@ textarea.setting-input {
 
   .settings-profile-card { padding: 16px; }
   .settings-profile-avatar { width: 52px; height: 52px; }
-
-  .coupon-input-group { flex-direction: column; }
-  .coupon-input-group .setting-input { max-width: none; }
 }
 
 /* --- Reduce Animations --- */
@@ -701,7 +690,7 @@ textarea.setting-input {
   box-shadow: 0 12px 30px rgba(0,0,0,0.3);
 }
 .settings-danger-zone { border-radius: var(--radius-lg); box-shadow: none; }
-.plan-card, .provider-row, .coupon-input-group { background: transparent; border: none; }
+.plan-card, .provider-row { background: transparent; border: none; }
 .status-badge.active { box-shadow: none; }
 .status-badge.inactive { box-shadow: none; }
 
@@ -710,11 +699,6 @@ textarea.setting-input {
   font-size: 12px; font-weight: 700; color: var(--text-secondary);
   background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft);
   border-radius: 999px; padding: 4px 10px; white-space: nowrap;
-}
-.coupon-chip {
-  font-size: 12px; font-weight: 800; letter-spacing: .03em; color: var(--text);
-  background: var(--accent-soft); border: 1px solid var(--accent);
-  border-radius: 999px; padding: 4px 11px; white-space: nowrap;
 }
 .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; padding: 16px 20px 20px; }
 .stat-tile { text-align: left; padding: 14px 14px 12px; background: none; border-radius: 0; }
