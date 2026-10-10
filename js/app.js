@@ -217,17 +217,11 @@ async function loadHomepageData() {
       homepageSetText('dash-stat-streak-sub', 'Unavailable');
     }
 
-    // Plan status: lifetime / trial countdown / expired.
+    // Plan status: everything is free and unlimited — show that.
     try {
       await Access.init();
-      const st = Access.state;
-      if (st.paid) {
-        homepageSetText('dash-credits-val', 'Lifetime');
-      } else if (st.reason === 'trial') {
-        homepageSetText('dash-credits-val', st.daysLeft <= 1 ? 'Trial ends today' : `${st.daysLeft} trial days left`);
-      } else if (st.reason === 'expired' || st.reason === 'blocked') {
-        homepageSetText('dash-credits-val', 'Trial expired');
-      }
+      const left = Access.remainingFor('chat');
+      homepageSetText('dash-credits-val', left < 0 ? 'Unlimited' : (left > 0 ? `${left} left today` : 'Daily limit reached'));
     } catch (_) {}
     // Class pill from the academic profile.
     const classLabel = acad && acad.class_level && acad.class_level.label;
@@ -2047,22 +2041,67 @@ async function recordSecurityEvent(kind, detail) {
 }
 
 /* =========================================================
-   LIFETIME ACCESS — 7-day trial, device lock, single session
-   Model: Rs 4,999 one-time lifetime + exam-period plans. 7-day free trial (one per
-   device). One active session per account (second login kicks
-   the first with notice). Hard paywall after trial expiry.
+   FREE & UNLIMITED — no trials, no plans, no paywall.
+   Every signed-in student gets unlimited AI. The only lock left is
+   the single active session per account (second login kicks
+   the first with notice).
 
    Requires Supabase tables (run ACCESS_TABLES.sql once):
-     trials(user_id PK, started_at, ends_at)
-     trial_devices(device_hash PK, user_id, claimed_at)
      active_devices(user_id PK, device_id, last_seen)
    ========================================================= */
 
-const TRIAL_DAYS = 7;
 const LIFETIME_PRICE = 'Rs 4,999';
 
 const Access = {
-  state: { ready: false, paid: false, trial: 'unknown', trialEndsAt: null, daysLeft: 0, access: false, reason: 'guest' },
+  // The library (eBooks, past papers, flashcards) is free and unlimited, so
+  // `access` now means "signed in -> the library opens". The AI tools are
+  // limited per day instead, and that cap lives on the server: this object
+  // only mirrors it so the UI can be honest before a request is made.
+  state: {
+    ready: false, paid: false, trial: 'unknown', trialEndsAt: null, daysLeft: 0,
+    access: false, reason: 'guest',
+    quota: { ready: false, unlimited: false, features: {}, resetsAt: null },
+  },
+
+  // Mirror of ai_feature_limit() in migrations/20261013000000_free_tier_quota.sql.
+  // Display only: the Edge Functions call consume_ai_quota() and are the real
+  // enforcement point, so editing this object cannot buy extra usage.
+  FREE_QUOTA: { chat: 15, test_build: 1, examiner: 3 },
+
+  featureName(f) {
+    return { chat: 'AI tutor messages', test_build: 'AI test builds', examiner: 'AI Examiner runs' }[f] || 'AI';
+  },
+
+  /** Units left for a feature today. -1 means unlimited (paid). */
+  remainingFor(feature) {
+    const q = this.state.quota || {};
+    if (q.unlimited) return -1;
+    const f = (q.features || {})[feature];
+    if (f && typeof f.remaining === 'number') return f.remaining;
+    // Snapshot not loaded yet: assume the day is unspent rather than
+    // flashing a paywall at a student who still has allowance.
+    return this.FREE_QUOTA[feature];
+  },
+
+  isOverQuota(feature) {
+    return this.remainingFor(feature) === 0;
+  },
+
+  /** Re-read today's standing. Never consumes. */
+  async refreshQuota() {
+    try {
+      if (!currentUser || !db) return this.state.quota;
+      const { data, error } = await db.rpc('ai_quota_snapshot');
+      if (error || !data || data.ok === false) return this.state.quota;
+      this.state.quota = {
+        ready: true,
+        unlimited: data.unlimited === true,
+        features: data.features || {},
+        resetsAt: data.resets_at || null,
+      };
+      return this.state.quota;
+    } catch (_) { return this.state.quota; }
+  },
   _deviceId: null,
   _heartbeat: null,
   _inited: false,
@@ -2140,23 +2179,20 @@ const Access = {
       if (this.isPaidEntitlement(ent)) {
         st.paid = true; st.access = true; st.reason = 'lifetime'; st.ready = true;
         this.claimDeviceSlot();
+        await this.refreshQuota();
         return st;
       }
-      const trial = await this.ensureTrial();
-      st.trial = trial.status;
-      st.trialEndsAt = trial.endsAt || null;
-      st.daysLeft = trial.daysLeft || 0;
-      if (trial.status === 'active') {
-        st.access = true; st.reason = 'trial';
-        this.claimDeviceSlot();
-      } else if (trial.status === 'unavailable') {
-        // Access tables not created yet (run ACCESS_TABLES.sql) — fail open so the app keeps working.
-        st.access = true; st.reason = 'trial';
-      } else {
-        st.access = false;
-        st.reason = trial.status === 'blocked' ? 'blocked' : 'expired';
-      }
+      // Free plan: the whole library (eBooks, past papers, flashcards) is open
+      // and stays open. The AI tools carry a daily allowance instead, and that
+      // allowance is enforced by the Edge Functions against a server-side
+      // counter — never by a flag in this file.
+      st.access = true;
+      st.reason = 'free';
       st.ready = true;
+      st.trial = 'none';
+      st.trialEndsAt = null;
+      st.daysLeft = 0;
+      await this.refreshQuota();
       return st;
     } catch (e) {
       console.warn('[Access] init failed:', e);
@@ -2165,60 +2201,10 @@ const Access = {
     }
   },
 
-  // 7-day trial with one-per-device lock. Auto-claims on first use.
+  // Free trials no longer exist: every signed-in student is unlimited.
+  // Kept as a stub so old callers keep working; never touches the DB.
   async ensureTrial() {
-    const out = { status: 'none', endsAt: null, daysLeft: 0 };
-    try {
-      if (!currentUser || !db) return out;
-      const now = Date.now();
-      let row = null;
-      try {
-        const res = await db.from('trials').select('started_at, ends_at').eq('user_id', currentUser.id).maybeSingle();
-        if (res.error) throw res.error;
-        row = res.data || null;
-      } catch (e) {
-        if (this._missingTable(e)) { console.warn('[Access] trials table missing — run ACCESS_TABLES.sql'); return { status: 'unavailable', endsAt: null, daysLeft: 0 }; }
-        throw e;
-      }
-      if (row && row.ends_at) {
-        const ends = new Date(row.ends_at).getTime();
-        if (now < ends) {
-          out.status = 'active'; out.endsAt = row.ends_at;
-          out.daysLeft = Math.max(1, Math.ceil((ends - now) / 86400000));
-        } else {
-          out.status = 'expired'; out.endsAt = row.ends_at; out.daysLeft = 0;
-        }
-        return out;
-      }
-      // No trial yet — claim one, locked to this device.
-      const hash = await this.getDeviceHash();
-      try {
-        const ins = await db.from('trial_devices').insert({ device_hash: hash, user_id: currentUser.id });
-        if (ins.error) throw ins.error;
-      } catch (e) {
-        if (e && (e.code === '23505' || /duplicate|already exists/i.test(e.message || ''))) {
-          out.status = 'blocked'; // this device already claimed a trial
-          return out;
-        }
-        if (this._missingTable(e)) { console.warn('[Access] trial_devices table missing — run ACCESS_TABLES.sql'); return { status: 'unavailable', endsAt: null, daysLeft: 0 }; }
-        throw e;
-      }
-      const started = new Date().toISOString();
-      const ends = new Date(now + TRIAL_DAYS * 86400000).toISOString();
-      try {
-        const t = await db.from('trials').insert({ user_id: currentUser.id, started_at: started, ends_at: ends });
-        if (t.error) throw t.error;
-      } catch (e) {
-        if (!(e && (e.code === '23505' || /duplicate|already exists/i.test(e.message || '')))) throw e;
-        // Race: trial row appeared concurrently — re-read it.
-        return this.ensureTrial();
-      }
-      out.status = 'active'; out.endsAt = ends; out.daysLeft = TRIAL_DAYS;
-      return out;
-    } catch (e) {
-      console.warn('[Access] trial check failed:', e);
-      return out;
-    }
+    return { status: 'none', endsAt: null, daysLeft: 0 };
   },
 
   // Single-session slot: this device takes over; others get kicked.
@@ -2277,7 +2263,7 @@ const Access = {
         <div style="position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:20px">
           <div style="width:100%;max-width:380px;background:var(--bg-secondary);border:1px solid var(--border-glass);border-radius:16px;padding:32px 28px;text-align:center">
             <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 8px">Signed in on another device</h3>
-            <p style="font-size:0.85rem;opacity:0.75;line-height:1.5;margin:0 0 24px">Your account was signed in elsewhere. Lifetime accounts allow one active session at a time — this device has been signed out.</p>
+            <p style="font-size:0.85rem;opacity:0.75;line-height:1.5;margin:0 0 24px">Your account was signed in elsewhere. Accounts allow one active session at a time — this device has been signed out.</p>
             <button id="access-kicked-ok" style="width:100%;padding:12px 20px;border:none;border-radius:12px;background:var(--accent);color:var(--on-accent);font-size:0.9rem;font-weight:700;cursor:pointer">Sign In Again</button>
           </div>
         </div>`;
@@ -2295,8 +2281,6 @@ const Access = {
   },
 
   trialDaysText() {
-    const st = this.state;
-    if (st.reason === 'trial') return st.daysLeft <= 1 ? 'Trial ends today' : `${st.daysLeft} trial days left`;
     return '';
   },
 
@@ -2304,44 +2288,14 @@ const Access = {
   // Returns true when the user is locked (signed in, no access).
   applyChatPaywall() {
     const st = this.state;
-    const locked = !!(st.ready && !st.access && st.reason !== 'guest' && st.reason !== 'error');
+    // The chat is locked only once today's free allowance is gone. Paid plans,
+    // and free students who still have messages left, are never locked.
+    const signedIn = st.ready && st.reason !== 'guest' && st.reason !== 'error';
+    const locked = signedIn && this.isOverQuota('chat');
     try { document.body.classList.toggle('locked', locked); } catch (_) {}
     try {
-      const area = document.querySelector('.chat-input-area');
-      let bar = document.getElementById('access-paywall');
-      if (locked && area) {
-        if (!bar) {
-          bar = document.createElement('div');
-          bar.id = 'access-paywall';
-          area.prepend(bar);
-        }
-        // Offer BOTH paid plans. Pushing only Lifetime here made it look like the
-        // exam plan (which is far cheaper) does not exist.
-        const base = (typeof BASE !== 'undefined' ? BASE : '');
-        const P = (typeof window !== 'undefined' && window.ANTEEM_PLANS) || {};
-        const lifePrice = P.fmt ? P.fmt(P.lifetimePrice) : (typeof LIFETIME_PRICE !== 'undefined' ? LIFETIME_PRICE : 'Rs 4,999');
-        const perList = Array.isArray(P.examPeriods) && P.examPeriods.length ? P.examPeriods : [];
-        const firstPer = perList[0];
-        const title = st.reason === 'blocked' ? 'Free trial already used on this device' : 'Your 7-day free trial has ended';
-        const examLine = firstPer
-          ? 'Exam plan ' + (P.fmt ? P.fmt(firstPer.price) : 'Rs ' + firstPer.price) + ' until ' + firstPer.label + '  ·  '
-          : '';
-        bar.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:10px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--accent)">
-            <div style="flex:1 1 220px;min-width:0">
-              <div style="font-size:13.5px;font-weight:700">${title}</div>
-              <div style="font-size:12px;opacity:0.75">Pick what suits you: Exam plan from ${firstPer && P.fmt ? P.fmt(firstPer.price) : 'Rs 999'}, or Lifetime ${lifePrice} once.</div>
-            </div>
-            <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
-              <a href="${base}/premium/" style="padding:10px 16px;border-radius:10px;background:transparent;color:var(--text);border:1px solid var(--accent);font-size:13px;font-weight:600;text-decoration:none">See plans</a>
-              <a href="${base}/payment/index.html?plan=exam" style="padding:10px 16px;border-radius:10px;background:transparent;color:var(--text);border:1px solid var(--accent);font-size:13px;font-weight:600;text-decoration:none">Exam plan${firstPer ? ' ' + (P.fmt ? P.fmt(firstPer.price) : '') : ''}</a>
-              <a href="${base}/payment/index.html?plan=lifetime" style="padding:10px 18px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;text-decoration:none">Lifetime ${lifePrice}</a>
-            </div>
-          </div>`;
-        bar.style.display = '';
-      } else if (bar) {
-        bar.style.display = 'none';
-      }
+      const old = document.getElementById('access-paywall');
+      if (old) old.remove();
     } catch (_) {}
     try {
       if (locked) {

@@ -548,7 +548,6 @@
   <script src="../assets/js/vendor/pdf.min.js"></script>
   <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = '../assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/plans.js?v=1"></script>
   <script src="../js/app.js?v=35"></script>
   <script src="../js/login-modal.js?v=5"></script>
   <script src="../js/forgot-modal.js?v=2"></script>
@@ -1081,8 +1080,17 @@
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             clearTimeout(to);
-            if (!res.ok) reject(new Error(data.error || ('Request failed (' + res.status + ')')));
-            else resolve(data);
+            if (!res.ok) {
+              var err = new Error(data.error || ('Request failed (' + res.status + ')'));
+              // The free plan allows 3 AI Examiner runs a day. The Edge
+              // Function spends that before it marks anything, so a 429 here
+              // means today's free runs are gone, not that anything failed.
+              if (res.status === 429 && data && data.code === 'FREE_DAILY_LIMIT') {
+                err.code = 'FREE_DAILY_LIMIT';
+                err.message = 'Something went wrong. Please try again.';
+              }
+              reject(err);
+            } else resolve(data);
           });
         }).catch(function (e) {
           clearTimeout(to);

@@ -55,7 +55,6 @@ async function refreshInlineSettings() {
     renderLanguage();
     renderPrivacy();
     await renderSubscription();
-    await renderCoupons();
     renderApi();
     renderConnected();
     renderVoiceCall();
@@ -90,7 +89,6 @@ async function initSettings() {
   renderLanguage();
   renderPrivacy();
   await renderSubscription();
-  await renderCoupons();
   renderConnected();
   renderAccounts();
   renderApi();
@@ -973,106 +971,19 @@ async function renderSubscription() {
   if (!c) return;
   c.innerHTML = '';
 
-  const planCard = document.createElement('div');
-  planCard.className = 'settings-card';
-  planCard.innerHTML = '<div class="skeleton-row"><div class="skeleton skeleton-text w-60"></div><div class="skeleton skeleton-text w-20" style="height:24px;border-radius:12px"></div></div>';
-  c.appendChild(planCard);
-
-  try {
-    const { data, error } = await db.rpc('get_entitlement_snapshot');
-    if (error) throw error;
-    settingsEntitlements = data;
-  } catch {
-    settingsEntitlements = null;
-  }
-  try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
-
-  await renderSubscriptionContent(c, planCard);
-}
-
-async function renderSubscriptionContent(container, planCard) {
-  container.removeChild(planCard);
-  const ent = settingsEntitlements;
-  const paid = (typeof Access !== 'undefined' && Access.isPaidEntitlement(ent))
-    || (ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active');
-  const trial = (typeof Access !== 'undefined' && Access.state.ready) ? Access.state : { reason: 'unknown', daysLeft: 0, trialEndsAt: null };
-
-  const currentCard = document.createElement('div');
-  currentCard.className = 'settings-card';
-  if (paid) {
-    currentCard.innerHTML = `
+  const freeCard = document.createElement('div');
+  freeCard.className = 'settings-card';
+  freeCard.innerHTML = `
       <div class="plan-card">
-        <div class="plan-icon pro">&#10024;</div>
+        <div class="plan-icon free">&#8734;</div>
         <div class="plan-info">
-          <h4>Anteemonee Lifetime ${badge('premium', 'Active')}</h4>
-          <p>One-time payment · Yours forever</p>
+          <h4>Free forever ${badge('active', 'Active')}</h4>
+          <p>Everything is free and unlimited — library, AI tutor, test builder and examiner. No plans, no payments, no card.</p>
         </div>
       </div>`;
-  } else if (trial.reason === 'trial') {
-    const endStr = trial.trialEndsAt ? new Date(trial.trialEndsAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
-    currentCard.innerHTML = `
-      <div class="plan-card">
-        <div class="plan-icon free">&#9201;</div>
-        <div class="plan-info">
-          <h4>Free Trial ${badge('active', trial.daysLeft <= 1 ? 'Ends today' : trial.daysLeft + ' days left')}</h4>
-          <p>Full access until ${endStr}. Upgrade to an Exam plan or Lifetime before it ends.</p>
-        </div>
-      </div>`;
-  } else if (trial.reason === 'blocked') {
-    currentCard.innerHTML = `
-      <div class="plan-card">
-        <div class="plan-icon free">&#128218;</div>
-        <div class="plan-info">
-          <h4>Trial Unavailable</h4>
-          <p>This device has already used its free trial. Choose an Exam plan or Lifetime to continue.</p>
-        </div>
-      </div>`;
-  } else {
-    currentCard.innerHTML = `
-      <div class="plan-card">
-        <div class="plan-icon free">&#128218;</div>
-        <div class="plan-info">
-          <h4>Trial Expired</h4>
-          <p>Your 7-day free trial has ended. Get an exam plan or lifetime access to continue.</p>
-        </div>
-      </div>`;
-  }
-  container.appendChild(currentCard);
+  c.appendChild(freeCard);
 
-  if (!paid) {
-    const upgradeCard = document.createElement('div');
-    upgradeCard.className = 'settings-card';
-    upgradeCard.innerHTML = `
-      <div style="padding:16px 20px 0">
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">Anteemonee Lifetime</div>
-        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">Pay once. Yours forever. No subscriptions.</div>
-      </div>
-      <div style="padding:0 20px 20px">
-        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:20px">
-          <span style="font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent)">Rs 4,999</span>
-          <span style="font-size:14px;color:var(--text-secondary)">one-time</span>
-        </div>
-        <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:14px">
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>Full AI Tutor access, forever</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>All flashcards, eBooks &amp; study tools</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>All future features included</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>One active session per account</span></li>
-          <li style="padding:6px 0;display:flex;align-items:center;gap:10px"><span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700">&#10003;</span><span>7-day money-back guarantee</span></li>
-        </ul>
-        <a href="/../payment/index.html?plan=lifetime" class="btn-settings btn-settings-primary" style="display:inline-block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box">Get Lifetime Access - Rs 4,999</a>
-      </div>`;
-    container.appendChild(upgradeCard);
-  }
-
-  // Method of applying the subscription (how the plan was activated).
-  const premiumSource = (ent && ent.premium_source) || '';
-  const methodLabel = premiumSource === 'coupon' ? 'Coupon code'
-    : (premiumSource === 'payment' || premiumSource === 'safepay' ? 'Paid via Safepay'
-    : (premiumSource ? premiumSource : '—'));
-
-  // Fetch the applied coupon (if any) and account stats in parallel.
-  let couponCode = null;
-  let couponExpiry = null;
+  // Account stats.
   let stats = { messages: 0, images: 0, tests: 0, minutes: 0 };
   try {
     const uid = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null;
@@ -1081,35 +992,13 @@ async function renderSubscriptionContent(container, planCard) {
       const imgR = db.from('ai_generated_images').select('id', { count: 'exact', head: true }).eq('user_id', uid);
       const testR = db.from('ai_test_history').select('id', { count: 'exact', head: true }).eq('user_id', uid);
       const profR = db.from('profiles').select('study_time_seconds').eq('id', uid).maybeSingle();
-      const couponR = db.from('coupon_redemptions').select('coupon_id, premium_expiry_at').eq('user_id', uid).order('redeemed_at', { ascending: false }).limit(1).maybeSingle();
-      const [mr, ir, tr, pr, cr] = await Promise.all([msgR, imgR, testR, profR, couponR]);
+      const [mr, ir, tr, pr] = await Promise.all([msgR, imgR, testR, profR]);
       stats.messages = (mr && mr.count) || 0;
       stats.images = (ir && ir.count) || 0;
       stats.tests = (tr && tr.count) || 0;
       stats.minutes = Math.floor(((pr && pr.data && pr.data.study_time_seconds) || 0) / 60);
-      const red = cr && cr.data;
-      if (red) {
-        couponExpiry = red.premium_expiry_at;
-        const { data: cpn } = await db.from('coupons').select('code, premium_duration_months').eq('id', red.coupon_id).maybeSingle();
-        if (cpn) couponCode = cpn.code;
-      }
     }
   } catch (_) {}
-
-  const planLabel = paid ? 'Lifetime' : trial.reason === 'trial' ? 'Free Trial' : trial.reason === 'blocked' ? 'Trial Unavailable' : 'Expired';
-  const statusLabel = paid ? 'active' : trial.reason === 'trial' ? 'trial' : 'expired';
-
-  // ── SUBSCRIPTION CARD ──
-  const subRows = [
-    buildRow('Current plan', paid ? 'Lifetime access' : (trial.reason === 'trial' ? 'Free trial' : 'No active plan'), badge(paid ? 'premium' : trial.reason === 'trial' ? 'active' : 'inactive', planLabel)),
-    buildRow('Status', statusLabel, badge(paid || trial.reason === 'trial' ? 'active' : 'inactive', statusLabel)),
-    buildRow('Applied via', methodLabel, methodLabel !== '—' ? `<span class="settings-method">${methodLabel}</span>` : null),
-  ];
-  if (couponCode) {
-    const expStr = couponExpiry ? new Date(couponExpiry).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
-    subRows.push(buildRow('Coupon', 'Applied at signup', `<span class="coupon-chip">${couponCode}${expStr ? ' · until ' + expStr : ''}</span>`));
-  }
-  container.appendChild(buildCard('SUBSCRIPTION', subRows));
 
   // ── ACCOUNT STATS CARD ──
   const statsCard = document.createElement('div');
@@ -1122,128 +1011,7 @@ async function renderSubscriptionContent(container, planCard) {
       <div class="stat-tile"><div class="stat-num">${stats.tests}</div><div class="stat-label">Tests built</div></div>
       <div class="stat-tile"><div class="stat-num">${stats.minutes}</div><div class="stat-label">Min on Anteemonee</div></div>
     </div>`;
-  container.appendChild(statsCard);
-}
-
-/* =========================
-   8. COUPONS
-   ========================= */
-
-async function renderCoupons() {
-  const c = document.getElementById('settings-coupons-content');
-  if (!c) return;
-  c.innerHTML = '<div class="skeleton" style="height:120px;margin:16px 0"></div>';
-
-  try {
-    const { data: redemptions } = await db.from('coupon_redemptions')
-      .select('id, coupon_id, redeemed_at, premium_start_at, premium_expiry_at')
-      .eq('user_id', currentUser.id)
-      .order('redeemed_at', { ascending: false });
-
-    const hasRedeemed = redemptions && redemptions.length > 0;
-
-    c.innerHTML = '';
-
-    if (hasRedeemed) {
-      const r = redemptions[0];
-
-      const statusCard = document.createElement('div');
-      statusCard.className = 'settings-card';
-      statusCard.innerHTML = `
-        <div class="settings-card-header">COUPON STATUS</div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-title" style="color:var(--success)">Coupon Redeemed</div>
-            <div class="setting-desc">Lifetime access granted — no expiry</div>
-          </div>
-          <span class="status-badge premium">Lifetime</span>
-        </div>`;
-      c.appendChild(statusCard);
-    } else {
-      const inputCard = document.createElement('div');
-      inputCard.className = 'settings-card';
-      inputCard.innerHTML = `
-        <div class="settings-card-header">REDEEM COUPON</div>
-        <div class="coupon-input-group">
-          <input type="text" class="setting-input" id="coupon-code" placeholder="Enter coupon code" style="text-transform:uppercase" maxlength="20">
-          <button class="btn-settings btn-settings-primary" id="coupon-btn" onclick="redeemCoupon()">Redeem</button>
-        </div>
-        <div id="coupon-msg" style="padding:0 20px 16px;font-size:13px;display:none"></div>`;
-      c.appendChild(inputCard);
-    }
-
-
-  } catch (e) {
-    c.innerHTML = '<div class="settings-card"><div class="setting-row"><div class="setting-info"><div class="setting-title">Unable to load coupon info</div></div></div></div>';
-  }
-}
-
-async function redeemCoupon() {
-  const code = document.getElementById('coupon-code').value.trim();
-  const msgEl = document.getElementById('coupon-msg');
-  const btn = document.getElementById('coupon-btn');
-  if (!code) return;
-
-  const ERRORS = {
-    INVALID: 'That coupon code isn\'t valid.',
-    INACTIVE: 'This coupon is no longer active.',
-    LIMIT_REACHED: 'This coupon has reached its redemption limit.',
-    ALREADY_USED: 'You\'ve already used this coupon.',
-    IP_USED: 'This coupon has already been redeemed from this network.',
-    NOT_AUTHENTICATED: 'Please sign in first.',
-    RATE_LIMITED: 'Too many attempts. Please wait a little and try again.',
-    REDEEM_FAILED: 'Couldn\'t redeem the coupon. Please try again.',
-  };
-
-  msgEl.style.display = 'none';
-  setLoading(btn, true);
-
-  try {
-    let result = null;
-
-    // Try Edge Function first, fall back to RPC if not deployed
-    try {
-      const { data, error } = await db.functions.invoke('redeem-coupon', { body: { code } });
-      if (error) throw error;
-      result = data;
-      // Edge Function returns {ok: true, months, premium_expires_at} or {ok: false, error: machine_code}
-      if (result && !result.ok) {
-        const msg = ERRORS[result.error] || ERRORS.REDEEM_FAILED;
-        msgEl.textContent = msg;
-        msgEl.style.color = '#FF6675';
-        msgEl.style.display = 'block';
-        return;
-      }
-    } catch (fnErr) {
-      // Edge Function not deployed â€” fall back to RPC
-      const { data, error } = await db.rpc('redeem_coupon_self', { p_code: code });
-      if (error) throw error;
-      result = data;
-      // RPC returns jsonb: {ok: true, months, ...} or {ok: false, error: 'CODE'}
-      if (result && !result.ok) {
-        const msg = ERRORS[result.error] || ERRORS.REDEEM_FAILED;
-        msgEl.textContent = msg;
-        msgEl.style.color = '#FF6675';
-        msgEl.style.display = 'block';
-        return;
-      }
-    }
-
-    // Success
-    msgEl.textContent = 'Coupon redeemed! Lifetime access is now active.';
-    msgEl.style.color = 'var(--success)';
-    msgEl.style.display = 'block';
-    document.getElementById('coupon-code').value = '';
-    showToastSettings('Coupon redeemed!');
-    // Refresh both subscription and coupon status
-    await Promise.all([renderSubscription(), renderCoupons()]);
-  } catch (err) {
-    msgEl.textContent = err.message || 'Failed to redeem coupon.';
-    msgEl.style.color = '#FF6675';
-    msgEl.style.display = 'block';
-  } finally {
-    setLoading(btn, false);
-  }
+  c.appendChild(statsCard);
 }
 
 /* =========================

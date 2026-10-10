@@ -420,14 +420,14 @@
   <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = '../assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../assets/js/vendor/docx.umd.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=32"></script>
+  <script src="../js/app.js?v=33"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>
   <script src="code/js/ai-api-service.js?v=22"></script>
   <script src="../js/mistral-key-modal.js?v=1"></script>
   <script src="code/js/image-limit-card.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=104"></script>
+  <script src="code/js/ai-chatbot.js?v=105"></script>
   <script src="../assets/js/vendor/chart.umd.min.js"></script>
   <script src="code/js/voice-chat.js?v=46"></script>
   <script src="code/js/realtime-call.js?v=8"></script>
@@ -493,23 +493,12 @@
         }
         var mRow = document.getElementById('drawer-account');
         if (mRow) mRow.style.display = 'flex';
-        if (!planDone && typeof db !== 'undefined' && db) {
+        if (!planDone) {
           planDone = true;
-          try {
-            var res = await db.rpc('get_entitlement_snapshot');
-            var ent = res && res.data;
-            var isPro = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
-            var planEl = document.getElementById('acct-plan');
-            if (planEl) {
-              planEl.textContent = isPro ? 'Premium' : 'Free plan';
-              planEl.classList.toggle('is-pro', !!isPro);
-            }
-            var mPlan = document.getElementById('m-acct-plan');
-            if (mPlan) {
-              mPlan.textContent = isPro ? 'Premium' : 'Free plan';
-              mPlan.classList.toggle('is-pro', !!isPro);
-            }
-          } catch (_) {}
+          var planEl = document.getElementById('acct-plan');
+          if (planEl) { planEl.textContent = 'Free plan'; planEl.classList.remove('is-pro'); }
+          var mPlan = document.getElementById('m-acct-plan');
+          if (mPlan) { mPlan.textContent = 'Free plan'; mPlan.classList.remove('is-pro'); }
         }
         return true;
       }

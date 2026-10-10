@@ -107,19 +107,12 @@
     if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_session_' + currentUser.id;
     return 'Anteemonee_ai_session_anon';
   }
-  // ── Chat store: premium → Supabase DB (all devices), free/guest → localStorage only ──
+  // ── Chat store: every signed-in student syncs across devices ──
   let isPremiumTier = false;
 
   async function refreshTier() {
-    isPremiumTier = false;
-    try {
-      if (typeof Access !== 'undefined' && Access.state.ready) {
-        isPremiumTier = Access.state.access;
-      } else if (typeof db !== 'undefined' && db) {
-        const { data: ent } = await db.rpc('get_entitlement_snapshot');
-        isPremiumTier = (typeof Access !== 'undefined' && Access.isPaidEntitlement(ent));
-      }
-    } catch (_) { isPremiumTier = false; }
+    // No tiers anymore: signed in means full access.
+    isPremiumTier = !!currentUserId();
     return isPremiumTier;
   }
 
@@ -1480,7 +1473,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     }
 
     // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
-    // Paid access: paid users + active 7-day trial pass, others hit the hard paywall.
+    // Free & unlimited: just sync access state in the background.
     try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
     const token = getAccessToken();
     if (!token) {
@@ -1855,10 +1848,37 @@ if (idx >= 0 && idx < PERSONAS.length) {
     return matched.concat(rest).slice(0, 5);
   }
 
+  // How much of the ingested book reaches the model, and how hard the model is
+  // pushed to teach from it. With one thin snippet the models — Astra in
+  // particular, being a large general model — blend towards general knowledge,
+  // so answers stop reading like they came from the Punjab board textbook.
+  // These are the knobs for that: more pages, more text per page, and an
+  // explicit book/general ratio with page citations in the instructions.
+  var TEXTBOOK_MAX_PAGES = 5;
+  var TEXTBOOK_PAGE_CHARS = 1800;
+  var TEXTBOOK_BOOK_SHARE = 70;
+
   function formatTextbookContext(pages) {
     if (!pages || pages.length === 0) return '';
 
-    const sections = pages.slice(0, 3).map(p => {
+    // The ranker ranks pages, not chapters, so the same printed page can come
+    // back twice. One page counted twice would read as two sources.
+    var seenPages = {};
+    var picked = [];
+    for (var i = 0; i < pages.length && picked.length < TEXTBOOK_MAX_PAGES; i++) {
+      var candidate = pages[i];
+      if (!candidate) continue;
+      var cPrinted = candidate.printed_page_number !== null && candidate.printed_page_number !== undefined ? candidate.printed_page_number : null;
+      var cPdf = candidate.page_number !== null && candidate.page_number !== undefined ? candidate.page_number : null;
+      var pageKey = String(candidate.book_id || candidate.book_title || '?') + '#' +
+        (cPrinted !== null ? cPrinted : cPdf !== null ? cPdf : i);
+      if (seenPages[pageKey]) continue;
+      seenPages[pageKey] = true;
+      picked.push(candidate);
+    }
+    if (picked.length === 0) return '';
+
+    const sections = picked.map(p => {
       const title = p.book_title || 'Unknown Book';
       const chapterNumber = p.chapter_number !== null && p.chapter_number !== undefined && p.chapter_number !== '' ? Number(p.chapter_number) : null;
       const chapterName = p.chapter_name ? String(p.chapter_name) : '';
@@ -1869,12 +1889,19 @@ if (idx >= 0 && idx < PERSONAS.length) {
       const pageInfo = printedPage !== null && pdfPage !== null && String(printedPage) !== String(pdfPage)
         ? `, PRINTED PAGE: ${printedPage}, PDF PAGE: ${pdfPage}`
         : printedPage !== null ? `, PAGE: ${printedPage}` : pdfPage !== null ? `, PDF PAGE: ${pdfPage}` : '';
-      const fullText = (p.full_text || p.snippet || '').slice(0, 1500);
+      const fullText = (p.full_text || p.snippet || '').slice(0, TEXTBOOK_PAGE_CHARS);
       return `[BOOK: "${title}"${chapter}${topic}${pageInfo}]\n${fullText}`;
     });
 
+    var generalShare = 100 - TEXTBOOK_BOOK_SHARE;
+    // Page attribution in the body is a references setting: with references off
+    // the student explicitly asked for no books or pages to be cited at all.
+    var citeInline = aiPrefs.references
+      ? ' Name the book and the printed page as you state each book fact, like "(Physics Class 11, p. 35)".'
+      : ' Do NOT name the book or any page number in the answer body (the References section is switched off).';
+
     var refBlock = aiPrefs.references
-      ? `4. REFERENCES ON — MANDATORY: At the VERY END of your response (after everything else), you MUST include a References section in this EXACT format:
+      ? `5. REFERENCES ON — MANDATORY: At the VERY END of your response (after everything else), you MUST include a References section in this EXACT format:
 
 ---
 **References:**
@@ -1882,16 +1909,17 @@ if (idx >= 0 && idx < PERSONAS.length) {
 ---
 
 Use the chapter number and name exactly as shown in the source block. If a source has no chapter metadata, cite it as Book, p. [page]. List ALL books, chapters, and pages you actually used. Do NOT invent references. If no usable book, page, or website source is available, omit the References heading and both separator lines entirely.`
-      : `4. REFERENCES OFF: Do NOT include any References section. Just end your answer normally.`;
+      : `5. REFERENCES OFF: Do NOT include any References section, and do not name books or page numbers anywhere in the answer. Just end your answer normally.`;
     return `\n\n===== TEXTBOOK REFERENCE — READ FIRST =====
-You were given the student's EXACT Punjab board textbook excerpts below (from 11th/12th Biology, Chemistry, Physics, Computer Science, English 2025 editions now ingested). You MUST read and comprehend these excerpts BEFORE writing your answer. Do NOT answer from general memory alone. Your explanation must be GROUNDED in these excerpts.
+You were given the student's EXACT Punjab board textbook excerpts below (from 11th/12th Biology, Chemistry, Physics, Computer Science, English 2025 editions now ingested). You MUST read and comprehend these excerpts BEFORE writing your answer. Do NOT answer from general memory alone. Teach from these excerpts first, and let general knowledge fill only the gaps.
 
 ${sections.join('\n\n---\n\n')}
 
-===== INSTRUCTIONS FOR THIS RESPONSE =====
-1. FIRST: Read all textbook excerpts above completely — they are your source of truth for this question.
-2. Explain step-by-step using the textbook as your PRIMARY source, quoting or paraphrasing key lines where relevant.
-3. Then enhance with your own knowledge (examples, analogies, exam tips) but keep the textbook's facts central.
+===== HOW TO USE THESE EXCERPTS =====
+1. READ THEM FIRST. They are the source of truth for this question.
+2. ${TEXTBOOK_BOOK_SHARE}% FROM THE BOOK: build the bulk of your answer out of these excerpts. Open with the book's own definition of the topic, quoting the key sentence from the excerpt, then teach the book's facts, formulas, values and terminology, and keep the book's wording wherever it is clearer than your own.${citeInline}
+3. ${generalShare}% OF YOUR OWN: only after the book has had its say, add your own analogies, extra worked examples and exam tips. Your own knowledge must never replace or contradict a book fact: where the excerpts cover a point, the book wins.
+4. IF THE EXCERPTS DO NOT COVER IT: say so in one short line, then answer that part from general knowledge so the student is not left stuck.
 ${refBlock}`;
   }
 
@@ -2071,7 +2099,7 @@ BACKGROUND: ${persona.background}
 STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines.
 
 BEHAVIOR:
-- For academic/study questions: Use the textbook content provided as your PRIMARY source. Explain step-by-step. Add your own knowledge to enhance.
+- For academic/study questions: teach from the textbook excerpts provided. Roughly 70% of the answer must be the book's own definitions, facts, formulas and wording, and at most 30% your own general knowledge, examples or exam tips. Explain step-by-step and never let your own knowledge replace a book fact.
 - FLASHCARD CREATION: When the user asks to create or make a flashcard:
   - If they gave a clear topic, term, or question: use the SELECTED SUBJECT ("${subjName}") as the card subject unless the user explicitly names a different subject, and output the card in this exact format, then the confirmation line, and nothing else:
     **Subject:** [Subject name, or General if unclear]
@@ -6095,22 +6123,8 @@ function handleFileBlocks(div, text) {
       var wa = document.querySelectorAll('.welcome-action-btn');
       for (var wi = 0; wi < wa.length; wi++) wa[wi].disabled = !authed || locked;
     } catch (_) {}
-    if (authed && !locked) return true;
-    if (locked) {
-      try {
-        chatInput.value = '';
-        chatInput.disabled = true;
-        chatInput.placeholder = 'Your free trial has ended. Choose an Exam plan or Lifetime to continue.'
-        autoResize();
-        btnSend.disabled = true;
-        btnSend.style.display = 'flex';
-        btnStop.style.display = 'none';
-        isStreaming = false;
-      } catch (_) {}
-      return false;
-    }
-    // model selector hidden permanently — auto routing handles models
     if (authed) return true;
+    // model selector hidden permanently — auto routing handles models
     try {
       chatInput.value = '';
       chatInput.disabled = true;
@@ -6577,7 +6591,9 @@ function handleFileBlocks(div, text) {
     if (!hasImages && isQuizRequest(text) && !hasQuizTopic(text)) pendingQuizTopic = true;
     if ((!text && !hasImages && !testRef) || isStreaming) return;
     if (!isAuthed()) { refreshAuthGate(); return; }
-    try { if (typeof Access !== 'undefined' && Access.state.ready && !Access.state.access) { refreshAuthGate(); return; } } catch (_) {}
+    // Free students keep chatting until today's allowance is spent. The gateway
+    // is the real gate — this only avoids a pointless round trip.
+    try { if (typeof Access !== 'undefined' && Access.state.ready && Access.isOverQuota && Access.isOverQuota('chat')) { refreshAuthGate(); return; } } catch (_) {}
 
     // Lock immediately — prevent double-send during any async gap
     isStreaming = true;
@@ -6853,6 +6869,25 @@ function handleFileBlocks(div, text) {
       }
     } catch (error) {
       // â”€â”€ Auto-retry on NO_SESSION: session exists locally but not in DB â”€â”€
+      if (error && error.code === 'FREE_DAILY_LIMIT') {
+        // Today's 15 messages are spent. The gateway spent them before
+        // generating a single token, so nothing was wasted, and it told us
+        // when the day rolls over. Lock the input and offer the upgrade.
+        try {
+          finalizeStreamingMessage(streamDiv, error.message || 'Daily free limit reached.');
+          if (typeof Access !== 'undefined') await Access.refreshQuota();
+        } catch (_) {}
+        try { refreshAuthGate(); } catch (_) {}
+        return;
+      }
+      if (error && error.code === 'session_expired') {
+        // The gateway meters per user_id, so a signed-out student is refused.
+        // Point them at sign-in rather than failing over to a chain that
+        // would refuse them the same way.
+        try { finalizeStreamingMessage(streamDiv, 'Please sign in to use the AI tutor.'); } catch (_) {}
+        try { refreshAuthGate(); } catch (_) {}
+        return;
+      }
       if (error.message && error.message.includes('NO_SESSION')) {
         console.warn('[AI] Session not found in DB. Starting fresh session and retrying...');
         activeSession = null;

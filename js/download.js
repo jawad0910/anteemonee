@@ -115,24 +115,6 @@ async function openBetaModal() {
     return;
   }
 
-  try {
-    let hasAccess = false;
-    if (typeof Access !== 'undefined') {
-      await Access.init();
-      hasAccess = Access.state.access;
-    } else {
-      const { data: ent } = await db.rpc('get_entitlement_snapshot');
-      hasAccess = ent && (ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active';
-    }
-    if (!hasAccess) {
-      if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = ''; }
-      document.getElementById('beta-premium-modal').classList.add('open');
-      return;
-    }
-  } catch (e) {
-    console.log('[BETA] entitlement check failed:', e.message);
-  }
-
   if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = ''; }
 
   const email = currentUser?.email || '';
@@ -247,12 +229,6 @@ function closeBetaSigninModal() {
   document.getElementById('beta-signin-modal').classList.remove('open');
 }
 
-/* ---- Beta Premium Required Modal ---- */
-
-function closeBetaPremiumModal() {
-  document.getElementById('beta-premium-modal').classList.remove('open');
-}
-
 /* ---- Close modals on overlay click / Escape ---- */
 
 function closeDownloadModal() {
@@ -267,7 +243,6 @@ document.addEventListener('click', (e) => {
     closeBetaDownloadModal();
     closeBetaNotVerifiedModal();
     closeBetaSigninModal();
-    closeBetaPremiumModal();
   }
 });
 
@@ -278,6 +253,5 @@ document.addEventListener('keydown', (e) => {
     closeBetaDownloadModal();
     closeBetaNotVerifiedModal();
     closeBetaSigninModal();
-    closeBetaPremiumModal();
   }
 });

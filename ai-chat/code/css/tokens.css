@@ -17,12 +17,6 @@
              'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
                   'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
-  /* Reading face for the conversation itself. Inter is asked for by name
-     (it is already downloaded for the rest of the page) so the reply looks
-     identical on every OS instead of inheriting whatever the system calls
-     its UI font, and its taller x-height keeps long answers easy to scan. */
-  --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-                  'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo,
                Consolas, monospace;
 
@@ -64,11 +58,6 @@
   --chat-bubble-border: rgba(0,0,0,0.10);
   --chat-bubble-text: #1A1A1A;
 
-  /* Blocks inside a reply (code, tables). The reply text itself has no
-     panel any more, so these are the only surfaces that need one. */
-  --chat-recessed: #F4F4F6;
-  --chat-recessed-border: rgba(0,0,0,0.075);
-
   --chat-sidebar: #FFFFFF;
   --chat-dock: #FFFFFF;
   --chat-composer: #FFFFFF;
@@ -92,10 +81,6 @@
   --chat-bubble: #000000;
   --chat-bubble-border: rgba(255,255,255,0.16);
   --chat-bubble-text: rgba(255,255,255,0.92);
-
-  /* Lifted just enough to read as a block on the black page. */
-  --chat-recessed: #141417;
-  --chat-recessed-border: rgba(255,255,255,0.09);
 
   --chat-sidebar: #000000;
   --chat-dock: #000000;

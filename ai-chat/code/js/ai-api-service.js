@@ -1,6 +1,6 @@
 ﻿/* ==========================================
    Anteemonee - Triple API Failover Service
-   Priority engine: GPT-6 Astra (free, called straight from the browser).
+   Priority engine: Muse Spark (free, called straight from the browser).
    Everything after that routes through the Supabase Edge Function
    (Groq → Qwen → Mistral). Detects incomplete streams and auto-falls back.
    ========================================== */
@@ -10,20 +10,27 @@ class AiApiService {
     this.supabaseUrl = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
     this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
     this.edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/ai-chat`;
+    // Every student message now goes through the gateway, which holds the
+    // Astra key server-side and enforces the 15/day free quota. The browser
+    // no longer talks to Astra or to ai-chat directly, so neither the key
+    // nor the cap can be bypassed from devtools.
+    this.gatewayUrl = `${this.supabaseUrl}/functions/v1/ai-chat-gateway`;
     this.activeProvider = 0;
     this._currentAbort = null;
     this._accessToken = null;
     this._sessionId = null;
     this.totalProviders = 3;
     this._lastFinishReason = null; // finish_reason of the latest completed attempt ('stop' | 'length' | ...)
-    // ── Priority engine: GPT-6 Astra (Flagship Router tunnel) ──
+    // ── Priority engine: Muse Spark (Flagship Router tunnel) ──
     // Astra is tried first for every request. On ANY failure — network error,
     // HTTP error, hung stream, empty reply — we fall through to the Supabase
     // edge function and its Groq → Qwen → Mistral chain, so the student never
     // sees an outage because of the free tunnel.
-    this.astraUrl = 'https://rmwit9z.abc-tunnel.us/v1/chat/completions';
-    this.astraModel = 'gpt-6-astra';
-    this.astraKey = 'sk-1af196978a75d6af-d5608e-c0e8ab59';
+    this.astraModel = 'oc/muse-spark-1.3-contributor-free';
+    // The Astra API key used to live here in cleartext. Anyone who opened
+    // devtools could read it and call the tunnel directly, entirely
+    // bypassing the site and its quota. It now lives in the gateway's
+    // ASTRA_API_KEY secret and is never sent to the browser.
     this._astraFails = 0;         // consecutive Astra failures
     this._astraCooldownUntil = 0; // skip Astra until this timestamp
     this._abortRequested = false; // user tapped Stop — never fail over after that
@@ -33,7 +40,7 @@ class AiApiService {
 
   get currentProvider() {
     if (this.lastServed && this.lastServed.engine === 'astra') {
-      return { name: 'GPT-6 Astra', model: this.lastServed.model };
+      return { name: 'Muse Spark', model: this.lastServed.model };
     }
     const names = ['Groq', 'Qwen', 'Mistral'];
     return { name: names[this.activeProvider] || 'AI', model: this._lastStreamModel };
@@ -77,6 +84,19 @@ class AiApiService {
       }
     } catch (_) {}
     return null;
+  }
+
+  /**
+   * An id for one student message, shared by the Astra attempt and every
+   * edge fallback so the gateway charges the daily quota exactly once.
+   */
+  _newRequestId() {
+    try {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+      }
+    } catch (_) {}
+    return 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
   }
 
   /**
@@ -168,7 +188,17 @@ class AiApiService {
     this.lastServed = null;
     this._abortRequested = false;
 
-    // ── Priority attempt: GPT-6 Astra. Any failure drops to the chain below. ──
+    // One id for this whole message, shared by the Astra attempt and every
+    // edge fallback below. The gateway treats it as an idempotency key, so
+    // a failover — or a replay after a session refresh — is charged once
+    // against the 15/day free quota rather than twice.
+    this._currentRequestId = this._newRequestId();
+
+    // ── Priority attempt: Muse Spark. Any failure drops to the chain below. ──
+    // Note: Astra has no vision support (verified 2026-10-09 with tests/
+    // astra-vision-probe.mjs — it accepts image parts but answers "I can't see
+    // the image"). Images must therefore be turned into text by the caller
+    // before they reach here, which is what the chatbot already does.
     if (this._astraAvailable()) {
       try {
         yield* this._streamAstra(messages);
@@ -176,6 +206,13 @@ class AiApiService {
         return;
       } catch (error) {
         if (this._abortRequested) throw error;
+        // A quota refusal is final, not an Astra outage: do not count it as
+        // an Astra failure and do not spend every fallback on the same
+        // refusal. Surface it to the caller with its reset time attached.
+        if (error && error.code === 'FREE_DAILY_LIMIT') throw error;
+        // Same for a session that is gone: every fallback needs the same JWT,
+        // so retrying the whole chain would only produce the same refusal.
+        if (error && error.code === 'session_expired') throw error;
         this._noteAstraFailure(error);
         // Partial text was already streamed to the UI, so the caller's
         // continuation path owns it — same contract as the edge providers.
@@ -237,9 +274,9 @@ class AiApiService {
       requestId = 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
     }
 
-    const body = { messages, providerIndex };
+    const body = { mode: 'edge', messages, providerIndex };
     if (this._sessionId) body.sessionId = this._sessionId;
-    if (requestId) body.requestId = requestId;
+    if (requestId) body.requestId = this._currentRequestId || requestId;
     if (images && images.length > 0) {
       body.images = images;
       console.log('[Edge] Sending', images.length, 'images, sizes:', images.map(i => i.length));
@@ -247,7 +284,7 @@ class AiApiService {
       console.log('[Edge] No images to send');
     }
 
-    const res = await this._postWithAuthRetry(this.edgeFunctionUrl, {
+    const res = await this._postWithAuthRetry(this.gatewayUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -399,25 +436,25 @@ class AiApiService {
 
   _noteAstraSuccess() {
     this._astraFails = 0;
-    console.info('[AI] Served by GPT-6 Astra (' +
+    console.info('[AI] Served by Muse Spark (' +
       ((this.lastServed && this.lastServed.model) || this.astraModel) + ')');
   }
 
   _noteAstraFailure(error) {
     this._astraFails += 1;
-    console.warn('[AI] GPT-6 Astra failed: ' + ((error && error.message) || error) +
+    console.warn('[AI] Muse Spark failed: ' + ((error && error.message) || error) +
       ' — falling back to Groq → Qwen → Mistral');
     // Two misses in a row means the tunnel is down for now: stop paying its
     // latency on every message, and try it again in a minute.
     if (this._astraFails >= 2) {
       this._astraCooldownUntil = Date.now() + 60000;
-      console.warn('[AI] GPT-6 Astra cooling down for 60s after ' + this._astraFails +
+      console.warn('[AI] Muse Spark cooling down for 60s after ' + this._astraFails +
         ' consecutive failures');
     }
   }
 
   /**
-   * Priority attempt: stream straight from GPT-6 Astra. The tunnel is
+   * Priority attempt: stream straight from Muse Spark. The tunnel is
    * OpenAI-compatible and sends CORS headers, so the browser calls it
    * directly — no edge function sits in front of it.
    *
@@ -429,31 +466,85 @@ class AiApiService {
   async *_streamAstra(messages) {
     const controller = new AbortController();
     this._currentAbort = controller;
-    // One budget for connect + reasoning + generation. Astra is a reasoning
-    // model, so the first visible token can take a while — stay generous.
-    const timeoutId = setTimeout(() => {
-      try { controller.abort(); } catch (_) {}
-    }, 90000);
+
+    // Astra is uncapped on purpose: no `max_tokens` is sent at all, so its own
+    // output length is the only ceiling. A fixed budget used to cut long
+    // answers mid-file, because reasoning tokens are billed against it too
+    // (verified 2026-10-09 with tests/astra-length-probe.mjs: max_tokens 50
+    // produced finish_reason "length" and zero visible text, while omitting it
+    // let a 500-line answer finish cleanly).
+    //
+    // The timers below are therefore stall-based, never duration-based: they
+    // catch a dead connection, they never cut a reply that is still flowing.
+    const CONNECT_TIMEOUT_MS = 60000;       // headers must arrive within this
+    const STALL_TIMEOUT_MS = 180000;        // then silence between chunks is fatal
+    const HARD_CEILING_MS = 30 * 60 * 1000; // absolute backstop for one attempt
+    const abortNow = () => { try { controller.abort(); } catch (_) {} };
+
+    let timeoutId = setTimeout(abortNow, CONNECT_TIMEOUT_MS);
+    /** Restart the silence clock — called on every byte that arrives. */
+    const armStall = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(abortNow, STALL_TIMEOUT_MS);
+    };
+    const hardCeilingId = setTimeout(abortNow, HARD_CEILING_MS);
     let reader = null;
 
     try {
       let res;
       try {
-        res = await fetch(this.astraUrl, {
+        // Via the gateway, which holds the Astra key server-side and spends
+        // one unit of the 15/day free quota before any token is used.
+        // _postWithAuthRetry replays once on a 401, and the shared
+        // requestId makes that replay cost nothing.
+        res = await this._postWithAuthRetry(this.gatewayUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.astraKey}`,
+            'Authorization': this._accessToken
+              ? `Bearer ${this._accessToken}`
+              : `Bearer ${this.supabaseKey}`,
           },
-          // Reasoning tokens are billed against max_tokens, so leave plenty of
-          // headroom: a tight budget can finish a reply with no visible text.
-          body: JSON.stringify({ model: this.astraModel, messages, stream: true, max_tokens: 4096 }),
+          body: JSON.stringify({
+            mode: 'astra',
+            messages,
+            requestId: this._currentRequestId,
+          }),
           signal: controller.signal,
         });
       } catch (e) {
         if (e && e.name === 'AbortError' && this._abortRequested) throw e;
         if (e && e.name === 'AbortError') throw new Error('Astra request timed out');
         throw e; // DNS / connection refused / offline — fail over right away
+      }
+
+      // Headers are in. From here on, only real silence is fatal.
+      armStall();
+
+      if (res.status === 401 || res.status === 403) {
+        // The gateway meters per user_id, so a signed-out student gets 401
+        // rather than unmetered chat. Say so plainly instead of failing
+        // over to a chain that will refuse it the same way.
+        const authErr = new Error('Please sign in to use the AI tutor.');
+        authErr.code = 'session_expired';
+        authErr.status = res.status;
+        throw authErr;
+      }
+
+      if (res.status === 429) {
+        // Daily free limit reached. This is NOT an Astra outage: failing
+        // over to the edge chain would be refused the same way, so it is
+        // surfaced immediately with its reset time attached.
+        let payload = {};
+        try { payload = JSON.parse(await res.text()); } catch (_) {}
+        const limitErr = new Error(payload.error || 'Daily free limit reached.');
+        limitErr.code = 'FREE_DAILY_LIMIT';
+        limitErr.feature = 'chat';
+        limitErr.used = payload.used;
+        limitErr.limit = payload.limit;
+        limitErr.remaining = 0;
+        limitErr.resetsAt = payload.resetsAt || payload.resets_at || null;
+        throw limitErr;
       }
 
       if (!res.ok) {
@@ -477,9 +568,9 @@ class AiApiService {
         if (data && data.error) throw new Error('Astra: ' + (data.error.message || data.error));
         const choice = data && data.choices && data.choices[0];
         const content = choice && choice.message && choice.message.content;
-        if (!content) throw new Error('GPT-6 Astra returned an empty response');
+        if (!content) throw new Error('Muse Spark returned an empty response');
         if (data.model) this._lastStreamModel = data.model;
-        this.lastServed = { engine: 'astra', provider: 'GPT-6 Astra', model: data.model || this.astraModel, at: Date.now() };
+        this.lastServed = { engine: 'astra', provider: 'Muse Spark', model: data.model || this.astraModel, at: Date.now() };
         yield content;
         return;
       }
@@ -491,8 +582,24 @@ class AiApiService {
       let receivedContent = false;
 
       while (true) {
-        const { done, value } = await reader.read();
+        let read;
+        try {
+          read = await reader.read();
+        } catch (e) {
+          // Stop tapped — surface the abort so nothing continues after it.
+          if (this._abortRequested) throw e;
+          // Text already reached the UI, so hand the partial reply to the
+          // caller's continuation path instead of restarting the whole answer
+          // with another model. (A dropped socket used to restart it from
+          // scratch, which is how a long file ended up half-written.)
+          if (receivedContent) {
+            throw new IncompleteStreamError('Muse Spark connection dropped mid-reply. Continuing where it stopped...');
+          }
+          throw new Error('Astra stream failed: ' + ((e && e.message) || e));
+        }
+        const { done, value } = read;
         if (done) break;
+        armStall();
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -517,7 +624,7 @@ class AiApiService {
             if (content) {
               receivedContent = true;
               if (!this.lastServed) {
-                this.lastServed = { engine: 'astra', provider: 'GPT-6 Astra', model: json.model || this.astraModel, at: Date.now() };
+                this.lastServed = { engine: 'astra', provider: 'Muse Spark', model: json.model || this.astraModel, at: Date.now() };
               }
               yield content;
             }
@@ -533,13 +640,14 @@ class AiApiService {
       if (!receivedContent) {
         // The connection died before any text, or thinking tokens consumed the
         // whole budget and the reply finished empty. Either way: fall back.
-        throw new Error('GPT-6 Astra produced no usable content');
+        throw new Error('Muse Spark produced no usable content');
       }
       if (!receivedDone) {
-        throw new IncompleteStreamError('GPT-6 Astra response was cut off. Retrying with fallback model...');
+        throw new IncompleteStreamError('Muse Spark response was cut off. Retrying with fallback model...');
       }
     } finally {
       try { clearTimeout(timeoutId); } catch (_) {}
+      try { clearTimeout(hardCeilingId); } catch (_) {}
       try { if (reader) reader.releaseLock(); } catch (_) {}
       if (this._currentAbort === controller) this._currentAbort = null;
     }
