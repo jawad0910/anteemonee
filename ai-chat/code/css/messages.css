@@ -12,98 +12,119 @@
 }
 .messages-list > .message {
   margin: 2px 0 8px;
-  animation: msgIn var(--m-base) var(--m-ease-out) both;
+  animation: msgRise var(--m-base) var(--m-ease-out) both;
+}
+/* A gentle rise and fade — no scale, no bounce. Long answers arrive the
+   same way a page settles: still, then readable. */
+@keyframes msgRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 /* Grouped bubbles: consecutive same-role messages hug together */
 .messages-list > .message.user + .message.user,
 .messages-list > .message.assistant + .message.assistant {
   margin-top: 2px;
 }
+/* The reply has no box of its own any more, so the break between two
+   speakers is the only thing separating them — give it air. */
+.messages-list > .message.user + .message.assistant,
+.messages-list > .message.assistant + .message.user {
+  margin-top: 18px;
+}
 
 /* ── Avatars ────────────────────────────────────────────────────
-   iMessage hides avatars inside grouped threads. The AI keeps its
-   mark on the very first message of a run only. */
+   The tutor's mark opens a run and its slot stays open for the rest of
+   it, so every line of the answer starts at the same x. The student's
+   avatar collapses instead, which keeps their pill hugging the right. */
 .message .msg-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  opacity: 0.9;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  opacity: 1;
+  margin-top: 1px;
 }
-.message.assistant + .message.assistant .msg-avatar,
+.message.assistant + .message.assistant .msg-avatar {
+  opacity: 0;
+}
 .message.user + .message.user .msg-avatar {
   opacity: 0;
   width: 0;
   margin: 0;
 }
-.message .msg-body { gap: 5px; }
+.message .msg-body { gap: 4px; }
 
-/* Bubbles hug their content and align to their owner's side:
-   assistant left (beside its mark), user right. Never center. */
+/* Alignment: the reply owns the whole column, the student's pill hugs
+   its side. Never center. */
 .messages-list > .message.assistant .msg-body {
-  flex: 0 1 auto;
-  max-width: 82%;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 .messages-list > .message.user .msg-body {
   flex: 0 1 auto;
   max-width: 82%;
 }
 
-/* ── Assistant bubble — frosted iOS gray card ─────────────────── */
+/* ── Assistant reply — clean, plain type ─────────────────────────
+   The answer is the whole point of the screen, so it is set as
+   typography rather than as a second block of colour. Removing the
+   panel is also what fixes the dark theme: the reply used to be a
+   pure-black card with a pale hairline drawn over a pure-black page,
+   which read as a cheap outline box. */
 .messages-list > .message.assistant .msg-content {
-  background: var(--chat-bubble);
-  -webkit-backdrop-filter: var(--m-blur-xs);
-  backdrop-filter: var(--m-blur-xs);
-  border: 1px solid var(--chat-bubble-border);
-  border-radius: 18px 18px 18px 6px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  display: block;
+  width: 100%;
+  max-width: 46em;          /* ≈72 characters: the comfortable measure */
   color: var(--chat-bubble-text);
-  padding: 8px 13px;
-  display: inline-block;
-  font-size: 13.5px;
-  line-height: 1.52;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  max-width: 100%;
-}
-/* Consecutive assistant bubbles square the inner corners */
-/* Tail belongs to the end of a same-role run */
-.messages-list > .message.assistant .msg-content {
-  border-bottom-left-radius: 4px;
-}
-.messages-list > .message.assistant:last-child .msg-content,
-.messages-list > .message.assistant + .message.user .msg-content,
-.messages-list > .message.assistant + .message.assistant:last-child .msg-content {
-  border-bottom-left-radius: 6px;
+  font-family: var(--font-reading);
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.68;
+  letter-spacing: -0.011em;
+  text-wrap: pretty;        /* no orphan word dangling on the last line */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── User bubble — iOS Messages tinted pill ───────────────────── */
 .messages-list > .message.user .msg-content {
   background: var(--chat-tint);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 40%);
   color: var(--chat-on-tint);
-  border-radius: 18px 18px 6px 18px;
-  padding: 7px 13px;
+  border-radius: 20px 20px 7px 20px;
+  padding: 9px 14px;
   display: inline-block;
-  font-size: 13.5px;
-  line-height: 1.5;
+  max-width: 100%;
+  font-family: var(--font-reading);
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.008em;
   box-shadow: 0 1px 2px var(--chat-tint-ring);
 }
 [data-theme="light"] .messages-list > .message.user .msg-content {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 .messages-list > .message.user + .message.user .msg-content {
-  border-top-right-radius: 8px;
+  border-top-right-radius: 9px;
 }
 .messages-list > .message.user:last-child .msg-content {
-  border-radius: 18px 18px 6px 18px;
+  border-radius: 20px 20px 7px 20px;
 }
 .messages-list > .message.user .msg-body { max-width: 76%; }
 
 /* ── Meta row inside a bubble (time/status) ───────────────────── */
 .message .msg-content .msg-meta {
-  display: inline-flex;
+  display: block;
+  float: none;
   align-items: center;
   gap: 4px;
-  float: right;
-  margin: 5px -2px -2px 10px;
+  margin: 7px 0 0;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -113,61 +134,112 @@
 .message.assistant .msg-content .msg-meta { color: var(--chat-text-meta); }
 .msg-meta .msg-check { font-size: 10px; }
 
-/* ── Markdown typography inside bubbles ───────────────────────── */
-.message.assistant .msg-content {
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+/* ── Markdown typography inside a reply ─────────────────────────
+   Kerning and ligatures only. The base theme asked for SF-specific
+   alternates (cv02/cv03/cv04/cv11) that Inter ignores, so the same
+   declaration now sits here where it wins the cascade for both roles. */
+.messages-list .msg-content {
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
 }
 .msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -0.021em;
   color: var(--chat-bubble-text);
 }
+.msg-content strong { font-weight: 600; color: var(--chat-bubble-text); }
+.msg-content img { max-width: 100%; border-radius: 12px; }
 .msg-content a {
   color: var(--chat-tint);
   border-bottom-color: transparent;
 }
 .msg-content a:hover { border-bottom-color: var(--chat-tint); }
 .msg-content blockquote {
-  border-left-color: var(--chat-tint);
+  border-left: 3px solid var(--chat-tint);
   background: var(--chat-tint-soft);
   color: var(--chat-bubble-text);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 .msg-content code:not(pre code) {
-  background: var(--chat-tint-soft);
-  color: var(--chat-tint-hi);
+  background: var(--chat-recessed);
+  border: 1px solid var(--chat-recessed-border);
+  color: var(--chat-bubble-text);
   font-family: var(--font-mono);
-  padding: 2px 7px;
+  font-size: 0.875em;
+  padding: 1px 6px;
   border-radius: 6px;
 }
+/* Blocks keep their own quiet panel — the text around them has none. */
 .msg-content pre {
-  background: color-mix(in srgb, #000 46%, var(--chat-bubble));
-  border: 1px solid var(--m-hairline-soft);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.msg-content .code-block { border-radius: 14px; overflow: hidden; }
-.msg-content .code-block-header {
-  background: color-mix(in srgb, #000 30%, transparent);
-  border-bottom: 1px solid var(--m-hairline-soft);
-}
-.msg-content .table-wrap {
-  border-color: var(--m-hairline-soft);
+  background: var(--chat-recessed);
+  border: 1px solid var(--chat-recessed-border);
+  border-radius: 12px;
   box-shadow: none;
 }
-.msg-content th {
-  background: var(--chat-tint-soft);
-  color: var(--chat-tint-hi);
+.msg-content .code-block {
+  background: var(--chat-recessed);
+  border: 1px solid var(--chat-recessed-border);
+  border-radius: 12px;
+  overflow: hidden;
 }
-/* KaTeX in tint */
+.msg-content .code-block pre {
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.msg-content .code-block-header {
+  background: none;
+  border-bottom: 1px solid var(--chat-recessed-border);
+}
+.msg-content .table-wrap {
+  border: 1px solid var(--chat-recessed-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+.msg-content td,
+.msg-content th { border-color: var(--chat-recessed-border); }
+.msg-content th {
+  background: var(--chat-recessed);
+  color: var(--chat-bubble-text);
+}
+/* Maths inherits the reply colour instead of fighting it. */
 .msg-content .katex { color: var(--chat-bubble-text); }
 
 /* ── Streaming / thinking ─────────────────────────────────────── */
 .streaming-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
   background: var(--chat-tint);
-  border-radius: 1px;
+  border-radius: 999px;
+  vertical-align: text-bottom;
+  animation: caretBreathe 1.15s var(--m-ease-inout) infinite;
 }
-.thinking-dot { background: var(--chat-tint); }
+/* A soft breath rather than a hard on/off blink. */
+@keyframes caretBreathe {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 0.2; }
+}
+/* Three dots, no box. The row is given a line's height so the answer does
+   not jump upward the moment the first token lands. */
+.thinking-indicator {
+  min-height: 1.68em;
+  padding: 0;
+  gap: 5px;
+  align-items: center;
+}
+.thinking-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--chat-tint);
+  animation: thinkBreathe 1.5s var(--m-ease-inout) infinite;
+}
+@keyframes thinkBreathe {
+  0%, 80%, 100% { opacity: 0.28; transform: translateY(0) scale(1); }
+  40%           { opacity: 1;    transform: translateY(-2px) scale(1.12); }
+}
 
 /* Streamed graph block placeholder while the chart is being generated. */
 .graph-stream-placeholder {
@@ -206,6 +278,35 @@
 .fb-btn.fb-like.active { color: var(--chat-tint); }
 .fb-btn.fb-like.active svg { fill: var(--chat-tint-soft); }
 .fb-btn.fb-copy.copied { color: var(--chat-tint); }
+
+/* ── Engine badge — which model actually answered ─────────────── */
+/* Deliberately always visible (the feedback row above is hover-only) so a
+   silent fallback away from the priority model is easy to notice. */
+.msg-engine {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+  cursor: default;
+  user-select: none;
+}
+.msg-engine-astra {
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint);
+}
+.msg-engine-fallback {
+  background: transparent;
+  border: 1px solid var(--chat-text-meta);
+  color: var(--chat-text-meta);
+  opacity: 0.85;
+}
 
 /* ── Reply chip / quote — tinted leading bar ──────────────────── */
 .reply-chip-bar { background: var(--chat-tint); }
@@ -397,19 +498,25 @@
   .graph-canvas-wrap { height: 220px; }
 }
 
-/* ── Compact rhythm (ends of file → wins over base theme) ───────
-   Tighter markdown spacing + controls so more conversation fits
-   on screen without the feed feeling cramped. */
-.msg-content p { margin: 0 0 6px; line-height: 1.6; }
-.msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 { margin: 12px 0 6px; }
-.msg-content ul, .msg-content ol { margin: 7px 0; padding-left: 22px; }
-.msg-content li { margin: 3px 0; line-height: 1.6; }
-.msg-content pre { padding: 12px; margin: 9px 0; }
-.msg-content .code-block pre { padding: 12px; }
-.msg-content .code-block-header { padding: 7px 12px; }
-.msg-content blockquote { padding: 8px 13px; margin: 9px 0; }
-.msg-content table, .msg-content .table-wrap { margin: 9px 0; }
-.msg-content hr { margin: 11px 0; }
-.msg-feedback, .msg-user-actions { margin-top: 4px; }
-.thinking-indicator { padding: 6px 0 2px; }
-.streaming-caret { height: 1em; }
+/* ── Reading rhythm (last block in the file, so it wins the base theme) ──
+   Spacing tuned for the 15.5px reply: enough air that a long answer reads
+   in clear steps, tight enough that more of it stays on screen. With the
+   panel gone the spacing IS the structure, so it is set in one place
+   instead of being fought over across three files. */
+.msg-content p { margin: 0 0 10px; line-height: 1.68; }
+.msg-content > *:first-child { margin-top: 0; }
+.msg-content > *:last-child { margin-bottom: 0; }
+.msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 { margin: 20px 0 8px; }
+.msg-content ul, .msg-content ol { margin: 9px 0; padding-left: 24px; }
+.msg-content li { margin: 4px 0; line-height: 1.62; }
+.msg-content li::marker { color: var(--chat-tint); }
+.msg-content pre { padding: 13px 14px; margin: 12px 0; }
+.msg-content .code-block { margin: 12px 0; }
+.msg-content .code-block pre { padding: 13px 14px; }
+.msg-content .code-block-header { padding: 8px 12px; }
+.msg-content blockquote { padding: 10px 14px; margin: 12px 0; }
+.msg-content table, .msg-content .table-wrap { margin: 12px 0; }
+.msg-content hr { margin: 16px 0; }
+.msg-feedback, .msg-user-actions { margin-top: 2px; }
+.thinking-indicator { padding: 0; }
+.streaming-caret { height: 1.05em; }

@@ -4,9 +4,12 @@
  * Run it with:
  *   node ai-chat/tests/astra-failover.test.mjs
  *
- * Scenario 1 talks to the real Astra tunnel (needs network). Scenarios 2-7
+ * Scenario 1 talks to the real Astra tunnel (needs network). Scenarios 2-11
  * swap the tunnel URL for a dead port or a throwaway local server, so they
- * assert the fallback contract without touching any real provider.
+ * assert the fallback contract without touching any real provider. Scenarios
+ * 9-11 cover the no-output-cap and stall-timeout behaviour: Astra must never
+ * be asked for a fixed token budget, and a connection that dies mid-reply must
+ * continue where it stopped rather than restarting the whole answer.
  */
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
@@ -125,7 +128,7 @@ console.log('\nScenario 4 - user taps Stop during Astra');
   check('Stop is not counted as an Astra outage', svc._astraFails === 0, String(svc._astraFails));
 }
 
-// ── 5. Empty Astra reply (reasoning tokens ate max_tokens) -> fallback
+// ── 5. Empty Astra reply (no usable content) -> fallback
 console.log('\nScenario 5 - Astra answers with empty content -> fallback');
 {
   const { server, url } = await fakeAstraServer((req, res) => {
@@ -197,6 +200,79 @@ console.log('\nScenario 8 - tunnel ignores stream:true and answers with plain JS
   const text = await collect(svc, [{ role: 'user', content: 'hi' }]);
   check('plain JSON reply is used', text.includes('NON_STREAM_OK'), JSON.stringify(text));
   check('still attributed to Astra', !!svc.lastServed && svc.lastServed.engine === 'astra', JSON.stringify(svc.lastServed));
+  server.close();
+}
+
+// ── 9. Astra is never given an output cap ────────────────────────────
+console.log('\nScenario 9 - Astra is asked for an uncapped answer');
+{
+  let seenBody = null;
+  const { server, url } = await fakeAstraServer((req, res) => {
+    let raw = '';
+    req.on('data', c => { raw += c; });
+    req.on('end', () => {
+      try { seenBody = JSON.parse(raw); } catch (_) { seenBody = { parseError: raw.slice(0, 120) }; }
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      for (let i = 0; i < 400; i++) {
+        res.write('data: {"model":"gpt-6-astra","choices":[{"delta":{"content":"chunk' + i + ' "}}]}\n\n');
+      }
+      res.write('data: {"model":"gpt-6-astra","choices":[{"delta":{},"finish_reason":"stop"}]}\n\n');
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
+  });
+  const svc = new AiApiService();
+  svc.astraUrl = url;
+  svc._streamFromEdge = async function* () { yield 'EDGE'; };
+  const text = await collect(svc, [{ role: 'user', content: 'write a giant html file' }]);
+  check('no max_tokens is sent, so Astra is uncapped',
+    !!seenBody && !('max_tokens' in seenBody), JSON.stringify(seenBody));
+  check('streaming is still requested',
+    !!seenBody && seenBody.stream === true, JSON.stringify(seenBody));
+  check('a long answer streams through in full',
+    text.includes('chunk0 ') && text.includes('chunk399 '), 'len=' + text.length);
+  server.close();
+}
+
+// ── 10. Connection dies mid-reply -> continue, do not restart ────────
+console.log('\nScenario 10 - Astra connection dies mid-reply');
+{
+  const { server, url } = await fakeAstraServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+    res.write('data: {"model":"gpt-6-astra","choices":[{"delta":{"content":"<html>half"}}]}\n\n');
+    setTimeout(() => { try { res.destroy(); } catch (_) {} }, 40);
+  });
+  const svc = new AiApiService();
+  svc.astraUrl = url;
+  let edgeCalls = 0;
+  svc._streamFromEdge = async function* () { edgeCalls++; yield 'EDGE_RESTART'; };
+  const drained = await drainPartial(svc, [{ role: 'user', content: 'hi' }]);
+  check('text that already arrived is kept',
+    drained.text.includes('<html>half'), JSON.stringify(drained.text));
+  check('the partial reply is handed to the continuation path',
+    !!drained.error && drained.error.name === 'IncompleteStreamError', drained.error && drained.error.name);
+  check('the fallback chain did not restart the whole answer',
+    edgeCalls === 0 && !drained.text.includes('EDGE_RESTART'), 'edgeCalls=' + edgeCalls);
+  server.close();
+}
+
+// ── 11. A server-side cap is still reported so the app can continue ──
+console.log('\nScenario 11 - a cap imposed by the server is still reported');
+{
+  const { server, url } = await fakeAstraServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+    res.write('data: {"model":"gpt-6-astra","choices":[{"delta":{"content":"cut sho"}}]}\n\n');
+    res.write('data: {"model":"gpt-6-astra","choices":[{"delta":{},"finish_reason":"length"}]}\n\n');
+    res.write('data: [DONE]\n\n');
+    res.end();
+  });
+  const svc = new AiApiService();
+  svc.astraUrl = url;
+  svc._streamFromEdge = async function* () { yield 'EDGE'; };
+  const text = await collect(svc, [{ role: 'user', content: 'write a long file' }]);
+  check('a capped reply still streams', text.includes('cut sho'), JSON.stringify(text));
+  check('finish_reason "length" is remembered so the app auto-continues',
+    svc._lastFinishReason === 'length', String(svc._lastFinishReason));
   server.close();
 }
 
