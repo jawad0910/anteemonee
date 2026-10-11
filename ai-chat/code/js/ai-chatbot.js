@@ -3414,7 +3414,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   function tunnelModelLabel(model) {
     var m = String(model || '').toLowerCase();
     if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
-    if (m.indexOf('muse-spark') !== -1) return 'Muse Spark';
+    if (m.indexOf('muse-spark') !== -1) return 'Muse Spark 1.3';
     if (m.indexOf('gpt-6') !== -1 || m.indexOf('astra') !== -1) return 'GPT-6 Astra';
     return null;
   }
@@ -3716,7 +3716,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       var label = document.createElement('span');
       label.className = 'msg-model';
       if (engine.engine === 'astra') {
-        var tLabel = tunnelModelLabel(engine.model) || engine.provider || 'Muse Spark';
+        var tLabel = tunnelModelLabel(engine.model) || engine.provider || 'Muse Spark 1.3';
         label.textContent = tLabel;
         label.title = 'Answered by ' + tLabel + (engine.model ? ' (' + engine.model + ')' : '');
       } else {

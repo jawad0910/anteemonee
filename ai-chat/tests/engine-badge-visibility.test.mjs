@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 
 const CHATBOT = new URL('../code/js/ai-chatbot.js', import.meta.url).pathname;
 const src = readFileSync(CHATBOT, 'utf8');
+const css = readFileSync(new URL('../code/css/messages.css', import.meta.url).pathname, 'utf8');
 
 let pass = 0;
 let fail = 0;
@@ -28,6 +29,7 @@ check('label inserted after sound button',
   badgeFn.includes("wrap.querySelector('.fb-tts')") &&
   badgeFn.includes("insertAdjacentElement('afterend', label)"));
 check('label uses msg-model class', badgeFn.includes("label.className = 'msg-model'"));
+check('dot separator before label', css.includes('.msg-model::before') && css.includes("content: '·'"));
 // The live streaming status names the engine without any gate.
 check('streaming status names engine ungated',
   /var servingEngine = getServingEngineLabel\(\);/.test(src));
@@ -37,7 +39,7 @@ const lblStart = src.indexOf('function tunnelModelLabel(model)');
 const lblEnd = src.indexOf('\n  }', lblStart) + 4;
 (0, eval)(src.slice(lblStart, lblEnd) + '\nglobalThis.__lbl = tunnelModelLabel;');
 const lbl = globalThis.__lbl;
-check('muse-spark id -> Muse Spark', lbl('oc/muse-spark-1.3-contributor-free') === 'Muse Spark');
+check('muse-spark id -> Muse Spark 1.3', lbl('oc/muse-spark-1.3-contributor-free') === 'Muse Spark 1.3');
 check('space-bunny id -> Space Bunny', lbl('oc/space-bunny-free') === 'Space Bunny');
 check('astra id -> GPT-6 Astra', lbl('gpt-6-astra') === 'GPT-6 Astra');
 check('unknown id -> null (caller falls back)', lbl('some-other-model') === null);
@@ -88,8 +90,8 @@ const order = wrap.children.map(c => c.className);
 const ti = order.findIndex(c => c.includes('fb-tts'));
 check('logged-out user still gets label after sound button',
   order[ti + 1] === 'msg-model', order.join(' | '));
-check('logged-out label text is Muse Spark',
-  wrap.children[ti + 1] && wrap.children[ti + 1].textContent === 'Muse Spark');
+check('logged-out label text is Muse Spark 1.3',
+  wrap.children[ti + 1] && wrap.children[ti + 1].textContent === 'Muse Spark 1.3');
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

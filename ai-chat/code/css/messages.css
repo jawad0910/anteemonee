@@ -291,6 +291,11 @@
   user-select: none;
   cursor: default;
 }
+.msg-feedback .msg-model::before {
+  content: '·';
+  margin-right: 6px;
+  font-weight: 700;
+}
 
 /* ── Reply chip / quote — tinted leading bar ──────────────────── */
 .reply-chip-bar { background: var(--chat-tint); }
