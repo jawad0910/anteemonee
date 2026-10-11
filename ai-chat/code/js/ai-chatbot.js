@@ -3407,27 +3407,6 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
-   * Which accounts may see the engine text ("Muse Spark" / "Groq fallback").
-   * It is a verification aid for the tunnel rollout, not product chrome, so it
-   * stays invisible to everyone else — matching is case-insensitive.
-   */
-  const ENGINE_BADGE_EMAILS = [
-    'jawadshafaqat0910@gmail.com',
-  ];
-
-  function canSeeEngineBadge() {
-    try {
-      var email = '';
-      if (typeof currentUser !== 'undefined' && currentUser) {
-        email = currentUser.email ||
-          (currentUser.user_metadata && currentUser.user_metadata.email) || '';
-      }
-      email = String(email || '').trim().toLowerCase();
-      return !!email && ENGINE_BADGE_EMAILS.indexOf(email) !== -1;
-    } catch (_) { return false; }
-  }
-
-  /**
    * Friendly name for the model id the tunnel actually served. The router
    * sometimes answers via an internal fallback model, so the pill must read
    * the real id — never a hardcoded name.
@@ -3724,11 +3703,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
    * after the sound button. It is rendered from the engine recorded on the
    * message, which the API service took from the real streamed response — so
    * the label can never claim Astra when Astra was not the one that answered.
-   * That makes a silent fallback visible.
+   * That makes a silent fallback visible. Shown for every account.
    */
   function attachEngineBadge(body, idx) {
     try {
-      if (!canSeeEngineBadge()) return;
       var wrap = body ? body.querySelector('.msg-feedback') : null;
       var tts = wrap ? wrap.querySelector('.fb-tts') : null;
       if (!tts || wrap.querySelector('.msg-model')) return;
@@ -6983,10 +6961,8 @@ function handleFileBlocks(div, text) {
           firstChunk = false;
           stopStatusCycle(statusCycle);
           // Name the live engine while the reply streams — the fastest way to
-          // see whether Astra answered or the request fell back. Only the
-          // allowlisted accounts get told the name; everyone else sees the
-          // generic status.
-          var servingEngine = canSeeEngineBadge() ? getServingEngineLabel() : null;
+          // see whether Astra answered or the request fell back.
+          var servingEngine = getServingEngineLabel();
           updateStreamingStatus(streamDiv, servingEngine ? servingEngine + ' is generating\u2026' : 'Generating response...', 'analyzing');
         }
         updateStreamingMessageThrottled(streamDiv, fullResponse);

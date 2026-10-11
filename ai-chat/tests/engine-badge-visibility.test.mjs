@@ -1,9 +1,7 @@
 /**
- * The "GPT-6 Astra / Groq fallback" chip is a rollout verification aid, so it
- * must only be shown to the allowlisted accounts. This test pulls the real
- * canSeeEngineBadge() helper straight out of ai-chatbot.js (it is written
- * against a global `currentUser`, so it runs standalone) and checks who gets
- * to see the text.
+ * The "which model answered this" label sits in the feedback row, right after
+ * the sound button, and is shown to EVERY account (logged in, guest, any
+ * email). It must read the real served model id — never a hardcoded name.
  *
  * Run it with:
  *   node ai-chat/tests/engine-badge-visibility.test.mjs
@@ -13,43 +11,85 @@ import { readFileSync } from 'node:fs';
 const CHATBOT = new URL('../code/js/ai-chatbot.js', import.meta.url).pathname;
 const src = readFileSync(CHATBOT, 'utf8');
 
-const start = src.indexOf('const ENGINE_BADGE_EMAILS');
-const jsdocEnd = src.indexOf('Name of the engine that is actually serving', start);
-if (start === -1 || jsdocEnd === -1) throw new Error('canSeeEngineBadge() not found in ai-chatbot.js');
-const chunk = src.slice(start, src.lastIndexOf('/**', jsdocEnd));
-(0, eval)(chunk);
-
-if (typeof globalThis.canSeeEngineBadge !== 'function') {
-  throw new Error('extracted helper did not evaluate');
-}
-
 let pass = 0;
 let fail = 0;
-function check(name, email, expected) {
-  globalThis.currentUser = email;
-  const got = globalThis.canSeeEngineBadge();
-  if (got === expected) { pass++; console.log('  PASS  ' + name); }
-  else { fail++; console.log('  FAIL  ' + name + '   -> expected ' + expected + ', got ' + got); }
+function check(name, cond, extra) {
+  if (cond) { pass++; console.log('  PASS  ' + name); }
+  else { fail++; console.log('  FAIL  ' + name + (extra ? '   -> ' + extra : '')); }
 }
 
-console.log('\nEngine badge visibility');
-check('the allowlisted address sees the chip', { email: 'jawadshafaqat0910@gmail.com' }, true);
-check('case does not matter', { email: 'JAWADSHAFAQAT0910@GMAIL.COM' }, true);
-check('surrounding whitespace does not matter', { email: '  JawadShafaqat0910@Gmail.com  ' }, true);
-check('a different gmail address is hidden', { email: 'someoneelse@gmail.com' }, false);
-check('a blank email is hidden', { email: '' }, false);
-check('a user with no email is hidden', {}, false);
-check('email only in user_metadata still matches', { user_metadata: { email: 'jawadshafaqat0910@gmail.com' } }, true);
-check('another user_metadata email is hidden', { user_metadata: { email: 'friend@gmail.com' } }, false);
-check('anonymous / logged out is hidden', null, false);
+console.log('\nModel label visibility (every account)');
+// No allowlist machinery may remain.
+check('no ENGINE_BADGE_EMAILS allowlist', src.indexOf('ENGINE_BADGE_EMAILS') === -1);
+check('no canSeeEngineBadge helper', src.indexOf('canSeeEngineBadge') === -1);
+// The label builder places .msg-model directly after the sound button.
+const badgeFn = src.slice(src.indexOf('function attachEngineBadge(body, idx)'));
+check('label inserted after sound button',
+  badgeFn.includes("wrap.querySelector('.fb-tts')") &&
+  badgeFn.includes("insertAdjacentElement('afterend', label)"));
+check('label uses msg-model class', badgeFn.includes("label.className = 'msg-model'"));
+// The live streaming status names the engine without any gate.
+check('streaming status names engine ungated',
+  /var servingEngine = getServingEngineLabel\(\);/.test(src));
 
-// The two places that show engine text must both go through the helper.
-const badgeGated = /function attachEngineBadge\(body, idx\) \{\s*\n\s*try \{\s*\n\s*if \(!canSeeEngineBadge\(\)\) return;/.test(src);
-const statusGated = /canSeeEngineBadge\(\) \? getServingEngineLabel\(\) : null/.test(src);
-if (badgeGated) { pass++; console.log('  PASS  the chip below a reply is gated'); }
-else { fail++; console.log('  FAIL  the chip below a reply is gated'); }
-if (statusGated) { pass++; console.log('  PASS  the live streaming status is gated'); }
-else { fail++; console.log('  FAIL  the live streaming status is gated'); }
+// tunnelModelLabel must map real ids to friendly names.
+const lblStart = src.indexOf('function tunnelModelLabel(model)');
+const lblEnd = src.indexOf('\n  }', lblStart) + 4;
+(0, eval)(src.slice(lblStart, lblEnd) + '\nglobalThis.__lbl = tunnelModelLabel;');
+const lbl = globalThis.__lbl;
+check('muse-spark id -> Muse Spark', lbl('oc/muse-spark-1.3-contributor-free') === 'Muse Spark');
+check('space-bunny id -> Space Bunny', lbl('oc/space-bunny-free') === 'Space Bunny');
+check('astra id -> GPT-6 Astra', lbl('gpt-6-astra') === 'GPT-6 Astra');
+check('unknown id -> null (caller falls back)', lbl('some-other-model') === null);
+
+// Functional: the label renders even logged out / guest (no currentUser).
+function makeEl(tag, cls) {
+  const el = {
+    tag, className: cls || '', children: [], textContent: '', title: '', dataset: {},
+    appendChild(c) { this.children.push(c); c.parent = this; return c; },
+    addEventListener() {},
+    querySelector(sel) {
+      const m = sel.match(/^\.([\w-]+)$/);
+      if (!m) return null;
+      const q = [this];
+      while (q.length) {
+        const n = q.shift();
+        if (n !== this && n.className && n.className.split(' ').includes(m[1])) return n;
+        q.push(...n.children);
+      }
+      return null;
+    },
+    insertAdjacentElement(pos, node) {
+      const sibs = this.parent.children;
+      sibs.splice(sibs.indexOf(this) + 1, 0, node);
+      node.parent = this.parent;
+      return node;
+    },
+  };
+  return el;
+}
+globalThis.document = { createElement(tag) { return makeEl(tag); } };
+globalThis.currentUser = null; // logged out
+globalThis.messages = [{ role: 'assistant', content: 'hi', engine: { engine: 'astra', provider: 'Flagship', model: 'oc/muse-spark-1.3-contributor-free' } }];
+const fnStart = src.indexOf('function attachEngineBadge(body, idx) {');
+const fnLines = src.slice(fnStart).split('\n');
+let fnEnd = 1;
+for (let i = 1; i < fnLines.length; i++) {
+  if (fnLines[i] === '  }') { fnEnd = i; break; }
+}
+(0, eval)(fnLines.slice(0, fnEnd + 1).join('\n') + '\nglobalThis.__attach = attachEngineBadge;');
+const body = makeEl('div', 'msg-body');
+const wrap = makeEl('div', 'msg-feedback');
+['fb-like', 'fb-dislike', 'fb-copy'].forEach(c => wrap.appendChild(makeEl('button', 'fb-btn ' + c)));
+wrap.appendChild(makeEl('button', 'fb-btn fb-tts tts-btn'));
+body.appendChild(wrap);
+globalThis.__attach(body, '0');
+const order = wrap.children.map(c => c.className);
+const ti = order.findIndex(c => c.includes('fb-tts'));
+check('logged-out user still gets label after sound button',
+  order[ti + 1] === 'msg-model', order.join(' | '));
+check('logged-out label text is Muse Spark',
+  wrap.children[ti + 1] && wrap.children[ti + 1].textContent === 'Muse Spark');
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
