@@ -67,13 +67,38 @@ class AiApiService {
    * never triggers Supabase's automatic refresh. Once that token expires the
    * edge functions reject every call with a 401, so we refresh on demand rather
    * than making the student sign in again.
+   *
+   * getSession() on its own is not enough: it can hand back the very token
+   * the gateway just rejected, so the retry would fail identically and the
+   * student would be told to sign in when their session is perfectly
+   * recoverable. Only a genuinely fresh token short-circuits; anything else
+   * (expired, or the token we were just refused on) forces a real refresh.
    */
   async _refreshAccessToken() {
     try {
-      if (typeof db !== 'undefined' && db && db.auth && typeof db.auth.getSession === 'function') {
+      if (typeof db === 'undefined' || !db || !db.auth) return null;
+
+      if (typeof db.auth.getSession === 'function') {
         const { data } = await db.auth.getSession();
+        const s = data && data.session;
+        const t = s && s.access_token;
+        const exp = s && s.expires_at ? s.expires_at * 1000 : 0;
+        // 30s of slack so a token cannot expire mid-flight.
+        const stillFresh = !!t && (!exp || Date.now() < exp - 30000);
+        const isRejectedToken = !!t && t === this._accessToken;
+        if (stillFresh && !isRejectedToken) {
+          this._accessToken = t;
+          return t;
+        }
+      }
+
+      // Expired, missing, or the same token that just 401'd. Force the
+      // refresh round-trip so the replay carries something the gateway will
+      // actually accept.
+      if (typeof db.auth.refreshSession === 'function') {
+        const { data, error } = await db.auth.refreshSession();
         const t = data && data.session && data.session.access_token;
-        if (t) {
+        if (t && !error) {
           this._accessToken = t;
           return t;
         }
