@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -21,16 +21,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=34">
+  <link rel="stylesheet" href="../css/style.css?v=35">
   <link rel="stylesheet" href="../css/settings.css?v=20">
   <style>
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
-      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
-      --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
-      --liquid-bg-strong: rgba(10,10,12,0.85);
-    }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
     /* ── Site header (pills) ── */
     .header { padding: 0; position: relative; z-index: 200; }
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; display: flex; align-items: center; position: relative; }
@@ -51,7 +45,7 @@
     .nav-drop:hover::before, .nav-drop.open::before { display: block; }
     .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
     .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); border-radius: 10px; }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text-secondary); border-radius: 10px; }
     .nav-menu a:hover { background: var(--surface); }
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
     .site-icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
@@ -94,6 +88,8 @@
     @media (max-width: 900px) { .site-menu-toggle { display: inline-flex; } .site-auth-btns { display: none; } #site-profile-wrap { display: none !important; } }
     .settings-page { padding-top: 100px; }
   </style>
+  <link rel="stylesheet" href="../css/header.css?v=4">
+  <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <header class="header" id="site-header">
@@ -103,20 +99,26 @@
         <span class="site-logo-text">Anteemonee</span>
       </a>
 <nav class="landing-nav" aria-label="Primary">
-  <a href="../dashboard/">Dashboard</a>
   <div class="nav-drop">
     <a href="#">Library <span class="caret">▾</span></a>
     <div class="nav-menu">
-      <a href="../ebooks/">eBooks</a>
-      <a href="../flashcards/">Flashcards</a>
-      <a href="../past-papers/">Past Papers</a>
+      <a href="../ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
+      <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
+      <a href="../past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
     </div>
   </div>
-  <a href="../ai-chat/">AI Assistant</a>
+  <div class="nav-drop">
+    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    </div>
+  </div>
+  <a href="../ai-test-builder/">AI Test Builder</a>
   <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
-        <a href="../messenger/" class="site-icon-btn" aria-label="Messenger" title="Messenger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
+        <a href="../mx-9f2c4e7a/" class="site-icon-btn" aria-label="Messenger" title="Messenger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
         <button class="site-icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
         <div class="site-auth-btns" id="site-auth-logged-out">
           <a href="../pages/login.html" class="site-btn-login">Log in</a>
@@ -156,7 +158,7 @@
   </header>
   <div class="site-mobile-menu" id="site-mobile-menu">
   <a href="../index.html" class="site-mobile-link">Dashboard</a>
-  <a href="../pages/board-notes.html" class="site-mobile-link">Board Notes</a>
+
   <div class="mobile-acc-dropdown">
     <button type="button" class="mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
     <div class="mobile-acc-list">
@@ -167,7 +169,7 @@
   </div>
   <a href="../ai-chat/" class="site-mobile-link">AI Assistant</a>
 
-        <a href="../messenger/" class="site-mobile-link">Messenger</a>
+        <a href="../mx-9f2c4e7a/" class="site-mobile-link">Messenger</a>
     <div class="site-mobile-cta">
       <a href="../pages/login.html" class="site-btn-login">Log in</a>
       <a href="../pages/signup.html" class="site-btn-signup">Sign Up</a>
@@ -206,14 +208,6 @@
             Appearance
           </button>
           <div class="settings-nav-divider"></div>
-          <button class="settings-nav-item" data-cat="subscription">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Subscription
-          </button>
-          <button class="settings-nav-item" data-cat="coupons">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-            Coupons
-          </button>
           <button class="settings-nav-item" data-cat="api">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/></svg>
             API Keys
@@ -279,32 +273,6 @@
               <p>Customize the look and feel of Anteemonee.</p>
             </div>
             <div id="settings-appearance-content"></div>
-          </div>
-
-          <!-- ============ SUBSCRIPTION ============ -->
-          <div class="settings-category" data-cat="subscription">
-            <button class="settings-mobile-back" onclick="showSidebar()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-              Settings
-            </button>
-            <div class="settings-category-header">
-              <h2>Subscription</h2>
-              <p>View your plan and manage premium access.</p>
-            </div>
-            <div id="settings-subscription-content"></div>
-          </div>
-
-          <!-- ============ COUPONS ============ -->
-          <div class="settings-category" data-cat="coupons">
-            <button class="settings-mobile-back" onclick="showSidebar()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-              Settings
-            </button>
-            <div class="settings-category-header">
-              <h2>Coupons</h2>
-              <p>Redeem a coupon code for premium access.</p>
-            </div>
-            <div id="settings-coupons-content"></div>
           </div>
 
           <!-- ============ API ============ -->
@@ -390,14 +358,14 @@
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
+  <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=32"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>
   <script src="../js/mistral-key-modal.js?v=1"></script>
-  <script src="../js/settings.js?v=13"></script>
+  <script src="../js/settings.js?v=14"></script>
   <script>
     // Settings page: mobile menu, auth buttons
     (function () {
