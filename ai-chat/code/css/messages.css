@@ -279,33 +279,17 @@
 .fb-btn.fb-like.active svg { fill: var(--chat-tint-soft); }
 .fb-btn.fb-copy.copied { color: var(--chat-tint); }
 
-/* ── Engine badge — which model actually answered ─────────────── */
-/* Deliberately always visible (the feedback row above is hover-only) so a
-   silent fallback away from the priority model is easy to notice. */
-.msg-engine {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  width: fit-content;
-  margin-top: 2px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.7;
-  cursor: default;
-  user-select: none;
-}
-.msg-engine-astra {
-  background: var(--chat-tint-soft);
-  color: var(--chat-tint);
-}
-.msg-engine-fallback {
-  background: transparent;
-  border: 1px solid var(--chat-text-meta);
+/* ── Model label — which model actually answered, right after the sound button.
+   Same typeface as the response, quiet metadata color. ─────────────── */
+.msg-feedback .msg-model {
+  font-family: var(--font-reading);
+  font-size: 12.5px;
+  font-weight: 400;
   color: var(--chat-text-meta);
-  opacity: 0.85;
+  margin-left: 6px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
 }
 
 /* ── Reply chip / quote — tinted leading bar ──────────────────── */

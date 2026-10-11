@@ -1385,6 +1385,13 @@ Use this context if the student refers to the quiz, an answer, or a question num
     // Subject must load first so chatStorageKey is per-subject.
     // Reload after auth too (anon key -> user key).
     try { loadSelectedSubject(); } catch (_) {}
+    try {
+      var qSub = new URLSearchParams(window.location.search).get('subject');
+      if (qSub) {
+        var qHit = CHAT_SUBJECTS.find(function (s) { return s.name.toLowerCase() === String(qSub).toLowerCase(); });
+        if (qHit) { selectedSubject = qHit.name; try { saveSelectedSubject(); } catch (_) {} }
+      }
+    } catch (_) {}
     try { updateSubjectUI(); } catch (_) {}
     // Version is per-user, so reload it once the user id is known.
     await refreshTier();
@@ -3713,30 +3720,33 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
-   * Small "which model answered this" chip under a reply. It is rendered from
-   * the engine recorded on the message, which the API service took from the
-   * real streamed response — so the chip can never claim Astra when Astra was
-   * not the one that answered. That makes a silent fallback visible.
+   * Small "which model answered this" label inside the feedback row, right
+   * after the sound button. It is rendered from the engine recorded on the
+   * message, which the API service took from the real streamed response — so
+   * the label can never claim Astra when Astra was not the one that answered.
+   * That makes a silent fallback visible.
    */
   function attachEngineBadge(body, idx) {
     try {
       if (!canSeeEngineBadge()) return;
-      if (!body || body.querySelector('.msg-engine')) return;
+      var wrap = body ? body.querySelector('.msg-feedback') : null;
+      var tts = wrap ? wrap.querySelector('.fb-tts') : null;
+      if (!tts || wrap.querySelector('.msg-model')) return;
       var message = (typeof messages !== 'undefined' && messages && messages[idx]) ? messages[idx] : null;
       var engine = message && message.engine;
       if (!engine || !engine.engine) return;
-      var badge = document.createElement('span');
+      var label = document.createElement('span');
+      label.className = 'msg-model';
       if (engine.engine === 'astra') {
-        var tLabel = tunnelModelLabel(engine.model) || 'Muse Spark';
-        badge.className = 'msg-engine msg-engine-astra';
-        badge.textContent = tLabel;
-        badge.title = 'Answered by the priority tunnel model ' + tLabel + (engine.model ? ' (' + engine.model + ')' : '');
+        var tLabel = tunnelModelLabel(engine.model) || engine.provider || 'Muse Spark';
+        label.textContent = tLabel;
+        label.title = 'Answered by ' + tLabel + (engine.model ? ' (' + engine.model + ')' : '');
       } else {
-        badge.className = 'msg-engine msg-engine-fallback';
-        badge.textContent = (engine.provider || 'AI') + ' fallback';
-        badge.title = 'Priority tunnel was unavailable — answered by ' + (engine.provider || 'the fallback model') + (engine.model ? ' (' + engine.model + ')' : '');
+        label.textContent = engine.provider || 'AI';
+        label.title = 'Answered by ' + (engine.provider || 'the fallback model') + (engine.model ? ' (' + engine.model + ')' : '');
       }
-      body.appendChild(badge);
+      if (tts.insertAdjacentElement) tts.insertAdjacentElement('afterend', label);
+      else wrap.appendChild(label);
     } catch (_) {}
   }
 
