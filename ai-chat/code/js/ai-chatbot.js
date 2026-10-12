@@ -5602,6 +5602,10 @@ function handleFileBlocks(div, text) {
 
 
   function finalizeStreamingMessage(div, text) {
+    // A finalized bubble is never "still sending": mark it done and drop any
+    // dead-send watchdog so it can neither fire late nor leak.
+    try { div.dataset.done = '1'; } catch (_) {}
+    try { if (div.__watchdog) { clearTimeout(div.__watchdog); div.__watchdog = null; } } catch (_) {}
     try {
       if (typeof _streamRenderTimer !== 'undefined' && _streamRenderTimer) { clearTimeout(_streamRenderTimer); }
     } catch (_) {}
@@ -6933,6 +6937,32 @@ function handleFileBlocks(div, text) {
     // finalize — the line always comes off, the chip stays only if the server
     // confirms it searched.
     if (!isGreetingMsg && clientWillSearch(text)) showWebSearchToolLine(streamDiv, text);
+    // Dead-send watchdog: every transport timeout in the stack is far shorter
+    // than this (60s connect, 15s first byte), so a bubble with no text and no
+    // finalize this late is wedged — an exception escaped above, or a promise
+    // never settled. Surface an error instead of spinning forever. Cleared by
+    // finalizeStreamingMessage on every normal path, so it can only fire when
+    // something actually went wrong.
+    try {
+      streamDiv.__watchdog = setTimeout(function () {
+        try {
+          var content = streamDiv && streamDiv.querySelector ? streamDiv.querySelector('.msg-content') : null;
+          var txt = content && content.textContent ? content.textContent.replace(/[\s.…]+/g, '') : '';
+          if (isStreaming && streamDiv && streamDiv.isConnected && !txt && !streamDiv.dataset.done) {
+            try { stopStatusCycle(statusCycle); } catch (_) {}
+            finalizeStreamingMessage(streamDiv, 'Sorry, something went wrong. The reply never started — please send your message again.');
+            isStreaming = false;
+            try {
+              btnStop.style.display = 'none';
+              btnSend.style.display = 'flex';
+              btnSend.disabled = true;
+              chatInput.disabled = false;
+              chatInput.focus();
+            } catch (_) {}
+          }
+        } catch (_) {}
+      }, 120000);
+    } catch (_) {}
     scrollToBottom();
 
     // Auto model routing: pick persona per message (no manual selector)
