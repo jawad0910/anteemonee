@@ -7193,7 +7193,14 @@ function handleFileBlocks(div, text) {
         try { if (typeof api !== 'undefined' && api) api.lastServed = null; } catch (_) {}
         // An expired session is recoverable and needs a specific instruction,
         // not a status code the student cannot act on.
-        const expired = error && (error.code === 'session_expired' || /\b(401|403)\b/.test(error.message || ''));
+        //
+        // Only trust the explicit `session_expired` code, which the API service
+        // sets solely when the gateway itself rejects our token. A loose match
+        // on "401"/"403" anywhere in the message used to mislabel every
+        // upstream tunnel failure as a login problem — the gateway forwards the
+        // tunnel's own 401/403 text, so a bad Flagship key told the student to
+        // sign in again when their session was perfectly fine.
+        const expired = error && error.code === 'session_expired';
         const errText = expired
           ? 'Your session expired. Please sign in again to keep chatting \u2014 your chats are saved.'
           : `Sorry, something went wrong. ${error.message}`;
