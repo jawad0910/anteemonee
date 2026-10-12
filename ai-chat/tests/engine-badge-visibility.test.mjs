@@ -138,6 +138,76 @@ const GW = readFileSync('/Users/sharjahlaptops1/Documents/anteemonee/supabase/fu
 check('gateway exposes X-Web-Searched', GW.includes('"Access-Control-Expose-Headers": "X-Served-By, X-Web-Searched"'));
 check('gateway sets X-Web-Searched on stream', GW.includes('"X-Web-Searched": searched ? "1" : "0"'));
 check('gateway searches searxng via flagship', GW.includes("provider: \"searxng\""));
+check('empty search retries once', /if \(!r\.text\) \{[\s\S]{0,400}?searchViaFlagship\(sq\)/.test(GW));
+check('ran-but-empty still grounds the reply', GW.includes('no usable results'));
+check('ran flag drives the header', /if \(r\.ran\) \{[\s\S]{0,200}?searched = true/.test(GW));
+
+// shouldWebSearch trigger: extract and run the real function.
+{
+  const sIdx = GW.indexOf('function shouldWebSearch(text: string): boolean {');
+  if (sIdx === -1) { check('shouldWebSearch found', false); }
+  else {
+    const tail = GW.slice(sIdx).split('\n');
+    let sEnd = 1;
+    for (let i = 1; i < tail.length; i++) {
+      if (tail[i] === '  }') { sEnd = i; break; }
+    }
+    const jsBody = tail.slice(0, sEnd + 1).join('\n').replace(': string', '').replace(': boolean', '');
+    (0, eval)(jsBody + '\nglobalThis.__should = shouldWebSearch;');
+    const should = globalThis.__should;
+    check('"web search it" triggers (web-first order)', should('web search it') === true);
+    check('"search the web for X" triggers', should('search the web for date sheet') === true);
+    check('"what is the news upto" triggers', should('what is the news upto') === true);
+    check('"what is happening" triggers', should("what's happening in Pakistan") === true);
+    check('"BISE date sheet 2026" triggers', should('BISE Lahore date sheet 2026') === true);
+    check('plain study question does not trigger', should('explain photosynthesis with examples') === false);
+    check('empty text does not trigger', should('   ') === false);
+  }
+}
+
+// cleanSearchQuery: strip the conversational wrapper, keep the searchable core.
+{
+  const cIdx = GW.indexOf('function cleanSearchQuery(q: string): string {');
+  if (cIdx === -1) { check('cleanSearchQuery found', false); }
+  else {
+    const tail = GW.slice(cIdx).split('\n');
+    let cEnd = 1;
+    for (let i = 1; i < tail.length; i++) {
+      if (tail[i] === '  }') { cEnd = i; break; }
+    }
+    const jsBody = tail.slice(0, cEnd + 1).join('\n').split(': string').join('');
+    (0, eval)(jsBody + '\nglobalThis.__clean = cleanSearchQuery;');
+    const clean = globalThis.__clean;
+    check('wrapper stripped to the core question',
+      clean('i want to know that if oxbridge school and college in rahimyar khan has a website do web search') === 'oxbridge school and college in rahimyar khan has a website',
+      clean('i want to know that if oxbridge school and college in rahimyar khan has a website do web search'));
+    check('short query survives', clean('BISE date sheet 2026') === 'BISE date sheet 2026');
+    check('empty falls back safely', clean('  ') === '');
+  }
+}
+
+// Client tool line: mirrors the server trigger, shows during streaming,
+// always removed on finalize.
+{
+  const cSrc = readFileSync(new URL('../code/js/ai-chatbot.js', import.meta.url).pathname, 'utf8');
+  const wIdx = cSrc.indexOf('function clientWillSearch(text) {');
+  if (wIdx === -1) { check('clientWillSearch found', false); }
+  else {
+    const tail = cSrc.slice(wIdx).split('\n');
+    let wEnd = 1;
+    for (let i = 1; i < tail.length; i++) {
+      if (tail[i] === '  }') { wEnd = i; break; }
+    }
+    (0, eval)(tail.slice(0, wEnd + 1).join('\n') + '\nglobalThis.__cwill = clientWillSearch;');
+    const cwill = globalThis.__cwill;
+    check('client mirrors "web search it"', cwill('web search it') === true);
+    check('client mirrors plain-question negative', cwill('explain photosynthesis') === false);
+    check('client mirrors length guard', cwill('x'.repeat(2001)) === false);
+  }
+  check('tool line shown at send', /showWebSearchToolLine\(streamDiv, text\)/.test(cSrc));
+  check('tool line removed on finalize', (cSrc.match(/hideWebSearchToolLine\(div\)/g) || []).length >= 1);
+  check('toolcall CSS present', readFileSync(new URL('../code/css/messages.css', import.meta.url).pathname, 'utf8').includes('.msg-toolcall'));
+}
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

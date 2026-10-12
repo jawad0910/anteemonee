@@ -307,6 +307,34 @@
 .msg-feedback .msg-web svg {
   flex-shrink: 0;
 }
+/* ── Streaming tool line (OpenCode-style): shown while a web search is
+   expected, removed on finalize — the permanent chip takes over. ── */
+.msg-toolcall {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 2px 0 8px;
+  font-family: var(--font-reading);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--chat-text-meta);
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+}
+.msg-toolcall-name {
+  font-weight: 600;
+}
+.msg-toolcall-query {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+.msg-toolcall-arrow {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
 
 /* ── Reply chip / quote — tinted leading bar ──────────────────── */
 .reply-chip-bar { background: var(--chat-tint); }

@@ -3430,6 +3430,52 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
+   * Client mirror of the gateway's shouldWebSearch(). When it matches we show
+   * the OpenCode-style tool line immediately ("Websearch <query> ↗"), so the
+   * wait for search + answer has visible feedback instead of a bare spinner.
+   * The gateway is authoritative: on finalize the line is always removed and
+   * only the X-Web-Searched header decides whether the permanent chip stays.
+   * Keep these patterns in sync with shouldWebSearch() in ai-chat-gateway.
+   */
+  function clientWillSearch(text) {
+    try {
+      var t = String(text || '');
+      if (!t.trim() || t.length > 2000) return false;
+      if (/search\s+(the\s+)?web|web\s+search|google\s+(it|this|that|for)|look\s+(it|this|that)\s+up|browse\s+for/i.test(t)) return true;
+      return /\b(20(2[4-9]|[3-9]\d)|today|tonight|yesterday|this\s+(week|month|year)|latest|newest|recent|currently|right\s+now|up\s*to\s*date|upto|current\s+events|happening|headlines|news|who\s+won|election|score|price\s+of|weather|datesheet|date\s*sheets?|results?\s*(announced|declared|out)?|announced|breaking)\b/i.test(t);
+    } catch (_) { return false; }
+  }
+
+  function escToolText(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function showWebSearchToolLine(div, query) {
+    try {
+      if (!div || div.querySelector('.msg-toolcall')) return;
+      var body = div.querySelector('.msg-body');
+      if (!body) return;
+      var q = String(query || '').replace(/\s+/g, ' ').trim().slice(0, 70);
+      var line = document.createElement('div');
+      line.className = 'msg-toolcall';
+      line.innerHTML = '<span class="msg-toolcall-name">Websearch</span>' +
+        '<span class="msg-toolcall-query">' + escToolText(q) + '</span>' +
+        '<span class="msg-toolcall-arrow">↗</span>';
+      var content = body.querySelector('.msg-content');
+      if (content) body.insertBefore(line, content);
+      else body.appendChild(line);
+    } catch (_) {}
+  }
+
+  function hideWebSearchToolLine(div) {
+    try {
+      if (!div) return;
+      var line = div.querySelector('.msg-toolcall');
+      if (line) line.remove();
+    } catch (_) {}
+  }
+
+  /**
    * Friendly name for the model id the tunnel actually served. The router
    * sometimes answers via an internal fallback model, so the pill must read
    * the real id — never a hardcoded name.
@@ -5535,6 +5581,10 @@ function handleFileBlocks(div, text) {
     }
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
     displayText = stripGraphBlock(displayText);
+    // The streaming tool line (if shown) always comes off here: the permanent
+    // "Searched the web" chip is added separately by attachFeedbackButtons and
+    // only when the server confirms it searched.
+    hideWebSearchToolLine(div);
     // A graph card is showing: collapse the bubble to one tiny caption line
     // (or nothing). Full explanation remains in the stored message content.
     if (graphData && !quiz) displayText = shortGraphCaption(graphData);
@@ -6830,6 +6880,11 @@ function handleFileBlocks(div, text) {
     streamDiv.__graphRequested = graphRequested;
     streamDiv.__graphPromptCt = text;
     const statusCycle = startStatusCycle(streamDiv, null);
+    // Instant search feedback: if this message will trigger the gateway's web
+    // search, show the tool line now instead of a bare spinner. Reconciled on
+    // finalize — the line always comes off, the chip stays only if the server
+    // confirms it searched.
+    if (!isGreetingMsg && clientWillSearch(text)) showWebSearchToolLine(streamDiv, text);
     scrollToBottom();
 
     // Auto model routing: pick persona per message (no manual selector)
