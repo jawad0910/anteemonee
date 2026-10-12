@@ -2407,14 +2407,35 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       return `<div class="table-wrap"><table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table></div>`;
     });
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+    // Ordered items are tagged, and grouped only AFTER the <ul> pass (which
+    // matches a literal "<li>" and therefore skips them), so the two passes can
+    // never nest an <ul> inside an <ol>.
+    html = html.replace(/^\d+\. (.+)$/gm, '<li class="md-ol">$1</li>');
     html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (match) => {
       if (match.includes('<li>')) return `<ul>${match}</ul>`;
       return match;
     });
-    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/((?:<li class="md-ol">.*<\/li>\n?)+)/g, (match) =>
+      `<ol>${match.replace(/ class="md-ol"/g, '')}</ol>`);
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
     html = html.replace(/\n\n/g, '</p><p>');
+    // Turn leftover newlines into line breaks WITHOUT letting that reach the
+    // boundaries of a block element. Masking the block tags is what stops each
+    // list item and heading from gaining a stray <br>, which used to scatter
+    // empty lines through every answer. Real paragraph breaks ("</p><p>") are
+    // left untouched because they were already substituted above.
+    const BLOCK_TAGS = /<\/?(?:ul|ol|li|h[1-6]|blockquote|pre|table|thead|tbody|tr|th|td|hr|div|a)\b[^>]*>/g;
+    const mask = [];
+    html = html.replace(BLOCK_TAGS, (tag) => {
+      mask.push(tag);
+      return '\u0000B' + (mask.length - 1) + '\u0000';
+    });
+    // Newlines that merely sit next to a block element carry no meaning, so
+    // drop them while the tag is masked and therefore still recognisable.
+    html = html.replace(/\n+(\u0000B\d+\u0000)/g, '$1');
+    html = html.replace(/(\u0000B\d+\u0000)\n+/g, '$1');
     html = html.replace(/\n/g, '<br>');
+    html = html.replace(/\u0000B(\d+)\u0000/g, (_, i) => mask[+i]);
     html = '<p>' + html + '</p>';
     html = html.replace(/<p><\/p>/g, '');
     html = html.replace(/<p>(<h[1-3]>)/g, '$1');
@@ -2425,6 +2446,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     html = html.replace(/(<\/pre>)<\/p>/g, '$1');
     html = html.replace(/<p>(<ul>)/g, '$1');
     html = html.replace(/(<\/ul>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<ol>)/g, '$1');
+    html = html.replace(/(<\/ol>)<\/p>/g, '$1');
     html = html.replace(/<p>(<table>)/g, '$1');
     html = html.replace(/(<\/table>)<\/p>/g, '$1');
     html = html.replace(/<p>(<div class="table-wrap">)/g, '$1');
@@ -3411,12 +3434,28 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
    * sometimes answers via an internal fallback model, so the pill must read
    * the real id — never a hardcoded name.
    */
-  function tunnelModelLabel(model) {
-    var m = String(model || '').toLowerCase();
+  /**
+   * Friendly, truthful name for the model that actually answered.
+   *
+   * The id the router sends back is authoritative — `oc/nemotron-3-ultra-free`
+   * really is Nemotron 3 Ultra, so that is what the student should read. Any
+   * id we have no pretty name for is tidied and shown verbatim (prefix dropped,
+   * `-free` stripped) rather than collapsing to a generic provider word like
+   * "Flagship", which told the student nothing about who replied. A fallback
+   * route (Groq, Qwen, …) resolves the same way, so the label always names the
+   * real model instead of the fallback engine.
+   */
+  function tunnelModelLabel(model, provider) {
+    var raw = String(model || '').trim();
+    var m = raw.toLowerCase();
+    if (!m) return provider || 'AI';
+    if (m.indexOf('muse-spark') !== -1) return m.indexOf('1.3') !== -1 ? 'Muse Spark 1.3' : 'Muse Spark';
+    if (m.indexOf('nemotron') !== -1) return m.indexOf('3.5') !== -1 ? 'Nemotron 3.5 Lightning' : 'Nemotron 3 Ultra';
     if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
-    if (m.indexOf('muse-spark') !== -1) return 'Muse Spark 1.3';
     if (m.indexOf('gpt-6') !== -1 || m.indexOf('astra') !== -1) return 'GPT-6 Astra';
-    return null;
+    var tidy = raw.split('/').pop().replace(/-free$/, '').replace(/[-_]+/g, ' ').trim();
+    if (!tidy) return provider || 'AI';
+    return tidy.charAt(0).toUpperCase() + tidy.slice(1);
   }
 
   /**
@@ -3429,8 +3468,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     try {
       var served = (typeof api !== 'undefined' && api && api.lastServed) ? api.lastServed : null;
       if (!served) return null;
-      if (served.engine !== 'astra') return served.provider || 'AI';
-      return tunnelModelLabel(served.model) || served.provider || 'Muse Spark';
+      if (served.engine !== 'astra') return tunnelModelLabel(served.model, served.provider);
+      return tunnelModelLabel(served.model, served.provider) || served.provider;
     } catch (_) { return null; }
   }
 
@@ -3716,12 +3755,14 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       var label = document.createElement('span');
       label.className = 'msg-model';
       if (engine.engine === 'astra') {
-        var tLabel = tunnelModelLabel(engine.model) || engine.provider || 'Muse Spark 1.3';
+        var tLabel = tunnelModelLabel(engine.model, engine.provider);
         label.textContent = tLabel;
         label.title = 'Answered by ' + tLabel + (engine.model ? ' (' + engine.model + ')' : '');
       } else {
-        label.textContent = engine.provider || 'AI';
-        label.title = 'Answered by ' + (engine.provider || 'the fallback model') + (engine.model ? ' (' + engine.model + ')' : '');
+        // A fallback route still names its real model, not just the engine.
+        var fLabel = tunnelModelLabel(engine.model, engine.provider);
+        label.textContent = fLabel;
+        label.title = 'Fallback route — answered by ' + fLabel + (engine.model ? ' (' + engine.model + ')' : '');
       }
       if (tts.insertAdjacentElement) tts.insertAdjacentElement('afterend', label);
       else wrap.appendChild(label);

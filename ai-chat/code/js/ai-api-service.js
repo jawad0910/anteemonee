@@ -9,7 +9,8 @@
 function tunnelDisplayName(model) {
   var m = String(model || '').toLowerCase();
   if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
-  if (m.indexOf('muse-spark') !== -1) return 'Muse Spark';
+  if (m.indexOf('muse-spark') !== -1) return 'Muse Spark 1.3';
+  if (m.indexOf('nemotron') !== -1) return m.indexOf('3.5') !== -1 ? 'Nemotron 3.5 Lightning' : 'Nemotron 3 Ultra';
   if (m.indexOf('gpt-6') !== -1 || m.indexOf('astra') !== -1 || m.indexOf('big-pickle') !== -1) return 'GPT-6 Astra';
   return null;
 }

@@ -35,14 +35,19 @@ check('streaming status names engine ungated',
   /var servingEngine = getServingEngineLabel\(\);/.test(src));
 
 // tunnelModelLabel must map real ids to friendly names.
-const lblStart = src.indexOf('function tunnelModelLabel(model)');
+const lblStart = src.indexOf('function tunnelModelLabel(');
 const lblEnd = src.indexOf('\n  }', lblStart) + 4;
+if (lblStart < 0 || lblEnd < 4) throw new Error('tunnelModelLabel() not found');
 (0, eval)(src.slice(lblStart, lblEnd) + '\nglobalThis.__lbl = tunnelModelLabel;');
 const lbl = globalThis.__lbl;
 check('muse-spark id -> Muse Spark 1.3', lbl('oc/muse-spark-1.3-contributor-free') === 'Muse Spark 1.3');
 check('space-bunny id -> Space Bunny', lbl('oc/space-bunny-free') === 'Space Bunny');
 check('astra id -> GPT-6 Astra', lbl('gpt-6-astra') === 'GPT-6 Astra');
-check('unknown id -> null (caller falls back)', lbl('some-other-model') === null);
+check('nemotron id -> Nemotron 3 Ultra', lbl('oc/nemotron-3-ultra-free') === 'Nemotron 3 Ultra');
+check('nemotron 3.5 id -> Nemotron 3.5 Lightning', lbl('nemotron-3.5-lightning-free') === 'Nemotron 3.5 Lightning');
+check('unknown id shows the real model, never "Flagship"', lbl('some-other-model') === 'Some other model');
+check('unknown provider-prefixed id is tidied', lbl('groq/llama-3.3-70b') === 'Llama 3.3 70b');
+check('empty id falls back to provider', lbl('', 'Groq') === 'Groq');
 
 // Functional: the label renders even logged out / guest (no currentUser).
 function makeEl(tag, cls) {
