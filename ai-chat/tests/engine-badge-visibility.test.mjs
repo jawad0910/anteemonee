@@ -98,5 +98,46 @@ check('logged-out user still gets label after sound button',
 check('logged-out label text is Muse Spark 1.3',
   wrap.children[ti + 1] && wrap.children[ti + 1].textContent === 'Muse Spark 1.3');
 
+// --- "Searched the web" chip -----------------------------------------------
+globalThis.FB_GLOBE_SVG = '<svg>globe</svg>';
+function buildRow() {
+  const b = makeEl('div', 'msg-body');
+  const w = makeEl('div', 'msg-feedback');
+  ['fb-like', 'fb-dislike', 'fb-copy'].forEach(c => w.appendChild(makeEl('button', 'fb-btn ' + c)));
+  w.appendChild(makeEl('button', 'fb-btn fb-tts tts-btn'));
+  b.appendChild(w);
+  return { b, w };
+}
+globalThis.messages = [{ role: 'assistant', content: 'hi',
+  engine: { engine: 'astra', provider: 'Flagship', model: 'oc/nemotron-3-ultra' }, searched: true }];
+{
+  const { b, w } = buildRow();
+  globalThis.__attach(b, '0');
+  const o = w.children.map(c => c.className);
+  const mi = o.findIndex(c => c === 'msg-model');
+  check('web chip follows the model label',
+    mi >= 0 && o[mi + 1] === 'msg-model msg-web', o.join(' | '));
+  const chip = w.children[mi + 1];
+  check('web chip reads Searched the web',
+    chip && chip.innerHTML.includes('Searched the web') && chip.innerHTML.includes('globe'),
+    chip && chip.innerHTML);
+}
+globalThis.messages = [{ role: 'assistant', content: 'hi',
+  engine: { engine: 'astra', provider: 'Flagship', model: 'oc/nemotron-3-ultra' }, searched: false }];
+{
+  const { b, w } = buildRow();
+  globalThis.__attach(b, '0');
+  check('no web chip without a search',
+    !w.children.some(c => (c.className || '').includes('msg-web')),
+    w.children.map(c => c.className).join(' | '));
+}
+// Static wiring: gateway exposes + sets the header, service reads it.
+const SVC = readFileSync(new URL('../code/js/ai-api-service.js', import.meta.url).pathname, 'utf8');
+check('service captures X-Web-Searched', SVC.includes("res.headers.get('X-Web-Searched')"));
+const GW = readFileSync('/Users/sharjahlaptops1/Documents/anteemonee/supabase/functions/ai-chat-gateway/index.ts', 'utf8');
+check('gateway exposes X-Web-Searched', GW.includes('"Access-Control-Expose-Headers": "X-Served-By, X-Web-Searched"'));
+check('gateway sets X-Web-Searched on stream', GW.includes('"X-Web-Searched": searched ? "1" : "0"'));
+check('gateway searches searxng via flagship', GW.includes("provider: \"searxng\""));
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

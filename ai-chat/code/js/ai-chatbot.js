@@ -3540,6 +3540,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   var FB_COPY_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
   var FB_CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
   var FB_SPEAKER_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+  var FB_GLOBE_SVG = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
 
   function bumpCounters(names) {
     try {
@@ -3748,12 +3749,12 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     try {
       var wrap = body ? body.querySelector('.msg-feedback') : null;
       var tts = wrap ? wrap.querySelector('.fb-tts') : null;
-      if (!tts || wrap.querySelector('.msg-model')) return;
+      if (!tts) return;
       var message = (typeof messages !== 'undefined' && messages && messages[idx]) ? messages[idx] : null;
-      var engine = message && message.engine;
-      if (!engine || !engine.engine) return;
-      var label = document.createElement('span');
-      label.className = 'msg-model';
+      if (message && message.engine && message.engine.engine && !wrap.querySelector('.msg-model')) {
+        var engine = message.engine;
+        var label = document.createElement('span');
+        label.className = 'msg-model';
       if (engine.engine === 'astra') {
         var tLabel = tunnelModelLabel(engine.model, engine.provider);
         label.textContent = tLabel;
@@ -3766,6 +3767,21 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       }
       if (tts.insertAdjacentElement) tts.insertAdjacentElement('afterend', label);
       else wrap.appendChild(label);
+      }
+      // "Searched the web" chip: shown only when the gateway actually ran a
+      // live search for this reply, independent of the model label above.
+      // Sits after it, same typeface as the response, quiet metadata color.
+      try {
+        if (message && message.searched && !wrap.querySelector('.msg-web')) {
+          var web = document.createElement('span');
+          web.className = 'msg-model msg-web';
+          web.innerHTML = FB_GLOBE_SVG + '<span>Searched the web</span>';
+          web.title = 'This answer was grounded with live web search results';
+          var anchor = wrap.querySelector('.msg-model') || tts;
+          if (anchor && anchor.insertAdjacentElement) anchor.insertAdjacentElement('afterend', web);
+          else wrap.appendChild(web);
+        }
+      } catch (_) {}
     } catch (_) {}
   }
 
@@ -5556,6 +5572,11 @@ function handleFileBlocks(div, text) {
         ? { engine: api.lastServed.engine || null, provider: api.lastServed.provider || null, model: api.lastServed.model || null }
         : null;
     } catch (_) { message.engine = null; }
+    // Whether the gateway ran a live web search for this reply. Recorded
+    // alongside the engine so the "searched the web" chip survives reloads.
+    try {
+      message.searched = !!(typeof api !== 'undefined' && api && api.lastSearched);
+    } catch (_) { message.searched = false; }
     try {
       var graphData = parseGraphBlock(text);
       if (!graphData && div && div.__graphRequested) graphData = synthesizeGraphFromPrompt(div.__graphPromptCt || '');
@@ -6911,6 +6932,19 @@ function handleFileBlocks(div, text) {
             'Never claim you cannot see the image: you are reading a description of it, and you ' +
             'should respond as though you have seen it. Never invent detail beyond this report.\n\n' +
             vision.description;
+          if (!text) {
+            // Image with no typed question: the reply has nothing anchoring it, so
+            // without this the model just continues the previous topic and ignores
+            // the image. Force the relevance decision explicitly.
+            visionContext +=
+              '\n\nThe student typed no question with this image, so first judge whether ' +
+              'the image connects to the ongoing conversation above. If it does, answer ' +
+              'in that context, using both the image and the conversation. If it does ' +
+              'not connect, ignore the previous topic completely and simply explain what ' +
+              'is in the image (what it shows, any text, problem or diagram in it, and ' +
+              'what the student can do with it next). Never continue the previous topic ' +
+              'when the image is unrelated to it, and never invent a link between them.';
+          }
         }
       } catch (e) {
         visionFailed = true;

@@ -41,6 +41,7 @@ class AiApiService {
     this._abortRequested = false; // user tapped Stop — never fail over after that
     this._lastStreamModel = null; // `model` id seen on the latest streamed chunks
     this.lastServed = null;       // { engine, provider, model } of the reply in flight
+    this.lastSearched = false;    // true when the gateway ran a web search for this reply
   }
 
   get currentProvider() {
@@ -209,6 +210,7 @@ class AiApiService {
     this._lastFinishReason = null;
     this._lastStreamModel = null;
     this.lastServed = null;
+    this.lastSearched = false;
     this._abortRequested = false;
 
     // One id for this message; the gateway treats it as an idempotency key.
@@ -362,6 +364,10 @@ class AiApiService {
         } catch (_) {}
         throw new Error('Astra ' + res.status + ': ' + detail);
       }
+
+      // Whether the gateway grounded this reply with a live web search. The
+      // chatbot reads it when finalizing so the reply can wear its badge.
+      try { this.lastSearched = res.headers.get('X-Web-Searched') === '1'; } catch (_) {}
 
       // The tunnel may ignore `stream` and answer with a single JSON body.
       const contentType = res.headers.get('content-type') || '';

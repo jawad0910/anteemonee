@@ -296,6 +296,17 @@
   margin-right: 6px;
   font-weight: 700;
 }
+.msg-feedback .msg-web {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.msg-feedback .msg-web::before {
+  content: none;
+}
+.msg-feedback .msg-web svg {
+  flex-shrink: 0;
+}
 
 /* ── Reply chip / quote — tinted leading bar ──────────────────── */
 .reply-chip-bar { background: var(--chat-tint); }
