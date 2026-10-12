@@ -76,6 +76,52 @@
   line-height: 1.1;
   min-width: 0;
 }
+
+/* ── Brand lockup: BETA sits above the wordmark ───────────────────
+   The wordmark is treated as artwork, not text: it cannot be selected or
+   dragged out, so it reads as a logo rather than a selectable string. */
+.brand-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1.05;
+  min-width: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+.brand-beta {
+  font-family: var(--font-ui, -apple-system, Inter, system-ui, sans-serif);
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+.logo-link,
+.site-logo-link,
+.tv-brand {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.mobile-brand-text {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .logo-text,
 .site-logo-text {
   font-family: var(--font-display, -apple-system, 'Plus Jakarta Sans', Inter, system-ui, sans-serif);

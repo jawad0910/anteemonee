@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,17 +28,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=33">
+  <link rel="stylesheet" href="../css/style.css?v=35">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
-      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
-      --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
-      --liquid-bg-strong: rgba(10,10,12,0.85);
-    }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
     .header { padding: 0; }
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
@@ -53,7 +47,7 @@
     .nav-drop:hover::before, .nav-drop.open::before { display: block; }
     .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
     .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
+    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text-secondary); }
     .nav-menu a:hover { background: var(--surface); }
     .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
     .icon-btn:hover { background: var(--surface); color: var(--text); }
@@ -109,29 +103,37 @@
     .pdf-shell:fullscreen .pdf-canvas-wrap{padding:0;background:#000}
     .pdf-shell:fullscreen #pdf-canvas{border-radius:0}
   </style>
+  <link rel="stylesheet" href="../css/header.css?v=5">
+  <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <header class="header" id="site-header" id="header">
     <div class="header-inner">
       <a href="../index.html" class="logo-link">
         <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="logo-text">Anteemonee</span>
+        <span class="brand-stack"><span class="brand-beta">Beta</span><span class="logo-text">Anteemonee</span></span>
       </a>
       <nav class="landing-nav" aria-label="Primary">
-  <a href="../dashboard/">Dashboard</a>
   <div class="nav-drop">
     <a href="#">Library <span class="caret">▾</span></a>
     <div class="nav-menu">
-      <a href="../ebooks/">eBooks</a>
-      <a href="../flashcards/">Flashcards</a>
-      <a href="../past-papers/">Past Papers</a>
+      <a href="../ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
+      <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
+      <a href="../past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
     </div>
   </div>
-  <a href="../ai-chat/">AI Assistant</a>
+  <div class="nav-drop">
+    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+    <div class="nav-menu">
+      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    </div>
+  </div>
+  <a href="../ai-test-builder/">AI Test Builder</a>
   <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
-        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
+        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </a>
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
@@ -147,8 +149,8 @@
     </div>
   </header>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="../index.html" class="mobile-nav-link">Home</a>
-    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
+
+
     <div class="mobile-acc-dropdown">
       <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
       <div class="mobile-acc-list">
@@ -157,9 +159,11 @@
         <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
       </div>
     </div>
-    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-        <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+        <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
       <a href="../pages/login.html" class="btn-login">Log in</a>
       <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
@@ -266,22 +270,21 @@
     <div class="footer-inner">
       <div class="footer-top">
         <div class="footer-brand">
-          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="brand-stack"><span class="brand-beta">Beta</span><span class="logo-text">Anteemonee</span></span><span class="logo-sub">Student OS</span></span></a>
           <p>The Student OS for Pakistan: FSc, matric & intermediate.</p>
         </div>
         <div class="footer-links">
           <div class="footer-col">
             <h4>Explore</h4>
             <a href="../index.html">Home</a>
-            <a href="../ai-chat/">AI Assistant</a>
-            <a href="../flashcards/">Flashcards</a>
+            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
             <a href="../pages/download.html">Download App</a>
           </div>
           <div class="footer-col">
             <h4>Features</h4>
             <a href="../ai-chat/">AI Tutor</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../payment/index.html?plan=lifetime">Lifetime Access</a>
+            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
           </div>
           <div class="footer-col">
             <h4>Legal</h4>
@@ -294,9 +297,9 @@
     </div>
   </footer>
 
-  <script src="https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }</script>
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="/assets/js/vendor/pdf.min.js"></script>
+  <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='/assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=31"></script>
 <script src="../js/login-modal.js?v=5"></script>

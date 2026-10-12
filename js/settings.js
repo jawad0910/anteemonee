@@ -1280,20 +1280,8 @@ function renderConnected() {
       await linkProvider('google');
     }));
   }
-  if (!hasSpotify) {
-    linkRows.push(buildClickableRow('Link Spotify', 'Connect your Spotify account', async () => {
-      await linkProvider('spotify');
-    }));
-  }
   if (linkRows.length) {
     c.appendChild(buildCard('LINK ACCOUNTS', linkRows));
-  }
-
-  if (!canDisconnectAny && providerCount === 1) {
-    const warnRows = [
-      buildRow('Cannot disconnect your only login method', 'Add another provider (Google, Spotify, or Email) before disconnecting to avoid being locked out.'),
-    ];
-    c.appendChild(buildCard('SECURITY NOTE', warnRows));
   }
 }
 
