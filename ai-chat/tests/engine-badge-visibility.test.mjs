@@ -141,6 +141,9 @@ check('gateway searches searxng via flagship', GW.includes("provider: \"searxng\
 check('empty search retries once', /if \(!r\.text\) \{[\s\S]{0,400}?searchViaFlagship\(sq\)/.test(GW));
 check('ran-but-empty still grounds the reply', GW.includes('no usable results'));
 check('ran flag drives the header', /if \(r\.ran\) \{[\s\S]{0,200}?searched = true/.test(GW));
+check('grounding rules cap length', GW.includes('at most ~120 words'));
+check('grounding rules ban quiz offers', GW.includes('quiz offers'));
+check('grounding rules ban scope apology', GW.includes('steer to another topic'));
 
 // shouldWebSearch trigger: extract and run the real function.
 {
@@ -207,6 +210,48 @@ check('ran flag drives the header', /if \(r\.ran\) \{[\s\S]{0,200}?searched = tr
   check('tool line shown at send', /showWebSearchToolLine\(streamDiv, text\)/.test(cSrc));
   check('tool line removed on finalize', (cSrc.match(/hideWebSearchToolLine\(div\)/g) || []).length >= 1);
   check('toolcall CSS present', readFileSync(new URL('../code/css/messages.css', import.meta.url).pathname, 'utf8').includes('.msg-toolcall'));
+}
+
+// Autolinked bare URLs: favicon chips, never double-processed.
+{
+  const cSrc = readFileSync(new URL('../code/js/ai-chatbot.js', import.meta.url).pathname, 'utf8');
+  check('autolink pass exists', cSrc.includes('(function autolink()'));
+  check('favicon via keyless icon service', cSrc.includes('google.com/s2/favicons?domain='));
+  check('dead favicon removes itself', cSrc.includes('onerror="this.remove()"'));
+  check('links open in new tab', cSrc.includes('md-autolink" href="'));
+  const css = readFileSync(new URL('../code/css/messages.css', import.meta.url).pathname, 'utf8');
+  check('autolink chip CSS present', css.includes('.md-autolink') && css.includes('.md-autolink-fav'));
+  // Functional: extract renderMarkdown with DOM stubs and run the screenshot case.
+  const mk = () => ({ style: {}, classList: { add() {}, remove() {}, toggle() {} }, setAttribute() {}, appendChild() {}, addEventListener() {}, innerHTML: '', textContent: '', value: '' });
+  globalThis.document = { addEventListener() {}, createElement: mk, getElementById: () => null, querySelectorAll: () => [], querySelector: () => null, body: mk() };
+  globalThis.window = { addEventListener() {} };
+  globalThis.getComputedStyle = () => ({});
+  const sIdx = cSrc.indexOf('function renderMarkdown(text) {');
+  const lines = cSrc.slice(sIdx).split('\n');
+  const base = lines[0].match(/^(\s*)/)[1].length;
+  let rEnd = 1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '}' && lines[i].match(/^(\s*)/)[1].length === base) { rEnd = i; break; }
+  }
+  (0, eval)(lines.slice(0, rEnd + 1).join('\n') + '\nglobalThis.__md = renderMarkdown;');
+  const out = globalThis.__md('Its presence is on Facebook:\nfacebook.com/oxbridge.ryk.official/\nfacebook.com/oxbridge.ryk/\n\nSee [official page](https://facebook.com/x/) and `code facebook.com/skip.js`.');
+  check('bare URLs become chips', (out.match(/<a class="md-autolink"/g) || []).length === 2);
+  check('chips keep line breaks', out.includes('</a><br><a class="md-autolink"'));
+  check('markdown link untouched', out.includes('>official page</a>'));
+  check('code span untouched', out.includes('facebook.com/skip.js</code>'));
+}
+
+// Scope judgment: off-topic questions must bypass the tutor template.
+{
+  const cSrc = readFileSync(new URL('../code/js/ai-chatbot.js', import.meta.url).pathname, 'utf8');
+  check('scope rule exists', cSrc.includes('SCOPE JUDGMENT'));
+  check('off-topic drops definitions', /drop the tutor template[\s\S]{0,600}?Do NOT define general terms/.test(cSrc));
+  check('off-topic drops step-by-step', cSrc.includes('Do NOT work anything through step by step'));
+  check('off-topic drops common mistakes', cSrc.includes('Do NOT list common mistakes'));
+  check('off-topic drops quiz offers', /drop the tutor template[\s\S]{0,800}?Do NOT offer quizzes/.test(cSrc));
+  check('off-topic drops subject framing', cSrc.includes('Do NOT frame yourself as a'));
+  check('off-topic capped brief', cSrc.includes('at most ~150 words'));
+  check('no forced subject connection', !cSrc.includes('still try to help within'));
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

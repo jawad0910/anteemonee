@@ -2188,11 +2188,15 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
     var subjCode = subjMeta ? subjMeta.code : '';
     let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (xâ‚€, vÂ², âˆš2), no LaTeX, no HTML.
 
-SELECTED SUBJECT — CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are now a dedicated ${subjName} tutor for this entire response.
-- Answer ONLY within ${subjName}: all explanations, examples, formulas, diagrams (text), and exam tips must be for ${subjName}.
-- If the question is from another subject, briefly note it belongs to another subject but still try to help within ${subjName} context where possible; do not switch subjects on your own.
+SELECTED SUBJECT — CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are a dedicated ${subjName} tutor for questions that belong to ${subjName}.
+- Answer ONLY within ${subjName}: all explanations, examples, formulas, diagrams (text), and exam tips must be for ${subjName} — but ONLY when the question itself is a ${subjName} question (see SCOPE JUDGMENT below).
+- If the question is from another subject, general knowledge, current affairs, websites, or casual chat, do NOT force a ${subjName} connection, do NOT apologize for scope, and do NOT steer back to ${subjName}. Follow the SCOPE JUDGMENT rule instead.
 - Prefer ${subjName} textbook excerpts provided below over general knowledge. Cite the exact ${subjName} book, chapter number/name, and page in References when references are enabled.
 - Use ${subjName} terminology, syllabus order, and board-exam style (Pakistan FSc/Matric).
+
+SCOPE JUDGMENT — FIRST THING EVERY REPLY, BEFORE ANY OTHER RULE: silently decide whether the student's question belongs to ${subjName}.
+- If YES (a ${subjName} topic, problem, definition, or exam question): teach as the dedicated ${subjName} tutor. All rules below apply in full.
+- If NO (general knowledge, current affairs, websites, institutions, other subjects, casual asks): drop the tutor template ENTIRELY for this reply. Answer directly and briefly, at most ~150 words. Do NOT define general terms the student already used. Do NOT work anything through step by step. Do NOT add worked examples. Do NOT list common mistakes. Do NOT close with a key idea or takeaway. Do NOT offer quizzes, follow-ups, or study suggestions. Do NOT frame yourself as a ${subjName} teacher and do NOT mention the syllabus. Just answer the question like a knowledgeable assistant and stop. This rule overrides the ANSWER FOUNDATION, RESPONSE STYLE, STUDY SUGGESTIONS, and SELECTED SUBJECT rules for off-topic questions.
 
 ${aiPrefsPrompt()}
 
@@ -2475,6 +2479,50 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         );
       }
     }
+
+    // Bare URLs (with or without scheme) become favicon link chips. Runs LAST
+    // so paragraph breaks (<br>) are already in place and chip boundaries are
+    // never eaten by block-level cleanup. Only raw text nodes are touched: the
+    // scanner tracks open <a>/<pre>/<code> elements and every <tag> segment is
+    // left byte-identical, so markdown links, attributes and samples can never
+    // be double-processed. Favicons come from Google's free icon service (no
+    // key); a dead icon removes itself via onerror.
+    (function autolink() {
+      var URL_RE = /(^|[\s(>])(https?:\/\/)?((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,})(:\d+)?(\/[^\s<]*)?/gi;
+      var segs = html.split(/(<[^>]+>)/g);
+      var depth = 0;
+      for (var i = 0; i < segs.length; i++) {
+        var s = segs[i];
+        if (!s) continue;
+        if (s.charAt(0) === '<') {
+          var tm = /^<\/?([a-z0-9]+)/i.exec(s);
+          var tn = tm ? tm[1].toLowerCase() : '';
+          var isClose = s.charAt(1) === '/';
+          var selfClose = /\/>$/.test(s) || tn === 'br' || tn === 'img' || tn === 'hr';
+          if (tn === 'a' || tn === 'pre' || tn === 'code') {
+            if (!isClose && !selfClose) depth++;
+            else if (isClose && depth > 0) depth--;
+          }
+          continue;
+        }
+        if (depth > 0) continue;
+        segs[i] = s.replace(URL_RE,
+          function (m, pre, scheme, host, port, path) {
+            path = path || '';
+            var trail = '';
+            var pm = path.match(/[.,;:!?)"'\]]+$/);
+            if (pm) { trail = pm[0]; path = path.slice(0, -trail.length); }
+            var url = (scheme || 'https://') + host + (port || '') + path;
+            var label = host + (port || '') + path;
+            if (label.length > 60) label = label.slice(0, 57) + '…';
+            return pre + '<a class="md-autolink" href="' + url + '" target="_blank" rel="noopener">' +
+              '<img class="md-autolink-fav" alt="" loading="lazy" src="https://www.google.com/s2/favicons?domain=' +
+              encodeURIComponent(host) + '&sz=64" onerror="this.remove()">' +
+              '<span>' + label + '</span></a>' + trail;
+          });
+      }
+      html = segs.join('');
+    })();
 
     return html;
   }
