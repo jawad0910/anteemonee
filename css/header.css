@@ -77,40 +77,22 @@
   min-width: 0;
 }
 
-/* ── Brand lockup: BETA sits above the wordmark ───────────────────
-   The wordmark is treated as artwork, not text: it cannot be selected or
-   dragged out, so it reads as a logo rather than a selectable string. */
+/* ── Brand lockup ───────────────────────────────────────────────
+   The wordmark is treated as artwork, not text: it cannot be selected
+   or dragged out, so it reads as a logo rather than a selectable
+   string. `.brand-stack` is the hook that carries that behaviour. */
 .brand-stack {
-  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
   line-height: 1.05;
   min-width: 0;
-  padding-top: 7px; /* room for the badge, which is out of flow */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-user-drag: none;
-}
-.brand-beta {
-  position: absolute;
-  top: 0;
-  right: 0;
-  font-family: var(--font-display, -apple-system, 'Plus Jakarta Sans', Inter, system-ui, sans-serif);
-  font-size: 9.5px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-  -webkit-user-select: none;
-  user-select: none;
-  pointer-events: none;
 }
 .logo-link,
 .site-logo-link,
