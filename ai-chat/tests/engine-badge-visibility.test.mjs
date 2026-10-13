@@ -252,6 +252,16 @@ check('grounding rules ban scope apology', GW.includes('steer to another topic')
   check('off-topic drops subject framing', cSrc.includes('Do NOT frame yourself as a'));
   check('off-topic capped brief', cSrc.includes('at most ~150 words'));
   check('no forced subject connection', !cSrc.includes('still try to help within'));
+  check('dead-send watchdog exists', cSrc.includes('streamDiv.__watchdog = setTimeout'));
+  // Regression: the tool-line call once sat above `const isGreetingMsg`,
+  // throwing a TDZ ReferenceError that stranded every bubble spinning.
+  // No executable reference to isGreetingMsg may precede its declaration.
+  const hIdx = cSrc.indexOf('async function handleSend() {');
+  const hBlock = cSrc.slice(hIdx, hIdx + 40000);
+  const declAt = hBlock.indexOf('const isGreetingMsg =');
+  const useAt = hBlock.indexOf('if (!isGreetingMsg && clientWillSearch(text))');
+  check('tool-line call sits after isGreetingMsg init', declAt > 0 && useAt > declAt);
+  check('finalize clears the watchdog', cSrc.includes("clearTimeout(div.__watchdog)"));
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

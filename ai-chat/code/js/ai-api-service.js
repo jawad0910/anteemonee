@@ -1,9 +1,11 @@
 ﻿/* ==========================================
-   Anteemonee - Flagship-only chat service.
-   Every message streams from the FlagshipRouter tunnel
-   (oc/space-bunny-free) via the ai-chat-gateway edge function, which
-   holds the tunnel key server-side. There is no fallback chain: if the
-   tunnel fails, the error surfaces so the student can retry.
+   Anteemonee - BazaarLink-direct chat service.
+   Every message streams from https://api.bazaarlink.ai (model auto:free)
+   via the ai-chat-gateway edge function, which holds the provider key
+   server-side. There is no fallback chain: if the provider fails, the
+   error surfaces so the student can retry.
+   (Web search still rides the Flagship tunnel — see the gateway — because
+   SearXNG only listens on localhost. That leg is search-only.)
    ========================================== */
 
 function tunnelDisplayName(model) {
@@ -20,22 +22,18 @@ class AiApiService {
     this.supabaseUrl = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
     this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
     // Every student message now goes through the gateway, which holds the
-    // Astra key server-side and enforces the 15/day free quota. The browser
-    // no longer talks to Astra or to ai-chat directly, so neither the key
+    // provider key server-side and enforces the 15/day free quota. The browser
+    // no longer talks to any model provider directly, so neither the key
     // nor the cap can be bypassed from devtools.
     this.gatewayUrl = `${this.supabaseUrl}/functions/v1/ai-chat-gateway`;
     this._currentAbort = null;
     this._accessToken = null;
     this._sessionId = null;
     this._lastFinishReason = null; // finish_reason of the latest completed attempt ('stop' | 'length' | ...)
-    // ── Flagship Router tunnel: the one and only route. ──
+    // ── BazaarLink direct: the one and only chat route. ──
     // Any failure surfaces to the student as an error (no silent fallback),
     // except user aborts, quota refusals and dead sessions, which rethrow.
-    this.astraModel = 'oc/muse-spark-1.3-contributor-free';
-    // The Astra API key used to live here in cleartext. Anyone who opened
-    // devtools could read it and call the tunnel directly, entirely
-    // bypassing the site and its quota. It now lives in the gateway's
-    // ASTRA_API_KEY secret and is never sent to the browser.
+    this.astraModel = 'auto:free';
     this._astraFails = 0;         // consecutive Astra failures
     this._astraCooldownUntil = 0; // skip Astra until this timestamp
     this._abortRequested = false; // user tapped Stop — never fail over after that
@@ -45,7 +43,7 @@ class AiApiService {
   }
 
   get currentProvider() {
-    return { name: tunnelDisplayName(this._lastStreamModel) || 'Flagship', model: this._lastStreamModel };
+    return { name: tunnelDisplayName(this._lastStreamModel) || 'BazaarLink', model: this._lastStreamModel };
   }
 
   /**
@@ -201,10 +199,10 @@ class AiApiService {
 
 
   /**
-   * Stream chat via the Flagship tunnel only. There is no fallback chain:
-   * if the tunnel fails, the error surfaces so the student can retry.
+   * Stream chat via BazaarLink direct only. There is no fallback chain:
+   * if the provider fails, the error surfaces so the student can retry.
    * A mid-stream drop still throws IncompleteStreamError so the caller can
-   * retry the same tunnel from the partial text it already showed.
+   * retry from the partial text it already showed.
    */
   async *streamChat(messages, providerIndex = null, images = null) {
     this._lastFinishReason = null;
@@ -217,7 +215,7 @@ class AiApiService {
     this._currentRequestId = this._newRequestId();
 
     if (!this._astraAvailable()) {
-      throw new Error('Flagship tunnel is cooling down after failures. Please try again in a minute.');
+      throw new Error('Chat service is cooling down after failures. Please try again in a minute.');
     }
     try {
       yield* this._streamAstra(messages);
@@ -229,7 +227,7 @@ class AiApiService {
       if (error && error.code === 'session_expired') throw error;
       this._noteAstraFailure(error);
       if (error instanceof IncompleteStreamError) throw error;
-      throw new Error('Flagship tunnel failed: ' + ((error && error.message) || error) + '. Please try again.');
+      throw new Error('Chat service failed: ' + ((error && error.message) || error) + '. Please try again.');
     }
   }
 
@@ -240,27 +238,27 @@ class AiApiService {
 
   _noteAstraSuccess() {
     this._astraFails = 0;
-    console.info('[AI] Served by Muse Spark (' +
+    console.info('[AI] Served by BazaarLink (' +
       ((this.lastServed && this.lastServed.model) || this.astraModel) + ')');
   }
 
   _noteAstraFailure(error) {
     this._astraFails += 1;
-    console.warn('[AI] Muse Spark failed: ' + ((error && error.message) || error) +
+    console.warn('[AI] BazaarLink chat failed: ' + ((error && error.message) || error) +
       ' — no fallback configured; surfacing the error.');
-    // Two misses in a row means the tunnel is down for now: stop paying its
+    // Two misses in a row means the provider is down for now: stop paying its
     // latency on every message, and try it again in a minute.
     if (this._astraFails >= 2) {
       this._astraCooldownUntil = Date.now() + 60000;
-      console.warn('[AI] Muse Spark cooling down for 60s after ' + this._astraFails +
+      console.warn('[AI] Chat cooling down for 60s after ' + this._astraFails +
         ' consecutive failures');
     }
   }
 
   /**
-   * Priority attempt: stream straight from Muse Spark. The tunnel is
-   * OpenAI-compatible and sends CORS headers, so the browser calls it
-   * directly — no edge function sits in front of it.
+   * Priority attempt: stream straight from BazaarLink via the gateway
+   * (OpenAI-compatible). The browser never touches the provider directly —
+   * the edge function holds the key and streams the response through.
    *
    * The prompt never tells the model what to call itself, so when a student
    * asks "which model are you?" the answer comes from the real model.
@@ -271,7 +269,7 @@ class AiApiService {
     const controller = new AbortController();
     this._currentAbort = controller;
 
-    // Astra is uncapped on purpose: no `max_tokens` is sent at all, so its own
+    // The chat route is uncapped on purpose: no `max_tokens` is sent at all, so its own
     // output length is the only ceiling. A fixed budget used to cut long
     // answers mid-file, because reasoning tokens are billed against it too
     // (verified 2026-10-09 with tests/astra-length-probe.mjs: max_tokens 50
@@ -297,7 +295,7 @@ class AiApiService {
     try {
       let res;
       try {
-        // Via the gateway, which holds the Astra key server-side and spends
+        // Via the gateway, which holds the provider key server-side and spends
         // one unit of the 15/day free quota before any token is used.
         // _postWithAuthRetry replays once on a 401, and the shared
         // requestId makes that replay cost nothing.
@@ -318,7 +316,7 @@ class AiApiService {
         });
       } catch (e) {
         if (e && e.name === 'AbortError' && this._abortRequested) throw e;
-        if (e && e.name === 'AbortError') throw new Error('Astra request timed out');
+        if (e && e.name === 'AbortError') throw new Error('Chat request timed out');
         throw e; // DNS / connection refused / offline — fail over right away
       }
 
@@ -336,7 +334,7 @@ class AiApiService {
       }
 
       if (res.status === 429) {
-        // Daily free limit reached. This is NOT an Astra outage: failing
+        // Daily free limit reached. This is NOT a provider outage: failing
         // over to the edge chain would be refused the same way, so it is
         // surfaced immediately with its reset time attached.
         let payload = {};
@@ -362,7 +360,7 @@ class AiApiService {
             detail = String(text).slice(0, 200) || detail;
           }
         } catch (_) {}
-        throw new Error('Astra ' + res.status + ': ' + detail);
+        throw new Error('Chat ' + res.status + ': ' + detail);
       }
 
       // Whether the gateway grounded this reply with a live web search. The
@@ -373,12 +371,12 @@ class AiApiService {
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const data = await res.json();
-        if (data && data.error) throw new Error('Astra: ' + (data.error.message || data.error));
+        if (data && data.error) throw new Error('Chat: ' + (data.error.message || data.error));
         const choice = data && data.choices && data.choices[0];
         const content = choice && choice.message && choice.message.content;
-        if (!content) throw new Error('Muse Spark returned an empty response');
+        if (!content) throw new Error('Chat returned an empty response');
         if (data.model) this._lastStreamModel = data.model;
-        this.lastServed = { engine: 'astra', provider: tunnelDisplayName(data.model) || 'Flagship', model: data.model || this.astraModel, at: Date.now() };
+        this.lastServed = { engine: 'astra', provider: tunnelDisplayName(data.model) || 'BazaarLink', model: data.model || this.astraModel, at: Date.now() };
         yield content;
         return;
       }
@@ -401,9 +399,9 @@ class AiApiService {
           // with another model. (A dropped socket used to restart it from
           // scratch, which is how a long file ended up half-written.)
           if (receivedContent) {
-            throw new IncompleteStreamError('Muse Spark connection dropped mid-reply. Continuing where it stopped...');
+            throw new IncompleteStreamError('Chat connection dropped mid-reply. Continuing where it stopped...');
           }
-          throw new Error('Astra stream failed: ' + ((e && e.message) || e));
+          throw new Error('Chat stream failed: ' + ((e && e.message) || e));
         }
         const { done, value } = read;
         if (done) break;
@@ -424,7 +422,7 @@ class AiApiService {
 
           try {
             const json = JSON.parse(data);
-            if (json.error) throw new Error('Astra: ' + (json.error.message || json.error));
+            if (json.error) throw new Error('Chat: ' + (json.error.message || json.error));
             if (json.model) this._lastStreamModel = json.model;
             const fr = json.choices?.[0]?.finish_reason;
             if (fr) this._lastFinishReason = fr;
@@ -432,12 +430,12 @@ class AiApiService {
             if (content) {
               receivedContent = true;
               if (!this.lastServed) {
-                this.lastServed = { engine: 'astra', provider: tunnelDisplayName(json.model) || 'Flagship', model: json.model || this.astraModel, at: Date.now() };
+                this.lastServed = { engine: 'astra', provider: tunnelDisplayName(json.model) || 'BazaarLink', model: json.model || this.astraModel, at: Date.now() };
               }
               yield content;
             }
           } catch (e) {
-            if (e && e.message && e.message.startsWith('Astra:')) throw e;
+            if (e && e.message && e.message.startsWith('Chat:')) throw e;
             // Malformed frames and keep-alive pings are ignored.
           }
         }
@@ -448,7 +446,7 @@ class AiApiService {
       if (!receivedContent) {
         // The connection died before any text, or thinking tokens consumed the
         // whole budget and the reply finished empty. Either way: fall back.
-        throw new Error('Muse Spark produced no usable content');
+        throw new Error('Chat produced no usable content');
       }
       // NOTE: this tunnel ends a clean, complete reply by simply closing the
       // stream — it never sends OpenAI's [DONE] marker (and reports
