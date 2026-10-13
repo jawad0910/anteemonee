@@ -1,9 +1,10 @@
 ﻿/* ==========================================
-   Anteemonee - BazaarLink-direct chat service.
-   Every message streams from https://api.bazaarlink.ai (model auto:free)
-   via the ai-chat-gateway edge function, which holds the provider key
-   server-side. There is no fallback chain: if the provider fails, the
-   error surfaces so the student can retry.
+   Anteemonee - Groq-direct chat service.
+   Every message streams from https://api.groq.com (primary
+   openai/gpt-oss-120b, fallback openai/gpt-oss-20b, two keys rotating on
+   429s) via the ai-chat-gateway edge function, which holds the provider
+   keys server-side. There is no fallback chain beyond that: if the
+   provider fails, the error surfaces so the student can retry.
    (Web search still rides the Flagship tunnel — see the gateway — because
    SearXNG only listens on localhost. That leg is search-only.)
    ========================================== */
@@ -11,6 +12,8 @@
 function tunnelDisplayName(model) {
   var m = String(model || '').toLowerCase();
   if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
+  if (m.indexOf('gpt-oss-120b') !== -1) return 'GPT-OSS 120B';
+  if (m.indexOf('gpt-oss-20b') !== -1) return 'GPT-OSS 20B';
   if (m.indexOf('muse-spark') !== -1) return 'Muse Spark 1.3';
   if (m.indexOf('nemotron') !== -1) return m.indexOf('3.5') !== -1 ? 'Nemotron 3.5 Lightning' : 'Nemotron 3 Ultra';
   if (m.indexOf('gpt-6') !== -1 || m.indexOf('astra') !== -1 || m.indexOf('big-pickle') !== -1) return 'GPT-6 Astra';
@@ -33,17 +36,18 @@ class AiApiService {
     // ── BazaarLink direct: the one and only chat route. ──
     // Any failure surfaces to the student as an error (no silent fallback),
     // except user aborts, quota refusals and dead sessions, which rethrow.
-    this.astraModel = 'auto:free';
+    this.chatModel = 'openai/gpt-oss-120b';
     this._astraFails = 0;         // consecutive Astra failures
     this._astraCooldownUntil = 0; // skip Astra until this timestamp
     this._abortRequested = false; // user tapped Stop — never fail over after that
     this._lastStreamModel = null; // `model` id seen on the latest streamed chunks
     this.lastServed = null;       // { engine, provider, model } of the reply in flight
     this.lastSearched = false;    // true when the gateway ran a web search for this reply
+    this._gatewayModel = null;    // exact serving model id, from X-Model
   }
 
   get currentProvider() {
-    return { name: tunnelDisplayName(this._lastStreamModel) || 'BazaarLink', model: this._lastStreamModel };
+    return { name: tunnelDisplayName(this._lastStreamModel) || 'Groq', model: this._lastStreamModel };
   }
 
   /**
@@ -209,6 +213,7 @@ class AiApiService {
     this._lastStreamModel = null;
     this.lastServed = null;
     this.lastSearched = false;
+    this._gatewayModel = null; // exact serving model id, from X-Model
     this._abortRequested = false;
 
     // One id for this message; the gateway treats it as an idempotency key.
@@ -238,13 +243,13 @@ class AiApiService {
 
   _noteAstraSuccess() {
     this._astraFails = 0;
-    console.info('[AI] Served by BazaarLink (' +
-      ((this.lastServed && this.lastServed.model) || this.astraModel) + ')');
+    console.info('[AI] Served by Groq (' +
+      ((this.lastServed && this.lastServed.model) || this.chatModel) + ')');
   }
 
   _noteAstraFailure(error) {
     this._astraFails += 1;
-    console.warn('[AI] BazaarLink chat failed: ' + ((error && error.message) || error) +
+    console.warn('[AI] Groq chat failed: ' + ((error && error.message) || error) +
       ' — no fallback configured; surfacing the error.');
     // Two misses in a row means the provider is down for now: stop paying its
     // latency on every message, and try it again in a minute.
@@ -363,9 +368,11 @@ class AiApiService {
         throw new Error('Chat ' + res.status + ': ' + detail);
       }
 
-      // Whether the gateway grounded this reply with a live web search. The
-      // chatbot reads it when finalizing so the reply can wear its badge.
+      // Whether the gateway grounded this reply with a live web search, and
+      // exactly which model served it (primary vs fallback). The chatbot reads
+      // both when finalizing so the reply can wear its badges.
       try { this.lastSearched = res.headers.get('X-Web-Searched') === '1'; } catch (_) {}
+      try { this._gatewayModel = res.headers.get('X-Model') || null; } catch (_) {}
 
       // The tunnel may ignore `stream` and answer with a single JSON body.
       const contentType = res.headers.get('content-type') || '';
@@ -376,7 +383,7 @@ class AiApiService {
         const content = choice && choice.message && choice.message.content;
         if (!content) throw new Error('Chat returned an empty response');
         if (data.model) this._lastStreamModel = data.model;
-        this.lastServed = { engine: 'astra', provider: tunnelDisplayName(data.model) || 'BazaarLink', model: data.model || this.astraModel, at: Date.now() };
+        this.lastServed = { engine: 'direct', provider: tunnelDisplayName(data.model) || 'Groq', model: data.model || this._gatewayModel || this.chatModel, at: Date.now() };
         yield content;
         return;
       }
@@ -430,7 +437,7 @@ class AiApiService {
             if (content) {
               receivedContent = true;
               if (!this.lastServed) {
-                this.lastServed = { engine: 'astra', provider: tunnelDisplayName(json.model) || 'BazaarLink', model: json.model || this.astraModel, at: Date.now() };
+                this.lastServed = { engine: 'direct', provider: tunnelDisplayName(json.model) || 'Groq', model: json.model || this._gatewayModel || this.chatModel, at: Date.now() };
               }
               yield content;
             }

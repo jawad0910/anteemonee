@@ -77,10 +77,24 @@ console.log('\nScenario 1 - gateway streams a reply through');
   check('content streamed through', text === 'hello world', JSON.stringify(text));
   check('went to the gateway, not a provider', String(seen[0].url).includes('/functions/v1/ai-chat-gateway'), seen[0].url);
   check('real model id captured', svc.lastServed && svc.lastServed.model === 'deepseek/deepseek-v4-flash-0731free', JSON.stringify(svc.lastServed));
-  check('unknown family falls back to BazaarLink provider', svc.lastServed && svc.lastServed.provider === 'BazaarLink', JSON.stringify(svc.lastServed));
+  check('unknown family falls back to Groq provider', svc.lastServed && svc.lastServed.provider === 'Groq', JSON.stringify(svc.lastServed));
+  check('engine tag is direct', svc.lastServed && svc.lastServed.engine === 'direct', JSON.stringify(svc.lastServed));
   check('search header captured', svc.lastSearched === true);
   check('no failures recorded', svc._astraFails === 0);
   check('no cooldown', svc._astraCooldownUntil === 0);
+}
+
+// ── 1b. X-Model header supplies the id when chunks omit it ───────────────
+console.log('\nScenario 1b - gateway model header as label source');
+{
+  const svc = new AiApiService();
+  globalThis.fetch = async () => sseResponse(
+    ['data: ' + JSON.stringify({ choices: [{ delta: { content: 'hi' } }] }) + '\n\n'],
+    { 'x-model': 'openai/gpt-oss-20b' },
+  );
+  const text = await collect(svc, [{ role: 'user', content: 'hi' }]);
+  check('content streamed', text === 'hi', JSON.stringify(text));
+  check('label falls back to header model', svc.lastServed && svc.lastServed.model === 'openai/gpt-oss-20b', JSON.stringify(svc.lastServed));
 }
 
 // ── 2. 401 with no refresh available -> session_expired ───────────────────

@@ -3543,6 +3543,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     var raw = String(model || '').trim();
     var m = raw.toLowerCase();
     if (!m) return provider || 'AI';
+    if (m.indexOf('gpt-oss-120b') !== -1) return 'GPT-OSS 120B';
+    if (m.indexOf('gpt-oss-20b') !== -1) return 'GPT-OSS 20B';
     if (m.indexOf('muse-spark') !== -1) return m.indexOf('1.3') !== -1 ? 'Muse Spark 1.3' : 'Muse Spark';
     if (m.indexOf('nemotron') !== -1) return m.indexOf('3.5') !== -1 ? 'Nemotron 3.5 Lightning' : 'Nemotron 3 Ultra';
     if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
@@ -3562,7 +3564,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     try {
       var served = (typeof api !== 'undefined' && api && api.lastServed) ? api.lastServed : null;
       if (!served) return null;
-      if (served.engine !== 'astra') return tunnelModelLabel(served.model, served.provider);
+      if (served.engine !== 'direct') return tunnelModelLabel(served.model, served.provider);
       return tunnelModelLabel(served.model, served.provider) || served.provider;
     } catch (_) { return null; }
   }
@@ -3849,7 +3851,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         var engine = message.engine;
         var label = document.createElement('span');
         label.className = 'msg-model';
-      if (engine.engine === 'astra') {
+      if (engine.engine === 'direct') {
         var tLabel = tunnelModelLabel(engine.model, engine.provider);
         label.textContent = tLabel;
         label.title = 'Answered by ' + tLabel + (engine.model ? ' (' + engine.model + ')' : '');

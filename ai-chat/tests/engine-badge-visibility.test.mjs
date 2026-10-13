@@ -97,6 +97,34 @@ check('logged-out user still gets label after sound button',
   order[ti + 1] === 'msg-model', order.join(' | '));
 check('logged-out label text is Muse Spark 1.3',
   wrap.children[ti + 1] && wrap.children[ti + 1].textContent === 'Muse Spark 1.3');
+// Groq era labels + old stored messages (engine 'astra') still resolving.
+globalThis.messages = [{ role: 'assistant', content: 'hi',
+  engine: { engine: 'direct', provider: 'Groq', model: 'openai/gpt-oss-120b' }, searched: false }];
+{
+  const { b, w } = buildRow();
+  globalThis.__attach(b, '0');
+  const o = w.children.map(c => c.className);
+  const mi = o.findIndex(c => c === 'msg-model');
+  check('direct engine labels GPT-OSS 120B',
+    mi >= 0 && w.children[mi].textContent === 'GPT-OSS 120B',
+    w.children[mi] && w.children[mi].textContent);
+}
+globalThis.messages = [{ role: 'assistant', content: 'hi',
+  engine: { engine: 'direct', provider: 'Groq', model: 'openai/gpt-oss-20b' }, searched: false }];
+{
+  const { b, w } = buildRow();
+  globalThis.__attach(b, '0');
+  const got = w.querySelector('.msg-model');
+  check('fallback model labels GPT-OSS 20B', got && got.textContent === 'GPT-OSS 20B');
+}
+globalThis.messages = [{ role: 'assistant', content: 'hi',
+  engine: { engine: 'astra', provider: 'Flagship', model: 'oc/muse-spark-1.3-contributor-free' }, searched: false }];
+{
+  const { b, w } = buildRow();
+  globalThis.__attach(b, '0');
+  const got = w.querySelector('.msg-model');
+  check('old stored astra messages still label correctly', got && got.textContent === 'Muse Spark 1.3');
+}
 
 // --- "Searched the web" chip -----------------------------------------------
 globalThis.FB_GLOBE_SVG = '<svg>globe</svg>';
@@ -135,7 +163,13 @@ globalThis.messages = [{ role: 'assistant', content: 'hi',
 const SVC = readFileSync(new URL('../code/js/ai-api-service.js', import.meta.url).pathname, 'utf8');
 check('service captures X-Web-Searched', SVC.includes("res.headers.get('X-Web-Searched')"));
 const GW = readFileSync('/Users/sharjahlaptops1/Documents/anteemonee/supabase/functions/ai-chat-gateway/index.ts', 'utf8');
-check('gateway exposes X-Web-Searched', GW.includes('"Access-Control-Expose-Headers": "X-Served-By, X-Web-Searched"'));
+check('gateway exposes X-Web-Searched', GW.includes('"Access-Control-Expose-Headers": "X-Served-By, X-Model, X-Web-Searched"'));
+check('gateway exposes X-Model', GW.includes('X-Model'));
+check('gateway serves groq direct', GW.includes('api.groq.com/openai/v1/chat/completions'));
+check('gateway primary is gpt-oss-120b', GW.includes('"openai/gpt-oss-120b"'));
+check('gateway fallback is gpt-oss-20b', GW.includes('"openai/gpt-oss-20b"'));
+check('gateway rotates groq keys on 429', GW.includes('groqFetch('));
+check('provider-busy 429 is distinct from daily limit', GW.includes('PROVIDER_BUSY'));
 check('gateway sets X-Web-Searched on stream', GW.includes('"X-Web-Searched": searched ? "1" : "0"'));
 check('gateway searches searxng via flagship', GW.includes("provider: \"searxng\""));
 check('empty search retries once', /if \(!r\.text\) \{[\s\S]{0,400}?searchViaFlagship\(sq\)/.test(GW));
