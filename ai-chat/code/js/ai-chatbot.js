@@ -6932,10 +6932,22 @@ function handleFileBlocks(div, text) {
     streamDiv.__graphRequested = graphRequested;
     streamDiv.__graphPromptCt = text;
     const statusCycle = startStatusCycle(streamDiv, null);
+    scrollToBottom();
+
+    // Auto model routing: pick persona per message (no manual selector)
+    try { applyPersonaForText(text); } catch (_) {}
+    try { updatePersonaUI(); } catch (_) {}
+
+    // Textbook RAG is study-only: Coder (coding agent) skips it entirely.
+    // Saves a DB round trip and keeps the coding prompt lean (faster TTFT).
+    // Textbook search + memory reload run in parallel, not sequentially.
+    const isCodingAgent = getActivePersona().codingOnly;
+    const isGreetingMsg = !hasImages && !pendingQuote && isInstantGreeting(text);
     // Instant search feedback: if this message will trigger the gateway's web
     // search, show the tool line now instead of a bare spinner. Reconciled on
     // finalize — the line always comes off, the chip stays only if the server
-    // confirms it searched.
+    // confirms it searched. (Placed after isGreetingMsg: referencing it any
+    // earlier throws a TDZ ReferenceError that strands the bubble spinning.)
     if (!isGreetingMsg && clientWillSearch(text)) showWebSearchToolLine(streamDiv, text);
     // Dead-send watchdog: every transport timeout in the stack is far shorter
     // than this (60s connect, 15s first byte), so a bubble with no text and no
@@ -6963,17 +6975,6 @@ function handleFileBlocks(div, text) {
         } catch (_) {}
       }, 120000);
     } catch (_) {}
-    scrollToBottom();
-
-    // Auto model routing: pick persona per message (no manual selector)
-    try { applyPersonaForText(text); } catch (_) {}
-    try { updatePersonaUI(); } catch (_) {}
-
-    // Textbook RAG is study-only: Coder (coding agent) skips it entirely.
-    // Saves a DB round trip and keeps the coding prompt lean (faster TTFT).
-    // Textbook search + memory reload run in parallel, not sequentially.
-    const isCodingAgent = getActivePersona().codingOnly;
-    const isGreetingMsg = !hasImages && !pendingQuote && isInstantGreeting(text);
     // Pure writing tasks are composed from knowledge — retrieval only burns tokens.
     const isGenerationTask = /\b(write|writes|writing|compose|draft|generate|create|make|prepare)\b[^.?!]{0,50}\b(essay|story|stories|poem|poems|poetry|speech|speeches|letter|letters|paragraph|paragraphs|precis|dialogue|dialogues|novel|autobiography)\b/i.test(text);
     var lightRag = !isCodingAgent && !isGreetingMsg && !isGenerationTask &&
