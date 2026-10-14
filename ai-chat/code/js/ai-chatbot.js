@@ -1815,6 +1815,31 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     if (searchQuery.length < 3) return [];
 
+    // Try semantic search first (embedding-based), fall back to full-text
+    async function runSemanticSearch(q) {
+      try {
+        const searchParams = {
+          p_query: q,
+          p_book_id: null,
+          p_limit: TEXTBOOK_MAX_PAGES,
+          p_similarity_threshold: 0.65,
+        };
+        // The gateway will fill in the embedding
+        let result = await db.rpc('search_textbook_pages_semantic', { ...searchParams, p_query: q });
+        if (!result.error && result.data && result.data.length > 0) {
+          console.log('[AI] Semantic search found ' + result.data.length + ' pages');
+          return prioritizeSubjectPages(result.data, subj);
+        }
+      } catch (e) {
+        console.warn('[AI] Semantic search failed, falling back:', e.message);
+      }
+      return [];
+    }
+
+    // Try semantic search first (better for conceptual questions)
+    var semanticPages = await runSemanticSearch(searchQuery);
+    if (semanticPages.length) return semanticPages;
+
     async function runSearch(q) {
       const searchParams = {
         p_query: q,
