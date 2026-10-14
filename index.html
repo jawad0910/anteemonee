@@ -28,7 +28,7 @@
   <link rel="icon" href="assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=35">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
@@ -309,24 +309,278 @@
           </div>
         </div>
         <div class="landing-hero-visual">
-          <div class="call-mock">
-            <div class="call-mock-head">
-              <img src="assets/anteemonee.png" alt="Anteemonee">
-              <div><b>What are you studying today?</b><span>Pick a subject — tutor opens ready</span></div>
+          <div class="bri-card" id="bri-card" aria-label="Interactive practice">
+            <div class="bri-subjs" id="bri-subjs" role="tablist" aria-label="Subjects">
+              <button data-i="0" class="on" role="tab">⚛ Phy</button>
+              <button data-i="1" role="tab">🧪 Chem</button>
+              <button data-i="2" role="tab">🧬 Bio</button>
+              <button data-i="3" role="tab">💻 CS</button>
+              <button data-i="4" role="tab">📐 Math</button>
             </div>
-            <div class="subjgrid">
-              <a class="subj-chip" href="ai-chat/?subject=Physics"><span class="subj-dot" style="background:#2E7D32"></span>Physics</a>
-              <a class="subj-chip" href="ai-chat/?subject=Chemistry"><span class="subj-dot" style="background:#C49557"></span>Chemistry</a>
-              <a class="subj-chip" href="ai-chat/?subject=Biology"><span class="subj-dot" style="background:#8E44AD"></span>Biology</a>
-              <a class="subj-chip" href="ai-chat/?subject=Mathematics"><span class="subj-dot" style="background:#8E44AD"></span>Mathematics</a>
-              <a class="subj-chip" href="ai-chat/?subject=Computer%20Science"><span class="subj-dot" style="background:#2980B9"></span>Computer Science</a>
-              <a class="subj-chip" href="ai-chat/?subject=English"><span class="subj-dot" style="background:#F39C12"></span>English</a>
+
+            <!-- SLIDE 0: Physics — F = ma, BISE numerical -->
+            <div class="bri-slide is-active" data-slide="0">
+              <p class="bri-q">A 2 kg cart is pushed with F = 10 N. Find the acceleration.</p>
+              <div class="bri-viz bri-phy">
+                <div class="bri-track">
+                  <div class="bri-cart" id="bri-cart">🛒</div>
+                  <div class="bri-force-arrow" id="bri-force-arrow"><span>F</span></div>
+                </div>
+                <div class="bri-phy-numbers"><span>F = <b id="bri-f-val">10</b> N</span><span>m = 2 kg</span><span>a = <b id="bri-a-val">5.0</b> m/s²</span></div>
+              </div>
+              <div class="bri-slider-row">
+                <input type="range" id="bri-phy-slider" min="0" max="20" value="10" step="1" aria-label="Force in newtons">
+                <span class="bri-val"><span id="bri-phy-val">10</span> N</span>
+              </div>
+              <p class="bri-status" id="bri-phy-feedback">a = 5.0 m/s²</p>
             </div>
-            <div class="mock-voice"><span class="pulse-dot"></span> Answers cite your exact book + page</div>
+
+            <!-- SLIDE 1: Chemistry — stoichiometry -->
+            <div class="bri-slide" data-slide="1" hidden>
+              <p class="bri-q">Balance the equation: <b><span id="bri-h2-coef">2</span>H₂ + O₂ → 2H₂O</b></p>
+              <div class="bri-viz bri-chem">
+                <div class="bri-mols" id="bri-mols"></div>
+              </div>
+              <div class="bri-slider-row">
+                <input type="range" id="bri-chem-slider" min="1" max="4" value="2" step="1" aria-label="Coefficient of H2">
+                <span class="bri-val"><span id="bri-chem-val">2</span>H₂</span>
+              </div>
+              <p class="bri-status" id="bri-chem-feedback">Balanced · 2H₂</p>
+            </div>
+
+            <!-- SLIDE 2: Biology — Punnett square -->
+            <div class="bri-slide" data-slide="2" hidden>
+              <p class="bri-q">In a <b>Tt × tt</b> cross, what percentage of offspring are tall?</p>
+              <div class="bri-viz bri-bio">
+                <div class="bri-punnett" id="bri-punnett">
+                  <span></span><span>T</span><span>t</span>
+                  <span>t</span><span class="tall">Tt</span><span class="short">tt</span>
+                  <span>t</span><span class="tall">Tt</span><span class="short">tt</span>
+                </div>
+              </div>
+              <div class="bri-slider-row">
+                <input type="range" id="bri-bio-slider" min="0" max="100" value="50" step="5" aria-label="Percent tall">
+                <span class="bri-val"><span id="bri-bio-val">50</span>%</span>
+              </div>
+              <p class="bri-status" id="bri-bio-feedback">50% tall</p>
+            </div>
+
+            <!-- SLIDE 3: CS — binary -->
+            <div class="bri-slide" data-slide="3" hidden>
+              <p class="bri-q">What is <b>1011₂</b> in decimal?</p>
+              <div class="bri-viz bri-cs">
+                <div class="bri-bits" id="bri-bits"></div>
+              </div>
+              <div class="bri-slider-row">
+                <input type="range" id="bri-cs-slider" min="0" max="15" value="11" step="1" aria-label="Decimal value">
+                <span class="bri-val"><span id="bri-cs-val">11</span></span>
+              </div>
+              <p class="bri-status" id="bri-cs-feedback">1011₂ = 11</p>
+            </div>
+
+            <!-- SLIDE 4: Maths — geometry MCQ favourite -->
+            <div class="bri-slide" data-slide="4" hidden>
+              <p class="bri-q">Exterior angles of a polygon always add to 360°. Find the missing angle.</p>
+              <div class="bri-viz bri-geo">
+                <svg viewBox="0 0 300 220" width="100%" height="160" aria-hidden="true">
+                  <polygon class="bri-poly" points="150,55 215,100 190,175 110,175 85,100" stroke-width="2.5" stroke-linejoin="round"/>
+                  <g class="bri-ext" stroke-width="2.5">
+                    <line x1="150" y1="55" x2="172" y2="12"/>
+                    <line x1="215" y1="100" x2="268" y2="100"/>
+                    <line x1="190" y1="175" x2="228" y2="212"/>
+                    <line x1="110" y1="175" x2="72" y2="212"/>
+                    <line x1="85" y1="100" x2="47" y2="132"/>
+                  </g>
+                  <path d="M150,55 L172,12 A34,34 0 0 1 195,55 Z" fill="#FED7AA"/>
+                  <path d="M215,100 L268,100 A30,30 0 0 1 250,128 Z" fill="#FEF08A"/>
+                  <path d="M190,175 L228,212 A38,38 0 0 1 182,205 Z" fill="#DDD6FE"/>
+                  <path d="M110,175 L72,212 A38,38 0 0 0 118,205 Z" fill="#F9A8D4"/>
+                  <path d="M85,100 L47,132 A32,32 0 0 1 78,132 Z" fill="#FECACA"/>
+                  <text class="bri-svgt" x="198" y="34" font-size="16" font-weight="700">70°</text>
+                  <g>
+                    <rect x="248" y="96" width="34" height="26" rx="7" class="bri-svgbox"/>
+                    <text id="bri-unknown-label" x="265" y="114" font-size="15" font-weight="800" text-anchor="middle" class="bri-svgt">50°</text>
+                  </g>
+                  <text class="bri-svgt" x="238" y="192" font-size="16" font-weight="700">100°</text>
+                  <text class="bri-svgt" x="38" y="192" font-size="16" font-weight="700">80°</text>
+                  <text class="bri-svgt" x="18" y="112" font-size="16" font-weight="700">60°</text>
+                </svg>
+                <div class="bri-cursor" id="bri-cursor" aria-hidden="true" hidden>
+                  <svg width="40" height="40" viewBox="0 0 24 24"><path d="M5 3l14 7-6.5 1.5L9 18z"/></svg>
+                </div>
+              </div>
+              <div class="bri-slider-row">
+                <input type="range" id="bri-math-slider" min="0" max="180" value="50" step="1" aria-label="Guess the missing angle">
+                <span class="bri-val"><span id="bri-math-val">50</span>°</span>
+              </div>
+              <p class="bri-status" id="bri-math-feedback">Missing angle = 50°</p>
+            </div>
+
+            <a class="bri-foot" id="bri-foot" href="ai-chat/?subject=Physics"><span id="bri-foot-text">Ask AI Tutor →</span></a>
           </div>
         </div>
       </div>
     </section>
+    <script>
+    (function () {
+      var card = document.getElementById('bri-card');
+      if (!card) return;
+      var slides = Array.prototype.slice.call(card.querySelectorAll('.bri-slide'));
+      var footEl = document.getElementById('bri-foot-text');
+      var footLink = document.getElementById('bri-foot');
+      var subjsWrap = document.getElementById('bri-subjs');
+      var meta = [
+        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Physics' },
+        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Chemistry' },
+        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Biology' },
+        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Computer%20Science' },
+        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Mathematics' }
+      ];
+      var cur = 0, timer = null, userHold = false;
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function syncSubjs() {
+        if (!subjsWrap) return;
+        Array.prototype.forEach.call(subjsWrap.children, function (b) {
+          b.classList.toggle('on', parseInt(b.getAttribute('data-i'), 10) === cur);
+        });
+      }
+      if (subjsWrap) {
+        Array.prototype.forEach.call(subjsWrap.children, function (b) {
+          b.addEventListener('click', function () { show(parseInt(b.getAttribute('data-i'), 10), true); });
+        });
+      }
+      function show(i, manual) {
+        cur = ((i % slides.length) + slides.length) % slides.length;
+        slides.forEach(function (sl, k) { sl.hidden = (k !== cur); sl.classList.toggle('is-active', k === cur); });
+        footEl.textContent = meta[cur].f;
+        if (footLink) footLink.href = meta[cur].link;
+        syncSubjs();
+        if (manual) { userHold = true; restart(); }
+      }
+      function restart() {
+        if (timer) clearInterval(timer);
+        if (reduceMotion) return;
+        timer = setInterval(function () { if (!document.hidden && !userHold) show(cur + 1); }, 9000);
+        if (userHold) setTimeout(function () { userHold = false; }, 16000);
+      }
+
+      // — Physics: F = ma, m = 2kg, target a = 5 —
+      var pSlider = document.getElementById('bri-phy-slider');
+      var pVal = document.getElementById('bri-phy-val');
+      var pF = document.getElementById('bri-f-val');
+      var pA = document.getElementById('bri-a-val');
+      var pFb = document.getElementById('bri-phy-feedback');
+      var pArrow = document.getElementById('bri-force-arrow');
+      var pCart = document.getElementById('bri-cart');
+      function phyCheck(f) {
+        f = parseFloat(f); var a = f / 2;
+        pVal.textContent = f; pF.textContent = f; pA.textContent = a.toFixed(1);
+        pArrow.style.width = (12 + f * 9) + 'px';
+        pCart.style.left = (8 + f * 6) + 'px';
+        var ok = (f === 10);
+        pFb.classList.toggle('good', ok); pFb.classList.toggle('miss', !ok);
+        pFb.textContent = 'a = ' + a.toFixed(1) + ' m/s²';
+      }
+      pSlider.addEventListener('input', function () { phyCheck(pSlider.value); userHold = true; });
+      phyCheck(10);
+
+      // — Chemistry: coef of H2, 2H2 + O2 -> 2H2O —
+      var cSlider = document.getElementById('bri-chem-slider');
+      var cVal = document.getElementById('bri-chem-val');
+      var cFb = document.getElementById('bri-chem-feedback');
+      var cMols = document.getElementById('bri-mols');
+      var cCoef = document.getElementById('bri-h2-coef');
+      function renderMols(n) {
+        var h = '';
+        for (var k = 0; k < n; k++) h += '<span class="bri-mol"><span class="bri-atom h">H</span><span class="bri-atom h">H</span> H₂</span>';
+        h += '<span class="bri-mol"><span class="bri-atom o">O</span><span class="bri-atom o">O</span> O₂</span>';
+        h += '<span style="font-weight:800">→</span><span class="bri-mol"><span class="bri-atom h">H</span><span class="bri-atom h">H</span><span class="bri-atom o">O</span> H₂O</span>';
+        cMols.innerHTML = h;
+      }
+      function chemCheck(n) {
+        n = parseInt(n, 10);
+        cVal.textContent = n; cCoef.textContent = n;
+        renderMols(n);
+        var ok = (n === 2);
+        cFb.classList.toggle('good', ok); cFb.classList.toggle('miss', !ok);
+        cFb.textContent = (n === 2) ? 'Balanced · 2H₂' : n + 'H₂ · unbalanced';
+      }
+      cSlider.addEventListener('input', function () { chemCheck(cSlider.value); userHold = true; });
+      chemCheck(2);
+
+      // — Biology: Tt x tt = 50% tall —
+      var bSlider = document.getElementById('bri-bio-slider');
+      var bVal = document.getElementById('bri-bio-val');
+      var bFb = document.getElementById('bri-bio-feedback');
+      function bioCheck(v) {
+        v = parseInt(v, 10);
+        bVal.textContent = v;
+        var ok = (v === 50);
+        bFb.classList.toggle('good', ok); bFb.classList.toggle('miss', !ok);
+        bFb.textContent = v + '% tall';
+      }
+      bSlider.addEventListener('input', function () { bioCheck(bSlider.value); userHold = true; });
+      bioCheck(50);
+
+      // — CS: 1011_2 = 11 —
+      var csSlider = document.getElementById('bri-cs-slider');
+      var csVal = document.getElementById('bri-cs-val');
+      var csFb = document.getElementById('bri-cs-feedback');
+      var csBits = document.getElementById('bri-bits');
+      function renderBits(v) {
+        var vals = [8, 4, 2, 1];
+        var html = '';
+        for (var i = 0; i < 4; i++) {
+          var on = (v >> (3 - i)) & 1;
+          html += '<button class="bri-bit' + (on ? ' on' : '') + '" data-b="' + (3 - i) + '">' + on + '<small>' + vals[i] + '</small></button>';
+        }
+        csBits.innerHTML = html;
+        Array.prototype.forEach.call(csBits.children, function (btn) {
+          btn.addEventListener('click', function () {
+            var b = parseInt(btn.getAttribute('data-b'), 10);
+            var nv = v ^ (1 << b);
+            csSlider.value = nv; csCheck(nv); userHold = true;
+          });
+        });
+      }
+      function csCheck(v) {
+        v = parseInt(v, 10);
+        csVal.textContent = v;
+        renderBits(v);
+        var ok = (v === 11);
+        csFb.classList.toggle('good', ok); csFb.classList.toggle('miss', !ok);
+        csFb.textContent = '1011₂ = ' + v;
+      }
+      csSlider.addEventListener('input', function () { csCheck(csSlider.value); userHold = true; });
+      csCheck(11);
+
+      // — Maths: exterior angles sum to 360 —
+      var mSlider = document.getElementById('bri-math-slider');
+      var mVal = document.getElementById('bri-math-val');
+      var mFb = document.getElementById('bri-math-feedback');
+      var mLabel = document.getElementById('bri-unknown-label');
+      function mathCheck(v) {
+        mVal.textContent = v; mLabel.textContent = v + '°';
+        var ok = (parseInt(v, 10) === 50);
+        mFb.classList.toggle('good', ok); mFb.classList.toggle('miss', !ok);
+        mFb.textContent = 'Missing angle = ' + v + '°';
+      }
+      mSlider.addEventListener('input', function () { mathCheck(mSlider.value); userHold = true; });
+      mathCheck(50);
+
+      // swipe support
+      var sx = null;
+      card.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+      card.addEventListener('touchend', function (e) {
+        if (sx === null) return;
+        var dx = e.changedTouches[0].clientX - sx;
+        if (Math.abs(dx) > 40) show(cur + (dx < 0 ? 1 : -1), true);
+        sx = null;
+      }, { passive: true });
+
+      restart();
+    })();
+    </script>
 
     <!-- SEE IT IN ACTION -->
     <section class="section" id="demo" style="padding-top:40px">

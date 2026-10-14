@@ -12,8 +12,17 @@
   --alt-hairline-soft: rgba(255,255,255,0.09);
   --alt-sh-1: none;
   --alt-sh-2: none;
-  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
-  --font-serif: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  /* Same type system as AI chat — no Fraunces on this page */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
+             'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+                  'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
+  --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+                  'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo,
+               Consolas, monospace;
+  --font-serif: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+                'SF Pro Display', 'Inter', system-ui, sans-serif;
 }
 [data-theme="light"] {
   --alt-hairline: rgba(0,0,0,0.16);
@@ -469,4 +478,84 @@ a.rstep:hover { transform: translateX(5px); box-shadow: 0 14px 34px -16px rgba(0
   .roadmap .rstep:nth-child(4) { margin-left: 9%; }
   .roadmap .rstep:nth-child(5) { margin-left: 12%; }
   .roadmap .rstep:nth-child(6) { margin-left: 15%; }
+}
+/* ── Anteemonee Lab — simple, theme blue ── */
+.bri-card {
+  position: relative;
+  background: var(--bg-card);
+  color: var(--text);
+  border-radius: var(--radius-lg);
+  padding: 16px 16px 12px;
+  max-width: 380px;
+  margin-left: auto;
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-card);
+}
+.bri-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.bri-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: var(--text); }
+.bri-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.bri-book { font-size: 11px; font-weight: 700; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border-card); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.bri-subjs { display: flex; gap: 6px; margin-bottom: 12px; }
+.bri-subjs button { flex: 1; min-width: 0; font-family: var(--font-ui); font-size: 12px; font-weight: 700; padding: 7px 2px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border-card); color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+.bri-subjs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.bri-slide[hidden] { display: none; }
+.bri-q { font-family: var(--font-reading, var(--font-ui)); font-size: 13.5px; font-weight: 600; line-height: 1.5; letter-spacing: -0.006em; color: var(--text); margin: 0 2px 10px; text-wrap: pretty; }
+.bri-q b { font-weight: 750; }
+.bri-viz { background: var(--surface); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 12px; position: relative; }
+.bri-geo { padding: 2px 2px 0; }
+.bri-geo svg { display: block; }
+.bri-poly { fill: var(--bg-card); stroke: var(--text); }
+.bri-ext { stroke: var(--text); }
+.bri-svgt { fill: var(--text); }
+.bri-svgbox { fill: var(--bg-card); stroke: var(--border); }
+.bri-cursor { display: none; }
+.bri-slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 2px 8px; }
+.bri-slider-row input[type="range"] { flex: 1; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 999px; background: var(--border); outline: none; cursor: ew-resize; }
+.bri-slider-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: grab; }
+.bri-slider-row input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; cursor: grab; }
+.bri-val { font-family: var(--font-reading, var(--font-ui)); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); background: var(--surface); border: 1px solid var(--border-card); padding: 5px 10px; border-radius: 9px; min-width: 58px; text-align: center; }
+.bri-status { font-family: var(--font-reading, var(--font-ui)); font-size: 15px; font-weight: 700; letter-spacing: -0.006em; font-variant-numeric: tabular-nums; text-align: center; margin: 0 2px; padding: 11px 12px; border-radius: 12px; border: 1px solid transparent; }
+.bri-status.good { color: var(--accent-ink); background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 32%, transparent); }
+[data-theme="dark"] .bri-status.good { color: #bfdbfe; }
+.bri-status.miss { color: var(--text); background: var(--surface); border-color: var(--border-card); }
+.bri-track { position: relative; height: 52px; background: repeating-linear-gradient(90deg, var(--border) 0 12px, transparent 12px 22px); background-position: 0 42px; background-size: 100% 3px; background-repeat: no-repeat; }
+.bri-cart { position: absolute; left: 6px; bottom: 8px; font-size: 26px; transition: left .2s; }
+.bri-force-arrow { position: absolute; left: 44px; bottom: 24px; height: 7px; background: var(--accent); border-radius: 99px; min-width: 10px; transition: width .15s; }
+.bri-force-arrow::after { content: ''; position: absolute; right: -7px; top: -4px; border-left: 8px solid var(--accent); border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.bri-force-arrow span { position: absolute; top: -17px; left: 0; font-size: 11px; font-weight: 800; color: var(--text); }
+.bri-phy-numbers { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+.bri-phy-numbers b { color: var(--text); }
+.bri-mols { display: flex; gap: 6px; flex-wrap: wrap; min-height: 40px; align-items: center; justify-content: center; }
+.bri-mol { display: inline-flex; align-items: center; gap: 3px; background: var(--bg-elevated); border: 1px solid var(--border-card); border-radius: 999px; padding: 5px 10px; font-size: 13px; font-weight: 800; color: var(--text); }
+.bri-atom { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #fff; }
+.bri-atom.h { background: var(--accent); } .bri-atom.o { background: #f59e0b; }
+.bri-punnett { display: grid; grid-template-columns: 30px 1fr 1fr; gap: 5px; max-width: 220px; margin: 0 auto; text-align: center; font-weight: 800; font-size: 13px; color: var(--text); }
+.bri-punnett span { padding: 8px 0; border-radius: 9px; background: var(--bg-elevated); border: 1px solid var(--border-card); }
+.bri-punnett span:first-child { background: transparent; border: none; }
+.bri-punnett .tall { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.bri-bits { display: flex; gap: 8px; justify-content: center; }
+.bri-bit { width: 52px; height: 54px; border-radius: 13px; background: var(--bg-elevated); border: 1px solid var(--border-card); color: var(--text-secondary); font-size: 20px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.bri-bit small { font-size: 10px; font-weight: 700; opacity: .6; }
+.bri-bit.on { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.bri-foot { display: flex; align-items: center; justify-content: center; font-family: var(--font-ui); font-size: 13.5px; font-weight: 700; letter-spacing: .002em; color: #fff; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 11px 14px; margin-top: 10px; text-decoration: none; }
+.bri-foot:hover { filter: brightness(1.08); }
+@media (max-width: 1024px) { .bri-card { margin: 0 auto; } }
+
+/* ── Homepage type: same as AI chat ── */
+body { font-family: var(--font-reading); }
+.hero h1,
+.section-title,
+.logo-text,
+.cta-band h2,
+.step .n,
+.rstep-num,
+.serif {
+  font-family: var(--font-display);
+}
+.hero-desc,
+.section-desc,
+.tool p,
+.step p,
+.faq-a {
+  font-family: var(--font-reading);
 }
