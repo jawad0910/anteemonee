@@ -2306,3 +2306,39 @@ const Access = {
     return locked;
   },
 };
+
+/* =========================
+   SITE-WIDE AI TUTOR WIDGET
+   Floating button + popup with the full AI tutor. Loads on every
+   page that includes app.js EXCEPT the AI chat and messenger
+   apps (they already are the chat). Assets: css/ai-tutor-widget.css
+   + js/ai-tutor-widget.js (cache-bust with ?v= when editing them).
+   ========================= */
+(function bootAiTutorWidget() {
+  try {
+    var p = String(location.pathname || '') + location.search + location.hash;
+    if (/ai-chat/i.test(p) || /mx-9f2c4e7a/i.test(p)) return;
+    if (window.__atwBootQueued) return;
+    window.__atwBootQueued = true;
+    var base = (function () {
+      try {
+        if (location.protocol !== 'file:') return location.origin;
+        var s = document.querySelector('script[src*="js/app.js"]');
+        if (s && s.src) {
+          var u = new URL(s.src);
+          var path = u.pathname;
+          return u.origin + path.substring(0, path.lastIndexOf('/js/app.js'));
+        }
+      } catch (_) {}
+      return '';
+    })();
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = base + '/css/ai-tutor-widget.css?v=1';
+    document.head.appendChild(css);
+    var s = document.createElement('script');
+    s.src = base + '/js/ai-tutor-widget.js?v=1';
+    s.defer = true;
+    document.head.appendChild(s);
+  } catch (_) {}
+})();

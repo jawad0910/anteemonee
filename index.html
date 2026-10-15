@@ -297,7 +297,7 @@
           <p class="hero-desc">Notes, past papers, AI tutor, flashcards & test builder. Everything you need in one place.</p>
           <div class="hero-actions">
             <a href="pages/signup.html" class="btn-primary" id="hero-primary-cta">Start free →</a>
-            <a href="ai-chat/" class="btn-secondary">Open AI Assistant</a>
+            <a href="past-papers/" class="btn-secondary" id="hero-secondary-cta">Explore past papers</a>
           </div>
           <div class="hero-chips">
             <div class="hero-chip">📖<span>Notes</span></div>
@@ -1071,13 +1071,13 @@
               }
             }
 
-            // Single hero CTA: signed in (free OR premium) -> Dashboard.
+            // Single hero CTA: signed in -> AI Tutor (no dashboard page).
             // Runs instantly, no loader — just swaps text + href in place.
             try {
               var heroCta = document.getElementById('hero-primary-cta');
               if (heroCta) {
-                if (heroCta.textContent !== 'Dashboard →') heroCta.textContent = 'Dashboard →';
-                if (heroCta.getAttribute('href') !== 'dashboard/') heroCta.setAttribute('href', 'dashboard/');
+                if (heroCta.textContent !== 'Open AI Tutor →') heroCta.textContent = 'Open AI Tutor →';
+                if (heroCta.getAttribute('href') !== 'ai-chat/') heroCta.setAttribute('href', 'ai-chat/');
               }
             } catch (_) {}
             // Show last AI chat in hero preview (keep fake data if none)
