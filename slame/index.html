@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slame - Anteemonee</title>
+  <meta name="description" content="Slame connects your tools to the Anteemonee AI Tutor. Connect Google Drive and your tutor can create and edit study files for you (it can never delete them).">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://anteemonee.com/slame/">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=36">
+  <style>
+    /* Same type system as the homepage + checkout. */
+    :root {
+      --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
+                 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+      --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+                      'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
+      --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+                      'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    }
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { background: var(--bg) !important; font-family: var(--font-reading); overflow-x: hidden; }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#000;--bg-card-hover:#000;--surface:#000;--surface-recessed:#000;--footer-bg:#000;--liquid-border-soft:rgba(255,255,255,.075);--liquid-border:rgba(255,255,255,.14);--liquid-bg-soft:rgba(255,255,255,.05)}
+    .slame-wrap { max-width: 1120px; margin: 0 auto; padding: 104px 24px 80px; }
+    .slame-title { font-family: var(--font-display); font-size: clamp(1.9rem, 3.2vw, 2.5rem); font-weight: 800; letter-spacing: -.03em; margin: 4px 4px 18px; }
+    .slame-hr { height: 1px; background: var(--liquid-border-soft); margin: 0 4px 26px; }
+    .slame-banner { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; padding: 12px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 600; }
+    .slame-banner[hidden] { display: none; }
+    .slame-banner svg { flex-shrink: 0; }
+    .slame-banner.ok { background: rgba(59,130,246,.12); color: var(--accent-hi); border: 1px solid rgba(59,130,246,.25); }
+    .slame-banner.error { background: rgba(248,113,113,.10); color: #F87171; border: 1px solid rgba(248,113,113,.3); }
+    .conn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .conn-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 24px 22px; border-radius: 20px; background: var(--bg-card-hover); border: 1px solid var(--liquid-border-soft); transition: border-color .15s, transform .15s; }
+    .conn-card:hover { border-color: var(--liquid-border); transform: translateY(-2px); }
+    .conn-icon { flex: none; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-hi); margin-bottom: 16px; }
+    .conn-icon svg { width: 24px; height: 24px; }
+    .conn-name { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); }
+    .conn-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-top: 4px; }
+    .conn-email { font-size: 12.5px; color: var(--text-secondary); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .conn-email[hidden] { display: none; }
+    .conn-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-hi); flex-shrink: 0; }
+    .conn-action { margin-top: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .conn-btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; font-family: inherit; cursor: pointer; transition: all .15s; white-space: nowrap; border: 1px solid transparent; }
+    .conn-btn[disabled] { opacity: .55; cursor: default; }
+    .conn-btn-primary { background: var(--accent); color: var(--on-accent); border: none; }
+    .conn-btn-primary:hover:not([disabled]) { background: var(--accent-hover); transform: translateY(-1px); }
+    .conn-btn-ghost { background: var(--liquid-bg-soft); border-color: var(--liquid-border); color: var(--text); }
+    .conn-btn-ghost:hover { border-color: var(--accent); }
+    .conn-pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; color: var(--accent-hi); font-size: 11px; font-weight: 800; background: var(--accent-soft); border: 1px solid rgba(59,130,246,.3); }
+    .conn-loading { font-size: 12.5px; color: var(--text-secondary); }
+    .conn-slot { display: flex; flex-direction: column; align-items: flex-start; padding: 24px 22px; border-radius: 20px; border: 1px solid var(--liquid-border-soft); background: transparent; }
+    .conn-slot .conn-icon { background: rgba(255,255,255,.05); color: var(--text-secondary); }
+    .conn-slot .conn-name { color: var(--text-secondary); }
+    .conn-slot .conn-desc { font-size: 12.5px; }
+    @media (max-width: 900px) { .conn-grid { grid-template-columns: repeat(2, 1fr); } .slame-wrap { padding-top: 88px; } }
+    @media (max-width: 560px) {
+      .slame-wrap { padding: 88px 16px 60px; }
+      .conn-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="../css/header.css?v=8">
+  <script src="../js/header-notifications.js?v=3" defer></script>
+</head>
+<body>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <div class="nav-drop">
+          <a href="../index.html#features">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ebooks/">eBooks</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../past-papers/">Past Papers</a>
+          </div>
+        </div>
+        <div class="nav-drop">
+          <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../ai-examiner/">AI Examiner</a>
+          </div>
+        </div>
+        <a href="../ai-test-builder/">AI Test Builder</a>
+        <a href="../century-club/">Century Club</a>
+        <a href="../premium/">Premium</a>
+        <a href="../slame/" class="is-current" aria-current="page">Slame</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
+    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
+    <a href="../premium/" class="mobile-nav-link">Premium</a>
+    <a href="../slame/" class="mobile-nav-link is-current">Slame</a>
+    <div class="mobile-cta">
+      <a href="../pages/login.html" class="btn-login">Log in</a>
+      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
+  </div>
+
+  <main class="slame-wrap">
+    <h1 class="slame-title">Slame</h1>
+    <div class="slame-hr"></div>
+
+    <div id="drive-banner" class="slame-banner" hidden></div>
+
+    <div class="conn-grid">
+      <div class="conn-card" id="drive-card">
+        <div class="conn-icon" aria-hidden="true">
+          <svg viewBox="0 0 87.3 78" fill="currentColor">
+            <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" opacity=".95"/>
+            <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" opacity=".55"/>
+            <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57.3c.8-1.4 1.2-2.95 1.2-4.5H59.85l5.85 11.75z" opacity=".35"/>
+            <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.4-4.5 1.2z" opacity=".75"/>
+            <path d="M59.85 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" opacity=".8"/>
+            <path d="M73.4 26.5L60.75 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.2 28h27.45c0-1.55-.4-3.1-1.2-4.5z" opacity=".45"/>
+          </svg>
+        </div>
+        <div class="conn-name">Google Drive</div>
+        <div class="conn-desc">Your AI Tutor creates, edits and customizes study files in your Drive. It can never delete anything.</div>
+        <div class="conn-email" id="drive-email" hidden><span class="conn-status-dot"></span><span id="drive-email-text"></span></div>
+        <div class="conn-action" id="drive-action">
+          <span class="conn-loading">Checking…</span>
+        </div>
+      </div>
+      <div class="conn-slot">
+        <div class="conn-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="conn-name">More connections</div>
+        <div class="conn-desc">New tools land in Slame over time.</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="brand-stack"><span class="logo-text">Anteemonee</span></span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
+            <a href="../pages/download.html">Download App</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../slame/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Slame</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="/privacy/">Privacy Policy</a>
+            <a href="/terms/">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=37"></script>
+<script src="../js/login-modal.js?v=5"></script>
+<script src="../js/forgot-modal.js?v=2"></script>
+<script src="../js/signup-modal.js?v=3"></script>
+  <script>
+    (function () {
+      // Mobile menu handled solely by setupMobileMenu() in app.js.
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">Account</a>' +
+                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">Settings</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Logout</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        var hideTimer = null;
+        function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      window.toggleLandingProfileDropdown = function () {
+        var d = document.getElementById('landing-profile-dropdown-menu');
+        if (d) d.classList.toggle('open');
+      };
+      window.closeLandingProfileDropdown = function () {
+        var d = document.getElementById('landing-profile-dropdown-menu');
+        if (d) d.classList.remove('open');
+      };
+      window.handleLandingLogout = function () {
+        try {
+          if (typeof handleLogout === 'function') handleLogout();
+          else window.location.href = '../index.html';
+        } catch (_) { window.location.href = '../index.html'; }
+      };
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+    })();
+  </script>
+  <script>
+    // Slame connections, Google Drive. The browser only talks to the two edge functions:
+    // The browser only ever talks to the two edge functions: it asks
+    // drive-oauth-start for a Google consent URL, and afterwards asks
+    // drive-api for the connection status. Tokens live server-side.
+    (function () {
+      var FN_BASE = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : 'https://zkuytvjeqkpexcbyoyhz.supabase.co') + '/functions/v1';
+      var actionEl = document.getElementById('drive-action');
+      var emailEl = document.getElementById('drive-email');
+      var emailTextEl = document.getElementById('drive-email-text');
+      var bannerEl = document.getElementById('drive-banner');
+
+      var status = { loaded: false, loggedIn: false, connected: false, email: null, busy: false };
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      async function accessToken() {
+        try {
+          if (typeof db === 'undefined' || !db || !db.auth) return null;
+          var res = await db.auth.getSession();
+          return (res && res.data && res.data.session && res.data.session.access_token) || null;
+        } catch (_) { return null; }
+      }
+
+      async function callFn(name, payload, token) {
+        var res = await fetch(FN_BASE + '/' + name, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+            'apikey': (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '')
+          },
+          body: JSON.stringify(payload || {})
+        });
+        var data = null;
+        try { data = await res.json(); } catch (_) { data = null; }
+        if (!res.ok) {
+          var msg = (data && (data.error || data.message)) || ('Request failed (' + res.status + ')');
+          throw new Error(msg);
+        }
+        return data || {};
+      }
+
+      function render() {
+        if (!actionEl) return;
+        var html = '';
+        if (!status.loaded) {
+          html = '<span class="conn-loading">Checking…</span>';
+        } else if (!status.loggedIn) {
+          html = '<button class="conn-btn conn-btn-primary" id="drive-login-btn" type="button">Log in to connect</button>';
+        } else if (status.connected) {
+          html = '<span class="conn-pill"><span class="conn-status-dot"></span>Connected</span>' +
+                 '<button class="conn-btn conn-btn-ghost" id="drive-disconnect-btn" type="button"' + (status.busy ? ' disabled' : '') + '>Disconnect</button>';
+        } else {
+          html = '<button class="conn-btn conn-btn-primary" id="drive-connect-btn" type="button"' + (status.busy ? ' disabled' : '') + '>' +
+                 (status.busy ? 'Opening Google…' : 'Connect') + '</button>';
+        }
+        actionEl.innerHTML = html;
+
+        if (emailEl && emailTextEl) {
+          if (status.connected && status.email) {
+            emailTextEl.textContent = status.email;
+            emailEl.hidden = false;
+          } else {
+            emailTextEl.textContent = '';
+            emailEl.hidden = true;
+          }
+        }
+
+        var loginBtn = document.getElementById('drive-login-btn');
+        if (loginBtn) loginBtn.addEventListener('click', function () {
+          if (typeof window.openLoginModal === 'function') window.openLoginModal();
+        });
+        var connectBtn = document.getElementById('drive-connect-btn');
+        if (connectBtn) connectBtn.addEventListener('click', connect);
+        var disconnectBtn = document.getElementById('drive-disconnect-btn');
+        if (disconnectBtn) disconnectBtn.addEventListener('click', disconnect);
+      }
+
+      function banner(kind, text) {
+        if (!bannerEl) return;
+        var icon = kind === 'error'
+          ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+        bannerEl.innerHTML = icon + '<span>' + esc(text) + '</span>';
+        bannerEl.hidden = false;
+      }
+
+      function readUrlBanner() {
+        try {
+          var p = new URLSearchParams(location.search);
+          var v = p.get('drive');
+          if (!v) return;
+          if (v === 'connected') banner('ok', 'Google Drive connected. Your AI Tutor can now create and edit files in your Drive.');
+          else if (v === 'cancelled') banner('ok', 'Google Drive connection was cancelled.');
+          else {
+            var reason = p.get('reason') || '';
+            var msg = reason === 'exchange' || reason === 'store'
+              ? 'Could not finish connecting Google Drive. Please try again.'
+              : reason === 'not_configured'
+                ? 'Google Drive is not set up on the server yet.'
+                : 'The Google Drive connection link expired or was already used. Please try again.';
+            banner('error', msg);
+          }
+          // Clean the URL so a refresh does not re-show the banner.
+          try { history.replaceState(null, '', location.pathname); } catch (_) {}
+        } catch (_) {}
+      }
+
+      async function refresh() {
+        var token = await accessToken();
+        if (!token) {
+          status.loaded = true; status.loggedIn = false; status.connected = false; status.email = null;
+          render();
+          return;
+        }
+        try {
+          var data = await callFn('drive-api', { action: 'status' }, token);
+          status.loaded = true;
+          status.loggedIn = true;
+          status.connected = !!data.connected;
+          status.email = data.email || null;
+        } catch (_) {
+          status.loaded = true;
+          status.loggedIn = true;
+          status.connected = false;
+        }
+        render();
+      }
+
+      async function connect() {
+        var token = await accessToken();
+        if (!token) { if (typeof window.openLoginModal === 'function') window.openLoginModal(); return; }
+        status.busy = true; render();
+        try {
+          var data = await callFn('drive-oauth-start', { origin: location.origin }, token);
+          if (data && data.url) { location.href = data.url; return; }
+          if (data && data.error === 'not_configured') throw new Error('Google Drive is not set up on the server yet.');
+          throw new Error('Could not start the Google Drive connection.');
+        } catch (e) {
+          status.busy = false; render();
+          banner('error', (e && e.message) || 'Could not start the Google Drive connection.');
+        }
+      }
+
+      async function disconnect() {
+        if (!(await modConfirm('Disconnect Google Drive? Your AI Tutor will lose access to files it created. Nothing is deleted from your Drive.', 'Disconnect'))) return;
+        var token = await accessToken();
+        if (!token) return;
+        status.busy = true; render();
+        try {
+          await callFn('drive-api', { action: 'disconnect' }, token);
+          status.connected = false; status.email = null;
+          banner('ok', 'Google Drive disconnected.');
+        } catch (e) {
+          banner('error', (e && e.message) || 'Could not disconnect. Please try again.');
+        }
+        status.busy = false; render();
+      }
+
+      /* In-app confirm (native window.confirm is unreliable in newer Chrome). */
+      function modConfirm(msg, okLabel) {
+        return new Promise(function (res) {
+          var m = document.getElementById('slame-confirm');
+          if (!m) return res(false);
+          document.getElementById('slame-cf-msg').textContent = msg;
+          var yes = document.getElementById('slame-cf-yes');
+          yes.textContent = okLabel || 'Confirm';
+          m.classList.add('open');
+          var done = function (v) { m.classList.remove('open'); yes.onclick = null; res(v); };
+          yes.onclick = function () { done(true); };
+          document.getElementById('slame-cf-no').onclick = function () { done(false); };
+          m.onclick = function (e) { if (e.target === m) done(false); };
+        });
+      }
+
+      // Auth state lands asynchronously (app.js loads it after us), so render
+      // immediately, then follow the auth events and poll briefly as a net.
+      readUrlBanner();
+      render();
+      refresh();
+      try {
+        if (typeof db !== 'undefined' && db && db.auth && db.auth.onAuthStateChange) {
+          db.auth.onAuthStateChange(function () { refresh(); });
+        }
+      } catch (_) {}
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        if (status.loggedIn || tries > 30) { clearInterval(timer); return; }
+        refresh();
+      }, 800);
+      window.addEventListener('focus', function () {
+        if (window.__slameDriveBusy) return;
+        refresh();
+      });
+    })();
+  </script>
+  <div id="slame-confirm" class="cp-modal cp-modal" style="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:20px">
+    <div style="width:100%;max-width:400px;background:var(--bg-elevated);border:1px solid var(--liquid-border);border-radius:16px;padding:18px">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px">Confirm</div>
+      <div id="slame-cf-msg" style="font-size:13.5px;line-height:1.65;color:var(--text-secondary)"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button type="button" class="conn-btn conn-btn-ghost" id="slame-cf-no" style="height:38px">Cancel</button>
+        <button type="button" class="conn-btn conn-btn-primary" id="slame-cf-yes" style="height:38px">Confirm</button>
+      </div>
+    </div>
+  </div>
+  <script src="../js/header-ai-dropdown.js?v=7"></script>
+</body>
+</html>
