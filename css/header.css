@@ -112,7 +112,7 @@
 }
 .logo-text,
 .site-logo-text {
-  font-family: var(--font-display, -apple-system, 'Plus Jakarta Sans', Inter, system-ui, sans-serif);
+  font-family:var(--font-display, -apple-system, 'Plus Jakarta Sans', Inter, system-ui, 'Noto Emoji', sans-serif);
   font-size: 17.5px;
   font-weight: 800;
   letter-spacing: -0.022em;
@@ -123,7 +123,7 @@
 }
 .logo-sub,
 .site-logo-sub {
-  font-family: var(--font-ui, -apple-system, Inter, system-ui, sans-serif);
+  font-family:var(--font-ui, -apple-system, Inter, system-ui, 'Noto Emoji', sans-serif);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -384,7 +384,7 @@
   font-weight: 700;
   font-size: 13px;
   color: #fff;
-  background: #23232a;
+  background: #242424;
   border-radius: 50%;
 }
 
@@ -434,7 +434,7 @@
   font-weight: 700;
   font-size: 14px;
   color: #fff;
-  background: #23232a;
+  background: #242424;
   border-radius: 50%;
 }
 .landing-profile-dropdown .dropdown-info {
@@ -531,8 +531,8 @@
   padding: 0 4px;
   box-sizing: border-box;
   border-radius: 999px;
-  background: var(--error, #e5484d);
-  color: #fff;
+  background: var(--error, #6a6a6a);
+  color: var(--on-accent);
   font-size: 10px;
   font-weight: 700;
   line-height: 16px;

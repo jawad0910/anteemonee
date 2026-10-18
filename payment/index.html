@@ -14,156 +14,200 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Complete Payment - Anteemonee</title>
-  <meta name="description" content="Pay for your Anteemonee exam plan or lifetime access via Easypaisa or JazzCash and upload your payment proof.">
+  <title>Payment - Anteemonee Premium</title>
+  <meta name="description" content="Pay for Anteemonee Monthly or Yearly premium with Easypaisa or JazzCash.">
   <meta name="theme-color" content="#000000">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=33">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/assets/anteemonee.png">
+  <link rel="stylesheet" href="/css/style.css?v=36">
   <style>
+    /* Same type system as the homepage + AI chat. */
+    :root {
+      --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
+                 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+      --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+                      'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
+      --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+                      'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    }
     html { scroll-behavior: smooth; background: var(--bg); }
-    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
-    [data-theme="dark"] {
-      --bg: #000; --bg-elevated: #0a0a0a; --elevated: #0a0a0a; --bg-card: #0d0d0f;
-      --bg-card-hover: #141416; --surface: #111113; --surface-recessed: #08080a;
-      --footer-bg: #000;
-      --liquid-bg: rgba(255,255,255,0.04); --liquid-bg-soft: rgba(255,255,255,0.05);
-      --liquid-bg-strong: rgba(10,10,12,0.85);
-    }
-    /* ── Site header (matches all pages) ── */
-    .header { padding: 0; }
-    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
-    .header-inner::before { display: none; }
-    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
-    .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
-    .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
-    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
-    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
-    .nav-drop { position: relative; }
-    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
-    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
-    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
-    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text); }
-    .nav-menu a:hover { background: var(--surface); }
-    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
-    .icon-btn:hover { background: var(--surface); color: var(--text); }
-    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
-    @media (max-width: 1100px) { .landing-nav { display: none; } }
-    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
-    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
-    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-    @media (max-width: 900px) { .landing-nav { display: none; } }
-    .landing-profile-dropdown { position: relative; }
-    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
-    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
-    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
-    .landing-profile-dropdown .profile-dropdown.open { display: block; }
-    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
-    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
-    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
-    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
-    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
-    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
-    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
-    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
-    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
+    body { background: var(--bg) !important; font-family: var(--font-reading); }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#000;--bg-card-hover:#000;--surface:#000;--surface-recessed:#000;--footer-bg:#000;--liquid-border-soft:rgba(255,255,255,.075);--liquid-border:rgba(255,255,255,.14);--liquid-bg-soft:rgba(255,255,255,.05)}
+    .checkout-wrap { max-width: 1220px; margin: 0 auto; padding: 104px 24px 80px; }
+    .checkout-grid { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+    .checkout-right { position: sticky; top: 86px; align-self: start; }
+    /* Big column panels */
+    .ck-panel { border-radius: 24px; background: var(--surface); border: 1px solid var(--liquid-border-soft); padding: 28px; }
+    .ck-title { font-family: var(--font-display); font-size: clamp(1.9rem, 3.2vw, 2.5rem); font-weight: 800; letter-spacing: -.03em; margin: 4px 4px 18px; }
+    .ck-hr { height: 1px; background: var(--liquid-border-soft); margin: 0 4px 22px; }
+    /* Section cards inside a panel */
+    .ck-card { border-radius: 18px; background: var(--bg-card-hover); border: 1px solid var(--liquid-border-soft); padding: 20px; }
+    .ck-card + .ck-card, .ck-secure + .ck-card, .ck-card + .ck-secure { margin-top: 18px; }
+    .ck-card h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 16px; }
+    .ck-label { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text); margin: 0 0 14px; }
+    /* Plan option tiles */
+    .ck-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ck-opt { position: relative; text-align: left; border: 1.5px solid var(--liquid-border-soft); background: var(--bg-card); border-radius: 14px; padding: 16px; cursor: pointer; font-family: inherit; color: var(--text); transition: all .15s; }
+    .ck-opt:hover { border-color: var(--liquid-border); }
+    .ck-opt.sel { border-color: var(--accent); }
+    .ck-opt-check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--accent); color: var(--on-accent); }
+    .ck-opt.sel .ck-opt-check { display: inline-flex; }
+    .ck-opt b { display: block; font-family: var(--font-display); font-size: 15.5px; font-weight: 700; margin-bottom: 4px; padding-right: 24px; }
+    .ck-opt small { display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; }
+    .ck-opt-price { font-family: var(--font-mono); font-size: 15px; font-weight: 800; letter-spacing: .02em; }
+    /* Payment method rows */
+    .ck-methods { display: flex; flex-direction: column; gap: 10px; }
+    .ck-method { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1.5px solid var(--liquid-border-soft); background: var(--bg-card); border-radius: 14px; padding: 12px 14px; cursor: pointer; font-family: inherit; color: var(--text); transition: all .15s; }
+    .ck-method:hover { border-color: var(--liquid-border); }
+    .ck-method.sel { border-color: var(--accent); }
+    .ck-icn { width: 40px; height: 40px; border-radius: 11px; background: var(--accent-soft); color: var(--accent-hi); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 800; font-size: 15px; }
+    .ck-method .m-txt { flex: 1; min-width: 0; }
+    .ck-method .m-txt b { display: block; font-family: var(--font-display); font-size: 14.5px; font-weight: 700; margin-bottom: 2px; }
+    .ck-method .m-txt small { display: block; font-size: 12.5px; color: var(--text-secondary); }
+    .ck-method .m-arrow { color: var(--text-muted); flex-shrink: 0; display: inline-flex; }
+    .ck-method.sel .m-arrow { color: var(--accent-hi); }
+    /* Account transfer box */
+    .ck-acct { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border: 1px solid var(--liquid-border-soft); background: var(--surface-recessed); border-radius: 14px; padding: 14px 16px; }
+    .ck-acct .acct-info { display: flex; flex-direction: column; gap: 2px; min-width: 140px; }
+    .ck-acct .num { font-family: var(--font-mono); font-size: 18px; font-weight: 800; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--text); }
+    .ck-acct .ttl { font-size: 12px; color: var(--text-secondary); }
+    .pay-copy { border: 1px solid var(--liquid-border-soft); background: var(--liquid-bg-soft); color: var(--text); border-radius: 12px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all .15s; }
+    .pay-copy:hover { background: var(--liquid-border-soft); }
+    /* Fields + drop */
+    .pay-field { margin-bottom: 14px; }
+    .pay-field:last-child { margin-bottom: 0; }
+    .pay-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: .02em; }
+    .ck-input { width: 100%; box-sizing: border-box; background: var(--surface-recessed); border: 1px solid var(--liquid-border-soft); color: var(--text); border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; transition: border-color .15s; }
+    .ck-input::placeholder { color: var(--text-muted); }
+    .ck-input:focus { outline: none; border-color: var(--accent); }
+    .hint { font-size: 12px; color: rgba(255,255,255,.58); margin-top: 6px; line-height: 1.5; }
+    .ck-drop { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border: 1px solid var(--liquid-border-soft); background: var(--surface-recessed); border-radius: 14px; padding: 12px 14px; cursor: pointer; text-align: left; font-family: inherit; color: var(--text); transition: all .2s; }
+    .ck-drop:hover { border-color: var(--accent); }
+    .ck-drop-hint { display: flex; align-items: center; gap: 12px; width: 100%; }
+    .ck-drop .dtxt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .ck-drop .dtxt b { font-size: 14px; font-weight: 700; }
+    .ck-drop .dtxt small { font-size: 12.5px; color: var(--text-secondary); }
+    .ck-drop img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; display: block; margin: 0; border: none; }
+    .ck-drop div { font-size: 12.5px; color: var(--text-secondary); }
+    /* Secure line under the payment card */
+    .ck-secure { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accent-hi); font-size: 13.5px; }
+    .ck-secure svg { flex-shrink: 0; }
+    /* Right panel: product row + summary */
+    .ck-prod { display: flex; align-items: center; gap: 14px; padding: 2px 4px 20px; flex-wrap: wrap; }
+    .ck-prod-tile { width: 52px; height: 52px; border-radius: 14px; background: var(--accent-soft); border: 1px solid rgba(123,123,123,.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ck-prod-tile img { width: 28px; height: 28px; border-radius: 7px; }
+    .ck-prod-info { flex: 1; min-width: 120px; }
+    .ck-prod-info b { display: block; font-family: var(--font-display); font-size: 19px; font-weight: 800; margin-bottom: 2px; }
+    .ck-prod-info small { font-size: 12.5px; color: var(--text-secondary); }
+    .ck-prod-price { font-family: var(--font-mono); font-size: 22px; font-weight: 800; letter-spacing: .01em; }
+    .ck-srow { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 10px; }
+    .ck-srow span:first-child { color: var(--text-secondary); }
+    .ck-sub { display: flex; align-items: center; gap: 8px; justify-content: flex-end; font-variant-numeric: tabular-nums; }
+    .ck-strike { color: var(--text-muted); text-decoration: line-through; font-size: 13px; }
+    .ck-off { font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-hi); white-space: nowrap; }
+    .ck-total-row { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--liquid-border-soft); margin-top: 14px; padding-top: 16px; }
+    .ck-total-row b { font-family: var(--font-display); font-size: 17px; font-weight: 800; }
+    .ck-total { display: flex; align-items: baseline; gap: 5px; }
+    .ck-total small { font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: .06em; }
+    .ck-total b { font-family: var(--font-mono); font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
+    .pay-submit { width: 100%; border: none; border-radius: 12px; background: var(--accent); color: var(--on-accent); font-size: 15px; font-weight: 700; padding: 13px 16px; cursor: pointer; transition: all .15s; margin-top: 18px; }
+    .pay-submit:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .pay-submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .pay-msg { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.55; display: none; }
+    .pay-msg.show { display: block; }
+    .pay-msg.info, .pay-msg.ok { background: rgba(123,123,123,.12); color: var(--accent-hi); border: 1px solid rgba(123,123,123,.25); }
+    .pay-msg.err { background: rgba(142,142,142,.14); color: #8e8e8e; border: 1px solid rgba(142,142,142,.3); }
+    /* Switch plan suggestion */
+    .ck-switch { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border-radius: 16px; background: rgba(123,123,123,.10); border: 1px solid rgba(123,123,123,.28); padding: 14px 16px; margin-top: 18px; cursor: pointer; font-family: inherit; color: var(--text); transition: all .15s; }
+    .ck-switch:hover { background: rgba(123,123,123,.16); }
+    .ck-sw-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .ck-sw-txt b { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+    .ck-sw-txt small { font-size: 12.5px; color: var(--accent-hi); }
+    .ck-go { margin-left: auto; color: var(--accent-hi); font-weight: 800; font-size: 14px; white-space: nowrap; }
+    /* Centered ready state (like Test ready) */
+    .ck-ready { max-width: 560px; margin: 0 auto; padding: 44px 24px 40px; text-align: center; }
+    .ck-ready-icn { width: 84px; height: 84px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-hi); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+    .ck-ready h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 800; letter-spacing: -.02em; margin: 0 0 10px; }
+    .ck-ready p { margin: 0; font-size: 15.5px; color: var(--text-secondary); line-height: 1.65; }
+    .ck-ready p b { color: var(--text); font-weight: 700; }
+    .ck-ready-actions { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 26px; flex-wrap: wrap; }
+    .r-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 999px; padding: 12px 28px; font-size: 14.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; text-decoration: none; }
+    .r-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .r-ghost { display: inline-flex; align-items: center; background: none; border: none; color: var(--text); font-size: 14.5px; font-weight: 700; cursor: pointer; padding: 12px 14px; border-radius: 999px; font-family: inherit; text-decoration: none; transition: color .15s; }
+    .r-ghost:hover { color: var(--accent-hi); }
+    /* Promo code */
+    .ck-promo-apply { display: flex; gap: 8px; margin-top: 16px; }
+    .ck-promo-apply .ck-input { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: .05em; }
+    .ck-promo-apply .pay-copy { padding: 10px 18px; }
+    .ck-promo-apply .pay-copy:hover { border-color: var(--accent); }
+    .ck-input.bad { border-color: #8e8e8e; }
+    .ck-promo-row { margin-top: 14px; }
+    .ck-promo-row + .ck-promo-row { margin-top: 10px; }
+    .ck-promo-apply { display: flex; gap: 8px; width: 100%; }
+    .ck-promo-apply .ck-input { flex: 1 1 0; min-width: 0; width: auto; text-transform: uppercase; letter-spacing: .05em; }
+    .ck-promo-apply .pay-copy { padding: 10px 18px; }
+    .ck-promo-apply .pay-copy:hover { border-color: var(--accent); }
+    .ck-promo-msg { display: none; font-size: 12px; margin-top: 8px; color: var(--accent-hi); }
+    .ck-promo-msg.show { display: block; }
+    .ck-promo-msg.err { color: #8e8e8e; }
+    .ck-promo-chip { display: flex; align-items: center; gap: 10px; width: 100%; border: 1px solid rgba(123,123,123,.35); background: rgba(123,123,123,.10); border-radius: 12px; padding: 9px 10px 9px 14px; }
+    .pc-code { font-family: var(--font-mono); font-size: 14px; font-weight: 800; letter-spacing: .04em; }
+    .pc-off { margin-left: auto; font-family: var(--font-mono); font-size: 13px; font-weight: 800; color: var(--accent-hi); white-space: nowrap; }
+    .pc-x { border: none; background: rgba(255,255,255,.06); color: var(--text); width: 26px; height: 26px; border-radius: 8px; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+    /* History */
+    .pay-hist { display: flex; flex-direction: column; gap: 8px; }
+    .pay-hist-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--liquid-border-soft); background: var(--surface-recessed); border-radius: 12px; font-size: 13px; }
+    .pay-hist-row span:first-child { color: var(--text-secondary); }
+    .pay-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .pay-pill.pending { background: rgba(193,193,193,.14); color: #c1c1c1; }
+    .pay-pill.approved { background: var(--accent-soft); color: var(--accent-hi); }
+    .pay-pill.rejected { background: rgba(142,142,142,.14); color: #8e8e8e; }
+    @media (max-width: 980px) { .checkout-grid { grid-template-columns: 1fr; } .checkout-right { position: static; top: auto; } .checkout-wrap { padding-top: 88px; } }
+    @media (max-width: 640px) { .ck-panel { padding: 20px; border-radius: 20px; } .checkout-wrap { padding-left: 16px; padding-right: 16px; } }
+    @media (max-width: 480px) { .ck-opts { grid-template-columns: 1fr; } }
 
-    /* ── Payment plan ── */
-    .pp-wrap { max-width: 640px; margin: 0 auto; padding: 110px 20px 80px; }
-    .pp-head h1 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.7rem, 3.4vw, 2.4rem); margin: 0 0 6px; letter-spacing: -0.01em; }
-    .pp-head p { color: var(--text-secondary); font-size: 14px; margin: 0 0 20px; }
-    .pp-card { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-xl); padding: 22px 20px; margin-bottom: 14px; box-shadow: var(--liquid-inset), 0 10px 30px rgba(0,0,0,0.16); }
-    .pp-step { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .pp-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
-    .pp-step b { font-size: 15px; }
-    .pp-order { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--bg-card); border: 1px solid var(--liquid-border-soft); }
-    .pp-order .plan-name { font-size: 14px; font-weight: 700; }
-    .pp-order .plan-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .pp-order .amt { font-family: 'Fraunces', Georgia, serif; font-size: 26px; font-weight: 700; white-space: nowrap; }
-    .pp-plan-pick { display: flex; gap: 8px; margin-bottom: 12px; }
-    .pp-plan-pick label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px; border-radius: 14px; border: 1px solid var(--liquid-border-soft); background: var(--liquid-bg-soft); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .15s; }
-    .pp-plan-pick input { display: none; }
-    .pp-plan-pick label.on { border-color: var(--accent); background: var(--accent-soft); }
-    .pp-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .pp-method { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--liquid-border-soft); background: var(--liquid-bg-soft); cursor: pointer; transition: all .15s; }
-    .pp-method input { display: none; }
-    .pp-method.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: var(--liquid-inset); }
-    .pp-badge { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; color: #fff; flex-shrink: 0; letter-spacing: -0.02em; }
-    .pp-badge.ep { background: linear-gradient(135deg, #43B02A, #2E7D1F); }
-    .pp-badge.jz { background: linear-gradient(135deg, #F23030, #B31217); }
-    .pp-method b { font-size: 13.5px; display: block; }
-    .pp-method span { font-size: 11.5px; color: var(--text-secondary); display: block; }
-    .pp-check { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: transparent; flex-shrink: 0; transition: all .15s; }
-    .pp-method.on .pp-check { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
-    .pp-account { border-radius: var(--radius-md); background: var(--bg-card); border: 1px solid var(--liquid-border-soft); overflow: hidden; }
-    .pp-account-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; }
-    .pp-account-row + .pp-account-row { border-top: 1px solid var(--border); }
-    .pp-account-row .k { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-    .pp-account-row .v { font-size: 15px; font-weight: 700; }
-    .pp-copy { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--liquid-border-soft); background: var(--liquid-bg-soft); color: var(--text); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; flex-shrink: 0; }
-    .pp-copy:hover { border-color: var(--liquid-border); transform: translateY(-1px); }
-    .pp-note { font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.6; }
-    .pp-file { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 26px 16px; border-radius: var(--radius-md); border: 1.5px dashed var(--liquid-border); background: var(--bg-card); color: var(--text-secondary); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .15s; text-align: center; }
-    .pp-file:hover { border-color: var(--accent); color: var(--text); }
-    .pp-preview { display: none; margin-top: 12px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--liquid-border-soft); }
-    .pp-preview img { width: 100%; max-height: 320px; object-fit: contain; background: #000; display: block; }
-    .pp-error { display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; background: rgba(239,68,68,0.1); color: var(--error); margin-bottom: 12px; }
-    .pp-submit { width: 100%; padding: 15px; font-size: 15px; }
-    .pp-gate { max-width: 560px; margin: 0 auto; padding: 110px 24px 80px; text-align: center; color: var(--text-secondary); border: 1px dashed var(--border); border-radius: 20px; background: rgba(255,255,255,.03); display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .pp-gate-icon { display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-    .pp-gate b { color: var(--text); font-size: 16px; }
-    .pp-gate p { font-size: 13.5px; max-width: 420px; margin: 0; line-height: 1.6; }
-    .pp-gate-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
-    .pp-success-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--accent-soft); color: var(--text); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; margin: 0 auto 4px; }
-    @media (max-width: 560px) {
-      .pp-wrap { padding: 96px 14px 60px; }
-      .pp-card { padding: 18px 16px; }
-      .pp-methods { grid-template-columns: 1fr; }
-      .pp-order .amt { font-size: 22px; }
-    }
   </style>
+  <link rel="stylesheet" href="/css/header.css?v=8">
+  <script src="/js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
-  <header class="header" id="site-header">
+<header class="header" id="site-header">
     <div class="header-inner">
-      <a href="../index.html" class="logo-link">
-        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="logo-text">Anteemonee</span>
+      <a href="/" class="logo-link">
+        <img src="/assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
       </a>
       <nav class="landing-nav" aria-label="Primary">
-        <a href="../dashboard/">Dashboard</a>
         <div class="nav-drop">
-          <a href="#">Library <span class="caret">▾</span></a>
+          <a href="/#features">Library <span class="caret">▾</span></a>
           <div class="nav-menu">
-            <a href="../ebooks/">eBooks</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../past-papers/">Past Papers</a>
+            <a href="/ebooks/">eBooks</a>
+            <a href="/flashcards/">Flashcards</a>
+            <a href="/past-papers/">Past Papers</a>
           </div>
         </div>
-        <a href="../ai-chat/">AI Assistant</a>
-        <a href="../century-club/">Century Club</a>
+        <div class="nav-drop">
+          <a href="/ai-chat/">AI Assistant <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="/ai-chat/">AI Tutor</a>
+            <a href="/ai-examiner/">AI Examiner</a>
+          </div>
+        </div>
+        <a href="/ai-test-builder/">AI Test Builder</a>
+        <a href="/slame/">Slame</a>
+      <a href="/century-club/">Century Club</a>
+        <a href="/premium/">Premium</a>
       </nav>
       <div class="header-actions">
-        <a href="../messenger/" class="icon-btn" aria-label="Messenger" title="Messenger">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </a>
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
         <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="../pages/login.html" class="btn-login">Log in</a>
-          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+          <a href="/pages/login.html" class="btn-login">Log in</a>
+          <a href="/pages/signup.html" class="btn-signup">Sign Up</a>
         </div>
         <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
         <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
@@ -171,648 +215,861 @@
     </div>
   </header>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="../dashboard/" class="mobile-nav-link">Dashboard</a>
-    <a href="../pages/board-notes.html" class="mobile-nav-link">Board Notes</a>
     <div class="mobile-acc-dropdown">
       <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
       <div class="mobile-acc-list">
-        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
-        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
-        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+        <a href="/ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="/flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="/past-papers/" class="mobile-nav-link">Past Papers</a>
       </div>
     </div>
-    <a href="../ai-chat/" class="mobile-nav-link">AI Assistant</a>
-    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-        <a href="../messenger/" class="mobile-nav-link">Messenger</a>
+    <a href="/ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="/ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="/ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
+    <a href="/slame/" class="mobile-nav-link">Slame</a>
+    <a href="/century-club/" class="mobile-nav-link">Century Club</a>
+    <a href="/premium/" class="mobile-nav-link">Premium</a>
     <div class="mobile-cta">
-      <a href="../pages/login.html" class="btn-login">Log in</a>
-      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+      <a href="/pages/login.html" class="btn-login">Log in</a>
+      <a href="/pages/signup.html" class="btn-signup">Sign Up</a>
     </div>
   </div>
-
-  <main>
-    <div class="pp-wrap">
-      <div class="pp-head">
-        <h1>Complete your payment</h1>
-        <p>Pay with Easypaisa or JazzCash, upload the screenshot proof, and we activate your plan after review.</p>
-      </div>
-
-      <!-- NOT SIGNED IN -->
-      <div id="pp-gate" class="pp-gate" style="display:none">
-        <div class="pp-gate-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <b>Sign in to pay</b>
-        <p>You need an account so we can activate the plan for you. Log in or create a free account to continue.</p>
-        <div class="pp-gate-actions">
-          <a href="../pages/login.html" class="btn-login">Log in</a>
-          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-        </div>
-      </div>
-
-      <!-- ALREADY PAID -->
-      <div id="pp-paid" class="pp-card" style="display:none;text-align:center">
-        <b style="font-size:16px">You already have premium access ✓</b>
-        <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0">No payment needed. Enjoy everything, forever or until your exam period ends.</p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
-          <a href="../dashboard/" class="btn-secondary" style="text-decoration:none">Go to Dashboard</a>
-          <a href="../refunds/" class="btn-secondary" style="text-decoration:none">Request a refund</a>
-        </div>
-      </div>
-
-      <!-- PENDING REVIEW -->
-      <div id="pp-pending" class="pp-card" style="display:none;text-align:center">
-        <b style="font-size:16px">Payment under review ⏳</b>
-        <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0" id="pp-pending-text">We received your screenshot proof and will activate your plan shortly.</p>
-        <div id="pp-pending-receipt" style="margin-top:14px;display:none;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface)">
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px">
-            <div style="font-size:19px;font-weight:700;letter-spacing:.01em" id="pp-receipt-no">—</div>
-            <span style="font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid var(--warning);color:var(--warning)">PENDING ACTIVATION</span>
+  <main class="checkout-wrap">
+    <div class="checkout-grid">
+      <!-- LEFT: checkout flow -->
+      <div class="ck-panel">
+        <h1 class="ck-title">Checkout</h1>
+        <div class="ck-hr"></div>
+        <section class="ck-card">
+          <h2>Plan</h2>
+          <div class="ck-opts">
+            <button type="button" class="ck-opt" data-cycle="monthly">
+              <span class="ck-opt-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <b>Monthly</b>
+              <small id="sub-monthly">30 days · all subjects</small>
+              <span class="ck-opt-price" id="price-monthly">Rs 299</span>
+            </button>
+            <button type="button" class="ck-opt" data-cycle="yearly">
+              <span class="ck-opt-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <b>Yearly</b>
+              <small id="sub-yearly">365 days · all subjects</small>
+              <span class="ck-opt-price" id="price-yearly">Rs 2,499</span>
+            </button>
           </div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px" id="pp-receipt-meta"></div>
-          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-            <button class="btn-secondary" id="pp-download-pending" type="button">Download receipt</button>
-            <a href="../receipts/" class="btn-secondary" style="text-decoration:none">All my receipts</a>
+        </section>
+        <section class="ck-card">
+          <h2>Payment method</h2>
+          <div class="ck-methods">
+            <button type="button" class="ck-method" data-method="easypaisa">
+              <span class="ck-icn">E</span>
+              <span class="m-txt"><b>Easypaisa</b><small>Mobile wallet · instant transfer</small></span>
+              <span class="m-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+            </button>
+            <button type="button" class="ck-method" data-method="jazzcash">
+              <span class="ck-icn">J</span>
+              <span class="m-txt"><b>JazzCash</b><small>Mobile wallet · instant transfer</small></span>
+              <span class="m-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+            </button>
           </div>
-          <div id="pp-pending-preview" style="margin-top:12px;display:none">
-            <img id="pp-pending-img" alt="Your payment receipt" style="width:100%;max-width:300px;border-radius:10px;border:1px solid var(--border);display:block;box-shadow:0 6px 20px rgba(0,0,0,.14)">
-          </div>
-        </div>
-        <p style="margin-top:14px"><a href="../refunds/" style="font-size:13px;color:var(--text-secondary)">Need a refund? Open a request</a></p>
-      </div>
-
-      <!-- MAIN FLOW -->
-        <div id="pp-setup-warn" hidden style="max-width:820px;margin:0 auto 14px;padding:12px 16px;border-radius:12px;border:1px solid var(--warning);background:rgba(251,191,36,0.10);font-size:13px;line-height:1.5">
-    <b>Heads up:</b> payment proof uploads are not available on our side right now, so please
-    <a href="mailto:support@anteemonee.com?subject=Payment%20screenshot" style="color:inherit;font-weight:700">email us your payment screenshot</a>
-    instead and we will activate your plan manually. Sorry about that.
-  </div>
-
-<div id="pp-main" style="display:none">
-        <div class="pp-card">
-          <div class="pp-step"><span class="pp-num">0</span><b>Your plan</b></div>
-          <div class="pp-plan-pick">
-            <label id="pick-exam"><input type="radio" name="pp-plan" value="exam" checked> Exam Plan</label>
-            <label id="pick-lifetime"><input type="radio" name="pp-plan" value="lifetime"> Lifetime</label>
-          </div>
-          <div id="pp-period-row">
-            <select id="pp-period" class="form-input" style="width:100%;font-size:13.5px"></select>
-          </div>
-          <div class="pp-order" style="margin-top:12px">
-            <div><div class="plan-name" id="pp-plan-name">Exam Plan</div><div class="plan-sub" id="pp-plan-sub"></div></div>
-            <div class="amt" id="pp-amount">Rs 999</div>
-          </div>
-        </div>
-
-        <div class="pp-card">
-          <div class="pp-step"><span class="pp-num">1</span><b>Choose payment method</b></div>
-          <div class="pp-methods">
-            <label class="pp-method on" id="m-ep">
-              <input type="radio" name="pp-method" value="easypaisa" checked>
-              <span class="pp-badge ep">EP</span>
-              <span><b>Easypaisa</b><span>Mobile account</span></span>
-              <span class="pp-check">✓</span>
-            </label>
-            <label class="pp-method" id="m-jz">
-              <input type="radio" name="pp-method" value="jazzcash">
-              <span class="pp-badge jz">JC</span>
-              <span><b>JazzCash</b><span>Mobile account</span></span>
-              <span class="pp-check">✓</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="pp-card">
-          <div class="pp-step"><span class="pp-num">2</span><b>Send the exact amount</b></div>
-          <div class="pp-account">
-            <div class="pp-account-row">
-              <div><div class="k">Account name</div><div class="v">Jawad Shafaqat</div></div>
+          <div class="ck-acct">
+            <div class="acct-info">
+              <div class="num" id="pay-acct-num">…</div>
+              <div class="ttl" id="pay-acct-title">…</div>
             </div>
-            <div class="pp-account-row">
-              <div><div class="k">Account number</div><div class="v" id="pp-acc-num">+923096976634</div></div>
-              <button type="button" class="pp-copy" id="pp-copy">Copy</button>
-            </div>
+            <button type="button" class="pay-copy" id="pay-copy">Copy number</button>
           </div>
-          <p class="pp-note">Same account for both Easypaisa and JazzCash. Send exactly <b id="pp-send-amt">Rs 999</b> from your account, then continue below.</p>
+        </section>
+        <div class="ck-secure">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Manual wallet transfer · reviewed by our team within hours</span>
         </div>
-
-        <div class="pp-card">
-          <div class="pp-step"><span class="pp-num">3</span><b>Attach screenshot proof</b></div>
-          <div class="form-group" style="margin-bottom:12px">
-            <label for="pp-sender" style="font-size:0.8rem;color:var(--text-secondary)">Your mobile number (optional)</label>
-            <input type="tel" id="pp-sender" class="form-input" placeholder="03XXXXXXXXX" autocomplete="tel">
+        <section class="ck-card" id="pay-proof-card">
+          <h2>Payment proof</h2>
+          <div class="pay-field">
+            <label for="pay-sender">Sender number (paid from)</label>
+            <input class="ck-input" type="tel" id="pay-sender" inputmode="tel" placeholder="03XX-XXXXXXX">
+            <div class="hint">The Easypaisa or JazzCash number you paid from. It helps us match the screenshot.</div>
           </div>
-          <label class="pp-file" for="pp-shot">📷 Tap to attach payment screenshot (JPG/PNG, max 5MB)</label>
-          <input type="file" id="pp-shot" accept="image/*" style="display:none">
-          <div class="pp-preview" id="pp-preview"><img id="pp-img" alt="Payment screenshot preview"></div>
-        </div>
-
-        <div class="pp-error" id="pp-error"></div>
-        <button class="btn-primary pp-submit" id="pp-submit">I have sent the payment</button>
+          <div class="pay-field">
+            <label>Payment screenshot</label>
+            <div class="ck-drop" id="pay-drop"><span id="pay-drop-text" class="ck-drop-hint"><span class="ck-icn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><span class="dtxt"><b>Tap to attach screenshot</b><small>PNG or JPG · max 5 MB</small></span></span></div>
+            <input type="file" id="pay-file" accept="image/png,image/jpeg" style="display:none">
+          </div>
+        </section>
+        <section class="ck-card" id="pay-hist-card" style="display:none">
+          <h2>Your requests</h2>
+          <div class="pay-hist" id="pay-hist"></div>
+        </section>
       </div>
-
-      <!-- SUCCESS -->
-      <div id="pp-success" class="pp-card" style="display:none;text-align:center">
-        <div class="pp-success-icon">✓</div>
-        <b style="font-size:16px">Proof submitted!</b>
-        <p style="font-size:13.5px;color:var(--text-secondary);margin:8px 0 0">Our team will verify your payment and activate your plan shortly. You will see premium features appear automatically.</p>
-        <div id="pp-success-receipt" style="margin-top:18px;padding:16px;border-radius:14px;border:1px solid var(--border);background:var(--surface)">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <div>
-              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Your receipt</div>
-              <div style="font-size:22px;font-weight:700;letter-spacing:.02em;margin-top:4px" id="pp-success-receipt-no">—</div>
+      <!-- RIGHT: product + summary -->
+      <div class="checkout-right">
+        <div class="ck-panel">
+          <div class="ck-prod">
+            <span class="ck-prod-tile"><img src="/assets/anteemonee.png" alt="" referrerpolicy="no-referrer"></span>
+            <span class="ck-prod-info"><b id="prod-name">Monthly</b><small id="prod-sub">30 days · all subjects</small></span>
+            <span class="ck-prod-price" id="prod-price">Rs 299</span>
+          </div>
+          <section class="ck-card">
+            <div class="ck-label">Summary</div>
+            <div class="ck-srow"><span>Plan</span><span id="sum-plan">Monthly</span></div>
+            <div class="ck-srow"><span>Billing</span><span id="sum-billing">Monthly · 30 days</span></div>
+            <div class="ck-srow"><span>Subtotal</span><span class="ck-sub"><span class="ck-strike" id="sum-strike" style="display:none">Rs 3,588</span><span id="sum-total">Rs 299</span><span class="ck-off" id="sum-off" style="display:none">31% off</span></span></div>
+            <div class="ck-promo-row" id="ck-promo-row" style="display:none">
+              <div class="ck-promo-chip">
+                <span class="pc-code" id="sum-promo-code">FIRST10</span>
+                <span class="pc-off" id="sum-promo-off">−10%</span>
+                <button type="button" class="pc-x" id="promo-remove" aria-label="Remove promo code">&times;</button>
+              </div>
             </div>
-            <span id="pp-receipt-badge" style="margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid var(--warning);color:var(--warning)">PENDING ACTIVATION</span>
-          </div>
-          <div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px" id="pp-success-receipt-meta"></div>
-          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Keep this receipt. It stays here until an admin activates your plan, and you need it for any refund request.</div>
-          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn-secondary" id="pp-download-receipt" type="button">Download receipt</button>
-            <a href="../receipts/" class="btn-secondary" style="text-decoration:none">All my receipts</a>
-          </div>
-          <div id="pp-receipt-preview" style="margin-top:14px;display:none">
-            <img id="pp-receipt-img" alt="Your payment receipt" style="width:100%;max-width:330px;border-radius:10px;border:1px solid var(--border);display:block;box-shadow:0 6px 20px rgba(0,0,0,.14)">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">
-          <a href="../refunds/" class="btn-secondary" style="text-decoration:none">Request a refund</a>
-          <a href="../account/" class="btn-secondary" style="text-decoration:none">My account</a>
-          <a href="../index.html" class="btn-secondary" style="text-decoration:none">Back to Home</a>
+            <div class="ck-promo-row" id="ck-promo-apply-row" style="display:none">
+              <div class="ck-promo-apply">
+                <input class="ck-input" id="promo-input" placeholder="Promo code" autocomplete="off" spellcheck="false">
+                <button type="button" class="pay-copy" id="promo-apply">Apply</button>
+              </div>
+              <div class="ck-promo-msg" id="promo-msg"></div>
+            </div>
+            <div class="ck-total-row"><b>Total</b><span class="ck-total"><small>Rs</small><b id="sum-grand">299</b></span></div>
+            <button type="button" class="pay-submit" id="pay-submit">Submit for review</button>
+            <div class="pay-msg" id="pay-msg"></div>
+          </section>
+          <button type="button" class="ck-switch" id="ck-switch">
+            <span class="ck-sw-txt"><b id="sw-name">Yearly</b><small id="sw-save">Save Rs 1,089 vs monthly</small></span>
+            <span class="ck-go">Switch →</span>
+          </button>
         </div>
       </div>
     </div>
+    <div id="ck-ready" class="ck-ready" style="display:none"></div>
   </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="logo-text">Anteemonee</span><span class="logo-sub">Student OS</span></span></a>
-          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>Explore</h4>
-            <a href="../index.html">Home</a>
-            <a href="../ai-chat/">AI Assistant</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../pages/download.html">Download App</a>
-          </div>
-          <div class="footer-col">
-            <h4>Features</h4>
-            <a href="../ai-chat/">AI Tutor</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../premium/">Plans &amp; Pricing</a>
-          </div>
-          <div class="footer-col">
-            <h4>Legal</h4>
-            <a href="/privacy/">Privacy Policy</a>
-            <a href="/terms/">Terms of Service</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
-    </div>
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0"></script>
-  <script src="../js/plans.js?v=1"></script>
-  <script src="../js/receipt.js?v=2"></script>
-  <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=31"></script>
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="/js/account-manager.js?v=11"></script>
+  <script src="/js/app.js?v=37"></script>
+  <script src="/js/login-modal.js?v=5"></script>
+  <script src="/js/forgot-modal.js?v=2"></script>
+  <script src="/js/signup-modal.js?v=3"></script>
+  <script src="/js/plans.js?v=4"></script>
+<!--PAYJS-->
   <script>
     (function () {
-      'use strict';
       var SUPA_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
       var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
 
-      function getDb() {
-        try { if (typeof db !== 'undefined' && db) return db; } catch (_) {}
-        try { return supabase.createClient(SUPA_URL, SUPA_ANON); } catch (_) { return null; }
+      var state = {
+        plan: 'monthly',
+        method: 'easypaisa',
+        file: null,
+        user: null,
+        db: null,
+        promo: null,
+        refCode: '',
+        gift: null,
+        gated: false
+      };
+      /* /payment/<USER-ID>/?plan=… — the link names the account that receives
+         premium (your id by default, someone else's id = gifting). */
+      function qsPlanRaw() {
+        try { return new URLSearchParams(location.search).get('plan') || ''; } catch (_) { return ''; }
       }
-      function fmtRs(n) {
-        try { return 'Rs ' + Number(n).toLocaleString('en-PK'); } catch (_) { return 'Rs ' + n; }
+      function canonicalPath(uid) {
+        return '/payment/' + uid + '/' + (qsPlanRaw() ? '?plan=' + qsPlanRaw() : '');
       }
-      function show(id) {
-        ['pp-gate', 'pp-paid', 'pp-pending', 'pp-main', 'pp-success'].forEach(function (x) {
-          var el = document.getElementById(x);
-          if (el) el.style.display = (x === id) ? '' : 'none';
-        });
-        var gate = document.getElementById('pp-gate');
-        if (gate && id === 'pp-gate') gate.style.display = 'flex';
+      function currentUidSync() {
+        try {
+          var keys = Object.keys(localStorage).filter(function (k) { return k.indexOf('sb-zkuytvjeqkpexcbyoyhz-auth-token') === 0; });
+          for (var i = 0; i < keys.length; i++) {
+            var j = JSON.parse(localStorage.getItem(keys[i]) || '{}');
+            var id = j && j.user && j.user.id;
+            if (typeof id === 'string' && id.length > 8) return id;
+          }
+        } catch (_) {}
+        return '';
       }
-      function fail(msg) {
-        var el = document.getElementById('pp-error');
-        el.textContent = msg;
-        el.style.display = 'block';
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      function normalizeRef(s) {
+        var v = String(s || '').trim().replace(/\s+/g, '');
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) {
+          var p = v.split('-');
+          return [p[0], p[1], p[2], p[3], p.slice(4).join('')].join('-').toLowerCase();
+        }
+        return v.toUpperCase();
+      }
+      function isUuidRef(s) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || ''));
+      }
+      function refFromUrl() {
+        try {
+          var seg = location.pathname.split('/').filter(Boolean);
+          var i = seg.lastIndexOf('payment');
+          var next = i >= 0 ? seg[i + 1] : '';
+          if (next && next !== 'index.html' && /^[A-Za-z0-9_-]{4,40}$/.test(next)) return normalizeRef(next);
+          var r = (qsPlanRaw(), (new URLSearchParams(location.search).get('ref') || ''));
+          if (r && /^[A-Za-z0-9_-]{4,40}$/.test(r)) return normalizeRef(r);
+        } catch (_) {}
+        return '';
       }
 
-      var state = { plan: 'exam', period: null, method: 'easypaisa', file: null, user: null, db: null, receipt: null, pendingReceipt: null };
+      function $(id) { return document.getElementById(id); }
 
-      function periods() {
-        return (window.ANTEEM_PLANS && window.ANTEEM_PLANS.examPeriods) || [];
+      function fmtNumber(n) {
+        try { return Number(n).toLocaleString('en-PK'); } catch (_) { return String(n); }
       }
-      function currentAmount() {
-        if (state.plan === 'lifetime') return window.ANTEEM_PLANS.lifetimePrice;
-        var p = window.ANTEEM_PLANS.periodById(state.period);
-        return p ? p.price : 0;
+      function fmtRs(amount) {
+        return 'Rs ' + fmtNumber(Math.max(0, Math.round(Number(amount || 0))));
       }
-      function refreshOrder() {
-        var nameEl = document.getElementById('pp-plan-name');
-        var subEl = document.getElementById('pp-plan-sub');
-        var amtEl = document.getElementById('pp-amount');
-        var sendEl = document.getElementById('pp-send-amt');
-        var row = document.getElementById('pp-period-row');
-        if (state.plan === 'lifetime') {
-          if (nameEl) nameEl.textContent = 'Lifetime Access';
-          if (subEl) subEl.textContent = 'one-time · yours forever';
-          if (row) row.style.display = 'none';
+      function plans() {
+        var P = window.ANTEEM_PLANS || {};
+        return P.plans || { monthly: { price: 299, days: 30, label: 'Monthly' }, yearly: { price: 2499, days: 365, label: 'Yearly' } };
+      }
+      function accounts() {
+        var P = window.ANTEEM_PLANS || {};
+        return P.paymentAccounts || { easypaisa: { label: 'Easypaisa', number: '+923096976634', title: 'Jawad Shafaqat' }, jazzcash: { label: 'JazzCash', number: '+923096976634', title: 'Jawad Shafaqat' } };
+      }
+      function planPrice(planId) {
+        var ps = plans(); var p = ps[planId];
+        if (p && typeof p.price === 'number') return p.price;
+        return planId === 'yearly' ? 2499 : 299;
+      }
+      function planDays(planId) {
+        var ps = plans(); var p = ps[planId];
+        if (p && typeof p.days === 'number') return p.days;
+        return planId === 'yearly' ? 365 : 30;
+      }
+      function planLabel(planId) {
+        var ps = plans(); var p = ps[planId];
+        return (p && p.label) || (planId === 'yearly' ? 'Yearly' : 'Monthly');
+      }
+      /* Promo codes are validated ONLY by the server (payment-promo edge
+         function). The client shows what the server returns; submit receives
+         the final amount from the server. */
+      var FN_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co/functions/v1/payment-promo';
+      function promoFree() {
+        return !!(state.promo && state.promo.kind === 'free');
+      }
+      function paintGate(info) {
+        var el = $('ck-ready');
+        var flow = document.querySelector('.checkout-grid');
+        if (!el || !flow) return;
+        var b = $('pay-submit');
+        if (!info) {
+          el.style.display = 'none';
+          flow.style.display = '';
+          state.gated = false;
+          if (b) { b.disabled = false; }
+          paintSelection();
+          return;
+        }
+        state.gated = true;
+        var when = '';
+        try { if (info.at) when = new Date(info.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) {}
+        var rno = info.no || info.receiptNo || '';
+        var title = info.title || 'Request sent';
+        var sub;
+        if (info.mode === 'active') {
+          sub = '<b>' + (info.label || 'Premium') + '</b>' + (info.days ? ' · ' + info.days + ' days' : '') +
+            '<br>Reload any Anteemonee page to unlock everything.';
         } else {
-          var p = window.ANTEEM_PLANS.periodById(state.period) || periods()[0];
-          if (p) state.period = p.id;
-          if (nameEl) nameEl.textContent = 'Exam Plan';
-          if (subEl) subEl.textContent = p ? ('valid until ' + p.short) : '';
-          if (row) row.style.display = '';
+          sub = '<b>' + (info.label || 'Premium') + '</b>';
+          if (rno) sub += ' · Receipt <b>' + rno + '</b>';
+          if (when) sub += ' · sent ' + when;
+          sub += '<br>We review each payment manually and premium starts as soon as it is approved.';
         }
-        var amt = currentAmount();
-        if (amtEl) amtEl.textContent = fmtRs(amt);
-        if (sendEl) sendEl.textContent = fmtRs(amt);
-        document.getElementById('pick-exam').classList.toggle('on', state.plan === 'exam');
-        document.getElementById('pick-lifetime').classList.toggle('on', state.plan === 'lifetime');
+        var actions = '';
+        if (info.mode === 'active') {
+          actions = '<a class="r-ghost" href="/">Home</a>' +
+            '<button type="button" class="r-primary" id="rd-reload">Reload now</button>';
+        } else {
+          actions = '<a class="r-ghost" href="/">Home</a>' +
+            '<button type="button" class="r-ghost" id="rd-refresh">Refresh status</button>' +
+            '<button type="button" class="r-primary" id="rd-receipt">Download receipt</button>';
+        }
+        el.innerHTML = '<span class="ck-ready-icn"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M20 6 9 17l-5-5"/></svg></span>' +
+          '<h2>' + title + '</h2><p>' + sub + '</p>' +
+          '<div class="ck-ready-actions">' + actions + '</div>';
+        el.style.display = '';
+        flow.style.display = 'none';
+        if (b) { b.disabled = true; }
+        var act = $('rd-refresh');
+        if (act) act.addEventListener('click', function () { loadHistory(); });
+        var rel = $('rd-reload');
+        if (rel) rel.addEventListener('click', function () { window.location.reload(); });
+        var rc = $('rd-receipt');
+        if (rc) rc.addEventListener('click', function () { downloadReceipt(info); });
       }
-
-      function setMethod(m) {
-        state.method = m;
-        document.getElementById('m-ep').classList.toggle('on', m === 'easypaisa');
-        document.getElementById('m-jz').classList.toggle('on', m === 'jazzcash');
+      var C128 = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+      function c128b(text) {
+        var vals = [104];
+        for (var i = 0; i < text.length; i++) {
+          var c = text.charCodeAt(i);
+          if (c < 32 || c > 126) c = 32;
+          vals.push(c - 32);
+        }
+        var sum = vals[0];
+        for (var i = 1; i < vals.length; i++) sum += vals[i] * i;
+        vals.push(sum % 103);
+        vals.push(106);
+        var bits = '';
+        for (var i = 0; i < vals.length; i++) bits += C128[vals[i]];
+        return bits;
       }
-
-      async function init() {
-        // Plan + period from URL (?plan=exam&period=may-jun-2027).
+      function drawBarcode(ctx, text, x, y, z, h) {
+        var bits = c128b(text);
+        var x0 = x;
+        for (var i = 0; i < bits.length; i++) {
+          if (bits[i] === '1') ctx.fillRect(x0, y, z, h);
+          x0 += z;
+        }
+        return bits.length * z;
+      }
+      var pendingRow = null;
+      function receiptData(info) {
+        var promo = state.promo ? state.promo.code : '';
+        var label = info.label || planLabel(state.plan);
+        var promoIn = /promo\s+([A-Z0-9]+)/i.exec(String(pendingRow && pendingRow.plan_label || ''));
+        if (promoIn && !promo) promo = promoIn[1];
+        return {
+          name: (state.gift && state.gift.name) || ((state.user && state.user.user_metadata && (state.user.user_metadata.full_name || state.user.user_metadata.name)) || (state.user && state.user.email) || 'Student'),
+          uid: state.gift ? state.gift.id : (state.user ? state.user.id : (currentUidSync() || '')),
+          plan: label,
+          price: (pendingRow && pendingRow.amount) || currentTotal(),
+          via: (String((pendingRow && pendingRow.method) || state.method || 'easypaisa') + ' / JazzCash')
+            .split(' / ')[0].toUpperCase() === 'EASYPAISA' ? 'easypaisa' : 'jazzcash',
+          sender: (pendingRow && pendingRow.sender_number) || ((($('pay-sender') || {}).value || ' ').trim()),
+          rno: info.no || info.receiptNo || 'ANT-',
+          When: info.at ? new Date(info.at) : new Date(),
+          promo: promo
+        };
+      }
+      function downloadReceipt(info) {
         try {
-          var q = new URLSearchParams(window.location.search);
-          var plan = (q.get('plan') || 'exam').toLowerCase();
-          state.plan = (plan === 'lifetime') ? 'lifetime' : 'exam';
-          var per = q.get('period');
-          state.period = window.ANTEEM_PLANS.periodById(per) ? per : (periods()[0] && periods()[0].id);
-        } catch (_) {}
-
-        // Period select options.
-        var sel = document.getElementById('pp-period');
-        sel.innerHTML = periods().map(function (p) {
-          return '<option value="' + p.id + '">' + p.label + ' — ' + fmtRs(p.price) + '</option>';
-        }).join('');
-        sel.value = state.period;
-        sel.addEventListener('change', function () { state.period = sel.value; refreshOrder(); });
-
-        document.querySelectorAll('input[name="pp-plan"]').forEach(function (r) {
-          if ((r.value === 'lifetime') === (state.plan === 'lifetime')) r.checked = true;
-          r.addEventListener('change', function () {
-            state.plan = document.querySelector('input[name="pp-plan"]:checked').value;
-            refreshOrder();
-          });
-        });
-        document.querySelectorAll('input[name="pp-method"]').forEach(function (r) {
-          r.addEventListener('change', function () {
-            setMethod(document.querySelector('input[name="pp-method"]:checked').value);
-          });
-        });
-        setMethod('easypaisa');
-        refreshOrder();
-
-        try {
-          var dBtn = document.getElementById('pp-download-receipt');
-          if (dBtn) dBtn.addEventListener('click', function () { downloadCurrentReceipt('success'); });
-          var dPend = document.getElementById('pp-download-pending');
-          if (dPend) dPend.addEventListener('click', function () { downloadCurrentReceipt('pending'); });
-        } catch (_) {}
-
-        document.getElementById('pp-copy').addEventListener('click', function () {
-          var btn = this;
-          var num = document.getElementById('pp-acc-num').textContent.trim();
-          function done(t) { btn.textContent = t; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
-          try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(num).then(function () { done('Copied'); }, function () { done('Copy failed'); });
-            } else { done('Copy failed'); }
-          } catch (_) { done('Copy failed'); }
-        });
-
-        var fileInput = document.getElementById('pp-shot');
-        fileInput.addEventListener('change', function () {
-          var f = fileInput.files && fileInput.files[0];
-          var prev = document.getElementById('pp-preview');
-          var img = document.getElementById('pp-img');
-          if (!f) { state.file = null; prev.style.display = 'none'; return; }
-          if (!/^image\//.test(f.type)) { fail('Please attach an image file (JPG or PNG).'); fileInput.value = ''; return; }
-          if (f.size > 5 * 1024 * 1024) { fail('Screenshot must be under 5MB.'); fileInput.value = ''; return; }
-          state.file = f;
-          try {
-            var err = document.getElementById('pp-error');
-            err.style.display = 'none';
-            img.src = URL.createObjectURL(f);
-            prev.style.display = 'block';
-          } catch (_) {}
-        });
-
-        document.getElementById('pp-submit').addEventListener('click', submitPayment);
-
-        // Wait for auth (same pattern as other pages).
-        var tries = 0;
-        var timer = setInterval(function () {
-          tries++;
-          var user = null;
-          try { user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null; } catch (_) {}
-          if (user || tries > 50 || window.__authReady === true) {
-            clearInterval(timer);
-            boot(user);
+          var d = receiptData(info);
+          var W = 720, H = 1060, lr = 40;
+          var c = document.createElement('canvas');
+          c.width = W; c.height = H;
+          var x = c.getContext('2d');
+          x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H);
+          var mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+          function text(s, col, bs) {
+            var parts = '';
+            for (var i = 0; i < (s || '').length; i++) parts += (s[i] === ' ' ? '  ' : s[i]).toUpperCase() + ' ';
+            x.fillStyle = bs || '#000';
+            x.font = 'bold 14px ' + mono;
+            x.fillText(parts || '', 26, col);
           }
-        }, 100);
+          function line(sX, col, bs, sx) {
+            x.fillStyle = bs || '#000'; x.font = (sx ? 'bold ' : '') + '15px ' + mono;
+            x.fillText(sX, sx || lr, col);
+          }
+          // header
+          x.fillStyle = '#000';
+          x.font = 'bold 46px ' + mono;
+          x.fillText('ANTEEMONEE', 176, 96);
+          x.font = '13px ' + mono;
+          x.textAlign = 'center';
+          x.fillText('Student OS for Pakistan', 360, 128);
+          x.fillText('FSc, Matric & Intermediate', 360, 148);
+          x.fillText('anteemoneee@gmail.com', 360, 168);
+          text('* * * * * * * * * * * * * * * * * * * * *', 196);
+          // body
+          x.fillStyle = '#000'; x.font = 'bold 26px ' + mono;
+          x.fillText('PAYMENT RECEIPT', 210, 238);
+          text('* * * * * * * * * * * * * * * * * * * * *', 262);
+          x.textAlign = 'left';
+          line('Student', 300, '#555', lr);
+          line(d.name, 322, '#000', lr);
+          line('UserID', 356, '#555', lr);
+          line(d.uid, 378, '#000', lr);
+          line('Plan', 412, '#555', lr);
+          line(String(d.plan) + (d.promo ? ' (promo ' + d.promo + ')' : ''), 434, '#000', lr);
+          line('Paid via', 468, '#555', lr);
+          line(d.via.toUpperCase() + (d.sender ? ' · ' + d.sender : ''), 490, '#000', lr);
+          x.fillStyle = 'rgba(0,0,0,.04)'; x.fillRect(lr, 508, W - 80, 2);
+          line('Total Paid', 544, '#000', lr);
+          x.font = 'bold 34px ' + mono; x.fillText('Rs ' + fmtNumber(d.price), 488, 552);
+          x.fillStyle = 'rgba(0,0,0,.04)'; x.fillRect(lr, 578, W - 80, 2);
+          line('Receipt No', 612, '#555', lr);
+          line(d.rno, 634, '#000', lr);
+          line('Pending', 668, '#555', lr);
+          line(d.When.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }), 690, '#000', lr);
+          text('* * * * * * * * * * * * * * * * * * * * *', 718);
+          x.fillStyle = '#000'; x.font = 'bold 24px ' + mono; x.textAlign = 'center';
+          x.fillText('THANK YOU!', 360, 758);
+          var stamp = 'PENDING';
+          x.save();
+          x.font = 'bold 62px ' + mono;
+          var sw = x.measureText(stamp).width;
+          x.translate(360, 800); x.rotate(-0.10);
+          x.fillStyle = 'rgba(0,0,0,0.06)';
+          x.fillText(stamp, -sw / 2, 0);
+          x.restore();
+          // barcode
+          var z = 2, bw = c128b(d.rno).length * z, bx = Math.max(28, (W - Math.min(bw, W - 56)) / 2);
+          // shrink if too wide
+          while (c128b(d.rno).length * z > W - 56 && z > 1) z -= 0.25;
+          bw = c128b(d.rno).length * z;
+          bx = (W - bw) / 2;
+          x.fillStyle = '#000';
+          drawBarcode(x, d.rno, bx, 832, z, 84);
+          x.font = '13px ' + mono; x.textAlign = 'center';
+          x.fillText(d.rno, 360, 936);
+          x.font = '11px ' + mono;
+          x.fillStyle = '#777';
+          x.fillText('Paid on approval · Anteemonee', 360, 962);
+          c.toBlob(function (bl) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(bl);
+            a.download = 'receipt-' + (d.rno || 'anteemonee') + '.png';
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+          }, 'image/png');
+        } catch (e) {
+          alert('Receipt failed: ' + ((e && e.message) || e));
+        }
       }
-
-      async function boot(user) {
-        state.db = getDb();
-        if (!user || !state.db) { show('pp-gate'); return; }
-        state.user = user;
-        // Already paid?
+      function paintRejectNote(info) {
+        var old = document.getElementById('rej-note');
+        if (old) old.remove();
+        if (!info) return;
+        var t = document.querySelector('.ck-title');
+        if (!t) return;
+        var d = document.createElement('div');
+        d.id = 'rej-note';
+        d.style.cssText = 'display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text);background:var(--accent-soft);border:1px solid var(--border);border-radius:12px;padding:11px 14px;margin:0 0 16px';
+        d.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>' +
+          '<span style="flex:1;min-width:0"><b style="color:#8e8e8e">Your last request</b>' + (info.no ? '<span style="color:var(--text-secondary)"> Receipt ' + (info.no || '') + '</span>' : '') + ' <b style="color:#8e8e8e">was rejected</b><span style="color:var(--text-secondary)"> · you can submit a new payment</span></span>' +
+          '<button type="button" id="rej-x" style="border:none;background:rgba(255,255,255,.06);color:var(--text);width:26px;height:26px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;padding:0;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center" aria-label="Dismiss">&times;</button>';
+        t.parentNode.insertBefore(d, t.nextSibling);
+        var x = $('rej-x');
+        if (x) x.addEventListener('click', function () {
+          try { localStorage.setItem('Anteemonee_rej_note', info.no || 'last'); } catch (_) {}
+          d.remove();
+        });
+      }
+      async function resolveGift() {
+        var ref = state.refCode;
+        if (!ref || !isUuidRef(ref)) { state.gift = null; paintGiftNotice(); return; }
+        var mine = currentUidSync();
+        if (mine && ref.toLowerCase() === mine.toLowerCase()) { state.gift = null; paintGiftNotice(); return; }
         try {
-          var ent = null;
-          if (typeof Access !== 'undefined' && Access.isPaidEntitlement) {
-            try { await Access.init(); } catch (_) {}
-            var res = await state.db.rpc('get_entitlement_snapshot');
-            ent = res && res.data;
-            if (Access.isPaidEntitlement(ent)) { show('pp-paid'); return; }
+          var r = await fnCall('whois', { ref_code: ref });
+          if (r && r.ok && r.found) {
+            state.giftResolvedFor = ref;
+            if (mine && String(r.id || '').toLowerCase() === mine.toLowerCase()) state.gift = null;
+            else state.gift = { id: ref, name: r.name };
           } else {
-            var r2 = await state.db.rpc('get_entitlement_snapshot');
-            var e2 = r2 && r2.data;
-            if (e2 && ((e2.plan_type === 'lifetime' && e2.subscription_status !== 'refunded') ||
-                ((e2.plan_type === 'premium' || e2.plan_type === 'pro') && e2.subscription_status === 'active'))) {
-              show('pp-paid'); return;
+            var me2 = mine || (state.user && state.user.id) || '';
+            if (me2 && String(me2).toLowerCase() !== ref.toLowerCase()) {
+              state.giftResolvedFor = ref;
+              window.location.replace(canonicalPath(me2));
+              return;
             }
+            state.gift = null;
           }
-        } catch (_) {}
-        // Pending request?
+        } catch (_) { state.gift = null; }
+        paintGiftNotice();
+      }
+      function paintGiftNotice() {
         try {
-          var pr = await state.db.from('payment_requests')
-            .select('id,plan,exam_period,amount,method,created_at,receipt_no,receipt_image')
-            .eq('user_id', user.id).eq('status', 'pending')
-            .order('created_at', { ascending: false }).limit(1).maybeSingle();
-          if (pr && !pr.error && pr.data) {
-            var d = pr.data;
+          var old = document.getElementById('gift-note');
+          if (old) old.remove();
+          if (!state.gift) return;
+          var t = document.querySelector('.ck-title');
+          if (!t) return;
+          var d = document.createElement('div');
+          d.id = 'gift-note';
+          d.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--accent-hi);background:var(--accent-soft);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin:0 0 16px';
+          d.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/></svg>' +
+            '<span>You are gifting premium to <b style="color:#fff">' + (state.gift.name || 'a student') + '</b></span>';
+          t.parentNode.insertBefore(d, t.nextSibling);
+        } catch (_) {}
+      }
+      function giftRecipient() {
+        return state.gift ? state.gift.id : '';
+      }
+      function promoDiscount(base) {
+        if (!state.promo) return 0;
+        return Math.min(base, Math.round(base * Number(state.promo.percent) / 100));
+      }
+      function currentTotal() {
+        var base = planPrice(state.plan);
+        return Math.max(0, base - promoDiscount(base));
+      }
+      async function fnCall(action, payload) {
+        var db = getDb();
+        var tok = null;
+        try {
+          var s = db ? await db.auth.getSession() : null;
+          tok = s && s.data && s.data.session ? s.data.session.access_token : null;
+        } catch (_) {}
+        if (!tok) return { ok: false, error: 'Please sign in first.' };
+        var res = await fetch(FN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'apikey': SUPA_ANON },
+          body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+        });
+        if (res.status === 401) return { ok: false, error: 'Please sign in first.' };
+        var data = null;
+        try { data = await res.json(); } catch (_) { data = null; }
+        if (data && data.code === 'dup') {
+          var dupErr = new Error(data.error || 'Your request has already been sent.');
+          dupErr.payload = data;
+          throw dupErr; // caught only by submitProof's dup-aware handler via async chain
+        }
+        return data || { ok: false, error: 'Server error. Try again.' };
+      }
+      function msg(kind, html) {
+        var el = $('pay-msg');
+        if (!el) return;
+        el.className = 'pay-msg show ' + (kind || 'info');
+        el.innerHTML = html;
+      }
+      function paintSelection() {
+        var amount = planPrice(state.plan);
+        var disc = promoDiscount(amount);
+        var total = Math.max(0, amount - disc);
+        var full = planPrice('monthly') * 12;
+        var save = full - planPrice('yearly');
+        document.querySelectorAll('[data-cycle]').forEach(function (b) { b.classList.toggle('sel', b.getAttribute('data-cycle') === state.plan); });
+        document.querySelectorAll('[data-method]').forEach(function (b) { b.classList.toggle('sel', b.getAttribute('data-method') === state.method); });
+        $('price-monthly').textContent = fmtRs(planPrice('monthly'));
+        $('price-yearly').textContent = fmtRs(planPrice('yearly'));
+        $('sub-monthly').textContent = planDays('monthly') + ' days · all subjects';
+        $('sub-yearly').textContent = planDays('yearly') + ' days · all subjects';
+        var acct = accounts()[state.method] || accounts().easypaisa;
+        $('pay-acct-num').textContent = acct.number || '…';
+        $('pay-acct-title').textContent = (acct.label || '') + (acct.title ? ' · ' + acct.title : '');
+        $('prod-name').textContent = planLabel(state.plan);
+        $('prod-sub').textContent = planDays(state.plan) + ' days · all subjects';
+        $('prod-price').textContent = fmtRs(amount);
+        $('sum-plan').textContent = planLabel(state.plan);
+        $('sum-billing').textContent = planLabel(state.plan) + ' · ' + planDays(state.plan) + ' days';
+        if (state.plan === 'yearly' && full > amount) {
+          $('sum-strike').style.display = '';
+          $('sum-strike').textContent = fmtRs(full);
+          $('sum-off').style.display = '';
+          $('sum-off').textContent = Math.round(save / full * 100) + '% off';
+        } else {
+          $('sum-strike').style.display = 'none';
+          $('sum-off').style.display = 'none';
+        }
+        $('sum-total').textContent = fmtRs(amount);
+        $('sum-grand').textContent = fmtNumber(total);
+        var pApply = $('ck-promo-apply-row'), pChip = $('ck-promo-row');
+        if (pApply && pChip) {
+          if (state.promo) {
+            pApply.style.display = 'none';
+            pChip.style.display = '';
+            $('sum-promo-code').textContent = state.promo.code;
+            $('sum-promo-off').textContent = '−' + state.promo.percent + '%';
+          } else {
+            pApply.style.display = '';
+            pChip.style.display = 'none';
+          }
+        }
+        var proofCard = $('pay-proof-card');
+        if (proofCard) proofCard.style.display = (promoFree() || state.gated) ? 'none' : '';
+        var sBtn = $('pay-submit');
+        if (sBtn && !sBtn.disabled) sBtn.textContent = promoFree() ? 'Activate premium now' : 'Submit for review';
+        var sw = $('ck-switch');
+        if (sw) {
+          if (state.plan === 'monthly') {
+            sw.style.display = '';
+            $('sw-name').textContent = planLabel('yearly');
+            $('sw-save').textContent = 'Save ' + fmtRs(save) + ' vs monthly';
+          } else {
+            sw.style.display = 'none';
+          }
+        }
+      }
+      function getDb() {
+        if (state.db) return state.db;
+        try {
+          if (typeof window.db !== 'undefined' && window.db) { state.db = window.db; return state.db; }
+          state.db = supabase.createClient(SUPA_URL, SUPA_ANON);
+          return state.db;
+        } catch (_) { return null; }
+      }
+      async function refreshAuth() {
+        var db = getDb(); var user = null;
+        try {
+          if (typeof currentUser !== 'undefined' && currentUser) user = currentUser;
+          else if (db) { var r = await db.auth.getUser(); user = r && r.data ? r.data.user : null; }
+        } catch (_) {}
+        state.user = user;
+        if (user) {
+          if (state.refCode && isUuidRef(state.refCode) && state.giftResolvedFor !== state.refCode) resolveGift();
+          loadHistory();
+        }
+      }
+      async function loadHistory() {
+        try {
+          var db = getDb();
+          if (!db || !state.user) return;
+          var r = await db.from('payment_requests').select('plan,plan_label,amount,method,sender_number,status,receipt_no,created_at').eq('user_id', state.user.id).order('created_at', { ascending: false }).limit(5);
+          var rows = (r && !r.error && Array.isArray(r.data)) ? r.data : [];
+          var pend = null;
+          for (var i = 0; i < rows.length; i++) {
+            if (String(rows[i].status || '') === 'pending') { pend = rows[i]; break; }
+          }
+          pendingRow = pend;
+          paintGate(pend ? { no: pend.receipt_no, label: pend.plan_label || pend.plan || 'premium', at: pend.created_at } : null);
+          var latest = rows.length ? rows[0] : null;
+          if (!pend && latest && String(latest.status || '') === 'rejected') {
+            var key = 'Anteemonee_rej_note';
+            var seen = '';
+            try { seen = localStorage.getItem(key) || ''; } catch (_) {}
+            if (seen !== latest.receipt_no) {
+              paintRejectNote({ no: latest.receipt_no, label: latest.plan_label || latest.plan || 'premium' });
+            } else {
+              paintRejectNote(null);
+            }
+          } else {
+            paintRejectNote(null);
+          }
+          if (!rows.length) { $('pay-hist-card').style.display = 'none'; return; }
+          $('pay-hist-card').style.display = '';
+          $('pay-hist').innerHTML = rows.map(function (x) {
+            var st = String(x.status || 'pending');
             var when = '';
-            try { when = new Date(d.created_at).toLocaleString(); } catch (_) {}
-            document.getElementById('pp-pending-text').textContent =
-              'We received your ' + fmtRs(d.amount) + ' ' + d.method + ' payment proof (' + when + ') and will activate your plan shortly.';
-            var rn = document.getElementById('pp-pending-receipt');
-            if (d.receipt_no) {
-              rn.style.display = 'block';
-              document.getElementById('pp-receipt-no').textContent = d.receipt_no;
-              document.getElementById('pp-receipt-meta').textContent =
-                (d.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan') + ' · ' + fmtRs(d.amount) + ' · ' + String(d.method || '').toUpperCase();
-              state.pendingReceipt = d;
-              var pv = document.getElementById('pp-pending-preview');
-              var pi = document.getElementById('pp-pending-img');
-              if (d.receipt_image && pv && pi) { pi.src = d.receipt_image; pv.style.display = 'block'; }
-            }
-            show('pp-pending');
-            return;
-          }
-        } catch (_) { /* table may not exist yet — show the form */ }
-
-        // Preflight. If the bucket or the table is missing, the user must know
-        // NOW, before they send money, rather than after they upload a receipt.
-        var warn = document.getElementById('pp-setup-warn');
-        try {
-          var probe = await state.db.storage.from('payment-proofs').list('', { limit: 1 });
-          if (probe && probe.error && /bucket not found|does not exist|not_found|404/i.test(String(probe.error.message || ''))) {
-            if (warn) warn.hidden = false;
-          }
+            try { when = new Date(x.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) {}
+            return '<div class="pay-hist-row"><span>' + (x.plan_label || x.plan || 'premium') + ' · ' + fmtRs(x.amount || 0) + ' · ' + (x.method || '') + (when ? ' · ' + when : '') + '</span><span class="pay-pill ' + st + '">' + st + '</span></div>';
+          }).join('');
         } catch (_) {}
-        show('pp-main');
       }
-
-      // AMB-<time36>-<8 random base36>. The random part needs real entropy: a
-      // 4-char tail collides within a few thousand submissions in the same
-      // millisecond, and a duplicate receipt number would let a refund lookup
-      // match the wrong payment.
-      function randChars(n) {
-        var out = '';
+      async function submitProof() {
+        if (promoFree()) { activateFree(); return; }
+        var db = getDb();
+        if (!state.user || !db) { msg('err', 'Please sign in first.'); return; }
+        var sender = ($('pay-sender').value || '').trim();
+        if (sender.replace(/\D/g, '').length < 10) { msg('err', 'Enter the sender number you paid from (e.g. 0300-1234567).'); return; }
+        if (!state.file) { msg('err', 'Attach the payment screenshot first.'); return; }
+        if (state.file.size > 5 * 1024 * 1024) { msg('err', 'Screenshot is over 5 MB. Compress it and try again.'); return; }
+        var btn = $('pay-submit');
+        if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+        msg('info', 'Signing the upload…');
         try {
-          var buf = new Uint32Array(n);
-          crypto.getRandomValues(buf);
-          for (var i = 0; i < n; i++) out += buf[i].toString(36).slice(-1);
-          return out.toUpperCase();
-        } catch (_) { /* fall through to Math.random */ }
-        for (var j = 0; j < n; j++) out += Math.floor(Math.random() * 36).toString(36);
-        return out.toUpperCase();
-      }
-      function receiptNo() {
-        var t = Date.now().toString(36).toUpperCase();
-        return 'AMB-' + t.slice(-6) + '-' + randChars(8);
-      }
-
-      function downloadCurrentReceipt(which) {
-        var r = (which === 'pending') ? state.pendingReceipt : state.receipt;
-        if (!r) return fail('No receipt to download yet.');
-        var no = r.no || r.receipt_no;
-        if (!no) return fail('No receipt number found.');
-        var planLabel = r.planLabel || (r.plan === 'lifetime' ? 'Lifetime Access' : 'Exam Plan');
-        var amount = r.amount || 0;
-        var method = String(r.method || '').toUpperCase();
-        var image = r.image || r.receipt_image;
-        try {
-          if (!image || typeof window.AnteemoneeReceipt === 'undefined') {
-            // Receipt image was not stored (older receipt) -- render it now.
-            image = window.AnteemoneeReceipt.render({
-              shopName: 'Anteemonee',
-              address: ['Student OS for Pakistan', 'FSc, Matric & Intermediate', 'support@anteemonee.com'],
-              title: 'Payment Receipt',
-              columns: [
-                { label: planLabel, value: fmtRs(amount) },
-                { label: 'Paid via ' + method, value: '' }
-              ],
-              totalLabel: 'Total Paid', total: fmtRs(amount),
-              footerLines: [{ label: 'Receipt No', value: no }],
-              thanks: 'THANK YOU!',
-              stamp: { text: (r.status === 'active' ? 'VERIFIED' : 'PENDING'), color: r.status === 'active' ? '#15803d' : '#b45309' },
-              barcodeText: no
-            });
-          }
-          var a = document.createElement('a');
-          a.href = image;
-          a.download = 'anteemonee-receipt-' + no + '.png';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        } catch (e) {
-          fail('Could not build the receipt image: ' + (e.message || 'unknown error'));
-        }
-      }
-
-      function uuid() {
-        try {
-          if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-        } catch (_) {}
-        return 'id-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
-      }
-
-      async function submitPayment() {
-        var btn = document.getElementById('pp-submit');
-        if (!state.file) { fail('Please attach your payment screenshot first.'); return; }
-        if (!state.user || !state.db) { fail('Please sign in first.'); return; }
-        btn.disabled = true;
-        var old = btn.textContent;
-        btn.textContent = 'Uploading…';
-        try {
-          var ext = 'jpg';
-          try {
-            var m = /\.([a-z0-9]+)$/i.exec(state.file.name || '');
-            if (m) ext = m[1].toLowerCase();
-            if (!/^(jpg|jpeg|png|webp)$/.test(ext)) ext = 'jpg';
-          } catch (_) {}
-          var path = state.user.id + '/req-' + uuid() + '.' + ext;
-          var BUCKET = 'payment-proofs';
-          var up = await state.db.storage.from(BUCKET).upload(path, state.file, { upsert: false });
-          if (up.error) {
-            // The usual cause is that the storage bucket was never created in the
-            // project. Say that plainly instead of surfacing "Bucket not found".
-            var msg = String(up.error.message || '');
-            if (/bucket not found|bucket does not exist|not_found|404/i.test(msg) ||
-                /storage\.buckets/i.test(msg)) {
-              throw new Error(
-                'Payment proof storage is not set up yet (bucket "' + BUCKET + '" is missing). ' +
-                'Please run supabase/migrations/20261015000000_payment_proofs_setup.sql in the Supabase SQL editor, ' +
-                'or message support and attach your screenshot directly.'
-              );
-            }
-            if (/row-level security|permission denied|42501/i.test(msg)) {
-              throw new Error(
-                'Your account is not allowed to upload a payment screenshot yet. ' +
-                'Please sign in again, or message support and attach your screenshot directly.'
-              );
-            }
-            throw new Error(msg || 'Screenshot upload failed.');
-          }
-          var pub = state.db.storage.from('payment-proofs').getPublicUrl(path);
-          var url = pub && pub.data && pub.data.publicUrl;
-          if (!url) throw new Error('Could not get screenshot URL.');
-          var sender = '';
-          try { sender = (document.getElementById('pp-sender').value || '').trim(); } catch (_) {}
-          var receipt = receiptNo();
-          var row = {
-            user_id: state.user.id,
+          var sgn = await fnCall('sign', {});
+          if (!sgn || !sgn.ok) throw new Error((sgn && sgn.error) || 'Could not start the screenshot upload.');
+          msg('info', 'Uploading screenshot…');
+          var fd = new FormData();
+          fd.append('file', state.file);
+          fd.append('api_key', sgn.apiKey);
+          fd.append('timestamp', String(sgn.timestamp));
+          fd.append('folder', sgn.folder);
+          fd.append('signature', sgn.signature);
+          var cld = null;
+          try { cld = await (await fetch('https://api.cloudinary.com/v1_1/' + sgn.cloud + '/image/upload', { method: 'POST', body: fd })).json(); } catch (_) {}
+          var url = cld && (cld.secure_url || cld.url);
+          if (!cld || !url) throw new Error((cld && cld.error && cld.error.message) || 'Screenshot upload failed. Try again.');
+          msg('info', 'Recording your request…');
+          var r = await fnCall('submit', {
             plan: state.plan,
-            exam_period: state.plan === 'exam' ? state.period : null,
-            amount: currentAmount(),
             method: state.method,
-            sender_number: sender || null,
+            sender: sender,
             screenshot_url: url,
-            status: 'pending',
-            receipt_no: receipt
-          };
-          var ins = { error: null };
-          // receipt_no has a unique index; retry with a fresh number on the rare
-          // collision instead of failing a real payment submission.
-          for (var attempt = 0; attempt < 4; attempt++) {
-            row.receipt_no = receipt;
-            ins = await state.db.from('payment_requests').insert(row);
-            if (!ins.error) break;
-            if (!/duplicate key|23505|unique/i.test(String(ins.error.message || ''))) break;
-            receipt = receiptNo();
-          }
-          if (ins.error) {
-            var im = String(ins.error.message || '');
-            if (/relation .*payment_requests.* does not exist|42P01/i.test(im)) {
-              throw new Error(
-                'Payment requests are not set up yet (table payment_requests is missing). ' +
-                'Please run supabase/migrations/20261015000000_payment_proofs_setup.sql in the Supabase SQL editor, ' +
-                'or message support with your screenshot.'
-              );
-            }
-            throw new Error(im || 'Could not save payment request.');
-          }
-
-          // Render the receipt image and keep it in state so the preview and
-          // the download button use the exact same PNG we store.
-          var planLabel = state.plan === 'lifetime' ? 'Lifetime Access'
-            : 'Exam Plan - ' + ((periods().filter(function (x) { return x.id === state.period; })[0] || {}).label || '');
-          var receiptImage = '';
-          try {
-            receiptImage = window.AnteemoneeReceipt.render({
-              shopName: 'Anteemonee',
-              address: ['Student OS for Pakistan', 'FSc, Matric & Intermediate', 'support@anteemonee.com'],
-              title: 'Payment Receipt',
-              columns: [
-                { label: planLabel, value: fmtRs(currentAmount()) },
-                { label: 'Paid via ' + String(state.method || '').toUpperCase(), value: '' },
-                { label: 'Status', value: 'Pending activation' }
-              ],
-              totalLabel: 'Total Paid', total: fmtRs(currentAmount()),
-              subTotals: [
-                { label: 'Plan', value: state.plan === 'lifetime' ? 'Lifetime' : 'Exam' },
-                { label: 'Method', value: String(state.method || '').toUpperCase() }
-              ],
-              footerLines: [
-                { label: 'Receipt No', value: receipt },
-                { label: 'Issued', value: new Date().toLocaleDateString('en-PK') }
-              ],
-              thanks: 'THANK YOU!',
-              stamp: { text: 'PENDING', color: '#b45309' },
-              barcodeText: receipt
-            });
-          } catch (_) { receiptImage = ''; }
-
-          // Mirror into payment_receipts. Never block the payment on it.
-          try {
-            await state.db.from('payment_receipts').insert({
-              receipt_no: receipt,
-              user_id: state.user.id,
-              plan: state.plan,
-              exam_period: state.plan === 'exam' ? state.period : null,
-              plan_label: planLabel,
-              amount: currentAmount(),
-              method: state.method,
-              sender_number: sender || null,
-              sender_reference: sender || null,
-              proof_url: url,
-              receipt_image: receiptImage || null,
-              status: 'pending',
-              payment_request_id: (ins.data && ins.data[0] && ins.data[0].id) || null
-            });
-          } catch (_) { /* receipts table may not exist yet; the request itself is saved */ }
-
-          state.receipt = { no: receipt, image: receiptImage, planLabel: planLabel,
-                            amount: currentAmount(), method: state.method };
-          try {
-            localStorage.setItem('Anteemonee_last_receipt', JSON.stringify(state.receipt));
-          } catch (_) {}
-
-          var rn = document.getElementById('pp-success-receipt-no');
-          if (rn) rn.textContent = receipt;
-          var rm = document.getElementById('pp-success-receipt-meta');
-          if (rm) rm.textContent = planLabel + ' · ' + fmtRs(currentAmount()) + ' · ' + String(state.method || '').toUpperCase();
-          var pv = document.getElementById('pp-receipt-preview');
-          var pi = document.getElementById('pp-receipt-img');
-          if (receiptImage && pv && pi) { pi.src = receiptImage; pv.style.display = 'block'; }
-          show('pp-success');
-          try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { window.scrollTo(0, 0); }
+            code: state.promo ? state.promo.code : '',
+            ref_code: state.refCode
+          });
+          if (!r || !r.ok) { throw new Error((r && r.error) || 'Submission failed.'); }
+          state.file = null;
+          $('pay-drop').innerHTML = '<span id="pay-drop-text" class="ck-drop-hint"><span class="ck-icn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><span class="dtxt"><b>Tap to attach screenshot</b><small>PNG or JPG · max 5 MB</small></span></span>';
+          paintGate({ receiptNo: r.receiptNo, label: r.label || planLabel(state.plan) });
+          loadHistory();
         } catch (e) {
-          fail(e.message || 'Something went wrong. Please try again.');
-        } finally {
-          btn.disabled = false;
-          btn.textContent = old;
+          if (e && e.payload && e.payload.code === 'dup') {
+            paintGate({ receiptNo: e.payload.receiptNo, label: e.payload.label, at: e.payload.at });
+          } else {
+            msg('err', 'Submission failed: ' + ((e && e.message) || e));
+          }
         }
+        if (btn) { btn.disabled = false; btn.textContent = 'Submit for review'; }
       }
-
+      async function activateFree() {
+        var db = getDb();
+        if (!state.user || !db) { msg('err', 'Please sign in first.'); return; }
+        var btn = $('pay-submit');
+        if (btn) { btn.disabled = true; btn.textContent = 'Activating…'; }
+        msg('info', 'Activating premium…');
+        try {
+          var r = await fnCall('activate', {
+            plan: state.plan,
+            method: state.method,
+            code: state.promo ? state.promo.code : '',
+            ref_code: state.refCode
+          });
+          if (!r || !r.ok) throw new Error((r && r.error) || 'Activation failed.');
+          paintGate({ mode: 'active', title: 'Premium active', label: (r.label || planLabel(state.plan)), days: r.days, no: '' });
+          loadHistory();
+        } catch (e) {
+          msg('err', 'Activation failed: ' + ((e && e.message) || e));
+        }
+        if (btn) { btn.disabled = false; btn.textContent = 'Activate premium now'; }
+      }
+      function bindFile() {
+        var drop = $('pay-drop'), file = $('pay-file');
+        drop.addEventListener('click', function () { file.click(); });
+        file.addEventListener('change', function () {
+          var f = file.files && file.files[0];
+          if (!f) return;
+          state.file = f;
+          if (f.type.indexOf('image/') === 0) {
+            var rd = new FileReader();
+            rd.onload = function () {
+              $('pay-drop').innerHTML = '<img alt="screenshot preview"><div>' + f.name + ' · ' + Math.round(f.size / 1024) + ' KB · tap to change</div>';
+              $('pay-drop').querySelector('img').src = rd.result;
+            };
+            rd.readAsDataURL(f);
+          } else {
+            var t = $('pay-drop-text');
+            if (t) t.innerHTML = '<b>' + f.name + '</b><br>Tap to change file.';
+          }
+        });
+      }
+      function init() {
+        try {
+          var q = new URLSearchParams(location.search);
+          var plan = (q.get('plan') || q.get('planType') || q.get('billingCycle') || '').toLowerCase().trim();
+          if (plan === 'monthly' || plan === 'yearly') state.plan = plan;
+          else if (plan === 'all-access') state.plan = 'yearly';
+          state.refCode = refFromUrl();
+          resolveGift();
+          // Canonicalize: from whatever page the user opens the checkout, the
+          // address becomes /payment/<uid>/ — the real auth uid when known.
+          if (state.refCode && isUuidRef(state.refCode)) {
+            history.replaceState({}, '', canonicalPath(state.refCode));
+          } else if (location.pathname.indexOf('/payment/') === 0) {
+            var me = currentUidSync();
+            if (me) { state.refCode = me; history.replaceState({}, '', canonicalPath(me)); resolveGift(); }
+            else {
+              var tries = 0;
+              var t = setInterval(function () {
+                tries++;
+                var me2 = currentUidSync();
+                if (me2) {
+                  clearInterval(t);
+                  state.refCode = me2;
+                  history.replaceState({}, '', canonicalPath(me2));
+                  resolveGift();
+                } else if (tries > 45) { clearInterval(t); }
+              }, 300);
+            }
+          } else if (!state.refCode) {
+            // no code at all (typo url) → sign in first; /payment works as-is
+          }
+        } catch (_) {}
+        document.querySelectorAll('[data-cycle]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            state.plan = b.getAttribute('data-cycle');
+            paintSelection();
+            if (state.promo) revalidatePromo();
+          });
+        });
+        document.querySelectorAll('[data-method]').forEach(function (b) {
+          b.addEventListener('click', function () { state.method = b.getAttribute('data-method'); paintSelection(); });
+        });
+        var promoInput = $('promo-input'), promoBtn = $('promo-apply'), promoX = $('promo-remove');
+        function promoFail(why) {
+          var pm = $('promo-msg');
+          if (pm) { pm.className = 'ck-promo-msg show err'; pm.textContent = why; }
+          promoInput.classList.add('bad');
+          setTimeout(function () { promoInput.classList.remove('bad'); }, 1200);
+        }
+        async function applyPromo() {
+          var raw = (promoInput.value || '').trim();
+          if (!raw) { promoFail('Type a promo code first.'); return; }
+          var pm = $('promo-msg');
+          if (promoBtn) promoBtn.disabled = true;
+          if (pm) { pm.className = 'ck-promo-msg show'; pm.textContent = 'Checking…'; }
+          try {
+            var r = await fnCall('preview', { plan: state.plan, code: raw });
+            if (r && r.ok && r.kind && r.kind !== 'none') {
+              if (pm) { pm.className = 'ck-promo-msg'; pm.textContent = ''; }
+              state.promo = { code: r.code, kind: r.kind, percent: r.percent };
+              promoInput.value = r.code;
+              paintSelection();
+            } else {
+              state.promo = null;
+              paintSelection();
+              promoFail((r && r.error) || 'That code is not valid.');
+            }
+          } catch (e) {
+            promoFail('Could not reach the server. Try again.');
+          }
+          if (promoBtn) promoBtn.disabled = false;
+        }
+        async function revalidatePromo() {
+          try {
+            var r = await fnCall('preview', { plan: state.plan, code: state.promo.code });
+            if (r && r.ok && r.kind && r.kind !== 'none') {
+              state.promo = { code: r.code, kind: r.kind, percent: r.percent };
+            } else {
+              state.promo = null;
+            }
+          } catch (_) { /* offline: keep the current state.promo display */ }
+          paintSelection();
+        }
+        if (promoBtn) promoBtn.addEventListener('click', function () { applyPromo(); });
+        if (promoInput) promoInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } });
+        if (promoX) promoX.addEventListener('click', function () { state.promo = null; promoInput.value = ''; paintSelection(); });
+        $('pay-copy').addEventListener('click', function () {
+          var num = $('pay-acct-num').textContent || '';
+          function done() { $('pay-copy').textContent = 'Copied ✓'; setTimeout(function () { $('pay-copy').textContent = 'Copy number'; }, 1500); }
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(num).then(done, done);
+            else { var ta = document.createElement('textarea'); ta.value = num; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (_) {} document.body.removeChild(ta); done(); }
+          } catch (_) { done(); }
+        });
+        $('pay-submit').addEventListener('click', submitProof);
+        var swEl = $('ck-switch');
+        if (swEl) swEl.addEventListener('click', function () { state.plan = 'yearly'; paintSelection(); if (state.promo) revalidatePromo(); });
+        bindFile();
+        function renderLandingAuth() {
+          try {
+            var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+            var lo = $('landing-auth'), li = $('landing-auth-in');
+            if (!lo || !li) return;
+            if (user) {
+              lo.style.display = 'none';
+              li.style.display = 'flex';
+              var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+              var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+              var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+              var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? '';
+              var key = (user.id || '') + '|' + (imgUrl || '') + '|' + (fullName || username);
+              if (li.dataset.avatarKey === key) return;
+              li.dataset.avatarKey = key;
+              li.innerHTML = '<div class="landing-profile-dropdown" id="landing-profile-dropdown"><button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu"><div class="avatar-wrapper">' +
+                (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                '</div></button><div class="profile-dropdown" id="landing-profile-dropdown-menu"><div class="dropdown-header"><div class="dropdown-avatar">' +
+                (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                '</div><div class="dropdown-info"><span class="dropdown-name">' + (fullName || username) + '</span><span class="dropdown-email">' + (user.email || '') + '</span></div></div><div class="dropdown-divider"></div><a href="/account/" class="dropdown-item">Account</a><div class="dropdown-divider"></div><button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Log out</button></div></div>';
+            } else {
+              li.style.display = 'none';
+              li.dataset.avatarKey = '';
+              lo.style.display = 'flex';
+            }
+          } catch (_) {}
+        }
+        window.toggleLandingProfileDropdown = function () { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.toggle('open'); };
+        window.handleLandingLogout = function () { try { if (typeof handleLogout === 'function') { handleLogout(); return; } } catch (_) {} window.location.href = '/'; };
+        document.addEventListener('click', function (e) {
+          var c = document.getElementById('landing-profile-dropdown');
+          var d = document.getElementById('landing-profile-dropdown-menu');
+          if (c && d && !c.contains(e.target)) d.classList.remove('open');
+        });
+        renderLandingAuth();
+        refreshAuth();
+        paintSelection();
+        var n = 0;
+        var t = setInterval(function () {
+          n++;
+          renderLandingAuth(); refreshAuth();
+          if (n > 40 || window.__authReady === true) clearInterval(t);
+        }, 300);
+        var hdr = $('site-header');
+        window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+      }
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
       else init();
-
-      // Header shadow on scroll + mobile menu handled by app.js.
-      var hdr = document.getElementById('site-header');
-      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
   </script>
-  <script src="../js/login-modal.js?v=5"></script>
-  <script src="../js/forgot-modal.js?v=2"></script>
-  <script src="../js/signup-modal.js?v=3"></script>
-  <script src="../js/header-ai-dropdown.js?v=7"></script>
 </body>
 </html>

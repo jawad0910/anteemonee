@@ -184,13 +184,13 @@
   async function promptForKey() {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:6000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,6,16,0.92)';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:6000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.92)';
       overlay.innerHTML = `
         <div style="width:100%;max-width:420px;background:var(--liquid-bg-strong, var(--bg-secondary));border:1px solid var(--liquid-border, var(--border));border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
           <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">Add your OpenAI API key</h3>
           <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px">Live call needs your own OpenAI key. Get it at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent);text-decoration:underline">platform.openai.com/api-keys</a>. We store it only on your device.</p>
           <input type="password" id="rt-key-input" placeholder="sk-proj-..." style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--liquid-border-soft, var(--border));background:var(--surface-recessed, var(--bg));color:var(--text);font-size:13px;box-sizing:border-box;margin-bottom:8px">
-          <div id="rt-key-err" style="font-size:12px;color:#FF6675;display:none;margin-bottom:8px"></div>
+          <div id="rt-key-err" style="font-size:12px;color:var(--error);display:none;margin-bottom:8px"></div>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
             <button id="rt-key-cancel" style="padding:8px 16px;border-radius:999px;border:1px solid var(--liquid-border-soft);background:transparent;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
             <button id="rt-key-save" style="padding:8px 18px;border-radius:999px;border:none;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;cursor:pointer">Save & Call</button>

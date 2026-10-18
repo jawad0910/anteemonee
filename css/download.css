@@ -7,7 +7,7 @@
   padding-top: 64px;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Noto Emoji', sans-serif;
 }
 
 /* â”€â”€â”€ Hero â€” neomorphic â”€â”€â”€ */
@@ -18,7 +18,7 @@
   overflow: hidden;
 }
 .download-hero h1 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family:'Fraunces', Georgia, 'Noto Emoji', serif;
   font-size: 48px;
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -83,9 +83,9 @@
   box-shadow: var(--neo-shadow-recessed-sm);
 }
 .platform-icon svg { width: 32px; height: 32px; }
-.platform-icon.android { background: rgba(61, 220, 132, 0.1); color: #3DDC84; }
+.platform-icon.android { background: rgba(180,180,180, 0.1); color: #b4b4b4; }
 .platform-icon.ios { background: var(--surface); color: var(--text); }
-.platform-icon.windows { background: rgba(2, 132, 199, 0.1); color: var(--cyan); }
+.platform-icon.windows { background: rgba(109,109,109, 0.1); color: var(--cyan); }
 .platform-icon.macos { background: var(--surface); color: var(--text); }
 
 /* â”€â”€â”€ Card Content â”€â”€â”€ */
@@ -145,13 +145,13 @@
   box-shadow: 0 6px 24px rgba(0,0,0,0.3), var(--neo-shadow-raised) !important;
   transform: translateY(-1px);
 }
-.rejected-badge { background: rgba(255, 102, 117, 0.1) !important; color: var(--error) !important; }
+.rejected-badge { background: rgba(136,136,136, 0.1) !important; color: var(--error) !important; }
 .btn-reapply {
-  background: rgba(255, 102, 117, 0.1) !important;
+  background: rgba(136,136,136, 0.1) !important;
   color: var(--error) !important;
   box-shadow: var(--neo-shadow-raised-sm) !important;
 }
-.btn-reapply:hover { background: rgba(255, 102, 117, 0.2) !important; box-shadow: var(--neo-shadow-raised) !important; }
+.btn-reapply:hover { background: rgba(136,136,136, 0.2) !important; box-shadow: var(--neo-shadow-raised) !important; }
 
 /* â”€â”€â”€ Beta Modal â€” neomorphic â”€â”€â”€ */
 .beta-modal { text-align: center; max-width: 420px; }
@@ -181,7 +181,7 @@
   font-size: 13px;
   margin-bottom: 12px;
   padding: 10px 14px;
-  background: rgba(255, 102, 117, 0.08);
+  background: rgba(136,136,136, 0.08);
   border-radius: var(--radius-sm);
   box-shadow: var(--neo-shadow-recessed-sm);
 }
@@ -190,7 +190,7 @@
   font-size: 13px;
   margin-bottom: 12px;
   padding: 10px 14px;
-  background: rgba(53, 211, 154, 0.08);
+  background: rgba(173,173,173, 0.08);
   border-radius: var(--radius-sm);
   box-shadow: var(--neo-shadow-recessed-sm);
 }

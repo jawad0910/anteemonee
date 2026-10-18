@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
     (function () {
       try {
         var m = null;
@@ -12,312 +13,384 @@
       } catch (_) {}
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Premium Plans - Anteemonee</title>
-  <meta name="description" content="Choose an Anteemonee plan: an Exam plan for a single exam period, or Lifetime access forever.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium - Anteemonee</title>
+  <meta name="description" content="Free forever, or unlimited AI with Monthly or Yearly premium, paid over Easypaisa or JazzCash.">
+  <meta name="theme-color" content="#000000">
+  <link rel="canonical" href="https://anteemonee.com/premium/">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=34">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=36">
   <style>
-    body { font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); }
-    .wrap { max-width: 940px; margin: 0 auto; padding: 40px 20px 80px; }
-
-    .px-head { text-align: center; margin-bottom: 34px; }
-    .px-eyebrow {
-      display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
-      text-transform: uppercase; color: var(--text-muted, #71717A); margin-bottom: 12px;
+    /* Same type system as the homepage + payment checkout. */
+    :root {
+      --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
+                 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+      --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+                      'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
+      --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+                      'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
     }
-    .px-title {
-      font-family: var(--font-display, inherit);
-      font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em;
-      margin: 0 0 10px; color: var(--text);
-    }
-    .px-sub { font-size: 15px; line-height: 1.6; color: var(--text-secondary); margin: 0 auto; max-width: 520px; }
-
-    /* Plan choice */
-    .px-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
-    .px-plan {
-      position: relative; display: block; cursor: pointer;
-      padding: 22px 22px 20px;
-      background: var(--bg-card, #0d0d0f);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), border-color 0.25s ease, box-shadow 0.3s cubic-bezier(0.22,1,0.36,1);
-    }
-    .px-plan:hover { transform: translateY(-3px); box-shadow: 0 10px 34px rgba(0,0,0,0.28); }
-    .px-plan input { position: absolute; opacity: 0; pointer-events: none; }
-    .px-plan-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .px-plan-top > span:first-child { min-width: 0; }
-    .px-plan-name { display: block; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
-    .px-plan-for { display: block; font-size: 12.5px; color: var(--text-muted, #71717A); margin-top: 3px; }
-    .px-radio {
-      flex: none; width: 22px; height: 22px; border-radius: 50%;
-      border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center;
-      transition: border-color 0.2s ease, background-color 0.2s ease;
-    }
-    .px-radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--on-accent, #000); transform: scale(0); transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1); }
-    .px-plan input:checked ~ .px-plan-top .px-radio { background: var(--accent); border-color: var(--accent); }
-    .px-plan input:checked ~ .px-plan-top .px-radio::after { transform: scale(1); }
-    .px-plan:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-    .px-plan:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-    .px-price { display: flex; align-items: baseline; gap: 8px; margin: 16px 0 4px; }
-    .px-amount { font-family: var(--font-display, inherit); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
-    .px-per { font-size: 13px; color: var(--text-muted, #71717A); }
-
-    /* Exam period picker */
-    .px-periods { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: none; }
-    .px-choice[data-active="exam"] .px-periods { display: block; }
-    .px-periods-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; }
-    .px-period-list { display: flex; flex-direction: column; gap: 7px; }
-    .px-period {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 11px 13px; cursor: pointer;
-      border: 1px solid var(--border); border-radius: 11px;
-      transition: border-color 0.2s ease, background-color 0.2s ease;
-    }
-    .px-period:hover { background: var(--surface, #141416); }
-    .px-period input { position: absolute; opacity: 0; pointer-events: none; }
-    .px-period-name { display: block; font-size: 13.5px; color: var(--text); font-weight: 500; }
-    .px-period-ends { display: block; font-size: 11.5px; color: var(--text-muted, #71717A); margin-top: 2px; }
-    .px-period-price { font-size: 13.5px; font-weight: 650; color: var(--text); flex: none; }
-    .px-period:has(input:checked) { border-color: var(--accent); background: var(--surface, #141416); }
-    .px-period:has(input:checked) .px-period-name::after { content: ' \2713'; font-weight: 700; }
-    .px-period:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-    .px-feats { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-    .px-feats li { position: relative; padding-left: 24px; font-size: 13.5px; line-height: 1.5; color: var(--text-secondary); }
-    .px-feats li::before {
-      content: ''; position: absolute; left: 0; top: 1px;
-      width: 15px; height: 15px; border-radius: 50%;
-      background: var(--accent-soft, rgba(255,255,255,0.12));
-    }
-    .px-feats li::after {
-      content: ''; position: absolute; left: 4.5px; top: 5px;
-      width: 6px; height: 3px;
-      border-left: 1.6px solid var(--text); border-bottom: 1.6px solid var(--text);
-      transform: rotate(-45deg);
-    }
-
-    /* Summary + CTA */
-    .px-summary {
-      padding: 20px 22px; border-radius: 18px;
-      background: var(--bg-card, #0d0d0f); border: 1px solid var(--border);
-      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-    }
-    .px-sum-main { flex: 1 1 240px; min-width: 0; }
-    .px-sum-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted, #71717A); }
-    .px-sum-plan { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); margin-top: 4px; }
-    .px-sum-note { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
-    .px-cta {
-      flex: none; display: inline-flex; align-items: center; gap: 9px;
-      padding: 14px 24px; border-radius: 999px;
-      background: var(--accent); color: var(--on-accent, #fff);
-      font-size: 15px; font-weight: 650; letter-spacing: -0.01em; text-decoration: none;
-      border: 1px solid var(--accent); cursor: pointer;
-      font-family: inherit;
-      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease, box-shadow 0.3s ease;
-    }
-    .px-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,0,0,0.3); opacity: 0.94; }
-    .px-cta:active { transform: translateY(0) scale(0.98); }
-    .px-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-    .px-steps { margin-top: 30px; }
-    .px-steps-title { font-size: 13px; font-weight: 650; color: var(--text); margin-bottom: 14px; }
-    .px-step-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .px-step { padding: 15px 16px; border: 1px solid var(--border); border-radius: 13px; background: var(--bg-card, #0d0d0f); }
-    .px-step b { display: block; font-size: 13px; color: var(--text); margin-bottom: 5px; }
-    .px-step span { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
-    .px-step-n {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 20px; height: 20px; border-radius: 6px; margin-bottom: 9px;
-      background: var(--accent-soft, rgba(255,255,255,0.12));
-      font-size: 11px; font-weight: 700; color: var(--text);
-    }
-
-    .px-foot { margin-top: 26px; text-align: center; font-size: 12.5px; color: var(--text-muted, #71717A); line-height: 1.6; }
-    .px-foot a { color: var(--text-secondary); }
-
-    .px-back {
-      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px;
-      font-size: 13.5px; color: var(--text-secondary); text-decoration: none;
-      transition: color 0.2s ease, transform 0.2s ease;
-    }
-    .px-back:hover { color: var(--text); transform: translateX(-2px); }
-
-    [data-theme="light"] .px-cta { --on-accent: #fff; }
-
-    @media (max-width: 760px) {
-      .wrap { padding: 28px 16px 60px; }
-      .px-choice { grid-template-columns: 1fr; }
-      .px-step-list { grid-template-columns: 1fr; }
-      .px-summary { flex-direction: column; align-items: stretch; }
-      .px-cta { justify-content: center; width: 100%; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .px-plan, .px-cta, .px-back, .px-radio, .px-radio::after { transition: none; }
-    }
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { background: var(--bg) !important; font-family: var(--font-reading); }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#000;--bg-card-hover:#000;--surface:#000;--surface-recessed:#000;--footer-bg:#000;--liquid-border-soft:rgba(255,255,255,.075);--liquid-border:rgba(255,255,255,.14);--liquid-bg-soft:rgba(255,255,255,.05)}
+    .pr-wrap { max-width: 1120px; margin: 0 auto; padding: 104px 24px 80px; }
+    .pr-title { font-family: var(--font-display); font-size: clamp(1.9rem, 3.2vw, 2.5rem); font-weight: 800; letter-spacing: -.03em; margin: 4px 4px 18px; }
+    .pr-hr { height: 1px; background: var(--liquid-border-soft); margin: 0 4px 26px; }
+    .pr-status { display: none; margin: 0 0 22px; font-size: 13.5px; font-weight: 600; border-radius: 12px; padding: 12px 16px; background: rgba(123,123,123,.12); color: var(--accent-hi); border: 1px solid rgba(123,123,123,.25); }
+    .pr-status.show { display: block; }
+    .pr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .pr-card { position: relative; border-radius: 20px; background: var(--bg-card-hover); border: 1px solid var(--liquid-border-soft); padding: 24px 22px; display: flex; flex-direction: column; transition: border-color .15s, transform .15s; }
+    .pr-card:hover { border-color: var(--liquid-border); transform: translateY(-2px); }
+    .pr-card.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .pr-card.featured:hover { border-color: var(--accent); }
+    .pr-flag { position: absolute; top: 16px; right: 16px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 5px 12px; }
+    .pr-name { font-family: var(--font-display); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text); }
+    .pr-price { font-family: var(--font-mono); font-size: 2rem; font-weight: 800; letter-spacing: -.01em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    .pr-price small { font-family: var(--font-reading); font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .pr-per { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; }
+    .pr-save { display: inline-block; align-self: flex-start; margin-top: 12px; font-size: 11px; font-weight: 800; color: var(--accent-hi); background: var(--accent-soft); border: 1px solid rgba(123,123,123,.3); border-radius: 999px; padding: 4px 12px; }
+    .pr-feats { list-style: none; margin: 18px 0 22px; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+    .pr-feats li { display: flex; gap: 10px; align-items: flex-start; }
+    .pr-feats .tick { flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-hi); display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; margin-top: 1px; }
+    .pr-btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 46px; border-radius: 12px; font-size: 14.5px; font-weight: 700; border: 1px solid var(--liquid-border); background: var(--liquid-bg-soft); color: var(--text); cursor: pointer; text-decoration: none; margin-top: auto; transition: all .15s; }
+    .pr-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .pr-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .pr-btn.primary:hover { background: var(--accent-hover); }
+    .pr-btn[disabled] { opacity: .55; cursor: default; transform: none; }
+    .pr-compare { margin-top: 40px; border: 1px solid var(--liquid-border-soft); border-radius: 20px; overflow: hidden; background: var(--bg-card-hover); }
+    .pr-compare table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .pr-compare th, .pr-compare td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--liquid-border-soft); }
+    .pr-compare thead th { font-family: var(--font-display); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--text); }
+    .pr-compare thead th:not(:first-child), .pr-compare td:not(:first-child) { text-align: center; }
+    .pr-compare tbody tr:last-child th, .pr-compare tbody tr:last-child td { border-bottom: none; }
+    .pr-compare .yes { color: var(--accent-hi); font-weight: 800; }
+    .pr-sub { font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+    .pr-faq { max-width: 820px; margin: 48px 0 0; }
+    .pr-faq h2 { margin: 0 0 10px; }
+    .faq-item { border-bottom: 1px solid var(--liquid-border-soft); }
+    .faq-q { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 4px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; background: none; border: none; font-family: inherit; }
+    .faq-q span:last-child { font-size: 20px; }
+    .faq-a { display: none; padding: 0 4px 18px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 720px; }
+    .faq-item.open .faq-a { display: block; }
+    .footer { margin-top: 64px; }
+    @media (max-width: 900px) { .pr-grid { grid-template-columns: 1fr; max-width: 480px; margin-left: auto; margin-right: auto; } .pr-wrap { padding-top: 88px; } .pr-compare { overflow-x: auto; } }
   </style>
+  <link rel="stylesheet" href="../css/header.css?v=8">
+  <script src="../js/header-notifications.js?v=3" defer></script>
+<!--CSS-->
 </head>
 <body>
-  <div class="wrap">
-    <a class="px-back" href="../index.html">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-      Back to home
-    </a>
-
-    <div class="px-head">
-      <span class="px-eyebrow">Premium</span>
-      <h1 class="px-title">Pick the plan that fits you</h1>
-      <p class="px-sub">Pay for one exam period, or unlock everything forever. Either way you get the full AI tutor, past papers and flashcards.</p>
-    </div>
-
-    <div class="px-choice" id="px-choice" data-active="exam">
-      <label class="px-plan">
-        <input type="radio" name="plan" value="exam" checked>
-        <span class="px-plan-top">
-          <span>
-            <span class="px-plan-name">Exam Plan</span>
-            <span class="px-plan-for">Everything until your exams finish</span>
-          </span>
-          <span class="px-radio" aria-hidden="true"></span>
-        </span>
-        <span class="px-price">
-          <span class="px-amount" id="px-exam-amount">Rs 999</span>
-          <span class="px-per" id="px-exam-per">one exam period</span>
-        </span>
-        <span class="px-periods">
-          <span class="px-periods-label">Choose your exam period</span>
-          <span class="px-period-list" id="px-period-list"></span>
-        </span>
-        <ul class="px-feats">
-          <li>Full AI tutor, textbook RAG and image reading</li>
-          <li>Past papers, notes and flashcards for your board</li>
-          <li>Access ends automatically when the period ends</li>
-        </ul>
-      </label>
-
-      <label class="px-plan">
-        <input type="radio" name="plan" value="lifetime">
-        <span class="px-plan-top">
-          <span>
-            <span class="px-plan-name">Lifetime Access</span>
-            <span class="px-plan-for">Every subject, every exam, forever</span>
-          </span>
-          <span class="px-radio" aria-hidden="true"></span>
-        </span>
-        <span class="px-price">
-          <span class="px-amount" id="px-life-amount">Rs 4,999</span>
-          <span class="px-per">pay once</span>
-        </span>
-        <ul class="px-feats">
-          <li>Everything in the Exam Plan, with no expiry</li>
-          <li>All future subjects, boards and new features</li>
-          <li>One payment, no renewals</li>
-        </ul>
-      </label>
-    </div>
-
-    <div class="px-summary">
-      <div class="px-sum-main">
-        <div class="px-sum-label">Your selection</div>
-        <div class="px-sum-plan" id="px-sum-plan">Exam Plan</div>
-        <div class="px-sum-note" id="px-sum-note">Pick an exam period to continue.</div>
-      </div>
-      <button class="px-cta" id="px-go" type="button">
-        Continue to payment
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      </button>
-    </div>
-
-    <div class="px-steps">
-      <div class="px-steps-title">How payment works</div>
-      <div class="px-step-list">
-        <div class="px-step"><span class="px-step-n">1</span><b>Send the payment</b><span>Transfer with Easypaisa or JazzCash to the account shown on the next screen.</span></div>
-        <div class="px-step"><span class="px-step-n">2</span><b>Upload the screenshot</b><span>Attach your payment receipt so we can verify it.</span></div>
-        <div class="px-step"><span class="px-step-n">3</span><b>We activate your plan</b><span>We review the proof and switch your account on, usually within a few hours.</span></div>
+  <header class="header" id="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo-link">
+        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
+        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
+      </a>
+      <nav class="landing-nav" aria-label="Primary">
+        <div class="nav-drop">
+          <a href="../index.html#features">Library <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ebooks/">eBooks</a>
+            <a href="../flashcards/">Flashcards</a>
+            <a href="../past-papers/">Past Papers</a>
+          </div>
+        </div>
+        <div class="nav-drop">
+          <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
+          <div class="nav-menu">
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../ai-examiner/">AI Examiner</a>
+          </div>
+        </div>
+        <a href="../ai-test-builder/">AI Test Builder</a>
+        <a href="../slame/">Slame</a>
+      <a href="../century-club/">Century Club</a>
+        <a href="../premium/" class="is-current" aria-current="page">Premium</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div id="landing-auth" class="auth-logged-out" style="display:none">
+          <a href="../pages/login.html" class="btn-login">Log in</a>
+          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+        </div>
+        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
+        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
       </div>
     </div>
-
-    <p class="px-foot">Questions about a plan? <a href="../index.html#faq">Read the FAQ</a> or message us on WhatsApp.</p>
+  </header>
+  <div class="mobile-menu" id="mobile-menu">
+    <div class="mobile-acc-dropdown">
+      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
+      <div class="mobile-acc-list">
+        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
+        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
+        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
+      </div>
+    </div>
+    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
+    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
+    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
+    <a href="../slame/" class="mobile-nav-link">Slame</a>
+    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
+    <a href="../premium/" class="mobile-nav-link is-current">Premium</a>
+    <div class="mobile-cta">
+      <a href="../pages/login.html" class="btn-login">Log in</a>
+      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
+    </div>
   </div>
-
-  <script src="../js/plans.js?v=1"></script>
+<!--HEADER-->
+<!--BODY-->
+  <main class="pr-wrap">
+    <h1 class="pr-title">Premium</h1>
+    <div class="pr-hr"></div>
+    <div class="pr-status" id="pr-status"></div>
+<!--CARDS-->
+    <div class="pr-grid" id="pr-grid">
+      <div class="pr-card" data-plan-card="free">
+        <div class="pr-name">Free</div>
+        <div class="pr-price"><span data-price="free">Rs 0</span> <small>forever</small></div>
+        <div class="pr-per">No card · no expiry</div>
+        <ul class="pr-feats">
+          <li><span class="tick">✓</span> Full library: eBooks, past papers, flashcards</li>
+          <li><span class="tick">✓</span> <span><span data-quota="chat">30</span> AI tutor messages / day</span></li>
+          <li><span class="tick">✓</span> <span><span data-quota="test">1</span> AI test build / day</span></li>
+          <li><span class="tick">✓</span> <span><span data-quota="exam">1</span> AI Examiner run / day</span></li>
+        </ul>
+        <a class="pr-btn" data-plan-cta="free" href="../pages/signup.html">Start free</a>
+      </div>
+      <div class="pr-card" data-plan-card="monthly">
+        <div class="pr-name">Monthly</div>
+        <div class="pr-price"><span data-price="monthly">Rs 299</span> <small>/ 30 days</small></div>
+        <div class="pr-per">Cancel anytime</div>
+        <ul class="pr-feats">
+          <li><span class="tick">✓</span> Everything in Free</li>
+          <li><span class="tick">✓</span> Unlimited AI tutor</li>
+          <li><span class="tick">✓</span> Unlimited AI test builder</li>
+          <li><span class="tick">✓</span> Unlimited AI Examiner</li>
+        </ul>
+        <a class="pr-btn" data-plan-cta="monthly" href="../payment/?plan=monthly">Choose Monthly</a>
+      </div>
+      <div class="pr-card featured" data-plan-card="yearly">
+        <span class="pr-flag">Best value</span>
+        <div class="pr-name">Yearly</div>
+        <div class="pr-price"><span data-price="yearly">Rs 2,499</span> <small>/ 365 days</small></div>
+        <div class="pr-per">One payment</div>
+        <span class="pr-save" data-save-badge>Save 30% vs monthly</span>
+        <ul class="pr-feats">
+          <li><span class="tick">✓</span> Everything in Monthly</li>
+          <li><span class="tick">✓</span> All subjects, all year</li>
+        </ul>
+        <a class="pr-btn primary" data-plan-cta="yearly" href="../payment/?plan=yearly">Choose Yearly</a>
+      </div>
+    </div>
+<!--COMPARE-->
+    <div class="pr-compare">
+      <table>
+        <thead><tr><th>Feature</th><th>Free</th><th>Monthly</th><th>Yearly</th></tr></thead>
+        <tbody>
+          <tr><td>eBooks, past papers, flashcards</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>AI tutor messages / day</td><td>30</td><td class="yes">Unlimited</td><td class="yes">Unlimited</td></tr>
+          <tr><td>AI test builds / day</td><td>1</td><td class="yes">Unlimited</td><td class="yes">Unlimited</td></tr>
+          <tr><td>AI Examiner run / day</td><td>1</td><td class="yes">Unlimited</td><td class="yes">Unlimited</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pr-faq" id="pr-faq">
+      <h2 class="pr-sub">Questions, answered</h2>
+      <div class="faq-item"><button class="faq-q">How do I pay?<span>+</span></button><div class="faq-a">Choose Monthly or Yearly, send the exact amount to our Easypaisa or JazzCash account shown on the payment page, then upload a screenshot of the transfer. Our team verifies it, usually within a few hours, and your premium starts immediately on approval.</div></div>
+      <div class="faq-item"><button class="faq-q">When does my premium start and end?<span>+</span></button><div class="faq-a">Monthly lasts 30 days and Yearly lasts 365 days, counted from the moment your payment is approved, not from when you send it. Your exact expiry date is on your Account page.</div></div>
+      <div class="faq-item"><button class="faq-q">What happens when premium expires?<span>+</span></button><div class="faq-a">Nothing breaks. Your account returns to the Free plan with the same daily AI limits. Your study data, streaks and history stay exactly as they are. Renew anytime to go unlimited again.</div></div>
+      <div class="faq-item"><button class="faq-q">Can I get a refund?<span>+</span></button><div class="faq-a">If your payment was approved by mistake or premium never activated, contact support with your receipt number and we will make it right. Refund requests are handled case by case within 7 days of approval.</div></div>
+    </div>
+  </main>
+<!--FOOTER-->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="brand-stack"><span class="logo-text">Anteemonee</span></span><span class="logo-sub">Student OS</span></span></a>
+          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <a href="../index.html">Home</a>
+            <a href="../premium/">Premium</a>
+            <a href="../century-club/">Century Club</a>
+          </div>
+          <div class="footer-col">
+            <h4>Features</h4>
+            <a href="../ai-chat/">AI Tutor</a>
+            <a href="../flashcards/">Flashcards</a>
+        </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="/privacy/">Privacy Policy</a>
+            <a href="/terms/">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
+    </div>
+  </footer>
+<!--SCRIPTS-->
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=37"></script>
+  <script src="../js/login-modal.js?v=5"></script>
+  <script src="../js/forgot-modal.js?v=2"></script>
+  <script src="../js/signup-modal.js?v=3"></script>
+  <script src="../js/plans.js?v=4"></script>
+<!--PAGEJS-->
   <script>
     (function () {
-      'use strict';
-      var P = window.ANTEEM_PLANS || {};
-      var periods = Array.isArray(P.examPeriods) ? P.examPeriods : [];
-      var fmt = P.fmt || function (n) { return 'Rs ' + n; };
-      var choice = document.getElementById('px-choice');
-      var list = document.getElementById('px-period-list');
-      var state = { plan: 'exam', period: (periods[0] && periods[0].id) || '' };
-
-      function endLabel(iso) {
+      function renderLandingAuth() {
         try {
-          return 'Access until ' + new Date(iso).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' });
-        } catch (_) { return ''; }
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            loggedIn.innerHTML = '<div class="landing-profile-dropdown" id="landing-profile-dropdown">'
+              + '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu"><div class="avatar-wrapper"><div class="avatar-fallback">' + initial + '</div></div></button>'
+              + '<div class="profile-dropdown" id="landing-profile-dropdown-menu">'
+              + '<div class="dropdown-header"><div class="dropdown-info"><span class="dropdown-name">' + (fullName || username) + '</span><span class="dropdown-email">' + (user.email || '') + '</span></div></div>'
+              + '<div class="dropdown-divider"></div>'
+              + '<a href="../account/" class="dropdown-item">Account</a>'
+              + '<a href="../premium/" class="dropdown-item">Premium</a>'
+              + '<div class="dropdown-divider"></div>'
+              + '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">Log out</button>'
+              + '</div></div>';
+            loggedIn.style.display = 'block';
+          } else { loggedIn.style.display = 'none'; loggedOut.style.display = 'flex'; }
+        } catch (_) {}
       }
-
-      function renderPeriods() {
-        if (!list) return;
-        if (!periods.length) {
-          list.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted)">Exam periods are loading…</div>';
-          return;
-        }
-        list.innerHTML = periods.map(function (p) {
-          return '<label class="px-period">'
-            + '<input type="radio" name="period" value="' + p.id + '"' + (p.id === state.period ? ' checked' : '') + '>'
-            + '<span><span class="px-period-name">' + p.label + '</span>'
-            + '<span class="px-period-ends">' + endLabel(p.endsAt) + '</span></span>'
-            + '<span class="px-period-price">' + fmt(p.price) + '</span>'
-            + '</label>';
-        }).join('');
-        Array.prototype.forEach.call(list.querySelectorAll('input[name="period"]'), function (r) {
-          r.addEventListener('change', function () { state.period = r.value; sync(); });
-        });
+      window.toggleLandingProfileDropdown = function () { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.toggle('open'); };
+      window.handleLandingLogout = function () { try { if (typeof handleLogout === 'function') { handleLogout(); return; } } catch (_) {} window.location.href = '../index.html'; };
+      // Paid-plan CTAs carry the receiving account in the URL:
+      // logged in → /payment/<your-uid>/?plan=…, guest → /payment/?plan=…
+      // (the checkout resolves and canonicalizes the uid after sign-in).
+      function primeUid() {
+        try {
+          var keys = Object.keys(localStorage).filter(function (k) { return k.indexOf('sb-zkuytvjeqkpexcbyoyhz-auth-token') === 0; });
+          for (var i = 0; i < keys.length; i++) {
+            var j = JSON.parse(localStorage.getItem(keys[i]) || '{}');
+            var id = j && j.user && j.user.id;
+            if (typeof id === 'string' && id.length > 8) return id;
+          }
+        } catch (_) {}
+        return (typeof currentUser !== 'undefined' && currentUser && currentUser.id) || '';
       }
-
-      function sync() {
-        var planEl = document.querySelector('input[name="plan"]:checked');
-        state.plan = planEl ? planEl.value : 'exam';
-        choice.setAttribute('data-active', state.plan);
-
-        var per = P.periodById ? P.periodById(state.period) : null;
-        var sumPlan = document.getElementById('px-sum-plan');
-        var sumNote = document.getElementById('px-sum-note');
-        var examAmt = document.getElementById('px-exam-amount');
-
-        if (state.plan === 'lifetime') {
-          sumPlan.textContent = 'Lifetime Access';
-          sumNote.textContent = 'One payment of ' + fmt(P.lifetimePrice || 4999) + '. Yours forever, no renewal.';
-        } else if (per) {
-          sumPlan.textContent = 'Exam Plan - ' + per.label;
-          sumNote.textContent = fmt(per.price) + '. ' + endLabel(per.endsAt) + '.';
-          if (examAmt) examAmt.textContent = fmt(per.price);
-        } else {
-          sumPlan.textContent = 'Exam Plan';
-          sumNote.textContent = 'Pick an exam period to continue.';
-        }
-        var lifeAmt = document.getElementById('px-life-amount');
-        if (lifeAmt) lifeAmt.textContent = fmt(P.lifetimePrice || 4999);
-      }
-
-      Array.prototype.forEach.call(document.querySelectorAll('input[name="plan"]'), function (r) {
-        r.addEventListener('change', sync);
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('[data-plan-cta="monthly"],[data-plan-cta="yearly"]') : null;
+        if (!a) return;
+        var uid = primeUid();
+        a.setAttribute('href', (uid ? '/payment/' + uid + '/' : '/payment/') + '?plan=' + a.getAttribute('data-plan-cta'));
       });
-
-      var go = document.getElementById('px-go');
-      if (go) {
-        go.addEventListener('click', function () {
-          var base = (typeof BASE !== 'undefined' && BASE) ? BASE : '';
-          var q = '?plan=' + encodeURIComponent(state.plan);
-          if (state.plan === 'exam' && state.period) q += '&period=' + encodeURIComponent(state.period);
-          window.location.href = base + '/payment/index.html' + q;
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () { tries++; renderLandingAuth(); if (tries > 40 || window.__authReady === true) clearInterval(timer); }, 300);
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+      document.addEventListener('click', function (e) {
+        var d = document.getElementById('landing-profile-dropdown');
+        var m = document.getElementById('landing-profile-dropdown-menu');
+        if (d && m && !d.contains(e.target)) m.classList.remove('open');
+        var q = e.target && e.target.closest ? e.target.closest('.faq-q') : null;
+        if (q) { var item = q.closest('.faq-item'); if (item) item.classList.toggle('open'); }
+      });
+    })();
+  </script>
+<!--STATUSJS-->
+  <script>
+    (function () {
+      function fmtRs(n) {
+        if (window.ANTEEM_PLANS && window.ANTEEM_PLANS.fmt) return window.ANTEEM_PLANS.fmt(n);
+        try { return 'Rs ' + Number(n).toLocaleString('en-PK'); } catch (_) { return 'Rs ' + n; }
+      }
+      function paintPrices() {
+        try {
+          var P = window.ANTEEM_PLANS || {};
+          var plans = P.plans || { monthly: { price: 299 }, yearly: { price: 2499 } };
+          document.querySelectorAll('[data-price="monthly"]').forEach(function (el) { el.textContent = fmtRs(plans.monthly.price); });
+          document.querySelectorAll('[data-price="yearly"]').forEach(function (el) { el.textContent = fmtRs(plans.yearly.price); });
+          var save = document.querySelector('[data-save-badge]');
+          if (save && plans.monthly && plans.yearly) {
+            var pct = Math.round((1 - plans.yearly.price / (plans.monthly.price * 12)) * 100);
+            if (pct > 0) save.textContent = 'Save ' + pct + '% vs monthly';
+          }
+        } catch (_) {}
+      }
+      function setStatus(kind, html) {
+        var el = document.getElementById('pr-status');
+        if (!el) return;
+        el.className = 'pr-status show ' + (kind || '');
+        el.innerHTML = html;
+      }
+      function markCurrent(plan) {
+        document.querySelectorAll('[data-plan-card]').forEach(function (card) {
+          var isCur = card.getAttribute('data-plan-card') === plan;
+          var cta = card.querySelector('[data-plan-cta]');
+          if (!cta) return;
+          if (isCur) {
+            cta.setAttribute('disabled', 'disabled');
+            cta.removeAttribute('href');
+            cta.textContent = plan === 'free' ? 'Current plan' : 'Premium active';
+          }
         });
       }
-
-      renderPeriods();
-      sync();
+      function setFreeCta(href, label) {
+        var cta = document.querySelector('[data-plan-cta="free"]');
+        if (!cta) return;
+        cta.removeAttribute('disabled');
+        cta.setAttribute('href', href);
+        cta.textContent = label;
+      }
+      async function paintStatus() {
+        paintPrices();
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          // Signed out: keep the signup link exactly as designed.
+          if (!user || typeof db === 'undefined' || !db) return;
+          var ent = null;
+          try { var r = await db.rpc('get_entitlement_snapshot'); ent = r && r.data ? r.data : null; } catch (_) {}
+          var plan = (ent && ent.plan_type) || 'free';
+          var paid = (typeof Access !== 'undefined' && Access.isPaidEntitlement) ? Access.isPaidEntitlement(ent) : (plan === 'monthly' || plan === 'yearly');
+          if (paid) {
+            var exp = ent.premium_expires_at || ent.exam_ends_at || null;
+            var expTxt = '';
+            try { if (exp) expTxt = ' · ends ' + new Date(exp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch (_) {}
+            setStatus('paid', 'Premium active · ' + plan + expTxt);
+            markCurrent(plan);
+            setFreeCta('../account/', 'Manage plan');
+            return;
+          }
+          try {
+            var pend = await db.from('payment_requests').select('plan,amount,status,created_at').eq('user_id', user.id).eq('status', 'pending').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (pend && pend.data) {
+              setStatus('pending', 'Payment under review · ' + fmtRs(pend.data.amount || 0) + ' · premium starts once it is approved');
+            }
+          } catch (_) {}
+          // Any signed-in user on the free plan: never link Start free to signup.
+          markCurrent('free');
+        } catch (_) {}
+      }
+      var n = 0;
+      var t = setInterval(function () {
+        n++;
+        try { paintStatus(); } catch (_) {}
+        if (n > 40 || window.__authReady === true) { clearInterval(t); try { paintStatus(); } catch (_) {} }
+      }, 300);
+      try { paintPrices(); } catch (_) {}
     })();
   </script>
 </body>

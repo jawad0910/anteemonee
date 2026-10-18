@@ -14,17 +14,17 @@
      SF Pro stays first on Apple; Plus Jakarta Sans supplies the
      same smooth, slightly geometric feel on the rest of the stack. */
   --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
-             'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+             'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, 'Noto Emoji', sans-serif;
   --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
-                  'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
+                  'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, 'Noto Emoji', sans-serif;
   /* Reading face for the conversation itself. Inter is asked for by name
      (it is already downloaded for the rest of the page) so the reply looks
      identical on every OS instead of inheriting whatever the system calls
      its UI font, and its taller x-height keeps long answers easy to scan. */
   --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-                  'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+                  'Segoe UI Variable Text', 'Segoe UI', system-ui, 'Noto Emoji', sans-serif;
   --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo,
-               Consolas, monospace;
+               Consolas, 'Noto Emoji', monospace;
 
   /* ── Motion — Apple-like spring / easing set ─────────────────── */
   --m-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
@@ -40,9 +40,9 @@
   --m-blur-xs: none;
 
   /* ── Hairlines (macOS separators) ────────────────────────────── */
-  --m-hairline-strong: rgba(120,120,128,0.4);
-  --m-hairline: rgba(120,120,128,0.25);
-  --m-hairline-soft: rgba(120,120,128,0.15);
+  --m-hairline-strong: rgba(128,128,128,0.4);
+  --m-hairline: rgba(128,128,128,0.25);
+  --m-hairline-soft: rgba(128,128,128,0.15);
 
   /* ── No shadows — flat ───────────────────────────────────────── */
   --m-sh-1: none;
@@ -53,10 +53,10 @@
 /* ── Light — flat white, blue only as accent ──────────────────── */
 :root,
 :root[data-theme="light"] {
-  --chat-tint: #2563EB;              /* user bubbles — accent blue */
-  --chat-tint-hi: #3B82F6;
-  --chat-tint-soft: rgba(37,99,235,0.10);
-  --chat-tint-ring: rgba(37,99,235,0.22);
+  --chat-tint: #000000;              /* user bubbles — monochrome */
+  --chat-tint-hi: #000000;
+  --chat-tint-soft: rgba(0,0,0,0.08);
+  --chat-tint-ring: rgba(0,0,0,0.22);
   --chat-on-tint: #fff;
 
   /* Assistant bubble — flat neutral */
@@ -77,16 +77,16 @@
   --chat-text-meta: rgba(0,0,0,0.5);
   --chat-wallpaper: #FFFFFF;
 
-  --m-focus: 0 0 0 3px rgba(37,99,235,0.14), 0 0 0 1px rgba(37,99,235,0.45);
+  --m-focus: 0 0 0 3px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.45);
 }
 
-/* ── Dark — flat black, blue only as accent ───────────────────── */
+/* ── Dark — flat black, monochrome accent ─────────────────────── */
 :root[data-theme="dark"] {
-  --chat-tint: #3B82F6;              /* user bubbles — accent blue */
-  --chat-tint-hi: #60A5FA;
-  --chat-tint-soft: rgba(59,130,246,0.16);
-  --chat-tint-ring: rgba(59,130,246,0.28);
-  --chat-on-tint: #FFFFFF;
+  --chat-tint: #FFFFFF;              /* user bubbles — monochrome */
+  --chat-tint-hi: #D4D4D4;
+  --chat-tint-soft: rgba(255,255,255,0.14);
+  --chat-tint-ring: rgba(255,255,255,0.28);
+  --chat-on-tint: #000000;
 
   /* Assistant bubble — flat black */
   --chat-bubble: #000000;
@@ -104,6 +104,8 @@
   --chat-field: #121212;
   --chat-text-meta: rgba(255,255,255,0.5);
   --chat-wallpaper: #000000;
+
+  --m-focus: 0 0 0 3px rgba(255,255,255,0.14), 0 0 0 1px rgba(255,255,255,0.45);
 }
 
 /* ── Selection + scrollbars inherit the tint ───────────────────── */

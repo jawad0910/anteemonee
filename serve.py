@@ -19,6 +19,9 @@ BIND = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
 # /ai-examiner/<subject>/<CODE>/ deep links are client-routed, so answer them
 # with the AI Examiner app instead of a 404.
 DEEP_EXAM_LINK = re.compile(r"^/ai-examiner/[A-Za-z0-9\-]+/[A-Za-z0-9]{6,}/?$")
+# /payment/<CLICK-CODE>/?plan=… tracks the premium CTA the visitor used; the
+# checkout app reads the path segment. Serve the payment app instead of 404.
+DEEP_PAY_LINK = re.compile(r"^/payment/[A-Za-z0-9_\-]+/?$")
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -38,6 +41,18 @@ class Handler(SimpleHTTPRequestHandler):
         clean = path.split("?", 1)[0].split("#", 1)[0]
         if DEEP_EXAM_LINK.match(clean):
             return os.path.join(self.directory, "ai-examiner", "index.html")
+        if DEEP_PAY_LINK.match(clean):
+            return os.path.join(self.directory, "payment", "index.html")
+        if clean.startswith("/payment/"):
+            inner = clean[len("/payment/"):]
+            # real file inside /payment/ wins (index.html, future assets);
+            # otherwise fall back to the site-root twin so /payment/<code>/css/… works
+            if inner:
+                if os.path.exists(os.path.join(self.directory, "payment", inner)):
+                    return super().translate_path(path)
+                if os.path.exists(os.path.join(self.directory, inner)):
+                    return os.path.join(self.directory, inner)
+            return os.path.join(self.directory, "payment", "index.html")
         return super().translate_path(path)
 
     def end_headers(self):

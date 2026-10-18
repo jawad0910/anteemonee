@@ -130,7 +130,7 @@
   letter-spacing: 0.01em;
   opacity: 0.72;
 }
-.message.user .msg-content .msg-meta { color: rgba(255, 255, 255, 0.92); }
+.message.user .msg-content .msg-meta { color: var(--chat-on-tint); opacity: 0.72; }
 .message.assistant .msg-content .msg-meta { color: var(--chat-text-meta); }
 .msg-meta .msg-check { font-size: 10px; }
 
@@ -481,7 +481,7 @@
   padding: 2px 14px 8px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary, #6b6b6b);
   text-align: center;
   letter-spacing: 0.02em;
 }
@@ -540,7 +540,7 @@
   justify-content: center;
   transition: background 0.15s var(--m-ease-out), color 0.15s var(--m-ease-out);
 }
-.graph-ed-remove:hover { background: rgba(239, 68, 68, 0.14); color: #f87171; }
+.graph-ed-remove:hover { background: var(--accent-soft); color: var(--error); }
 .graph-ed-add {
   margin-top: 4px;
   padding: 7px 12px;

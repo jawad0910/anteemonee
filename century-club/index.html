@@ -21,13 +21,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=35">
+  <link rel="stylesheet" href="../css/style.css?v=36">
   <style>
     /* ── Tokens local to this page ── */
     :root {
       --cc-ease: cubic-bezier(.22, 1, .36, 1);
       --cc-spring: cubic-bezier(.34, 1.56, .64, 1);
-      --cc-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --cc-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Noto Emoji', sans-serif;
       --cc-serif: 'Fraunces', Georgia, serif;
       --cc-hairline: inset 0 1px 0 rgba(255,255,255,.07);
     }
@@ -42,7 +42,7 @@
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
     .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .logo-text { font-family:'Fraunces', Georgia, 'Noto Emoji', serif; font-size: 21px; }
     .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
     .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: color .2s, background-color .2s; }
     .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
@@ -84,7 +84,7 @@
     .cc-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 0 var(--text); animation: ccPulse 2.6s var(--cc-ease) infinite; }
     @keyframes ccPulse { 0% { box-shadow: 0 0 0 0 rgba(127,127,127,.5); } 70% { box-shadow: 0 0 0 9px rgba(127,127,127,0); } 100% { box-shadow: 0 0 0 0 rgba(127,127,127,0); } }
 
-    .cc-title { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(2.6rem, 8.2vw, 5.4rem); line-height: .94; letter-spacing: -.035em; margin: 22px 0 0; }
+    .cc-title { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(2.6rem, 8.2vw, 5.4rem); line-height: .94; letter-spacing: -.035em; margin: 22px 0 0; }
     .cc-title .cc-word { display: inline-block; opacity: 0; transform: translateY(.55em) rotate(1.5deg); filter: blur(6px); }
     .cc-hero.is-in .cc-word { animation: ccWord .95s var(--cc-ease) forwards; animation-delay: calc(var(--w) * .085s + .08s); }
     @keyframes ccWord { to { opacity: 1; transform: none; filter: blur(0); } }
@@ -119,7 +119,7 @@
     .cc-ring .cc-track { fill: none; stroke: var(--border); stroke-width: 9; }
     .cc-ring .cc-fill { fill: none; stroke: var(--text); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 1.6s var(--cc-ease); }
     .cc-ring-core { position: absolute; inset: 20px; display: grid; place-content: center; text-align: center; gap: 1px; }
-    .cc-ring-num { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(2.5rem, 5.4vw, 3.35rem); line-height: 1; letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-ring-num { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(2.5rem, 5.4vw, 3.35rem); line-height: 1; letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; }
     .cc-ring-of { font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
     .cc-ring-badge { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 7px 15px; border-radius: var(--radius-pill); background: var(--bg-elevated); border: 1px solid var(--liquid-border-soft); box-shadow: var(--neo-shadow-float); font-size: 12px; font-weight: 600; letter-spacing: -.005em; }
 
@@ -128,14 +128,14 @@
     .cc-stat { position: relative; padding: 20px 20px 18px; border-radius: var(--radius-lg); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); overflow: hidden; transition: transform .5s var(--cc-ease), box-shadow .5s var(--cc-ease); }
     .cc-stat:hover { transform: translateY(-3px); box-shadow: var(--neo-shadow-raised); }
     .cc-stat .k { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
-    .cc-stat .v { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 1.95rem); letter-spacing: -.035em; line-height: 1.15; margin-top: 7px; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-stat .v { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 1.95rem); letter-spacing: -.035em; line-height: 1.15; margin-top: 7px; font-variant-numeric: lining-nums tabular-nums; }
     .cc-stat .v small { font-family: var(--cc-font); font-size: 12.5px; font-weight: 500; letter-spacing: -.005em; color: var(--text-muted); margin-left: 4px; }
     #cc-since { letter-spacing: -.01em !important; word-spacing: .1em; }
 
     /* ══════════════ ROSTER ══════════════ */
     .cc-roster-wrap { max-width: 1180px; margin: 0 auto; padding: 84px 24px 20px; }
     .cc-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 26px; }
-    .cc-section-head h2 { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(1.6rem, 3.6vw, 2.3rem); letter-spacing: -.03em; margin: 0; line-height: 1.05; }
+    .cc-section-head h2 { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(1.6rem, 3.6vw, 2.3rem); letter-spacing: -.03em; margin: 0; line-height: 1.05; }
     .cc-section-head p { margin: 9px 0 0; font-size: 14px; color: var(--text-secondary); max-width: 48ch; line-height: 1.6; }
 
     .cc-search { position: relative; display: flex; align-items: center; gap: 9px; padding: 0 15px; height: 44px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); transition: border-color .25s var(--cc-ease), background-color .25s var(--cc-ease), box-shadow .25s var(--cc-ease); min-width: 268px; }
@@ -155,7 +155,7 @@
     .cc-card:hover::after { transform: translateX(115%); }
     .cc-card[hidden] { display: none; }
 
-    .cc-rank { position: relative; z-index: 1; flex-shrink: 0; width: 34px; text-align: right; font-family: var(--cc-serif); font-weight: 700; font-size: 15px; letter-spacing: -.03em; color: var(--text-muted); font-variant-numeric: lining-nums tabular-nums; }
+    .cc-rank { position: relative; z-index: 1; flex-shrink: 0; width: 34px; text-align: right; font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: 15px; letter-spacing: -.03em; color: var(--text-muted); font-variant-numeric: lining-nums tabular-nums; }
     .cc-rank sup { font-family: var(--cc-font); font-size: 8.5px; font-weight: 700; vertical-align: super; margin-left: .5px; }
 
     .cc-av { position: relative; z-index: 1; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--surface); border: 1px solid var(--liquid-border-soft); }
@@ -185,7 +185,7 @@
 
     .cc-state { text-align: center; padding: 74px 24px; }
     .cc-state-icon { width: 58px; height: 58px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); color: var(--text-secondary); }
-    .cc-state h3 { font-family: var(--cc-serif); font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; margin: 0 0 9px; }
+    .cc-state h3 { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; margin: 0 0 9px; }
     .cc-state p { margin: 0 auto 24px; max-width: 42ch; font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
 
     /* ══════════════ CLAIM CARD ══════════════ */
@@ -195,7 +195,7 @@
     .cc-claim-glow { position: absolute; width: 420px; height: 420px; right: -110px; top: -170px; border-radius: 50%; filter: blur(88px); background: radial-gradient(circle, var(--aurora-1), transparent 70%); pointer-events: none; }
     .cc-claim-top { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 30px; align-items: center; }
     .cc-claim .cc-eyebrow { margin-bottom: 16px; }
-    .cc-claim h2 { font-family: var(--cc-serif); font-weight: 700; font-size: clamp(1.55rem, 3.5vw, 2.15rem); letter-spacing: -.032em; margin: 0 0 11px; line-height: 1.08; }
+    .cc-claim h2 { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(1.55rem, 3.5vw, 2.15rem); letter-spacing: -.032em; margin: 0 0 11px; line-height: 1.08; }
     .cc-claim p { margin: 0; max-width: 50ch; font-size: 14.5px; line-height: 1.65; color: var(--text-secondary); }
     .cc-claim-cta { display: flex; flex-direction: column; gap: 9px; flex-shrink: 0; }
     .cc-claim-cta .cc-btn { justify-content: center; white-space: nowrap; }
@@ -236,7 +236,7 @@
       .cc-card, .cc-card::after, .cc-btn, .cc-stat { transition: none !important; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=7">
+  <link rel="stylesheet" href="../css/header.css?v=8">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
@@ -263,7 +263,8 @@
     </div>
   </div>
         <a href="../ai-test-builder/">AI Test Builder</a>
-  <a href="../century-club/" class="is-current" aria-current="page">Century Club</a>
+  <a href="../slame/">Slame</a>
+      <a href="../century-club/" class="is-current" aria-current="page">Century Club</a>
       </nav>
       <div class="header-actions">
         <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
@@ -295,6 +296,7 @@
     <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
     <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
     <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
+    <a href="../slame/" class="mobile-nav-link">Slame</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
     <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
@@ -461,7 +463,7 @@
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=31"></script>
+  <script src="../js/app.js?v=37"></script>
   <script src="../js/login-modal.js?v=5"></script>
   <script src="../js/forgot-modal.js?v=2"></script>
   <script src="../js/signup-modal.js?v=3"></script>

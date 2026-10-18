@@ -1,5 +1,5 @@
 {
-  "version": "1.0.9",
-  "updated": "2026-09-16",
-  "changelog": "Replace all teal/green CSS variables with indigo accent throughout"
+  "version": "1.0.11",
+  "updated": "2026-10-09",
+  "changelog": "AI tutor now remembers students between chats (durable, de-duplicated memory with corrections) + memory card in Settings to view, download or clear it"
 }

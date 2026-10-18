@@ -21,8 +21,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=35">
-  <link rel="stylesheet" href="../css/settings.css?v=20">
+  <link rel="stylesheet" href="../css/style.css?v=36">
+  <link rel="stylesheet" href="../css/settings.css?v=21">
   <style>
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
     /* ── Site header (pills) ── */
@@ -31,7 +31,7 @@
     .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
     .site-logo-link { display: flex; align-items: center; gap: 8px; text-decoration: none; }
     .site-logo-img { width: 32px; height: 32px; border-radius: 10px; }
-    .site-logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 700; color: var(--text); }
+    .site-logo-text { font-family:'Fraunces', Georgia, 'Noto Emoji', serif; font-size: 21px; font-weight: 700; color: var(--text); }
     .site-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
     .site-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
     .site-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
@@ -52,12 +52,12 @@
     .site-icon-btn:hover { background: var(--surface); color: var(--text); }
     .site-profile-wrap { position: relative; }
     .site-avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .site-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; overflow: hidden; }
+    .site-avatar-circle { width: 30px; height: 30px; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; overflow: hidden; }
     .site-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
     .site-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 300; display: none; }
     .site-dropdown.open { display: block; }
     .site-dd-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
-    .site-dd-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .site-dd-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
     .site-dd-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .site-dd-info { display: flex; flex-direction: column; min-width: 0; }
     .site-dd-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -88,7 +88,7 @@
     @media (max-width: 900px) { .site-menu-toggle { display: inline-flex; } .site-auth-btns { display: none; } #site-profile-wrap { display: none !important; } }
     .settings-page { padding-top: 100px; }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=7">
+  <link rel="stylesheet" href="../css/header.css?v=8">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
@@ -115,7 +115,8 @@
     </div>
   </div>
   <a href="../ai-test-builder/">AI Test Builder</a>
-  <a href="../century-club/">Century Club</a>
+  <a href="../slame/">Slame</a>
+      <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
         <a href="../mx-9f2c4e7a/" class="site-icon-btn" aria-label="Messenger" title="Messenger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
@@ -168,6 +169,7 @@
     </div>
   </div>
   <a href="../ai-chat/" class="site-mobile-link">AI Assistant</a>
+  <a href="../slame/" class="site-mobile-link">Slame</a>
 
         <a href="../mx-9f2c4e7a/" class="site-mobile-link">Messenger</a>
     <div class="site-mobile-cta">
@@ -227,7 +229,7 @@
             Advanced
           </button>
           <div class="settings-nav-divider"></div>
-          <button class="settings-nav-item" onclick="settingsLogout()" style="color:#FF6675">
+          <button class="settings-nav-item" onclick="settingsLogout()" style="color:#888888">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Log Out
           </button>
@@ -338,8 +340,8 @@
     <div class="settings-modal-overlay" id="delete-account-modal">
       <div class="settings-modal">
         <h3>Delete Account</h3>
-        <p>This action is <strong style="color:#FF6675">permanent and irreversible</strong>. All your data including profile, academic information, study progress, AI history, and preferences will be permanently deleted.</p>
-        <p>Type <strong style="color:#FF6675">DELETE</strong> to confirm:</p>
+        <p>This action is <strong style="color:#888888">permanent and irreversible</strong>. All your data including profile, academic information, study progress, AI history, and preferences will be permanently deleted.</p>
+        <p>Type <strong style="color:#888888">DELETE</strong> to confirm:</p>
         <input type="text" class="confirm-input" id="delete-confirm-input" placeholder='Type "DELETE"'>
         <div class="modal-actions">
           <button class="btn-settings btn-settings-secondary" onclick="closeDeleteModal()">Cancel</button>
@@ -360,7 +362,7 @@
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=32"></script>
+  <script src="../js/app.js?v=37"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>

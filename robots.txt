@@ -4,6 +4,7 @@ Allow: /
 Disallow: /account/
 Disallow: /pages/account.html
 Disallow: /pages/payment.html
+Disallow: /payment/
 Disallow: /pages/payment-success.html
 Disallow: /pages/payment-cancel.html
 Disallow: /pages/onboarding.html

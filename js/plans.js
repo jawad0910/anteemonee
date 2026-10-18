@@ -1,6 +1,7 @@
 /* =========================================================
    Anteemonee PLANS — single source of truth for pricing.
-   Free (forever) · Exam (per exam period) · Lifetime.
+   Free (forever) · Monthly · Yearly.
+   Legacy (still honoured everywhere): Exam (per exam period) · Lifetime.
    ========================================================= */
 (function () {
   'use strict';
@@ -8,6 +9,25 @@
   window.ANTEEM_PLANS = {
     trialDays: 7,
     lifetimePrice: 4999,
+
+    /* ---- Current subscription plans (Rs, per billing period) ---- */
+    plans: {
+      free:    { id: 'free',    label: 'Free',    price: 0,    interval: null,      days: 0,   tagline: 'Start learning — free forever' },
+      monthly: { id: 'monthly', label: 'Monthly', price: 299,  interval: 'month',   days: 30,  tagline: 'Premium, billed every month' },
+      yearly:  { id: 'yearly',  label: 'Yearly',  price: 2499, interval: 'year',    days: 365, tagline: 'Premium, billed once a year' },
+    },
+    planOrder: ['free', 'monthly', 'yearly'],
+
+    /* ---- Promo codes moved SERVER-SIDE (supabase/functions/payment-promo).
+       The browser never sees the catalog; /payment/ asks the server ---- */
+
+    /* ---- Where students send manual payments (Easypaisa/JazzCash).
+       PLACEHOLDERS — replace with the real accounts before launch.
+       The /payment/ page reads these, so one edit updates checkout. ---- */
+    paymentAccounts: {
+      easypaisa: { label: 'Easypaisa', number: '+923096976634', title: 'Jawad Shafaqat' },
+      jazzcash:  { label: 'JazzCash',  number: '+923096976634', title: 'Jawad Shafaqat' },
+    },
 
     // The only 6 exam periods on sale. Access lasts until the
     // end of the selected period (Pakistan time).
@@ -30,6 +50,33 @@
         if (list[i].id === id) return list[i];
       }
       return null;
+    },
+
+    /* ---- Subscription-plan helpers (new Free/Monthly/Yearly model) ---- */
+    planById: function (id) {
+      var plans = (window.ANTEEM_PLANS && window.ANTEEM_PLANS.plans) || {};
+      return plans[id] || null;
+    },
+
+    priceFor: function (id) {
+      var p = window.ANTEEM_PLANS.planById(id);
+      if (p) return p.price;
+      if (id === 'lifetime') return window.ANTEEM_PLANS.lifetimePrice;
+      return 0;
+    },
+
+    isPaidPlan: function (id) {
+      return id === 'monthly' || id === 'yearly' ||
+             id === 'exam' || id === 'lifetime' ||
+             id === 'premium' || id === 'pro';
+    },
+
+    /* Expiry timestamp (ISO) for a paid subscription starting now. */
+    expiresAtFor: function (id, fromDate) {
+      var p = window.ANTEEM_PLANS.planById(id);
+      if (!p || !p.days) return null;
+      var base = fromDate ? new Date(fromDate).getTime() : Date.now();
+      return new Date(base + p.days * 864e5).toISOString();
     }
   };
 })();

@@ -289,7 +289,7 @@ body.guest .history-section .sidebar-label { display: none; }
   background: var(--liquid-bg-soft, rgba(255,255,255,0.08));
 }
 .delete-confirm-ok {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--error);
   border: 1px solid transparent;
 }

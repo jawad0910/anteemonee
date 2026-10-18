@@ -2066,7 +2066,7 @@ const Access = {
   // Mirror of ai_feature_limit() in migrations/20261013000000_free_tier_quota.sql.
   // Display only: the Edge Functions call consume_ai_quota() and are the real
   // enforcement point, so editing this object cannot buy extra usage.
-  FREE_QUOTA: { chat: 15, test_build: 1, examiner: 3 },
+  FREE_QUOTA: { chat: 30, test_build: 1, examiner: 1 },
 
   featureName(f) {
     return { chat: 'AI tutor messages', test_build: 'AI test builds', examiner: 'AI Examiner runs' }[f] || 'AI';
@@ -2106,11 +2106,16 @@ const Access = {
   _heartbeat: null,
   _inited: false,
 
-  // Paid = lifetime, exam (until its period ends), or legacy active premium/pro.
+  // Paid = monthly/yearly (until expiry), lifetime, exam (until its
+  // period ends), or legacy active premium/pro.
   isPaidEntitlement(ent) {
     if (!ent) return false;
     if (ent.plan_type === 'lifetime' && ent.subscription_status !== 'refunded') return true;
     if ((ent.plan_type === 'premium' || ent.plan_type === 'pro') && ent.subscription_status === 'active') return true;
+    if ((ent.plan_type === 'monthly' || ent.plan_type === 'yearly') && ent.subscription_status === 'active') {
+      if (!ent.premium_expires_at) return true; // columns not migrated yet
+      try { return new Date(ent.premium_expires_at).getTime() > Date.now(); } catch (_) { return true; }
+    }
     if (ent.plan_type === 'exam' && ent.subscription_status === 'active') {
       if (!ent.exam_ends_at) return true; // exam columns not migrated yet
       try { return new Date(ent.exam_ends_at).getTime() > Date.now(); } catch (_) { return true; }
@@ -2334,10 +2339,10 @@ const Access = {
     })();
     var css = document.createElement('link');
     css.rel = 'stylesheet';
-    css.href = base + '/css/ai-tutor-widget.css?v=1';
+    css.href = base + '/css/ai-tutor-widget.css?v=3';
     document.head.appendChild(css);
     var s = document.createElement('script');
-    s.src = base + '/js/ai-tutor-widget.js?v=1';
+    s.src = base + '/js/ai-tutor-widget.js?v=3';
     s.defer = true;
     document.head.appendChild(s);
   } catch (_) {}

@@ -613,12 +613,12 @@
 
   // ── Subject State ──
   const CHAT_SUBJECTS = [
-    { name: 'Physics', code: '9702', color: '#2E7D32', bg: 'rgba(46,125,50,0.15)' },
-    { name: 'Chemistry', code: '9701', color: '#C49557', bg: 'rgba(196,149,87,0.15)' },
-    { name: 'Biology', code: '9700', color: '#8E44AD', bg: 'rgba(142,68,173,0.15)' },
-    { name: 'Computer Science', code: '9618', color: '#2980B9', bg: 'rgba(41,128,185,0.15)' },
-    { name: 'Mathematics', code: '9709', color: '#8E44AD', bg: 'rgba(142,68,173,0.15)' },
-    { name: 'English', code: '9093', color: '#F39C12', bg: 'rgba(243,156,18,0.15)' }
+    { name: 'Physics', code: '9702', color: '#dcdcdc', bg: 'rgba(220,220,220,0.15)' },
+    { name: 'Chemistry', code: '9701', color: '#c2c2c2', bg: 'rgba(194,194,194,0.15)' },
+    { name: 'Biology', code: '9700', color: '#a8a8a8', bg: 'rgba(168,168,168,0.15)' },
+    { name: 'Computer Science', code: '9618', color: '#e8e8e8', bg: 'rgba(232,232,232,0.15)' },
+    { name: 'Mathematics', code: '9709', color: '#909090', bg: 'rgba(144,144,144,0.15)' },
+    { name: 'English', code: '9093', color: '#b4b4b4', bg: 'rgba(180,180,180,0.15)' }
   ];
   let selectedSubject = 'Physics';
   function subjectSlug(name) { return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'physics'; }
@@ -1512,6 +1512,9 @@ if (idx >= 0 && idx < PERSONAS.length) {
     // Renders the modes bar. The GitHub repo chip is currently the only thing
     // that goes in it.
     try { renderModeChips(); } catch (_) {}
+    // Slame: warm the Google Drive context so the first message already
+    // knows the connection state (fire and forget; errors stay silent).
+    try { refreshDriveCtx(); } catch (_) {}
     chatInput.focus();
     // Periodic streak check (every 5 min)
     setInterval(() => { refreshStreak(); saveSessionState(); }, 5 * 60 * 1000);
@@ -1767,7 +1770,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     // Keep hidden model elements in sync (no visible effect)
     try {
       if (typeof modelSelectedName !== 'undefined' && modelSelectedName) modelSelectedName.textContent = PERSONAS[activePersonaIndex].name;
-      if (typeof modelDot !== 'undefined' && modelDot) modelDot.style.background = ['#3B82F6', 'var(--accent)'][PERSONAS[activePersonaIndex].providerIndex] || '#3B82F6';
+      if (typeof modelDot !== 'undefined' && modelDot) modelDot.style.background = ['#8a8a8a', 'var(--accent)'][PERSONAS[activePersonaIndex].providerIndex] || '#8a8a8a';
     } catch (_) {}
   }
 
@@ -2205,7 +2208,7 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
       // The coding persona used to skip the student's response style and
       // explanation level entirely, so those settings had no effect here.
       ctx += `\n\n${aiPrefsPrompt()}`;
-      return ctx;
+      return ctx + drivePromptBlock();
     }
 
     var subjMeta = getSubjectMeta(selectedSubject);
@@ -2304,7 +2307,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 - Never say "Sure!", "Of course!", "Great question!" or similar — just answer.`;
     }
 
-    return ctx;
+    return ctx + drivePromptBlock();
   }
 
   function isReferenceHeading(line) {
@@ -3460,7 +3463,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         : `<div class="avatar-fallback-msg">${escapeHtml(initial)}</div>`;
       div.innerHTML = `
         <div class="msg-avatar user-avatar">${avatarHtml}</div>
-        <div class="msg-body">${quoteHtml}${testHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content)}</div></div>
+        <div class="msg-body">${quoteHtml}${testHtml}${imagesHtml}<div class="msg-content">${escapeHtml(content.indexOf('[[DRIVE_FILE:') === 0 ? driveNoteText(content) : content)}</div></div>
       `;
       attachUserActions(div);
     }
@@ -3961,6 +3964,188 @@ function parseFileBlocks(text) {
 function stripFileBlocks(text) {
   if (!text) return text;
   return text.replace(/```\s*file-create\s*:[^\n]*\n[\s\S]*?```/g, "").trim();
+}
+
+// ── Slame: Google Drive for the AI Tutor ─────────────────────────────
+// The tutor can create and edit study files in the student's connected
+// Drive. There is deliberately NO delete path anywhere in the app, and
+// drivePromptBlock() tells the tutor that so it answers correctly when
+// students ask about it.
+var DriveCtx = { connected: false, email: null, files: [], fetchedAt: 0, fetching: null };
+var DRIVE_READ_RE = /```\s*drive-read\s*:\s*([^\n`]+)\n?\s*```/;
+
+function driveApiBase() {
+  try { return (typeof api !== 'undefined' && api && api.supabaseUrl) || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''); } catch (_) { return ''; }
+}
+async function driveApi(action, payload) {
+  var base = driveApiBase();
+  var token = getAccessToken();
+  if (!base || !token) return null;
+  try {
+    var res = await fetch(base + '/functions/v1/drive-api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) { return null; }
+}
+function refreshDriveCtx(force) {
+  var now = Date.now();
+  if (!force && DriveCtx.fetchedAt && now - DriveCtx.fetchedAt < 60000) return Promise.resolve(DriveCtx);
+  if (DriveCtx.fetching) return DriveCtx.fetching;
+  DriveCtx.fetching = driveApi('list').then(function (data) {
+    if (data && data.ok) {
+      DriveCtx.connected = true;
+      DriveCtx.email = data.email || null;
+      DriveCtx.files = Array.isArray(data.files) ? data.files : [];
+    } else if (data && data.connected === false) {
+      DriveCtx.connected = false;
+      DriveCtx.files = [];
+    }
+    DriveCtx.fetchedAt = Date.now();
+    DriveCtx.fetching = null;
+    return DriveCtx;
+  }).catch(function () {
+    DriveCtx.fetching = null;
+    DriveCtx.fetchedAt = Date.now();
+    return DriveCtx;
+  });
+  return DriveCtx.fetching;
+}
+function drivePromptBlock() {
+  if (!DriveCtx.connected) {
+    return '\n\nSLAME / GOOGLE DRIVE: The student has NOT connected Google Drive. If they ask you to save, create or edit a file in their Google Drive, tell them in one short line to connect Google Drive on the Slame page (anteemonee.com/slame) and then ask again. Never pretend you saved or opened anything.';
+  }
+  var lines = DriveCtx.files.slice(0, 40).map(function (f) {
+    var when = f.modifiedTime ? String(f.modifiedTime).slice(0, 10) : '';
+    return '- ' + f.name + (when ? ' (modified ' + when + ')' : '');
+  });
+  return '\n\nSLAME / GOOGLE DRIVE - CONNECTED: The student connected Google Drive' +
+    (DriveCtx.email ? ' (' + DriveCtx.email + ')' : '') + '. Your Drive abilities:\n' +
+    '1) CREATE / EDIT: whenever the student asks for a file, or asks to save, edit or customize a file in Drive, output the normal ```file-create:Filename.ext block with the full content. The app saves it to their Google Drive automatically (and offers a download). To EDIT an existing file, output the block again with the SAME filename shown below; the new version replaces the old one in Drive (Drive keeps the old revision).\n' +
+    '2) READ an existing file (only when the student asks to edit or customize a file whose content is NOT already in this conversation): output exactly one empty block\n```drive-read:Exact File Name.ext\n```\nand stop there. The app loads the file and you continue automatically with its content. Never claim to have read a file before its content actually appears in the conversation.\n' +
+    '3) HARD RULE - NO DELETING: you can create and edit files, but you can NEVER delete, trash or remove a file from the student\'s Google Drive. Deletion is not supported anywhere, so never promise or imply it. If the student asks you to delete a file, say plainly that you can only create and edit files and that they can delete it themselves in Google Drive if they want. Never say you have no access to their Drive. If asked what you can do with Drive or how it works, explain exactly this: create and edit yes, delete no.\n' +
+    (lines.length ? 'Files currently in the student\'s Drive (Anteemonee files, newest first):\n' + lines.join('\n') : 'The student\'s Drive has no Anteemonee files yet.');
+}
+function driveNoteText(text) {
+  var m = String(text || '').match(/^\[\[DRIVE_FILE:(.+?)\]\]/);
+  return '📄  ' + (m ? m[1] : 'file') + ' — loaded from Google Drive';
+}
+function parseDriveReadName(text) {
+  var m = String(text || '').match(DRIVE_READ_RE);
+  return m && m[1] ? m[1].trim().slice(0, 200) : null;
+}
+function stripDriveReadBlock(text) {
+  if (!text) return text;
+  return String(text).replace(new RegExp(DRIVE_READ_RE.source, 'g'), '').trim();
+}
+var DRIVE_SVG_SMALL = '<svg width="18" height="18" viewBox="0 0 87.3 78" fill="currentColor" aria-hidden="true">' +
+  '<path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" opacity=".95"/>' +
+  '<path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" opacity=".55"/>' +
+  '<path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57.3c.8-1.4 1.2-2.95 1.2-4.5H59.85l5.85 11.75z" opacity=".35"/>' +
+  '<path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.4-4.5 1.2z" opacity=".75"/>' +
+  '<path d="M59.85 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" opacity=".8"/>' +
+  '<path d="M73.4 26.5L60.75 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.2 28h27.45c0-1.55-.4-3.1-1.2-4.5z" opacity=".45"/></svg>';
+
+// Auto-save every file the tutor generates into the connected Drive and show
+// a Save card under it. Update is by exact filename, so "edit" = same-name
+// re-save. There is no delete anywhere, on purpose.
+function maybeSaveBlocksToDrive(div, blocks) {
+  var host = div.querySelector('.msg-body') || div;
+  blocks.forEach(function (f) {
+    var card = document.createElement('div');
+    card.className = 'drive-card';
+    if (!DriveCtx.connected) {
+      card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>Save files to your Google Drive</b><span>Connect Google Drive in Slame and files land there automatically.</span></span>' +
+        '<a class="drive-card-open" href="/slame/">Connect</a>';
+      host.appendChild(card);
+      return;
+    }
+    card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>Saving to Google Drive&hellip;</b><span>' + escapeHtml(f.filename) + '</span></span>';
+    host.appendChild(card);
+    driveApi('save', { name: f.filename, content: f.content }).then(function (res) {
+      if (res && res.ok) {
+        var link = res.webViewLink || '';
+        card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+          '<span class="drive-card-tx"><b>' + (res.updated ? 'Updated in your Google Drive' : 'Saved to your Google Drive') + '</b><span>' + escapeHtml(res.name || f.filename) + '</span></span>' +
+          (link ? '<a class="drive-card-open" href="' + escapeHtml(link) + '" target="_blank" rel="noopener">Open</a>' : '');
+        DriveCtx.fetchedAt = 0; // force the file list refresh on the next send
+      } else {
+        card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+          '<span class="drive-card-tx"><b>Could not save to Google Drive</b><span>' + escapeHtml(f.filename) + ' · check the connection in Slame.</span></span>' +
+          '<a class="drive-card-open" href="/slame/">Slame</a>';
+      }
+    }).catch(function () {});
+  });
+}
+
+// ```drive-read:Name``` -> load the file, then continue the chat with its
+// content so the tutor can actually edit it.
+function handleDriveBlocks(div, text, isLive) {
+  var name = parseDriveReadName(text);
+  if (!name) return;
+  var host = div.querySelector('.msg-body') || div;
+  var old = host.querySelector('.drive-read-card');
+  if (old) old.remove();
+  var card = document.createElement('div');
+  card.className = 'drive-card drive-read-card';
+  if (!DriveCtx.connected) {
+    card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>Google Drive is not connected</b><span>Connect it in Slame, then ask again to read or edit "' + escapeHtml(name) + '".</span></span>' +
+      '<a class="drive-card-open" href="/slame/">Connect</a>';
+    host.appendChild(card);
+    return;
+  }
+  card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+    '<span class="drive-card-tx"><b>Reading from Google Drive&hellip;</b><span>' + escapeHtml(name) + '</span></span>';
+  host.appendChild(card);
+  if (!isLive) return;
+  driveApi('read', { name: name }).then(function (res) {
+    if (!res || !res.ok || !res.found) {
+      card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>File not found in your Drive</b><span>' + escapeHtml(name) + ' · check the name and try again.</span></span>';
+      return;
+    }
+    if (res.unsupported) {
+      card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>This file type cannot be read yet</b><span>' + escapeHtml(name) + '</span></span>';
+      return;
+    }
+    var kb = Math.max(1, Math.round(String(res.content || '').length / 1024));
+    card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>Loaded from Google Drive</b><span>' + escapeHtml(res.name || name) + ' · ' + kb + ' KB' + (res.truncated ? ' · shortened' : '') + '</span></span>' +
+      (res.webViewLink ? '<a class="drive-card-open" href="' + escapeHtml(res.webViewLink) + '" target="_blank" rel="noopener">Open</a>' : '');
+    continueWithDriveFile(res);
+  }).catch(function () {});
+}
+function continueWithDriveFile(file) {
+  // One automatic continuation per file per two minutes: stops any possible
+  // read -> read loop if the model misbehaves.
+  window.__driveReadGuard = window.__driveReadGuard || {};
+  var key = String(file.name || '');
+  var last = window.__driveReadGuard[key] || 0;
+  if (Date.now() - last < 120000) return;
+  window.__driveReadGuard[key] = Date.now();
+
+  var note = '[[DRIVE_FILE:' + file.name + ']]\n' +
+    'The student\'s Google Drive file "' + file.name + '" is loaded below. ' +
+    'Continue now: fulfill the student\'s last request using this content (edit, customize or explain it). Do not greet or thank.\n' +
+    '<<<DRIVE_FILE_CONTENT>>>\n' + String(file.content || '') + (file.truncated ? '\n...[content shortened]' : '') + '\n<<<END_DRIVE_FILE_CONTENT>>>';
+
+  var tries = 0;
+  (function fire() {
+    if (isStreaming) {
+      tries++;
+      if (tries <= 10) setTimeout(fire, 400);
+      return;
+    }
+    chatInput.value = note;
+    handleSend();
+  })();
 }
 
 // ── Graph block: ```graph\n{...json...}\n``` ───────────────────
@@ -4864,7 +5049,7 @@ var _graphCharts = {}; // idx -> Chart instance
 try { window.__anteemoneeGraphCharts = _graphCharts; } catch (_) {}
 
 function graphChartColors() {
-  var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3B82F6';
+  var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#b3b3b3';
   var text = getComputedStyle(document.body).color || 'rgba(255,255,255,0.8)';
   var grid = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(255,255,255,0.12)';
   return { accent: accent, text: text, grid: grid };
@@ -5026,7 +5211,7 @@ function renderGraphCard(div, rawGraph) {
   var colors = graphChartColors();
 
   function makeDataset(set, idx) {
-    var palette = ['#3B82F6', '#F59E0B', '#22C55E', '#EF4444', '#8B5CF6', '#06B6D4'];
+    var palette = ['#e0e0e0', '#c0c0c0', '#a0a0a0', '#808080', '#606060', '#404040'];
     var color = palette[idx % palette.length];
     var base = {
       label: set.name || 'Series ' + (idx + 1),
@@ -5093,7 +5278,7 @@ function renderGraphCard(div, rawGraph) {
     } else if (type === 'pie') {
       config.options.plugins.legend.position = 'bottom';
       sets.forEach(function (s, idx) {
-        var palette = ['#3B82F6', '#F59E0B', '#22C55E', '#EF4444', '#8B5CF6', '#06B6D4'];
+        var palette = ['#e0e0e0', '#c0c0c0', '#a0a0a0', '#808080', '#606060', '#404040'];
         s.backgroundColor = graph.labels.map(function (_, li) { return shade(palette[(idx + li) % palette.length], li * 0.06); });
         s.borderColor = colors.text;
         s.borderWidth = 1;
@@ -5502,8 +5687,8 @@ function generateBeautifulDocx(filename, markdown) {
             inCode = false;
             var codeStr = codeBuf.join("\n");
             children.push(new docx.Paragraph({
-              children: [new docx.TextRun({ text: codeStr, font: "Consolas", size: 16, color: "E2E8F0" })],
-              shading: { type: docx.ShadingType.SOLID, color: "0F172A", fill: "0F172A" },
+              children: [new docx.TextRun({ text: codeStr, font: "Consolas", size: 16, color: "E2E2E2" })],
+              shading: { type: docx.ShadingType.SOLID, color: "111111", fill: "111111" },
               spacing: { after: 200 },
             }));
             codeBuf = [];
@@ -5519,13 +5704,13 @@ function generateBeautifulDocx(filename, markdown) {
           children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt2, bold: true, size: 24, color: "4F46E5" })], heading: docx.HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }));
         } else if (t.startsWith("### ")) {
           var txt3 = t.replace(/^###\s+/,"").trim();
-          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt3, bold: true, size: 22, color: "0D9488" })], heading: docx.HeadingLevel.HEADING_3, spacing: { before: 180, after: 80 } }));
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt3, bold: true, size: 22, color: "555555" })], heading: docx.HeadingLevel.HEADING_3, spacing: { before: 180, after: 80 } }));
         } else if (t.startsWith("- ") || t.startsWith("* ")) {
           var btxt = t.replace(/^[-*]\s+/,"").trim();
-          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "•  "+btxt, size: 20, color: "0F172A" })], bullet: { level: 0 }, spacing: { after: 80 } }));
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "•  "+btxt, size: 20, color: "111111" })], bullet: { level: 0 }, spacing: { after: 80 } }));
         } else if (/^\d+\.\s/.test(t)) {
           var ntxt = t.replace(/^\d+\.\s+/,"").trim();
-          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: ntxt, size: 20, color: "0F172A" })], numbering: { reference: "default-numbering", level: 0 }, spacing: { after: 80 } }));
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: ntxt, size: 20, color: "111111" })], numbering: { reference: "default-numbering", level: 0 }, spacing: { after: 80 } }));
         } else if (t.startsWith("> ")) {
           var qtxt = t.replace(/^>\s+/,"").trim();
           children.push(new docx.Paragraph({
@@ -5540,7 +5725,7 @@ function generateBeautifulDocx(filename, markdown) {
           children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: cells.join("  |  "), size: 18, color: "334155" })], spacing: { after: 40 } }));
         } else {
           var para = t.replace(/\*\*(.+?)\*\*/g, "$1");
-          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: para, size: 20, color: "0F172A" })], spacing: { after: 160 } }));
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: para, size: 20, color: "111111" })], spacing: { after: 160 } }));
         }
       }
       children.push(new docx.Paragraph({
@@ -5562,7 +5747,7 @@ function generateBeautifulDocx(filename, markdown) {
     }
   });
 }
-function handleFileBlocks(div, text) {
+function handleFileBlocks(div, text, opts) {
   var blocks = parseFileBlocks(text);
   if (!blocks.length) return;
   var host = div.querySelector(".msg-body") || div;
@@ -5598,7 +5783,7 @@ function handleFileBlocks(div, text) {
           showChatToast("Word downloaded: " + filename);
         });
       } else if (extLower === "html") {
-        var htmlDoc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(filename)+"</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:800px;margin:40px auto;padding:32px;line-height:1.7;color:#0F172A;background:#F8FAFC}h1{color:var(--accent);border-bottom:3px solid var(--accent);padding-bottom:12px}h2{color:var(--accent);margin-top:28px}h3{color:#0D9488}blockquote{border-left:4px solid var(--accent);background:#EEF2FF;padding:12px 16px;border-radius:8px}code{background:#0F172A;color:#E2E8F0;padding:2px 6px;border-radius:4px}pre{background:#0F172A;color:#E2E8F0;padding:16px;border-radius:12px;overflow:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:var(--accent);color:#fff;padding:10px;text-align:left}td{padding:10px;border:1px solid #E2E8F0}tr:nth-child(even) td{background:#F8FAFC}header{border-bottom:2px solid var(--accent);padding-bottom:16px;margin-bottom:24px}footer{text-align:center;color:#64748B;font-size:12px;margin-top:40px;border-top:1px solid #E2E8F0;padding-top:16px}</style></head><body><header><h1>"+escapeHtml(filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "))+"</h1><p style=\"color:#64748B\">Generated by Anteemonee • "+new Date().toLocaleDateString()+"</p></header><article>"+renderMarkdown(content).replace(/<p><\/p>/g,"")+"</article><footer>Generated by Anteemonee • AI Study Tutor</footer></body></html>";
+        var htmlDoc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(filename)+"</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:800px;margin:40px auto;padding:32px;line-height:1.7;color:#111111;background:#f8f8f8}h1{color:var(--accent);border-bottom:3px solid var(--accent);padding-bottom:12px}h2{color:var(--accent);margin-top:28px}h3{color:#444444}blockquote{border-left:4px solid var(--accent);background:#f0f0f0;padding:12px 16px;border-radius:8px}code{background:#111111;color:#e2e2e2;padding:2px 6px;border-radius:4px}pre{background:#111111;color:#e2e2e2;padding:16px;border-radius:12px;overflow:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#111111;color:#fff;padding:10px;text-align:left}td{padding:10px;border:1px solid #e2e2e2}tr:nth-child(even) td{background:#f8f8f8}header{border-bottom:2px solid var(--accent);padding-bottom:16px;margin-bottom:24px}footer{text-align:center;color:#666666;font-size:12px;margin-top:40px;border-top:1px solid #e2e2e2;padding-top:16px}</style></head><body><header><h1>"+escapeHtml(filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "))+"</h1><p style=\"color:#666666\">Generated by Anteemonee • "+new Date().toLocaleDateString()+"</p></header><article>"+renderMarkdown(content).replace(/<p><\/p>/g,"")+"</article><footer>Generated by Anteemonee • AI Study Tutor</footer></body></html>";
         var blob2 = new Blob([htmlDoc], {type:"text/html"});
         downloadBlob(blob2, filename);
         showChatToast("HTML downloaded");
@@ -5611,7 +5796,7 @@ function handleFileBlocks(div, text) {
     prevBtn.addEventListener("click", function(){
       var extLower = f.ext.toLowerCase();
       if (extLower === "html") {
-        var htmlDoc2 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Preview</title><style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:24px;color:#0F172A}h1{color:var(--accent)}h2{color:var(--accent)}h3{color:#0D9488}</style></head><body>"+renderMarkdown(f.content)+"</body></html>";
+        var htmlDoc2 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Preview</title><style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:24px;color:#111111}h1{color:var(--accent)}h2{color:var(--accent)}h3{color:#444444}</style></head><body>"+renderMarkdown(f.content)+"</body></html>";
         var w = window.open("", "_blank");
         if (w) { w.document.write(htmlDoc2); w.document.close(); }
       } else {
@@ -5624,6 +5809,7 @@ function handleFileBlocks(div, text) {
     });
     host.appendChild(card);
   });
+  try { if (opts && opts.allowDriveSave) maybeSaveBlocksToDrive(div, blocks); } catch (_) {}
 }
 
 
@@ -5660,6 +5846,7 @@ function handleFileBlocks(div, text) {
     }
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
     displayText = stripGraphBlock(displayText);
+    displayText = stripDriveReadBlock(displayText);
     // The streaming tool line (if shown) always comes off here: the permanent
     // "Searched the web" chip is added separately by attachFeedbackButtons and
     // only when the server confirms it searched.
@@ -5672,7 +5859,8 @@ function handleFileBlocks(div, text) {
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
-    try { handleFileBlocks(div, text); } catch (_) {}
+    try { handleFileBlocks(div, text, { allowDriveSave: true }); } catch (_) {}
+    try { handleDriveBlocks(div, text, true); } catch (_) {}
     destroyGraphsIn(div);
     if (graphData) {
       try { renderGraphCard(div, graphData); } catch (_) {}
@@ -6875,6 +7063,7 @@ function handleFileBlocks(div, text) {
 
   async function handleSend() {
     const text = chatInput.value.trim();
+    const driveInternal = text.indexOf('[[DRIVE_FILE:') === 0;
     const hasImages = pendingImages.length > 0;
     const testRef = pendingTestRef;
     const quizRequested = !hasImages && shouldCreateQuiz(text);
@@ -6906,6 +7095,8 @@ function handleFileBlocks(div, text) {
 
     // Refresh AI preferences in case user changed them mid-session
     await loadAiPrefs();
+    // Slame / Drive: refresh the connection + file list so the tutor prompt is current.
+    try { await refreshDriveCtx(); } catch (_) {}
 
     // â”€â”€ Session gate: must have an active session â”€â”€
     if (!activeSession || new Date(activeSession.expires_at).getTime() <= Date.now()) {
@@ -6936,7 +7127,7 @@ function handleFileBlocks(div, text) {
     }
 
     commitEditMessage();
-    appendMessage('user', text || '', true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null, test: testRef || null });
+    appendMessage('user', driveInternal ? driveNoteText(text) : (text || ''), true, { idx: messages.length, quote: quote || null, images: hasImages ? imagesToSend : null, test: testRef || null });
     messages.push(quote
       ? { role: 'user', content: text, quote, images: hasImages ? imagesToSend : null, testRef: testRef || null }
       : { role: 'user', content: text, images: hasImages ? imagesToSend : null, testRef: testRef || null });
@@ -7224,7 +7415,7 @@ function handleFileBlocks(div, text) {
     } catch (error) {
       // â”€â”€ Auto-retry on NO_SESSION: session exists locally but not in DB â”€â”€
       if (error && error.code === 'FREE_DAILY_LIMIT') {
-        // Today's 15 messages are spent. The gateway spent them before
+        // Today's 30 messages are spent. The gateway spent them before
         // generating a single token, so nothing was wasted, and it told us
         // when the day rolls over. Lock the input and offer the upgrade.
         try {

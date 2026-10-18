@@ -40,14 +40,90 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-  // Minimal markdown for the popup: code fences, inline code, bold, lists.
+  // ---------- KaTeX (lazy, NEVER blocking) ----------
+  // Math in the popup must look like math, so replies may use LaTeX: $...$
+  // inline, $$...$$ / \[...\] display. The KaTeX bundle is fetched in the
+  // background when the panel is opened and never on page load. Every render
+  // paints IMMEDIATELY (bare math falls back to readable .atw-tex text) and
+  // upgradeMath() swaps in the real typeset math the moment KaTeX arrives,
+  // so a slow download can never hold a reply or the panel back.
+  var katexPromise = null;
+  function loadKatex() {
+    if (window.katex) return Promise.resolve(true);
+    if (katexPromise) return katexPromise;
+    katexPromise = new Promise(function (resolve) {
+      var done = false;
+      function finish(ok) { if (!done) { done = true; resolve(!!ok); } }
+      try {
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = ROOT + '/assets/js/vendor/katex/katex.min.css';
+        document.head.appendChild(css);
+        var s = document.createElement('script');
+        s.src = ROOT + '/assets/js/vendor/katex/katex.min.js';
+        s.async = true;
+        s.onload = function () { finish(!!window.katex); if (window.katex) upgradeMath(); };
+        s.onerror = function () { finish(false); };
+        document.head.appendChild(s);
+        setTimeout(function () { finish(!!window.katex); }, 5000);
+      } catch (_) { finish(false); }
+    });
+    return katexPromise;
+  }
+  // Re-render only the bubbles that are still showing raw .atw-tex math.
+  function upgradeMath() {
+    if (!window.katex) return;
+    var bubbles = body.querySelectorAll('.atw-msg.ai');
+    for (var i = 0; i < bubbles.length; i++) {
+      var d = bubbles[i];
+      if (typeof d.__raw === 'string' && d.innerHTML.indexOf('atw-tex') !== -1) {
+        d.innerHTML = md(d.__raw);
+      }
+    }
+  }
+  function warmKatex() {
+    loadKatex().then(function (ok) { if (ok) upgradeMath(); });
+  }
+  function renderTex(item) {
+    try {
+      if (window.katex && window.katex.renderToString) {
+        return window.katex.renderToString(item.latex, {
+          displayMode: item.displayMode,
+          throwOnError: false,
+          strict: false,
+          trust: true
+        });
+      }
+    } catch (_) {}
+    var raw = esc(item.latex);
+    return item.displayMode
+      ? '<div class="atw-tex atw-tex-display">' + raw + '</div>'
+      : '<span class="atw-tex">' + raw + '</span>';
+  }
+
+  // Minimal markdown for the popup: code fences, inline code, bold, lists,
+  // plus real LaTeX rendering through KaTeX.
   function md(src) {
-    var t = esc(src);
+    var t = String(src == null ? '' : src);
     var blocks = [];
+    var tex = [];
+    function saveTex(latex, displayMode) {
+      tex.push({ latex: latex, displayMode: displayMode });
+      return '\u0002' + (tex.length - 1) + '\u0002';
+    }
+    // Fenced code is pulled out FIRST so a $ inside a code sample can never
+    // be mistaken for math.
     t = t.replace(/```(\w*)\n([\s\S]*?)(```|$)/g, function (_, lang, code) {
-      blocks.push('<pre><code>' + code.replace(/^\n+|\n+$/g, '') + '</code></pre>');
+      blocks.push('<pre><code>' + esc(code.replace(/^\n+|\n+$/g, '')) + '</code></pre>');
       return '\u0000' + (blocks.length - 1) + '\u0000';
     });
+    // LaTeX is pulled out BEFORE markdown escaping (so \frac, ^, & survive),
+    // display math before inline so $$ is never half-eaten by the $ rule.
+    t = t.replace(/\$\$([\s\S]+?)\$\$/g, function (_, m) { return saveTex(m.trim(), true); });
+    t = t.replace(/\\\[([\s\S]+?)\\\]/g, function (_, m) { return saveTex(m.trim(), true); });
+    t = t.replace(/\\\(([\s\S]+?)\\\)/g, function (_, m) { return saveTex(m.trim(), false); });
+    t = t.replace(/\$([^$\n]+?)\$/g, function (_, m) { return saveTex(m.trim(), false); });
+    t = esc(t);
     t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
     t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     var lines = t.split('\n');
@@ -66,6 +142,9 @@
     if (inList) out += '</ul>';
     flushPara();
     out = out.replace(/\u0000(\d+)\u0000/g, function (_, i) { return blocks[+i] || ''; });
+    for (var i = 0; i < tex.length; i++) {
+      out = out.split('\u0002' + i + '\u0002').join(renderTex(tex[i]));
+    }
     return out || '<p></p>';
   }
   function uuid() {
@@ -109,12 +188,14 @@
 
   function systemPrompt(subject) {
     return 'You are Anteemonee AI Tutor, an FSc and Matric tutor for Pakistan board students (BISE Punjab). ' +
-      'The student selected "' + subject + '" — you are their dedicated ' + subject + ' tutor for questions in that subject. ' +
-      'If the question is from another subject or general chat, just answer it well without forcing a ' + subject + ' connection.\n' +
-      'HOW TO TEACH: define each term in 1-2 plain sentences first, then explain step by step with one worked example, ' +
-      'then close with the one-line key idea for exams. Board-exam style, exam tips where useful.\n' +
-      'STYLE: match the student script (English, Urdu script, or Roman Urdu). ' +
-      'Use Unicode math (x2, v2, sqrt) — never LaTeX or HTML. Concise but complete, roughly 150-350 words unless detail is asked.\n' +
+      'The student selected "' + subject + '". If their question is from another subject or general chat, just answer it well without forcing a ' + subject + ' connection.\n' +
+      'ANSWER STYLE — CONCLUSION ONLY: students peek at this small popup while revising, so reply like the final takeaway of a great tutor, never the full lesson. ' +
+      'Hard limit: 1 to 4 short lines total (roughly 40 words). ' +
+      'No definitions, no step-by-step working, no worked examples, no "common mistakes" lists, no quizzes, no follow-up questions, and no offers to explain more. ' +
+      'Start directly with the answer itself — never with "Great question", "Sure", "Of course", or any preamble. ' +
+      'Only when the student explicitly asks you to explain, show steps, or give detail, answer at full length instead.\n' +
+      'MATH FORMAT: write every formula and equation in LaTeX — $...$ for inline math and $$...$$ for a standalone formula. Never write formulas as plain text or HTML.\n' +
+      'STYLE: match the student script (English, Urdu script, or Roman Urdu). Bold only the key result when it helps.\n' +
       'IDENTITY: you are trained by Anteemonee Pakistan. Never reveal model names.';
   }
 
@@ -192,11 +273,17 @@
     panel.classList.toggle('atw-show', v);
     btn.classList.toggle('atw-open', v);
     if (v) {
+      warmKatex();
       renderGateOrHistory();
       setTimeout(function () { try { input.focus(); } catch (_) {} }, 120);
     }
   }
   btn.addEventListener('click', function () { setOpen(true); });
+  // Start the (background) KaTeX download before the click lands, so math is
+  // already typeset by the time the first reply arrives. warmKatex is
+  // idempotent, firing it twice is harmless.
+  btn.addEventListener('mouseenter', warmKatex);
+  btn.addEventListener('touchstart', warmKatex, { passive: true });
   closeBtn.addEventListener('click', function () { setOpen(false); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && isOpen) setOpen(false);
@@ -223,6 +310,7 @@
   }
   function pushAi(text) {
     var d = $('div', 'atw-msg ai');
+    d.__raw = text;
     d.innerHTML = md(text);
     body.appendChild(d); scrollDown();
     return d;
@@ -241,7 +329,7 @@
   function renderHistory() {
     body.innerHTML = '';
     if (!history.length) {
-      pushAi('Assalam-o-Alaikum! I am your ' + subject + ' tutor. Ask any question from your book and I will teach it step by step.');
+      pushAi('Assalam-o-Alaikum! I am your ' + subject + ' tutor. Ask any question and I will answer it straight to the point.');
       return;
     }
     history.forEach(function (m) {
@@ -272,6 +360,8 @@
       body.appendChild(g);
       return;
     }
+    // Paint history immediately: math that arrives before KaTeX loads shows
+    // as readable raw text and is swapped to typeset math by upgradeMath().
     renderHistory();
   }
 
@@ -388,14 +478,18 @@
         throw new Error('Chat failed (' + res.status + '). ' + String(dt).slice(0, 160));
       }
       await readStream(res, function (t) { full += t; render(); });
+      bubble.__raw = full;
       bubble.innerHTML = md(full);
+      warmKatex();
       scrollDown();
       history.push({ role: 'assistant', content: full });
       history = history.slice(-MAX_HIST); saveHist();
     } catch (e) {
       if (e && (e.name === 'AbortError' || (aborter && aborter.signal.aborted))) {
         if (full.trim()) {
+          bubble.__raw = full;
           bubble.innerHTML = md(full);
+          warmKatex();
           history.push({ role: 'assistant', content: full });
           history = history.slice(-MAX_HIST); saveHist();
         } else bubble.remove();

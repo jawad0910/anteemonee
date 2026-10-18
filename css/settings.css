@@ -284,11 +284,11 @@ textarea.setting-input {
 .btn-settings-secondary:active { box-shadow: var(--neo-shadow-pressed); transform: translateY(0); }
 
 .btn-settings-danger {
-  background: rgba(255,102,117,0.1);
-  color: #FF6675;
+  background: rgba(136,136,136,0.1);
+  color: #888888;
   box-shadow: var(--neo-shadow-raised-sm);
 }
-.btn-settings-danger:hover { background: rgba(255,102,117,0.18); box-shadow: var(--neo-shadow-raised); }
+.btn-settings-danger:hover { background: rgba(136,136,136,0.18); box-shadow: var(--neo-shadow-raised); }
 
 .btn-settings-ghost {
   background: none;
@@ -317,12 +317,12 @@ textarea.setting-input {
 
 /* --- Danger Zone â€” neomorphic --- */
 .settings-danger-zone {
-  border: 1px solid rgba(255,102,117,0.2);
+  border: 1px solid rgba(136,136,136,0.2);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-.settings-danger-zone .setting-row { border-bottom-color: rgba(255,102,117,0.08); }
-.settings-danger-zone .setting-title { color: #FF6675; }
+.settings-danger-zone .setting-row { border-bottom-color: rgba(136,136,136,0.08); }
+.settings-danger-zone .setting-title { color: #888888; }
 
 /* --- Toast â€” neomorphic --- */
 .settings-toast {
@@ -347,7 +347,7 @@ textarea.setting-input {
   transform: translateX(-50%) translateY(0);
 }
 .settings-toast.error {
-  color: #FF6675;
+  color: #888888;
 }
 
 /* --- Profile Card â€” neomorphic --- */
@@ -437,7 +437,7 @@ textarea.setting-input {
 }
 .settings-modal .confirm-input:focus {
   outline: none;
-  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px rgba(255,102,117,0.3);
+  box-shadow: var(--neo-shadow-recessed-sm), 0 0 0 2px rgba(136,136,136,0.3);
 }
 
 /* --- Skeleton Loading --- */
@@ -483,8 +483,8 @@ textarea.setting-input {
   font-size: 18px;
   flex-shrink: 0;
 }
-.provider-icon.google { background: rgba(234,67,53,0.12); color: #EA4335; }
-.provider-icon.spotify { background: rgba(30,215,96,0.12); color: #1ED760; }
+.provider-icon.google { background: rgba(101,101,101,0.12); color: #656565; }
+.provider-icon.spotify { background: rgba(167,167,167,0.12); color: #a7a7a7; }
 .provider-icon.email { background: var(--accent-soft); color: var(--accent); }
 .provider-icon.github { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 
@@ -667,7 +667,7 @@ textarea.setting-input {
   box-shadow: none;
 }
 .btn-settings-secondary:hover, .btn-settings-ghost:hover { background: var(--liquid-bg-strong); }
-.btn-settings-danger { border: 1px solid rgba(255,102,117,0.2); box-shadow: none; }
+.btn-settings-danger { border: 1px solid rgba(136,136,136,0.2); box-shadow: none; }
 .btn-settings-danger:hover { box-shadow: none; }
 
 /* Profile card */
@@ -750,7 +750,7 @@ textarea.setting-input {
   transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .api-progress-fill.is-full {
-  background: linear-gradient(90deg, var(--error), rgba(248, 113, 113, 0.65));
+  background: linear-gradient(90deg, var(--error), rgba(142,142,142, 0.65));
 }
 .api-progress-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;

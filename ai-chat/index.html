@@ -17,7 +17,7 @@
   <title>Anteemonee - AI Study Tutor & Flashcards for Pakistan Students</title>
   <meta name="description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects. Anteemonee is Pakistan's smartest Student OS.">
   <meta name="keywords" content="AI tutor Pakistan, flashcards, study chat, FSc preparation, matric exam prep, student AI, Anteemonee, online tutor, study assistant">
-  <meta name="theme-color" content="#07080C">
+  <meta name="theme-color" content="#080808">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/ai-chat/">
   <!-- Open Graph -->
@@ -37,8 +37,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=35">
-  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=86">
+  <link rel="stylesheet" href="../css/style.css?v=36">
+  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=88">
   <link rel="stylesheet" href="../assets/js/vendor/katex/katex.min.css">
   <style>
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
@@ -46,7 +46,7 @@
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
     .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .logo-text { font-family:'Fraunces', Georgia, 'Noto Emoji', serif; font-size: 21px; }
     .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
     .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
     .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
@@ -61,7 +61,7 @@
     .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
     .icon-btn:hover { background: var(--surface); color: var(--text); }
     .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
     @media (max-width: 1100px) { .landing-nav { display: none; } }
     .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
     .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
@@ -71,13 +71,13 @@
     .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
     .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
     .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
     .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
     .landing-profile-dropdown .profile-dropdown.open { display: block; }
     .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
     .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
     .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
     .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
     .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -99,12 +99,12 @@
     @media (max-width: 900px) { .site-menu-toggle { display: inline-flex; } .site-auth-btns { display: none; } #landing-auth-in { display: none !important; } }
   </style>
   <!-- macOS / iOS Messages design system -->
-  <link rel="stylesheet" href="code/css/tokens.css?v=2">
-  <link rel="stylesheet" href="code/css/layout.css?v=1">
-  <link rel="stylesheet" href="code/css/messages.css?v=105">
+  <link rel="stylesheet" href="code/css/tokens.css?v=3">
+  <link rel="stylesheet" href="code/css/layout.css?v=2">
+  <link rel="stylesheet" href="code/css/messages.css?v=106">
   <link rel="stylesheet" href="code/css/composer.css?v=104">
   <link rel="stylesheet" href="code/css/responsive.css?v=106">
-  <link rel="stylesheet" href="../css/header.css?v=7">
+  <link rel="stylesheet" href="../css/header.css?v=8">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body class="welcome-center">
@@ -133,7 +133,8 @@
     </div>
   </div>
   <a href="../ai-test-builder/">AI Test Builder</a>
-  <a href="../century-club/">Century Club</a>
+  <a href="../slame/">Slame</a>
+      <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
         <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
@@ -163,6 +164,7 @@
     </div>
   </div>
   <a href="../ai-chat/" class="site-mobile-link">AI Assistant</a>
+  <a href="../slame/" class="site-mobile-link">Slame</a>
 
         <a href="../mx-9f2c4e7a/" class="site-mobile-link">Messenger</a>
     <div class="site-mobile-cta">
@@ -420,14 +422,14 @@
   <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = '../assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../assets/js/vendor/docx.umd.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=33"></script>
+  <script src="../js/app.js?v=37"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>
   <script src="code/js/ai-api-service.js?v=27"></script>
   <script src="../js/mistral-key-modal.js?v=1"></script>
   <script src="code/js/image-limit-card.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=119"></script>
+  <script src="code/js/ai-chatbot.js?v=120"></script>
   <script src="../assets/js/vendor/chart.umd.min.js"></script>
   <script src="code/js/voice-chat.js?v=46"></script>
   <script src="code/js/realtime-call.js?v=8"></script>

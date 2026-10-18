@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=35">
+  <link rel="stylesheet" href="../css/style.css?v=36">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -37,7 +37,7 @@
     .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
     .header-inner::before { display: none; }
     .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
+    .logo-text { font-family:'Fraunces', Georgia, 'Noto Emoji', serif; font-size: 21px; }
     .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
     .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
     .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
@@ -52,7 +52,7 @@
     .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
     .icon-btn:hover { background: var(--surface); color: var(--text); }
     .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
     @media (max-width: 1100px) { .landing-nav { display: none; } }
     .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
     .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
@@ -62,13 +62,13 @@
     .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
     .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
     .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
     .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
     .landing-profile-dropdown .profile-dropdown.open { display: block; }
     .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
     .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
     .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #23232A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
     .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
     .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -81,7 +81,7 @@
     .section-inner { max-width: 1280px; margin: 0 auto; }
 
     /* PDF shower (pdf.js — same as eBooks) */
-    #pdf-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(3,7,18,.72);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);align-items:center;justify-content:center;padding:18px}
+    #pdf-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(7,7,7,.72);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);align-items:center;justify-content:center;padding:18px}
     .pdf-shell{position:relative;width:min(1100px,100%);height:min(88vh,900px);background:var(--bg-elevated);border:1px solid rgba(255,255,255,.12);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.55)}
     .pdf-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent)}
     .pdf-bar-left{display:flex;align-items:center;gap:10px;min-width:0}
@@ -103,7 +103,7 @@
     .pdf-shell:fullscreen .pdf-canvas-wrap{padding:0;background:#000}
     .pdf-shell:fullscreen #pdf-canvas{border-radius:0}
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=7">
+  <link rel="stylesheet" href="../css/header.css?v=8">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
@@ -130,7 +130,8 @@
     </div>
   </div>
   <a href="../ai-test-builder/">AI Test Builder</a>
-  <a href="../century-club/">Century Club</a>
+  <a href="../slame/">Slame</a>
+      <a href="../century-club/">Century Club</a>
 </nav>
       <div class="header-actions">
         <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
@@ -162,6 +163,7 @@
     <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
     <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
     <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
+    <a href="../slame/" class="mobile-nav-link">Slame</a>
     <a href="../century-club/" class="mobile-nav-link">Century Club</a>
         <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
     <div class="mobile-cta">
@@ -172,7 +174,7 @@
 
   <style>
     .pp-wrap{max-width:1280px;margin:0 auto;padding:110px 24px 80px}
-    .pp-head h1{font-family:'Fraunces',Georgia,serif;font-size:clamp(1.8rem,3.2vw,2.4rem);margin:0 0 6px}
+    .pp-head h1{font-family:'Fraunces',Georgia,'Noto Emoji', serif;font-size:clamp(1.8rem,3.2vw,2.4rem);margin:0 0 6px}
     .pp-head p{color:var(--text-secondary);font-size:14px;margin:0 0 14px}
     .pp-filters{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 20px;align-items:center}
     .pp-filters input{flex:1;min-width:220px;padding:11px 14px;border-radius:12px;border:1px solid var(--liquid-border-soft);background:var(--liquid-bg-soft);-webkit-backdrop-filter:var(--liquid-blur-sm);backdrop-filter:var(--liquid-blur-sm);color:var(--text);font:inherit;font-size:13.5px;outline:none;box-shadow:var(--liquid-inset)}
@@ -301,7 +303,7 @@
   <script src="/assets/js/vendor/pdf.min.js"></script>
   <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='/assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=31"></script>
+  <script src="../js/app.js?v=37"></script>
 <script src="../js/login-modal.js?v=5"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=3"></script>
