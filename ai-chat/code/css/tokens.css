@@ -11,20 +11,12 @@
 
 :root {
   /* ── Type ──────────────────────────────────────────────────────
-     SF Pro stays first on Apple; Plus Jakarta Sans supplies the
-     same smooth, slightly geometric feel on the rest of the stack. */
-  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
-             'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, 'Noto Emoji', sans-serif;
-  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
-                  'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, 'Noto Emoji', sans-serif;
-  /* Reading face for the conversation itself. Inter is asked for by name
-     (it is already downloaded for the rest of the page) so the reply looks
-     identical on every OS instead of inheriting whatever the system calls
-     its UI font, and its taller x-height keeps long answers easy to scan. */
-  --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-                  'Segoe UI Variable Text', 'Segoe UI', system-ui, 'Noto Emoji', sans-serif;
-  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo,
-               Consolas, 'Noto Emoji', monospace;
+     One font everywhere: the native macOS / Apple UI face (see the global
+     tokens in css/style.css). No webfonts are loaded for this layout. */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-reading: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
 
   /* ── Motion — Apple-like spring / easing set ─────────────────── */
   --m-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);

@@ -257,12 +257,14 @@
   }
 
   // Keep only the 50 most recent DB chats per user (best effort, background).
+  // Runs through the server-side delete so images the trimmed chats generated
+  // are freed with them, not orphaned in the ai-images bucket.
   function trimDbConversations(uid) {
     try {
       db.from('chat_conversations').select('id').eq('user_id', uid).order('updated_at', { ascending: false }).range(50, 500)
         .then(({ data }) => {
           const ids = (data || []).map(r => r.id).filter(Boolean);
-          if (ids.length) db.from('chat_conversations').delete().in('id', ids).then(() => {}).catch(() => {});
+          if (ids.length && typeof purgeOrDeleteChats !== 'undefined') purgeOrDeleteChats(ids);
         }).catch(() => {});
     } catch (_) {}
   }
@@ -320,6 +322,23 @@
   }
 
   async function deleteConversationFromDb(id) {
+    // Server-side delete first: the chat-delete function verifies ownership,
+    // removes every generated image the chat produced from the ai-images
+    // bucket, then deletes the row. On any failure fall back to the direct
+    // RLS delete (the row still goes away; images may need the retry).
+    try {
+      const base = (typeof api !== 'undefined' && api && api.supabaseUrl) || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
+      const anonKey = (typeof api !== 'undefined' && api && api.supabaseKey) || (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '');
+      const token = getAccessToken();
+      if (base && token) {
+        const res = await fetch(base + '/functions/v1/chat-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ id: id }),
+        });
+        if (res.ok) return;
+      }
+    } catch (_) {}
     try { await db.from('chat_conversations').delete().eq('id', id); } catch (_) {}
   }
 
@@ -415,16 +434,35 @@
   async function pruneDbConversations(uid) {
     try {
       var cutoff = new Date(Date.now() - CHAT_TTL_MS).toISOString();
+      // Discover the expired chats first so their images can be purged too;
+      // the direct delete would orphan generated-image files in the bucket.
       try {
-        // try to keep pinned chats
-        var res = await db.from('chat_conversations').delete().eq('user_id', uid).lt('updated_at', cutoff).or('pinned.is.null,pinned.eq.false');
-        if (res && res.error && /pinned|column/i.test(res.error.message||'')) throw res.error;
-      } catch (e) {
-        if (/pinned|column/i.test((e && e.message)||'')) {
-          await db.from('chat_conversations').delete().eq('user_id', uid).lt('updated_at', cutoff);
-        }
+        const sel = await db.from('chat_conversations').select('id,pinned,updated_at').eq('user_id', uid).lt('updated_at', cutoff);
+        var rows = (sel && sel.data) || [];
+        var expired = rows.filter(r => r && !r.pinned).map(r => r.id).filter(Boolean);
+        if (!expired.length) return;
+        if (typeof purgeOrDeleteChats !== 'undefined') purgeOrDeleteChats(expired);
+      } catch (_) {}
+    } catch (_) {}
+  }
+
+  // Shared server-side delete: image purge + row delete via chat-delete,
+  // falling back to the direct RLS delete when the edge call fails.
+  async function purgeOrDeleteChats(ids) {
+    if (!ids || !ids.length) return;
+    try {
+      const base = (typeof api !== 'undefined' && api && api.supabaseUrl) || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
+      const token = getAccessToken();
+      if (base && token) {
+        const res = await fetch(base + '/functions/v1/chat-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ ids: ids }),
+        });
+        if (res.ok) return;
       }
     } catch (_) {}
+    try { await db.from('chat_conversations').delete().in('id', ids); } catch (_) {}
   }
 
   // Chats written while the store was loading live in localStorage only. Fold
@@ -1239,7 +1277,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
     memoryEnabled: true,
     personalization: '',
     emojis: false,
-    references: false,
+    references: true,
   };
   function referencesStorageKey() {
     try {
@@ -1362,6 +1400,22 @@ Use this context if the student refers to the quiz, an answer, or a question num
   }
 
   // â”€â”€ Init â”€â”€
+  // Send wedge safety net: if ANY uncaught error or unhandled rejection fires
+  // mid-send, the locked composer must never stay dead. Unlock + log it.
+  function __recoverSendWedge(kind) {
+    try {
+      if (!isStreaming) return;
+      var live = document.querySelector('div.__liveReply');
+      if (live) return; // a live stream owns the lock legitimately
+      console.error('[AI Chat] send recovered after ' + kind);
+      isStreaming = false;
+      chatInput.disabled = false;
+      btnSend.disabled = chatInput.value.trim() === '';
+    } catch (_) {}
+  }
+  window.addEventListener('error', function () { __recoverSendWedge('error'); });
+  window.addEventListener('unhandledrejection', function () { __recoverSendWedge('unhandled rejection'); });
+
   document.addEventListener('DOMContentLoaded', init);
 
   async function init() {
@@ -1783,7 +1837,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     if (typeof currentUser === 'undefined' || !currentUser) return;
     try {
       const { data: acads } = await db.from('student_academic_profiles')
-        .select('education_system_id, board_id, class_level_id, group_id, exam_year, education_system:education_systems(name), board:boards(name), class_level:class_levels(label), group:groups(name)')
+        .select('education_system_id, board_id, class_level_id, group_id, education_system:education_systems(name), board:boards(name), class_level:class_levels(label), group:groups(name)')
         .eq('user_id', currentUser.id).maybeSingle();
 
       if (acads) {
@@ -1794,7 +1848,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
           class: acads.class_level?.label || '',
           classLevelId: acads.class_level_id || null,
           group: acads.group?.name || '',
-          examYear: acads.exam_year || '',
+          examYear: '',
         };
       } else {
         studentContext = { name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student' };
@@ -1817,31 +1871,6 @@ if (idx >= 0 && idx < PERSONAS.length) {
       .slice(0, 200);
 
     if (searchQuery.length < 3) return [];
-
-    // Try semantic search first (embedding-based), fall back to full-text
-    async function runSemanticSearch(q) {
-      try {
-        const searchParams = {
-          p_query: q,
-          p_book_id: null,
-          p_limit: TEXTBOOK_MAX_PAGES,
-          p_similarity_threshold: 0.65,
-        };
-        // The gateway will fill in the embedding
-        let result = await db.rpc('search_textbook_pages_semantic', { ...searchParams, p_query: q });
-        if (!result.error && result.data && result.data.length > 0) {
-          console.log('[AI] Semantic search found ' + result.data.length + ' pages');
-          return prioritizeSubjectPages(result.data, subj);
-        }
-      } catch (e) {
-        console.warn('[AI] Semantic search failed, falling back:', e.message);
-      }
-      return [];
-    }
-
-    // Try semantic search first (better for conceptual questions)
-    var semanticPages = await runSemanticSearch(searchQuery);
-    if (semanticPages.length) return semanticPages;
 
     async function runSearch(q) {
       const searchParams = {
@@ -1988,7 +2017,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
   // explicit book/general ratio with page citations in the instructions.
   var TEXTBOOK_MAX_PAGES = 5;
   var TEXTBOOK_PAGE_CHARS = 1800;
-  var TEXTBOOK_BOOK_SHARE = 70;
+  var TEXTBOOK_BOOK_SHARE = 60;
 
   function formatTextbookContext(pages) {
     if (!pages || pages.length === 0) return '';
@@ -2050,7 +2079,7 @@ ${sections.join('\n\n---\n\n')}
 ===== HOW TO USE THESE EXCERPTS =====
 1. READ THEM FIRST. They are the source of truth for this question.
 2. ${TEXTBOOK_BOOK_SHARE}% FROM THE BOOK: build the bulk of your answer out of these excerpts. Open with the book's own definition of the topic, quoting the key sentence from the excerpt, then teach the book's facts, formulas, values and terminology, and keep the book's wording wherever it is clearer than your own.${citeInline}
-3. ${generalShare}% OF YOUR OWN: only after the book has had its say, add your own analogies, extra worked examples and exam tips. Your own knowledge must never replace or contradict a book fact: where the excerpts cover a point, the book wins.
+3. ${generalShare}% OF YOUR OWN: only after the book has had its say, add your own analogies and extra worked examples, woven naturally into the explanation. Your own knowledge must never replace or contradict a book fact: where the excerpts cover a point, the book wins.
 4. IF THE EXCERPTS DO NOT COVER IT: say so in one short line, then answer that part from general knowledge so the student is not left stuck.
 ${refBlock}`;
   }
@@ -2064,20 +2093,25 @@ ${refBlock}`;
       'ANSWER FOUNDATION - MANDATORY IN EVERY RESPONSE:\n' +
       '1. DEFINE THE TOPIC FIRST. Open by stating what the concept, term, or process actually IS, in one or two plain sentences, BEFORE any explanation. If the student used a technical term, define that exact term first. Never assume a term is known.\n' +
       '2. GIVE IT CONTEXT. Say why it matters, what it is used for, and where it fits in the bigger picture of the subject.\n' +
-      '3. ONLY THEN WORK IT THROUGH. Break it into steps, show the reasoning, give a concrete worked example, and mention the mistakes students usually make.\n' +
-      '4. CLOSE WITH THE KEY IDEA. End with one or two sentences the student could repeat in an exam.\n' +
+      '3. THEN WORK IT THROUGH. Break it into steps, show the reasoning, and give a concrete worked example.\n' +
+      '4. NO INVENTED HEADINGS OR LABELS. Never attach template labels or made-up sections such as "Definition", "Context", "Common Mistakes", "Common Pitfalls", "Key Idea", "Overview", "Conclusion", "Important Points", and never open a line with a bold tag like "Exam tip:" or "Pro tip:". Write natural flowing prose and lists that read like a good teacher talking, and only use a heading the student explicitly asked for.\n' +
       'Never reply with a bare one-line answer that skips the definition. Short is fine, undefined is not.';
+
+    // Concise belongs to the floating AI Tutor widget (lower-right popup).
+    // The full tutor must never go short because of a setting meant for the
+    // widget, so concise is coerced to balanced here; detailed/advanced apply.
+    const chatResponseStyle = aiPrefs.responseStyle === 'concise' ? 'balanced' : aiPrefs.responseStyle;
 
     const styleRule = {
       concise: 'RESPONSE STYLE is CONCISE: define the topic in 1-2 sentences, then give the direct answer and the single most important point. Skip extra examples and background. Never skip the definition. Roughly 120-200 words.',
-      balanced: 'RESPONSE STYLE is BALANCED: a full, complete explanation, not a summary. Define the topic, give context, then walk through it step by step, add one clear worked example, note a common mistake, and close with the key takeaway. Roughly 350-600 words.',
-      detailed: 'RESPONSE STYLE is DETAILED: teach the topic thoroughly rather than summarising it. Define it, give context, then use clear headed sections for each part, show multiple worked examples, cover edge cases and exceptions, list the mistakes students actually make in exams, and add exam tips and memory aids. Roughly 700-1200 words. Write as much as the topic genuinely needs. Do not hold back, and do not pad with filler.',
-    }[aiPrefs.responseStyle] || 'RESPONSE STYLE is BALANCED: a full, complete explanation with a definition, context, step-by-step working, a worked example, and a key takeaway. Roughly 350-600 words.';
+      balanced: 'RESPONSE STYLE is BALANCED: a full, complete explanation, not a summary. Define the topic, give context, then walk through it step by step with one clear worked example. Roughly 350-600 words.',
+      detailed: 'RESPONSE STYLE is DETAILED: teach the topic thoroughly rather than summarising it. Define it, give context, then show multiple worked examples and cover edge cases and exceptions in natural prose, not template sections. Roughly 700-1200 words. Write as much as the topic genuinely needs. Do not hold back, and do not pad with filler.',
+    }[chatResponseStyle] || 'RESPONSE STYLE is BALANCED: a full, complete explanation with a definition, context, step-by-step working, and a worked example. Roughly 350-600 words.';
 
     const levelRule = {
       simple: 'EXPLANATION LEVEL is SIMPLE: explain as if the student has never seen this topic before. Very simple words, everyday analogies, tiny steps, and define every piece of jargon the moment you use it. Explain the WHY, not just the WHAT.',
       standard: 'EXPLANATION LEVEL is STANDARD: explain at FSc board-exam level, but completely and self-contained. Assume the student knows the class background, NOT that they know this specific topic.',
-      advanced: 'EXPLANATION LEVEL is ADVANCED: go deep. Show the full reasoning and the derivation where one exists, explain WHY the result holds, discuss edge cases and limiting cases, compare it against related ideas the student might confuse it with, and flag the classic exam traps and which marks are awarded for each part. Be substantially longer than a standard explanation.',
+      advanced: 'EXPLANATION LEVEL is ADVANCED: go deep. Show the full reasoning and the derivation where one exists, explain WHY the result holds, discuss edge cases and limiting cases, compare it against related ideas the student might confuse it with, and point out where students usually slip, woven naturally into the explanation. Be substantially longer than a standard explanation.',
     }[aiPrefs.explanationLevel] || 'EXPLANATION LEVEL is STANDARD: explain at FSc board-exam level, completely and self-contained.';
 
     const langRule = {
@@ -2113,13 +2147,13 @@ Rules: cite the exact book, chapter number/name, and page values from the excerp
     // Response style and explanation level combine: the two deepest settings
     // together mean a textbook-chapter answer, and that has to be spelled out
     // or the model settles for something short.
-    const isDetailed = aiPrefs.responseStyle === 'detailed';
+    const isDetailed = chatResponseStyle === 'detailed';
     const isAdvanced = aiPrefs.explanationLevel === 'advanced';
     const depthRule = (isDetailed && isAdvanced)
       ? 'MAXIMUM DEPTH MODE: response style is DETAILED and explanation level is ADVANCED. This is the deepest setting available. Write a long, thorough, textbook-chapter-quality explanation: full derivations, every relevant case, several worked examples, and a complete summary of the key ideas. Length is expected here, roughly 900-1500 words, unless the question is genuinely trivial. Never cut the explanation short.'
       : (isDetailed || isAdvanced)
-        ? 'HIGH DEPTH MODE: write a full thorough explanation rather than a summary. Include the complete reasoning, a worked example, and the mistakes students make. Length is expected, roughly 600-1000 words.'
-        : (aiPrefs.responseStyle === 'concise'
+        ? 'HIGH DEPTH MODE: write a full thorough explanation rather than a summary, with the complete reasoning and a worked example. Length is expected, roughly 600-1000 words.'
+        : (chatResponseStyle === 'concise'
           ? 'KEEP IT TIGHT: this is the concise style. Do not write long sections, do not add multiple examples, and do not pad. But always include the definition and the key idea.'
           : '');
 
@@ -2217,7 +2251,7 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
     let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (xâ‚€, vÂ², âˆš2), no LaTeX, no HTML.
 
 SELECTED SUBJECT — CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are a dedicated ${subjName} tutor for questions that belong to ${subjName}.
-- Answer ONLY within ${subjName}: all explanations, examples, formulas, diagrams (text), and exam tips must be for ${subjName} — but ONLY when the question itself is a ${subjName} question (see SCOPE JUDGMENT below).
+- Answer ONLY within ${subjName}: all explanations, examples, formulas, and diagrams (text) must be for ${subjName} — but ONLY when the question itself is a ${subjName} question (see SCOPE JUDGMENT below).
 - If the question is from another subject, general knowledge, current affairs, websites, or casual chat, do NOT force a ${subjName} connection, do NOT apologize for scope, and do NOT steer back to ${subjName}. Follow the SCOPE JUDGMENT rule instead.
 - Prefer ${subjName} textbook excerpts provided below over general knowledge. Cite the exact ${subjName} book, chapter number/name, and page in References when references are enabled.
 - Use ${subjName} terminology, syllabus order, and board-exam style (Pakistan FSc/Matric).
@@ -2235,7 +2269,7 @@ BACKGROUND: ${persona.background}
 STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines.
 
 BEHAVIOR:
-- For academic/study questions: teach from the textbook excerpts provided. Roughly 70% of the answer must be the book's own definitions, facts, formulas and wording, and at most 30% your own general knowledge, examples or exam tips. Explain step-by-step and never let your own knowledge replace a book fact.
+- For academic/study questions: teach from the textbook excerpts provided. Roughly 70% of the answer must be the book's own definitions, facts, formulas and wording, and at most 30% your own general knowledge, analogies and examples. Explain step-by-step and never let your own knowledge replace a book fact.
 - FLASHCARD CREATION: When the user asks to create or make a flashcard:
   - If they gave a clear topic, term, or question: use the SELECTED SUBJECT ("${subjName}") as the card subject unless the user explicitly names a different subject, and output the card in this exact format, then the confirmation line, and nothing else:
     **Subject:** [Subject name, or General if unclear]
@@ -2254,7 +2288,7 @@ BEHAVIOR:
   - The extension determines the file type: .txt for plain text, .md for markdown, .pdf for PDF, .docx for Word, .html for HTML, .csv for CSV, .json for JSON
   - After the block, add a short line: "Your beautifully designed file is ready! Click Download below."
   - The app will automatically convert the markdown inside the block to a beautifully designed downloadable file with colors, headers, footers, and styling. NEVER mention manual steps.
-- REFERENCES TOGGLE (student setting, default OFF): ${aiPrefs.references ? 'ON — You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])\n- [Website URL]\n---\n\nUse the exact book, chapter number/name, and page values shown in the retrieved source excerpts. If a source has no chapter metadata, cite the book and page without a chapter. List ALL sources you actually used, never invent citations, and place the section at the very end. If no usable source exists, omit the heading and separators.' : 'OFF — NEVER include a References section in any response. Just answer and stop.'}
+- REFERENCES TOGGLE (student setting, default ON): ${aiPrefs.references ? 'ON — You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])\n- [Website URL]\n---\n\nUse the exact book, chapter number/name, and page values shown in the retrieved source excerpts. If a source has no chapter metadata, cite the book and page without a chapter. List ALL sources you actually used, never invent citations, and place the section at the very end. If no usable source exists, omit the heading and separators.' : 'OFF — NEVER include a References section in any response. Just answer and stop.'}
 - For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly.${aiPrefs.references ? ' Do NOT include references for plain greetings/small talk (no source to cite).' : ' Do NOT include references for casual chat.'}
 - NEVER fabricate book references. Only cite books that are actually provided in the textbook content block. NEVER fabricate website URLs; only list sites you actually used.`;
 
@@ -3487,6 +3521,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     div.className = 'message assistant';
     // Index of the assistant message about to be pushed (user msg already in).
     div.dataset.idx = messages.length;
+    // Marks the bubble as a FRESH reply (not a replay from history), so
+    // side-effect blocks (calendar delete confirm) only ever run live.
+    div.__liveReply = true;
     const statusLabel = '';
     const statusClass = mode === 'think' ? 'thinking' : '';
     div.innerHTML = `
@@ -3973,6 +4010,7 @@ function stripFileBlocks(text) {
 // students ask about it.
 var DriveCtx = { connected: false, email: null, files: [], fetchedAt: 0, fetching: null };
 var DRIVE_READ_RE = /```\s*drive-read\s*:\s*([^\n`]+)\n?\s*```/;
+var DRIVE_LIST_RE = /```\s*drive-list\s*:\s*([^\n`]+)\n?\s*```/;
 
 function driveApiBase() {
   try { return (typeof api !== 'undefined' && api && api.supabaseUrl) || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''); } catch (_) { return ''; }
@@ -3999,9 +4037,11 @@ function refreshDriveCtx(force) {
     if (data && data.ok) {
       DriveCtx.connected = true;
       DriveCtx.email = data.email || null;
+      DriveCtx.canReadAll = data.can_read_all === true;
       DriveCtx.files = Array.isArray(data.files) ? data.files : [];
     } else if (data && data.connected === false) {
       DriveCtx.connected = false;
+      DriveCtx.canReadAll = false;
       DriveCtx.files = [];
     }
     DriveCtx.fetchedAt = Date.now();
@@ -4015,18 +4055,22 @@ function refreshDriveCtx(force) {
   return DriveCtx.fetching;
 }
 function drivePromptBlock() {
+  if (DriveCtx.connected && DriveCtx.canReadAll === false) {
+    return '\n\nSLAME / GOOGLE DRIVE - CONNECTED (limited): The student connected Google Drive before full read access existed. You can only see and read files YOU (the tutor) created; their other Drive files are invisible. If they ask you to open or read one of those, tell them in one short line to disconnect and reconnect Google Drive on the Slame page (anteemonee.com/slame) so the tutor can read any file. Creating and editing files you already made keeps working.';
+  }
   if (!DriveCtx.connected) {
-    return '\n\nSLAME / GOOGLE DRIVE: The student has NOT connected Google Drive. If they ask you to save, create or edit a file in their Google Drive, tell them in one short line to connect Google Drive on the Slame page (anteemonee.com/slame) and then ask again. Never pretend you saved or opened anything.';
+    return '\n\nSLAME / GOOGLE DRIVE: The student has NOT connected Google Drive. If they ask you to save, create, edit, read or LIST files in their Google Drive (including "what files do I have"), tell them in one short line to connect Google Drive on the Slame page (anteemonee.com/slame) and then ask again. Never pretend you saved, opened or listed anything.';
   }
   var lines = DriveCtx.files.slice(0, 40).map(function (f) {
     var when = f.modifiedTime ? String(f.modifiedTime).slice(0, 10) : '';
-    return '- ' + f.name + (when ? ' (modified ' + when + ')' : '');
+    return '- ' + f.name + (f.isFolder ? ' [FOLDER]' : '') + (f.parentName ? ' (in folder: ' + f.parentName + ')' : '') + (when ? ' (modified ' + when + ')' : '');
   });
   return '\n\nSLAME / GOOGLE DRIVE - CONNECTED: The student connected Google Drive' +
     (DriveCtx.email ? ' (' + DriveCtx.email + ')' : '') + '. Your Drive abilities:\n' +
     '1) CREATE / EDIT: whenever the student asks for a file, or asks to save, edit or customize a file in Drive, output the normal ```file-create:Filename.ext block with the full content. The app saves it to their Google Drive automatically (and offers a download). To EDIT an existing file, output the block again with the SAME filename shown below; the new version replaces the old one in Drive (Drive keeps the old revision).\n' +
     '2) READ an existing file (only when the student asks to edit or customize a file whose content is NOT already in this conversation): output exactly one empty block\n```drive-read:Exact File Name.ext\n```\nand stop there. The app loads the file and you continue automatically with its content. Never claim to have read a file before its content actually appears in the conversation.\n' +
-    '3) HARD RULE - NO DELETING: you can create and edit files, but you can NEVER delete, trash or remove a file from the student\'s Google Drive. Deletion is not supported anywhere, so never promise or imply it. If the student asks you to delete a file, say plainly that you can only create and edit files and that they can delete it themselves in Google Drive if they want. Never say you have no access to their Drive. If asked what you can do with Drive or how it works, explain exactly this: create and edit yes, delete no.\n' +
+    '3) LIST A FOLDER: when the student asks what is inside a folder (or asks you to summarize the contents of a folder), output exactly one empty block\n```drive-list:Folder Name\n```\nand stop there. The app lists that folder and you continue automatically with its contents. Folder names are shown in the list below.\n' +
+    '4) HARD RULE - NO DELETING: you can create and edit files, but you can NEVER delete, trash or remove a file from the student\'s Google Drive. Deletion is not supported anywhere, so never promise or imply it. If the student asks you to delete a file, say plainly that you can only create and edit files and that they can delete it themselves in Google Drive if they want. Never say you have no access to their Drive. If asked what you can do with Drive or how it works, explain exactly this: create and edit yes, delete no.\n' +
     (lines.length ? 'Files currently in the student\'s Drive (Anteemonee files, newest first):\n' + lines.join('\n') : 'The student\'s Drive has no Anteemonee files yet.');
 }
 function driveNoteText(text) {
@@ -4039,7 +4083,7 @@ function parseDriveReadName(text) {
 }
 function stripDriveReadBlock(text) {
   if (!text) return text;
-  return String(text).replace(new RegExp(DRIVE_READ_RE.source, 'g'), '').trim();
+  return String(text).replace(new RegExp(DRIVE_READ_RE.source, 'g'), '').replace(new RegExp(DRIVE_LIST_RE.source, 'g'), '').trim();
 }
 var DRIVE_SVG_SMALL = '<svg width="18" height="18" viewBox="0 0 87.3 78" fill="currentColor" aria-hidden="true">' +
   '<path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" opacity=".95"/>' +
@@ -4086,6 +4130,14 @@ function maybeSaveBlocksToDrive(div, blocks) {
 // ```drive-read:Name``` -> load the file, then continue the chat with its
 // content so the tutor can actually edit it.
 function handleDriveBlocks(div, text, isLive) {
+  var listName = (function () {
+    var m = String(text || '').match(DRIVE_LIST_RE);
+    return m && m[1] ? m[1].trim().slice(0, 200) : null;
+  })();
+  if (listName) {
+    handleDriveListBlock(div, listName, isLive);
+    return;
+  }
   var name = parseDriveReadName(text);
   if (!name) return;
   var host = div.querySelector('.msg-body') || div;
@@ -4106,13 +4158,16 @@ function handleDriveBlocks(div, text, isLive) {
   if (!isLive) return;
   driveApi('read', { name: name }).then(function (res) {
     if (!res || !res.ok || !res.found) {
+      var missText = DriveCtx.canReadAll === false
+        ? ' · your connection can only read files the tutor created. Disconnect and reconnect Google Drive on Slame to read any file.'
+        : ' · check the name and try again.';
       card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
-        '<span class="drive-card-tx"><b>File not found in your Drive</b><span>' + escapeHtml(name) + ' · check the name and try again.</span></span>';
+        '<span class="drive-card-tx"><b>File not found in your Drive</b><span>' + escapeHtml(name) + missText + '</span></span>';
       return;
     }
     if (res.unsupported) {
       card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
-        '<span class="drive-card-tx"><b>This file type cannot be read yet</b><span>' + escapeHtml(name) + '</span></span>';
+        '<span class="drive-card-tx"><b>Binary files cannot be read yet</b><span>' + escapeHtml(name) + ' (images, PDFs from outside the tutor and other binary formats)</span></span>';
       return;
     }
     var kb = Math.max(1, Math.round(String(res.content || '').length / 1024));
@@ -4122,6 +4177,66 @@ function handleDriveBlocks(div, text, isLive) {
     continueWithDriveFile(res);
   }).catch(function () {});
 }
+function handleDriveListBlock(div, folderName, isLive) {
+  var host = div.querySelector('.msg-body') || div;
+  var old = host.querySelector('.drive-read-card');
+  if (old) old.remove();
+  var card = document.createElement('div');
+  card.className = 'drive-card drive-read-card';
+  if (!DriveCtx.connected) {
+    card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>Google Drive is not connected</b><span>Connect it in Slame, then ask again.</span></span>' +
+      '<a class="drive-card-open" href="/slame/">Connect</a>';
+    host.appendChild(card);
+    return;
+  }
+  card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+    '<span class="drive-card-tx"><b>Listing Drive folder&hellip;</b><span>' + escapeHtml(folderName) + '</span></span>';
+  host.appendChild(card);
+  if (!isLive) return;
+  driveApi('folder', { name: folderName }).then(function (res) {
+    if (!res || !res.ok || !res.found) {
+      var miss = DriveCtx.canReadAll === false
+        ? ' · your connection can only read files the tutor created. Disconnect and reconnect Google Drive on Slame for full access.'
+        : ' · check the name and try again.';
+      card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>Folder not found in your Drive</b><span>' + escapeHtml(folderName) + miss + '</span></span>';
+      return;
+    }
+    var items = Array.isArray(res.items) ? res.items : [];
+    card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>' + escapeHtml(res.folder || folderName) + '</b><span>' + items.length + ' item' + (items.length === 1 ? '' : 's') + ' listed' + (res.truncated ? ' (first 50)' : '') + '</span></span>';
+    if (window.__driveListGuard && window.__driveListGuard[folderName] && Date.now() - window.__driveListGuard[folderName] < 120000) return;
+    window.__driveListGuard = window.__driveListGuard || {};
+    window.__driveListGuard[folderName] = Date.now();
+    continueWithDriveFolder(res.folder || folderName, items, res.truncated);
+  }).catch(function () {
+    card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>Could not list the folder</b><span>' + escapeHtml(folderName) + ' · try again.</span></span>';
+  });
+}
+
+function continueWithDriveFolder(folderName, items, truncated) {
+  var lines = (items || []).slice(0, 50).map(function (f) {
+    return '- ' + f.name + (f.isFolder ? ' [FOLDER]' : '') + (f.modifiedTime ? ' (modified ' + String(f.modifiedTime).slice(0, 10) + ')' : '');
+  });
+  var body = lines.length ? lines.join('\n') : '(the folder is empty)';
+  var note = '[[DRIVE_FOLDER:' + folderName + ']]\n' +
+    "The contents of the student's Google Drive folder \"" + folderName + "\" are listed below. " +
+    "Continue now: answer the student's last question about this folder using these entries. Do not repeat the list back verbatim unless asked.\n" +
+    '<<<DRIVE_FOLDER_CONTENT>>>\n' + body + (truncated ? '\n...[list shortened to first 50]' : '') + '\n<<<END_DRIVE_FOLDER_CONTENT>>>';
+  var tries = 0;
+  (function fire() {
+    if (isStreaming) {
+      tries++;
+      if (tries <= 10) setTimeout(fire, 400);
+      return;
+    }
+    chatInput.value = note;
+    handleSend();
+  })();
+}
+
 function continueWithDriveFile(file) {
   // One automatic continuation per file per two minutes: stops any possible
   // read -> read loop if the model misbehaves.
@@ -4146,6 +4261,222 @@ function continueWithDriveFile(file) {
     chatInput.value = note;
     handleSend();
   })();
+}
+
+// ── Slame: Google Calendar for the AI Tutor ─────────────────────────
+// The tutor schedules, reschedules and clears events on the student's
+// primary calendar. The model answers with one ```calendar {json}```
+// block; the app executes it after the reply finalizes (delete first
+// asks the student to confirm, mirroring the Drive card flow).
+var CalCtx = { connected: false, calEnabled: false, email: null, timeZone: null, events: [], fetchedAt: 0, fetching: null };
+var CALENDAR_RE = /```\s*calendar\s*\n?([\s\S]*?)```/;
+var CAL_INTENT_RE = /\b(calendars?|schedul\w*|reschedul\w*|remind(er|ers)?\b|\bevent(s)?\b|meeting|appoin\w+|due date|deadline|move my .{0,40}( to| by)|push .{0,40}( to| by the? )?(\w+\s*day|next week))\b/i;
+
+function calendarApi(action, payload) {
+  var base = driveApiBase();
+  var token = getAccessToken();
+  if (!base || !token) return Promise.resolve(null);
+  return fetch(base + '/functions/v1/calendar-api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify(Object.assign({ action: action }, payload || {})),
+  }).then(function (res) {
+    return res.json().catch(function () { return null; });
+  }).catch(function () { return null; });
+}
+
+function refreshCalendarCtx(force) {
+  var now = Date.now();
+  if (!force && CalCtx.fetchedAt && now - CalCtx.fetchedAt < 120000) return Promise.resolve(CalCtx);
+  if (CalCtx.fetching) return CalCtx.fetching;
+  CalCtx.fetching = calendarApi('status').then(function (st) {
+    if (st && st.ok && st.connected && st.calendar_enabled) {
+      CalCtx.connected = true;
+      CalCtx.calEnabled = true;
+      CalCtx.email = st.email || CalCtx.email;
+      return calendarApi('list', { limit: 12 }).then(function (data) {
+        if (data && data.ok) {
+          CalCtx.timeZone = data.timeZone || CalCtx.timeZone;
+          CalCtx.events = Array.isArray(data.events) ? data.events : [];
+        }
+        CalCtx.fetchedAt = Date.now();
+        CalCtx.fetching = null;
+        return CalCtx;
+      });
+    } else {
+      CalCtx.connected = !!(st && st.ok && st.connected);
+      CalCtx.calEnabled = !!(st && st.calendar_enabled);
+      if (st && st.email) CalCtx.email = st.email;
+      CalCtx.events = [];
+      CalCtx.fetchedAt = Date.now();
+      CalCtx.fetching = null;
+      return CalCtx;
+    }
+  }).catch(function () {
+    CalCtx.fetching = null;
+    CalCtx.fetchedAt = Date.now();
+    return CalCtx;
+  });
+  return CalCtx.fetching;
+}
+
+function calendarPromptBlock() {
+  var tz = CalCtx.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  var nowIso = new Date().toISOString();
+  if (!CalCtx.connected) {
+    return '\n\nSLAME / GOOGLE CALENDAR: The student has NOT connected Google Calendar. If they ask you to add, move, rename or delete a calendar event, tell them in one short line to connect Google Calendar on the Slame page (anteemonee.com/slame) and then ask again. Never pretend you scheduled anything.';
+  }
+  if (!CalCtx.calEnabled) {
+    return '\n\nSLAME / GOOGLE CALENDAR: The student connected Google Drive before the calendar permission existed. If they ask for anything calendar-related, tell them in one short line to reopen Slame (anteemonee.com/slame) and press "Grant access" on the Google Calendar card, then ask again.';
+  }
+  var lines = CalCtx.events.slice(0, 12).map(function (e) {
+    return '- id ' + e.id + ' — "' + e.title + '"' + (e.start ? ' starting ' + e.start : '');
+  });
+  return '\n\nSLAME / GOOGLE CALENDAR - CONNECTED: The student connected Google Calendar' +
+    (CalCtx.email ? ' (' + CalCtx.email + ')' : '') + '. Their time zone is ' + tz +
+    '. Right now it is ' + nowIso + ' (UTC) — always output times as exact Offset ISO strings like "2026-10-21T17:00:00+05:00" matching the student zone, never as vague phrases.\n' +
+    'Your calendar abilities:\n' +
+    '1) ADD: output exactly one block:\n```calendar\n{"action":"create","title":"...","start":"2026-10-21T17:00:00+05:00","end":"2026-10-21T18:00:00+05:00","description":"..."}\n```\nend is optional (defaults to start+1h); description is optional.\n' +
+    '2) RESCHEDULE: only for events that appear in "Upcoming events" below (or that you just created in this conversation and therefore know the id of):\n```calendar\n{"action":"move","eventId":"<exact id>","start":"...","end":"..."}\n```\npicking the event by meeting title/time, never by guessing ids.\n' +
+    '3) RENAME: {"action":"rename","eventId":"<id>","title":"New title"}\n' +
+    '4) DELETE: only when the student clearly asks to remove/cancel an event:\n```calendar\n{"action":"delete","eventId":"<id>"}```\nThe app asks them to confirm before it is removed.\n' +
+    '5) OUTPUT RULES: at most ONE calendar block per reply, only when the student asks for a schedule change; keep the block last in your reply. When they ask "what is on my calendar", answer directly from the list below instead of emitting a block.\n' +
+    (lines.length ? 'Upcoming events (id — title — start):\n' + lines.join('\n') : 'Their calendar has no upcoming events listed.');
+}
+
+function parseCalendarBlock(text) {
+  var m = String(text || '').match(CALENDAR_RE);
+  if (!m || !m[1]) return null;
+  try {
+    var spec = JSON.parse(m[1].trim());
+    if (!spec || typeof spec !== 'object' || !spec.action) return null;
+    if (['create', 'move', 'rename', 'delete'].indexOf(spec.action) === -1) return null;
+    return spec;
+  } catch (_) {
+    return null;
+  }
+}
+
+function stripCalendarBlocks(text) {
+  if (!text) return text;
+  return String(text).replace(new RegExp('```\\s*calendar\\s\\n?[\\s\\S]*?```', 'g'), '').trim();
+}
+
+function localIso(date) {
+  var off = -date.getTimezoneOffset();
+  var sign = off >= 0 ? '+' : '-';
+  var abs = Math.abs(off);
+  var pad = function (n) { return ('0' + n).slice(-2); };
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+    'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + '00' + sign + pad(Math.floor(abs / 60)) + ':' + pad(abs % 60);
+}
+
+var CAL_SVG_SMALL = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="8" y1="19" x2="12" y2="19"/></svg>';
+
+function fmtCalWhen(spec) {
+  var raw = Array.isArray(spec.start) ? spec.start[0] : spec.start;
+  if (typeof raw !== 'string' || !raw) return '';
+  var d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+// Executes the parsed block once the reply is final and shows a small card
+// in place. Every payload the model puts in is re-normalized here: times go
+// out as Offset ISO for the STUDENT's zone, never the server's.
+function maybeRunCalendarBlock(div, text) {
+  var spec = parseCalendarBlock(text);
+  if (!spec) return;
+  var host = div.querySelector('.msg-body') || div;
+  if (spec.action !== 'delete') {
+    try {
+      if (spec.start && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(String(spec.start))) {
+        var d = new Date(spec.start);
+        if (!isNaN(d.getTime())) spec.start = localIso(d);
+      }
+      if (spec.end && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(String(spec.end))) {
+        var d2 = new Date(spec.end);
+        if (!isNaN(d2.getTime())) spec.end = localIso(d2);
+      }
+    } catch (_) {}
+  }
+
+  var card = document.createElement('div');
+  card.className = 'drive-card cal-card';
+  var when = fmtCalWhen(spec);
+  var label = spec.action === 'create' ? (when ? ' '.concat(escapeHtml(when)) : '')
+    : spec.action === 'move' ? (when || '')
+    : spec.action === 'rename' ? String(escapeHtml(spec.title || ''))
+    : '';
+  card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+    '<span class="drive-card-tx"><b>' + (
+      spec.action === 'create' ? 'Creating calendar event&hellip;' :
+      spec.action === 'move' ? 'Rescheduling&hellip;' :
+      spec.action === 'rename' ? 'Renaming&hellip;' : 'Checking&hellip;'
+    ) + '</b><span>' + (label ? escapeHtml(label) : '') + '</span></span>';
+  host.appendChild(card);
+
+  var payload = {
+    action: spec.action,
+    eventId: spec.eventId,
+    title: spec.title,
+    description: spec.description,
+    start: spec.start,
+    end: spec.end,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  };
+  if (spec.action === 'delete' && div.__liveReply) {
+    var ok = window.confirm('Delete "' + (spec.eventId && findLocalEvent(spec.eventId) ? findLocalEvent(spec.eventId).title : 'this event') + '" from your Google Calendar?');
+    if (!ok) {
+      card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>Cancelled</b><span>The event was not deleted.</span></span>';
+      return;
+    }
+  }
+  calendarApi(spec.action, payload).then(function (res) {
+    if (!res) { throw new Error('no response'); }
+    if (!res.ok) {
+      var msg = res.error || 'Could not update your Google Calendar.';
+      if (res.code === 'need_reconnect') {
+        card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+          '<span class="drive-card-tx"><b>Calendar permission missing</b><span>' + escapeHtml(msg) + '</span></span>' +
+          '<a class="drive-card-open" href="/slame/">Slame</a>';
+      } else {
+        card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+          '<span class="drive-card-tx"><b>Not done</b><span>' + escapeHtml(msg) + '</span></span>';
+      }
+      return;
+    }
+    if (spec.action === 'delete') {
+      card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>Removed from Google Calendar</b><span>Event deleted.</span></span>';
+    } else {
+      var link = res.event && res.event.link ? escapeHtml(res.event.link) : '';
+      var main = spec.action === 'create' ? 'Added to Google Calendar' : spec.action === 'move' ? 'Rescheduled' : 'Renamed';
+      card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+        '<span class="drive-card-tx"><b>' + main + '</b><span>' + escapeHtml((res.event && (res.event.title || '')) || '') +
+        (res.event && res.event.start ? ' · ' + escapeHtml(fmtCalWhen({ start: res.event.start })) : '') + '</span></span>' +
+        (link ? '<a class="drive-card-open" href="' + link + '" target="_blank" rel="noopener">Open</a>' : '');
+    }
+    CalCtx.fetchedAt = 0; // force the list refresh on the next calendar prompt
+  }).catch(function () {
+    card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
+      '<span class="drive-card-tx"><b>Could not reach Google Calendar</b><span>Please try again.</span></span>';
+  });
+}
+
+function isLiveNow(div) {
+  // Replays from history must not trigger side effects (calendar delete
+  // confirm, event writes); only fresh replies are candidates. The finalizer
+  // marks live bubbles with __liveReply.
+  return typeof div.__liveReply === 'undefined' ? false : !!div.__liveReply;
+}
+
+function findLocalEvent(id) {
+  for (var i = 0; i < CalCtx.events.length; i++) {
+    if (String(CalCtx.events[i].id) === String(id)) return CalCtx.events[i];
+  }
+  return null;
 }
 
 // ── Graph block: ```graph\n{...json...}\n``` ───────────────────
@@ -5847,6 +6178,7 @@ function handleFileBlocks(div, text, opts) {
     var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
     displayText = stripGraphBlock(displayText);
     displayText = stripDriveReadBlock(displayText);
+    displayText = stripCalendarBlocks(displayText);
     // The streaming tool line (if shown) always comes off here: the permanent
     // "Searched the web" chip is added separately by attachFeedbackButtons and
     // only when the server confirms it searched.
@@ -5861,6 +6193,7 @@ function handleFileBlocks(div, text, opts) {
     } catch (_) {}
     try { handleFileBlocks(div, text, { allowDriveSave: true }); } catch (_) {}
     try { handleDriveBlocks(div, text, true); } catch (_) {}
+    try { if (div.__liveReply) maybeRunCalendarBlock(div, text); } catch (_) {}
     destroyGraphsIn(div);
     if (graphData) {
       try { renderGraphCard(div, graphData); } catch (_) {}
@@ -7070,10 +7403,20 @@ function handleFileBlocks(div, text, opts) {
     const graphRequested = !hasImages && isGraphRequest(text);
     if (!hasImages && isQuizRequest(text) && !hasQuizTopic(text)) pendingQuizTopic = true;
     if ((!text && !hasImages && !testRef) || isStreaming) return;
-    if (!isAuthed()) { refreshAuthGate(); return; }
+    if (!isAuthed()) {
+      showChatToast('Log in to send messages — use Log In in the header.');
+      refreshAuthGate();
+      return;
+    }
     // Free students keep chatting until today's allowance is spent. The gateway
     // is the real gate — this only avoids a pointless round trip.
-    try { if (typeof Access !== 'undefined' && Access.state.ready && Access.isOverQuota && Access.isOverQuota('chat')) { refreshAuthGate(); return; } } catch (_) {}
+    try {
+      if (typeof Access !== 'undefined' && Access.state.ready && Access.isOverQuota && Access.isOverQuota('chat')) {
+        showChatToast("You've hit today's chat limit — your allowance resets tomorrow.");
+        refreshAuthGate();
+        return;
+      }
+    } catch (_) {}
 
     // Lock immediately — prevent double-send during any async gap
     isStreaming = true;
@@ -7213,6 +7556,13 @@ function handleFileBlocks(div, text, opts) {
       : fetchTextbookPageContext(text).catch(function () { return ''; });
     const memoriesPromise = loadAiMemories().catch(function () {});
     const textbookPages = await textbookPromise;
+    // Calendar context only when the message smells like scheduling: keeps
+    // every other reply from paying a Google round trip.
+    const calendarIntent = !isCodingAgent && !isGreetingMsg && CAL_INTENT_RE.test(text);
+    const calendarPromise = calendarIntent
+      ? refreshCalendarCtx().catch(function () { return CalCtx; })
+      : Promise.resolve(CalCtx);
+    await calendarPromise;
     const chapterListBlock = await chapterListPromise;
     const pageBlock = await pagePromise;
     await memoriesPromise;
@@ -7241,7 +7591,7 @@ function handleFileBlocks(div, text, opts) {
     // Greetings get a tiny prompt: no system brick, no RAG, no history.
     const systemPrompt = isGreetingMsg
       ? ('You are a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
-      : buildSystemPrompt() + textbookContext + (graphRequested ? graphProtocolPrompt() : '') + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
+      : buildSystemPrompt() + textbookContext + (calendarIntent ? calendarPromptBlock() : '') + (graphRequested ? graphProtocolPrompt() : '') + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
 
     // Auth must be set before the vision call below: it hits an edge function
     // that rejects anonymous callers, and the token used to be applied further

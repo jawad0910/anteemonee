@@ -217,53 +217,57 @@ body.guest .history-section .sidebar-label { display: none; }
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
 }
 .delete-confirm-card {
   width: 100%;
-  max-width: 360px;
-  padding: 26px 24px 22px;
+  max-width: 340px;
+  padding: 28px 24px 22px;
   text-align: center;
-  border-radius: 18px;
-  background: var(--bg);
+  border-radius: 24px;
+  background: var(--bg-elevated, var(--bg));
   border: 1px solid var(--m-hairline, var(--border));
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
-  animation: dcIn 0.2s var(--m-ease-out, ease);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: dcIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 @keyframes dcIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
   to   { opacity: 1; transform: none; }
 }
 .delete-confirm-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   margin-bottom: 14px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--error) 14%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--error) 13%, transparent);
   color: var(--error);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--error) 22%, transparent);
 }
 .delete-confirm-card h3 {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  margin: 0 0 6px;
+  font-family: var(--font-ui);
+  font-size: 16.5px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0 0 5px;
   color: var(--text);
 }
 .delete-confirm-title {
   font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 620;
+  color: var(--text-secondary);
   margin: 0 0 8px;
   word-break: break-word;
 }
 .delete-confirm-note {
   font-size: 12.5px;
   line-height: 1.5;
-  color: var(--text-secondary);
-  margin: 0 0 20px;
+  color: var(--text-muted);
+  margin: 0 0 22px;
 }
 .delete-confirm-actions {
   display: flex;
@@ -272,29 +276,34 @@ body.guest .history-section .sidebar-label { display: none; }
 .delete-confirm-actions button {
   flex: 1;
   height: 42px;
-  border-radius: 12px;
+  border-radius: 999px;
   font-family: var(--font-ui);
   font-size: 13.5px;
   font-weight: 650;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  transition: transform 0.15s var(--m-ease-out, ease), background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
 }
 .delete-confirm-actions button:active { transform: scale(0.97); }
+.delete-confirm-actions button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .delete-confirm-cancel {
-  color: var(--text);
-  background: transparent;
+  color: var(--text-secondary);
+  background: var(--liquid-bg-soft, rgba(255,255,255,0.06));
   border: 1px solid var(--m-hairline, var(--border));
 }
 .delete-confirm-cancel:hover {
-  background: var(--liquid-bg-soft, rgba(255,255,255,0.08));
+  color: var(--text);
+  background: var(--liquid-bg-strong, rgba(255,255,255,0.1));
 }
 .delete-confirm-ok {
-  color: var(--on-accent);
-  background: var(--error);
+  /* Chat's --error token is a text red (white in light theme), not a fill
+     red — a solid literal keeps the destructive button readable on both. */
+  color: #fff;
+  background: #e5484d;
   border: 1px solid transparent;
 }
 .delete-confirm-ok:hover {
-  filter: brightness(1.08);
+  filter: saturate(1.1) brightness(1.06);
 }
 @media (prefers-reduced-motion: reduce) {
   .delete-confirm-card { animation: none; }
