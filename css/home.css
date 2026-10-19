@@ -12,17 +12,12 @@
   --alt-hairline-soft: rgba(255,255,255,0.09);
   --alt-sh-1: none;
   --alt-sh-2: none;
-  /* Same type system as AI chat — no Fraunces on this page */
-  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
-             'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
-  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
-                  'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
-  --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-                  'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo,
-               Consolas, monospace;
-  --font-serif: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
-                'SF Pro Display', 'Inter', system-ui, sans-serif;
+  /* One font everywhere — the macOS system face (see style.css tokens). */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-reading: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-serif: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
 }
 [data-theme="light"] {
   --alt-hairline: rgba(0,0,0,0.16);
@@ -43,10 +38,10 @@ body { background: var(--bg) !important; }
   max-width: 1280px;
 }
 
-/* Soft halo behind the headline */
 .hero-text {
   position: relative;
 }
+/* Soft halo behind the headline */
 .hero-text::before {
   content: '';
   position: absolute;
@@ -57,19 +52,6 @@ body { background: var(--bg) !important; }
   opacity: 0.55;
   pointer-events: none;
   z-index: -1;
-}
-
-.hero-badge {
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--text);
-  background: var(--liquid-bg-soft);
-  border: 1px solid var(--liquid-border-soft);
-  border-radius: 999px;
-  box-shadow: var(--alt-sh-1);
-  margin-bottom: 22px;
 }
 
 .hero h1 {
@@ -130,44 +112,9 @@ body { background: var(--bg) !important; }
   box-shadow: var(--alt-sh-2);
 }
 
-/* Feature chips — quiet glass tiles */
-.hero-chips {
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  margin-bottom: 24px;
-}
-.hero-chip {
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 9px 8px 8px;
-  border-radius: 14px;
-  background: var(--liquid-bg-soft);
-  border: 1px solid var(--liquid-border-soft);
-  box-shadow: var(--alt-sh-1);
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.2;
-  color: var(--text-secondary);
-  transition: transform 0.22s var(--alt-ease), border-color 0.22s var(--alt-ease), box-shadow 0.22s var(--alt-ease), background 0.22s var(--alt-ease);
-}
-.hero-chip > span {
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-.emoji, .hero-chip .chip-emoji { font-size: 15px; line-height: 1; }
-.hero-chip:hover {
-  transform: translateY(-3px);
-  border-color: var(--liquid-border);
-  box-shadow: var(--alt-sh-2);
-  background: var(--liquid-bg);
-  color: var(--text);
-}
-[data-theme="light"] .hero-chip { color: var(--text); }
+/* Feature chips — removed for a calmer hero */
 
-/* Hero visual — a floating AI-chat card */
+/* Hero visual — an interactive practice card */
 .landing-hero-visual {
   position: relative;
   min-width: 0;
@@ -188,11 +135,6 @@ body { background: var(--bg) !important; }
   border-radius: 24px;
   box-shadow: none;
   padding: 20px;
-  animation: heroFloat 5s ease-in-out infinite;
-}
-@keyframes heroFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
 }
 .call-mock-head {
   padding-bottom: 12px;
@@ -360,12 +302,9 @@ body { background: var(--bg) !important; }
 /* ═══ RESPONSIVE ═══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .hero-inner { grid-template-columns: 1fr; gap: 40px; }
-  .hero-text::before { left: -80px; top: -80px; }
-  .hero-chips { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 640px) {
   .hero { padding: 96px 18px 60px; }
-  .hero-chips { grid-template-columns: repeat(2, 1fr); }
   .hero-actions { flex-direction: column; align-items: stretch; }
   #hero-primary-cta, .hero-actions .btn-secondary { width: 100%; justify-content: center; }
   .unified-grid { grid-template-columns: 1fr; }
@@ -375,13 +314,12 @@ body { background: var(--bg) !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .call-mock,
-  .hero-chip,
   .u-tool,
   .plan-btn,
   #hero-primary-cta,
   .hero-actions .btn-secondary,
   .faq-q { animation: none !important; transition: none !important; }
-  .call-mock, .hero-chip:hover, .u-tool:hover, .plan-btn:hover, #hero-primary-cta:hover { transform: none !important; }
+  .call-mock:hover, .u-tool:hover, .plan-btn:hover, #hero-primary-cta:hover { transform: none !important; }
 }
 
 /* ── Demo TV ───────────────────────────────────────────────────── */

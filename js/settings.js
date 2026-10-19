@@ -51,6 +51,7 @@ async function refreshInlineSettings() {
     applyReduceAnimations();
     renderSecurity();
     renderAI();
+    renderStorage();
     renderAppearance();
     renderLanguage();
     renderPrivacy();
@@ -85,6 +86,7 @@ async function initSettings() {
   applyReduceAnimations();
   renderSecurity();
   renderAI();
+  renderStorage();
   renderAppearance();
   renderLanguage();
   renderPrivacy();
@@ -696,7 +698,7 @@ function renderAI() {
   const prefRows = [
     buildRow('Study Suggestions', 'Show AI study recommendations', buildToggle('t-ai_suggest', p.ai_study_recommendations, v => savePref('ai_study_recommendations', v))),
     buildRow('Emojis', 'Use emojis in AI responses', buildToggle('t-ai_emojis', p.ai_emojis === true, v => savePref('ai_emojis', v))),
-    buildRow('References', 'Show book pages + website sources after every AI response (off by default)', buildToggle('t-ai_references', p.ai_references === true, v => savePref('ai_references', v))),
+    buildRow('References', 'Show book pages + website sources after every AI response (on by default)', buildToggle('t-ai_references', p.ai_references === true, v => savePref('ai_references', v))),
   ];
   c.appendChild(buildCard('SUGGESTIONS', prefRows));
 
@@ -884,6 +886,145 @@ async function loadMemoryLastUpdated() {
     if (el) el.textContent = '';
   }
 }
+
+/* =========================
+   3b. STORAGE
+   ========================= */
+
+function renderStorage() {
+  const c = document.getElementById('settings-storage-content');
+  if (!c) return;
+  c.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'settings-card';
+  const imageRow = storageRow('Image storage');
+  const textRow = storageRow('Text storage');
+  card.appendChild(imageRow);
+  card.appendChild(textRow);
+  c.appendChild(card);
+
+  fetchStorageUsage().then(usage => {
+    if (!usage) return;
+    imageRow.update(usage.image_bytes, usage.image_limit);
+    textRow.update(usage.text_bytes, usage.text_limit);
+  }).catch(() => {});
+}
+
+async function fetchStorageUsage() {
+  try {
+    if (typeof currentUser === 'undefined' || !currentUser || typeof db === 'undefined') return null;
+    const { data, error } = await db.rpc('user_storage_usage');
+    if (error || !data) return null;
+    return data;
+  } catch (_) {
+    return null;
+  }
+}
+
+function formatStorageMb(bytes) {
+  if (typeof bytes !== 'number' || !isFinite(bytes)) return '—';
+  const mb = bytes / (1024 * 1024);
+  if (mb === 0) return '0';
+  if (mb >= 1000) return mb.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  // 4 significant figures: 0.001, 0.0424, 1.118, 10, 500...
+  return mb.toPrecision(4).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+}
+
+// One shared info popup, positioned near whichever ⓘ was clicked. Nested /
+// absolutely-positioned popups get clipped by the card's padding, so this one
+// lives at <body> level with fixed coordinates.
+let storagePopEl = null;
+function showStoragePopup(anchorBtn, label) {
+  if (!storagePopEl) {
+    storagePopEl = document.createElement('div');
+    storagePopEl.style.cssText = 'position:fixed;z-index:9999;min-width:230px;max-width:290px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#1c1c1e;color:#f5f5f7;font-size:12px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none;';
+    document.body.appendChild(storagePopEl);
+    document.addEventListener('click', (e) => {
+      if (storagePopEl.style.display === 'none') return;
+      if (e.target === anchorBtn || storagePopEl.contains(e.target)) return;
+      storagePopEl.style.display = 'none';
+    });
+    document.addEventListener('mousedown', (e) => {
+      if (storagePopEl.style.display === 'none') return;
+      if (e.target === anchorBtn || storagePopEl.contains(e.target)) return;
+      storagePopEl.style.display = 'none';
+    });
+    window.addEventListener('resize', () => { storagePopEl.style.display = 'none'; });
+    window.addEventListener('scroll', () => { if (storagePopEl.style.display !== 'none') storagePopEl.style.display = 'none'; }, true);
+  }
+  storagePopEl.textContent = STORAGE_INFO[label] || '';
+  const r = anchorBtn.getBoundingClientRect();
+  storagePopEl.style.display = 'block';
+  const w = storagePopEl.offsetWidth;
+  const h = storagePopEl.offsetHeight;
+  let left = r.right - w;
+  left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+  let top = r.bottom + 6;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+  storagePopEl.style.left = left + 'px';
+  storagePopEl.style.top = top + 'px';
+}
+
+function storageRow(label) {
+  const row = document.createElement('div');
+  row.className = 'setting-row';
+
+  const info = document.createElement('div');
+  info.className = 'setting-info';
+  info.innerHTML = `<div class="setting-title">${label}</div>`;
+  row.appendChild(info);
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+  // Info button: a short 2-3 line summary, nothing longer.
+  const infoBtn = document.createElement('button');
+  infoBtn.setAttribute('aria-label', 'About ' + label);
+  infoBtn.type = 'button';
+  infoBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-5"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>';
+  infoBtn.style.cssText = 'flex:none;background:none;border:none;color:#888;cursor:pointer;padding:4px;line-height:0;';
+  infoBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    showStoragePopup(infoBtn, label);
+  });
+  wrap.appendChild(infoBtn);
+
+  // Filled in later by update() once the usage RPC responds.
+  let barBox = null, fill = null, descEl = null;
+  row.update = (usedBytes, limitBytes) => {
+    const pct = (typeof usedBytes === 'number' && typeof limitBytes === 'number' && limitBytes > 0)
+      ? Math.max(1, Math.min(100, Math.round((usedBytes / limitBytes) * 100))) : 0;
+    const color = pct >= 100 ? '#e5484d' : pct >= 80 ? '#f5a623' : 'var(--accent)';
+    const full = pct >= 100;
+    if (!descEl) {
+      descEl = document.createElement('div');
+      descEl.className = 'setting-desc';
+      info.appendChild(descEl);
+      barBox = document.createElement('div');
+      barBox.style.cssText = 'flex:1;max-width:120px;height:6px;border-radius:4px;background:var(--panel-2,#2c2c2e);overflow:hidden;';
+      fill = document.createElement('div');
+      fill.style.cssText = 'height:100%;border-radius:4px;transition:width .4s ease;';
+      barBox.appendChild(fill);
+      wrap.insertBefore(barBox, infoBtn);
+    }
+    descEl.textContent = `${formatStorageMb(usedBytes)} MB of ${formatStorageMb(limitBytes)} MB used${full ? ' — full' : ''}`;
+    fill.style.width = pct + '%';
+    fill.style.background = color;
+  };
+
+  row.appendChild(wrap);
+  return row;
+}
+
+const STORAGE_INFO = {
+  'Image storage': 'AI-generated images, photos you send in chat, and account imagery are stored here. Images from chats you delete are removed automatically. 500 MB per account.',
+  'Text storage':
+    'Your AI chat history, AI test builder and AI examiner records are stored as text. About 5 million characters of chat ≈ 10 MB. When full, chats pause — delete old chats to continue.',
+};
+
 
 /* =========================
    4. APPEARANCE

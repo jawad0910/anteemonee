@@ -7,7 +7,7 @@
   padding-top: 64px;
   background: var(--bg);
   color: var(--text);
-  font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Noto Emoji', sans-serif;
+  font-family: var(--font-ui);
 }
 
 /* â”€â”€â”€ Hero â€” neomorphic â”€â”€â”€ */
@@ -18,7 +18,7 @@
   overflow: hidden;
 }
 .download-hero h1 {
-  font-family:'Fraunces', Georgia, 'Noto Emoji', serif;
+  font-family: var(--font-ui);
   font-size: 48px;
   font-weight: 700;
   letter-spacing: -0.5px;

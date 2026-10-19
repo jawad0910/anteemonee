@@ -51,8 +51,8 @@
         '<button type="button" class="sm-close" id="sm-close" aria-label="Close">&times;</button>' +
         '<div class="sm-head">' +
           '<img src="' + assetPrefix + 'assets/anteemonee.png" alt="Anteemonee">' +
-          '<h2 id="sm-title">Create Account</h2>' +
-          '<p>Start your connected study experience</p>' +
+          '<h2 id="sm-title">Create account</h2>' +
+          '<p>Takes less than a minute</p>' +
         '</div>' +
         '<form class="sm-form" id="signup-form">' +
           '<div class="sm-error" id="signup-error"></div>' +

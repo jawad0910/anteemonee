@@ -112,7 +112,7 @@
 }
 .logo-text,
 .site-logo-text {
-  font-family:var(--font-display, -apple-system, 'Plus Jakarta Sans', Inter, system-ui, 'Noto Emoji', sans-serif);
+  font-family:var(--font-display, -apple-system, Inter, system-ui, sans-serif);
   font-size: 17.5px;
   font-weight: 800;
   letter-spacing: -0.022em;
@@ -123,7 +123,7 @@
 }
 .logo-sub,
 .site-logo-sub {
-  font-family:var(--font-ui, -apple-system, Inter, system-ui, 'Noto Emoji', sans-serif);
+  font-family:var(--font-ui, -apple-system, Inter, system-ui, sans-serif);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -229,6 +229,8 @@
 .nav-drop.open .nav-menu { display: block; }
 .nav-menu a {
   display: flex;
+  align-items: center;
+  gap: 9px;
   width: 100%;
   box-sizing: border-box;
   font-size: 13.5px;
@@ -237,6 +239,8 @@
   border-radius: 9px;
   color: var(--text-secondary);
 }
+.nav-item-icon { width: 15px; height: 15px; flex: none; color: var(--text-muted); transition: color 0.15s ease; }
+.nav-menu a:hover .nav-item-icon { color: var(--accent); }
 .nav-menu a::after { display: none; }
 .nav-menu a:hover { background: var(--accent-soft); color: var(--accent); }
 .nav-drop.open > a { color: var(--accent); }
@@ -681,6 +685,39 @@
   .header-inner, .site-header-inner { padding: 0 14px; gap: 8px; }
   .logo-img, .site-logo-img { width: 30px; height: 30px; }
 }
+
+/* Current page state — set automatically by js/site-chrome.js. */
+.landing-nav a.is-current,
+.landing-nav a.has-current,
+.desktop-nav a.is-current {
+  color: var(--accent-ink, var(--text));
+  font-weight: 700;
+}
+.landing-nav a.is-current::after,
+.landing-nav a.has-current::after,
+.desktop-nav a.is-current::after {
+  transform: scaleX(1);
+}
+.mobile-nav-link.is-current {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+/* Keyboard focus — a quiet ring users can actually see. */
+.landing-nav a:focus-visible,
+.btn-login:focus-visible,
+.btn-signup:focus-visible,
+.btn-cta-header:focus-visible,
+.icon-btn:focus-visible,
+.theme-toggle:focus-visible,
+.mobile-menu-toggle:focus-visible,
+.footer-col a:focus-visible,
+.logo-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  border-radius: 999px;
+}
+.landing-nav a:focus-visible { border-radius: 8px; }
 
 /* Auth-flow header (reset-password / verify-email): centered logo only. */
 .header-authed,

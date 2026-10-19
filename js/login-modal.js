@@ -42,8 +42,8 @@
         '<button type="button" class="lm-close" id="lm-close" aria-label="Close">&times;</button>' +
         '<div class="lm-head">' +
           '<img src="' + assetPrefix + 'assets/anteemonee.png" alt="Anteemonee">' +
-          '<h2 id="lm-title">Welcome Back</h2>' +
-          '<p>Sign in with your email or username</p>' +
+          '<h2 id="lm-title">Log in</h2>' +
+          '<p>Welcome back</p>' +
         '</div>' +
         '<form class="lm-form" id="lm-form">' +
           '<div class="lm-error" data-login-error></div>' +
