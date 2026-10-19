@@ -1920,6 +1920,10 @@ if (idx >= 0 && idx < PERSONAS.length) {
   // or "chapter". Answer those from the official chapter list instead.
   function isChapterListQuestion(text) {
     var t = String(text || '');
+    // Book-structure questions: "what is on the first page of book",
+    // "how many pages", "table of contents", "what does chapter 3 cover".
+    if (/\b(table of contents|contents|toc|index of the book)\b/i.test(t)) return true;
+    if (/\b(pages?|pg)\b/i.test(t) && /\b(first|last|opening|starting|beginning|how many|number of|count)\b/i.test(t)) return true;
     if (!/\bchapters?\b|\bch\b/i.test(t)) return false;
     return /\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|\d+\s*(st|nd|rd|th)?|list|lists|names?|how many|number of|order|sequence|start|starts|begin|begins)\b/i.test(t);
   }
@@ -1946,9 +1950,59 @@ if (idx >= 0 && idx < PERSONAS.length) {
         });
       });
       if (!lines.length) return '';
-      return 'OFFICIAL CHAPTER LIST from our library - use these EXACT chapter names and numbers. ' +
-        'When asked for the first chapter, it is Chapter 1 in the list below:\n' +
-        lines.join('\n') + '\n\n';
+      // Book overview: total pages, page range, publisher, chapter count —
+      // answers "how many pages", "which edition" without any search.
+      var overviewBlock = '';
+      try {
+        var resOv = await db.rpc('get_book_overview', {
+          p_subject_name: subj,
+          p_class_level_id: (typeof studentContext !== 'undefined' && studentContext) ? studentContext.classLevelId : null,
+        });
+        if (!resOv.error && resOv.data && resOv.data.length) {
+          var bookLines = [];
+          var ov1 = null;
+          resOv.data.forEach(function (o) {
+            if (!o.stored_pages) return;                         // empty duplicate shelf copy
+            if (!ov1) ov1 = o;
+            var range = (o.first_page != null && o.last_page != null) ? (o.first_page + '-' + o.last_page) : String(o.total_pages || '?');
+            bookLines.push('- "' + o.title + '"' + (o.edition ? ' (' + o.edition + ')' : '') +
+              ': ' + (o.total_pages || '?') + ' pages, printed pages ' + range +
+              ', ' + (o.chapter_count || '?') + ' chapters, starting with "' + (o.first_chapter || '?') + '"' +
+              (o.publisher ? ', publisher: ' + o.publisher : '') +
+              (o.class_label ? ', class: ' + o.class_label : ''));
+          });
+          if (bookLines.length) {
+            overviewBlock = 'STORED BOOK OVERVIEW (the database HAS this textbook in full):\n' +
+              bookLines.join('\n') + '\n';
+          }
+        }
+      } catch (e) { console.warn('[AI] Book overview failed:', e && e.message); }
+      // "What is on the first page" style questions need the REAL opening
+      // page text, not chapter names alone — fetch printed page 1 of the
+      // subject book so the model quotes the stored content.
+      var page1Block = '';
+      if (/\b(first|opening|starting|beginning)\s+pages?\b|\bpages?\s+(one|1)\b|\bpage\b\s*\d*\s*\bof\s+(the\s+)?book\b/i.test(text)) {
+        try {
+          var resPage1 = await db.rpc('get_textbook_page_by_number', {
+            p_subject_name: subj,
+            p_printed_page: 1,
+            p_class_level_id: (typeof studentContext !== 'undefined' && studentContext) ? studentContext.classLevelId : null,
+          });
+          if (!resPage1.error && resPage1.data && resPage1.data.length) {
+            var p1 = resPage1.data[0];
+            page1Block = '\n\nThe stored textbook REALLY begins like this — trust it, never describe a generic book:\n' +
+              '[BOOK: "' + (p1.book_title || subj + ' textbook') + ', PRINTED PAGE 1' +
+              (p1.chapter_number !== null && p1.chapter_number !== undefined ? ', Chapter ' + p1.chapter_number + (p1.chapter_name ? ': ' + p1.chapter_name : '') : '') + ']\n' +
+              String(p1.full_text || '').slice(0, 700) + '\n';
+          }
+        } catch (e) { console.warn('[AI] Page-1 lookup failed:', e && e.message); }
+      }
+      return (overviewBlock ? overviewBlock + '\n' : '') +
+        'OFFICIAL CHAPTER LIST (exact names and numbers - use them as printed, with their printed page ranges):\n' +
+        lines.join('\n') + page1Block +
+        '\nYou ALWAYS have this textbook stored. Answer book/facts questions from it and ' +
+        'cite chapter + printed page. NEVER say the textbook is unavailable or describe a ' +
+        'generic "typical textbook".\n';
     } catch (e) {
       console.warn('[AI] Chapter list lookup failed:', e);
       return '';
@@ -1986,7 +2040,10 @@ if (idx >= 0 && idx < PERSONAS.length) {
       });
       if (!parts.length) return '';
       return 'The student asked about printed page ' + n + ' - the EXACT page text from our library is below. ' +
-        'Explain THIS page (do not ask for a photo; you already have the text):\n' +
+        'This page is licensed course material supplied directly to students on this platform, so ' +
+        'reproducing it is fine: answer from THIS page, list its headings, quote short passages ' +
+        'openly, and explain fully in your own words. Never refuse on copyright grounds and never ' +
+        'say the page is unavailable. Explain THIS page (do not ask for a photo; you already have the text):\n' +
         parts.join('\n\n') + '\n\n';
     } catch (e) {
       console.warn('[AI] Page lookup failed:', e);
