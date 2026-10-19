@@ -54,12 +54,18 @@
     .conn-btn[disabled] { opacity: .8; cursor: default; }
     .conn-btn.loading { color: transparent !important; pointer-events: none; }
     .conn-btn.loading svg { opacity: 0; }
-    .conn-load-bar { position: absolute; left: 13px; right: 13px; bottom: 7px; height: 3px; border-radius: 2px; overflow: hidden; background: rgba(255,255,255,.22); opacity: 0; transition: opacity .15s ease; }
+    .conn-load-bar { position: absolute; left: 13px; right: 13px; bottom: 7px; height: 3px; border-radius: 2px; overflow: hidden; background: rgba(0,0,0,.14); opacity: 0; transition: opacity .15s ease; }
     .conn-btn.loading .conn-load-bar { opacity: 1; }
-    .conn-load-bar i { display: block; height: 100%; width: 36%; border-radius: 2px; background: rgba(255,255,255,.95); animation: connSlide 1.05s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
-    .conn-btn-ghost.loading .conn-load-bar { background: rgba(0,0,0,.10); }
+    .conn-load-bar i { display: block; height: 100%; width: 36%; border-radius: 2px; background: rgba(0,0,0,.85); animation: connSlide 1.05s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+    .conn-btn-ghost .conn-load-bar { background: var(--liquid-border); }
+    .conn-btn-ghost .conn-load-bar i { background: var(--accent-hi); }
+    .conn-btn-ghost.loading .conn-load-bar { background: var(--liquid-border); }
     .conn-btn-ghost.loading .conn-load-bar i { background: var(--accent-hi); }
     @keyframes connSlide { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
+    [data-theme="light"] .conn-load-bar { background: rgba(255,255,255,.22); }
+    [data-theme="light"] .conn-load-bar i { background: rgba(255,255,255,.92); }
+    [data-theme="light"] .conn-btn-ghost .conn-load-bar { background: var(--liquid-border); }
+    [data-theme="light"] .conn-btn-ghost .conn-load-bar i { background: var(--accent-hi); }
     @media (prefers-reduced-motion: reduce) { .conn-load-bar i { animation: none; transform: translateX(0); width: 100%; opacity: .7; } }
     .conn-btn-primary { background: var(--accent); color: var(--on-accent); border: none; }
     .conn-btn-primary:hover:not([disabled]) { background: var(--accent-hover); transform: translateY(-1px); }
@@ -445,7 +451,7 @@
         var busy = !!(cal.busy || window.__slameDriveBusy);
         if (cal.connected) {
           calActionEl.innerHTML =
-            '<button type="button" class="conn-btn conn-btn-primary' + (busy ? ' loading' : '') + '" id="cal-connect-btn"' + (busy ? ' disabled' : '') + '>Grant access' + LOAD_BAR + '</button>';
+            '<button type="button" class="conn-btn conn-btn-primary' + (busy ? ' loading' : '') + '" id="cal-connect-btn"' + (busy ? ' disabled' : '') + '>Connect' + LOAD_BAR + '</button>';
         } else {
           calActionEl.innerHTML =
             '<button type="button" class="conn-btn conn-btn-primary' + (busy ? ' loading' : '') + '" id="cal-connect-btn"' + (busy ? ' disabled' : '') + '>Connect' + LOAD_BAR + '</button>';
