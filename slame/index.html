@@ -20,19 +20,13 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://anteemonee.com/slame/">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=36">
+  <link rel="stylesheet" href="../css/style.css?v=38">
   <style>
     /* Same type system as the homepage + checkout. */
     :root {
-      --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans',
-                 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
-      --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
-                      'SF Pro Display', 'Inter', 'Segoe UI Variable Display', system-ui, sans-serif;
-      --font-reading: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-                      'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+      --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+      --font-reading: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
     }
     html { scroll-behavior: smooth; background: var(--bg); }
     body { background: var(--bg) !important; font-family: var(--font-reading); overflow-x: hidden; }
@@ -56,13 +50,24 @@
     .conn-email[hidden] { display: none; }
     .conn-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-hi); flex-shrink: 0; }
     .conn-action { margin-top: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .conn-btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; font-family: inherit; cursor: pointer; transition: all .15s; white-space: nowrap; border: 1px solid transparent; }
-    .conn-btn[disabled] { opacity: .55; cursor: default; }
+    .conn-btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; font-family: inherit; cursor: pointer; transition: all .15s; white-space: nowrap; border: 1px solid transparent; position: relative; overflow: hidden; }
+    .conn-btn[disabled] { opacity: .8; cursor: default; }
+    .conn-btn.loading { color: transparent !important; pointer-events: none; }
+    .conn-btn.loading svg { opacity: 0; }
+    .conn-load-bar { position: absolute; left: 13px; right: 13px; bottom: 7px; height: 3px; border-radius: 2px; overflow: hidden; background: rgba(255,255,255,.22); opacity: 0; transition: opacity .15s ease; }
+    .conn-btn.loading .conn-load-bar { opacity: 1; }
+    .conn-load-bar i { display: block; height: 100%; width: 36%; border-radius: 2px; background: rgba(255,255,255,.95); animation: connSlide 1.05s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+    .conn-btn-ghost.loading .conn-load-bar { background: rgba(0,0,0,.10); }
+    .conn-btn-ghost.loading .conn-load-bar i { background: var(--accent-hi); }
+    @keyframes connSlide { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
+    @media (prefers-reduced-motion: reduce) { .conn-load-bar i { animation: none; transform: translateX(0); width: 100%; opacity: .7; } }
     .conn-btn-primary { background: var(--accent); color: var(--on-accent); border: none; }
     .conn-btn-primary:hover:not([disabled]) { background: var(--accent-hover); transform: translateY(-1px); }
     .conn-btn-ghost { background: var(--liquid-bg-soft); border-color: var(--liquid-border); color: var(--text); }
     .conn-btn-ghost:hover { border-color: var(--accent); }
     .conn-pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; color: var(--accent-hi); font-size: 11px; font-weight: 800; background: var(--accent-soft); border: 1px solid rgba(59,130,246,.3); }
+    .conn-pill .conn-check { display: inline-flex; color: var(--accent-hi); }
+    .conn-note { font-size: 11.5px; color: var(--text-secondary); flex: 1; min-width: 140px; line-height: 1.4; }
     .conn-loading { font-size: 12.5px; color: var(--text-secondary); }
     .conn-slot { display: flex; flex-direction: column; align-items: flex-start; padding: 24px 22px; border-radius: 20px; border: 1px solid var(--liquid-border-soft); background: transparent; }
     .conn-slot .conn-icon { background: rgba(255,255,255,.05); color: var(--text-secondary); }
@@ -74,70 +79,13 @@
       .conn-grid { grid-template-columns: 1fr; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=8">
+  <link rel="stylesheet" href="../css/header.css?v=10">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
-  <header class="header" id="site-header">
-    <div class="header-inner">
-      <a href="../index.html" class="logo-link">
-        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
-      </a>
-      <nav class="landing-nav" aria-label="Primary">
-        <div class="nav-drop">
-          <a href="../index.html#features">Library <span class="caret">▾</span></a>
-          <div class="nav-menu">
-            <a href="../ebooks/">eBooks</a>
-            <a href="../flashcards/">Flashcards</a>
-            <a href="../past-papers/">Past Papers</a>
-          </div>
-        </div>
-        <div class="nav-drop">
-          <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
-          <div class="nav-menu">
-            <a href="../ai-chat/">AI Tutor</a>
-            <a href="../ai-examiner/">AI Examiner</a>
-          </div>
-        </div>
-        <a href="../ai-test-builder/">AI Test Builder</a>
-        <a href="../century-club/">Century Club</a>
-        <a href="../premium/">Premium</a>
-        <a href="../slame/" class="is-current" aria-current="page">Slame</a>
-      </nav>
-      <div class="header-actions">
-        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="../pages/login.html" class="btn-login">Log in</a>
-          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-        </div>
-        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
-        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
-      </div>
-    </div>
-  </header>
-  <div class="mobile-menu" id="mobile-menu">
-    <div class="mobile-acc-dropdown">
-      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
-      <div class="mobile-acc-list">
-        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
-        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
-        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
-      </div>
-    </div>
-    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
-    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-    <a href="../premium/" class="mobile-nav-link">Premium</a>
-    <a href="../slame/" class="mobile-nav-link is-current">Slame</a>
-    <div class="mobile-cta">
-      <a href="../pages/login.html" class="btn-login">Log in</a>
-      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-    </div>
-  </div>
+  <div data-site-header></div>
+  <script src="../js/site-chrome.js?v=2"></script>
+
 
   <main class="slame-wrap">
     <h1 class="slame-title">Slame</h1>
@@ -164,6 +112,17 @@
           <span class="conn-loading">Checking…</span>
         </div>
       </div>
+      <div class="conn-card" id="calendar-card">
+        <div class="conn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="8" y1="19" x2="12" y2="19"/></svg>
+        </div>
+        <div class="conn-name">Google Calendar</div>
+        <div class="conn-desc">Your AI Tutor adds, reschedules and clears study events. Say it in chat ("move my physics test to next Friday") and it is done.</div>
+        <div class="conn-email" id="cal-email" hidden><span class="conn-status-dot"></span><span id="cal-email-text"></span></div>
+        <div class="conn-action" id="cal-action">
+          <span class="conn-loading">Checking…</span>
+        </div>
+      </div>
       <div class="conn-slot">
         <div class="conn-icon" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -174,43 +133,16 @@
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="brand-stack"><span class="logo-text">Anteemonee</span></span><span class="logo-sub">Student OS</span></span></a>
-          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>Explore</h4>
-            <a href="../index.html">Home</a>
-            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-            <a href="../pages/download.html">Download App</a>
-          </div>
-          <div class="footer-col">
-            <h4>Features</h4>
-            <a href="../ai-chat/">AI Tutor</a>
-            <a href="../slame/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Slame</a>
-          </div>
-          <div class="footer-col">
-            <h4>Legal</h4>
-            <a href="/privacy/">Privacy Policy</a>
-            <a href="/terms/">Terms of Service</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
-    </div>
-  </footer>
+  <div data-site-footer></div>
+  <script src="../js/site-chrome.js?v=2"></script>
+
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=37"></script>
-<script src="../js/login-modal.js?v=5"></script>
+<script src="../js/login-modal.js?v=6"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
-<script src="../js/signup-modal.js?v=3"></script>
+<script src="../js/signup-modal.js?v=4"></script>
   <script>
     (function () {
       // Mobile menu handled solely by setupMobileMenu() in app.js.
@@ -350,21 +282,21 @@
         return data || {};
       }
 
+      var LOAD_BAR = '<span class="conn-load-bar" aria-hidden="true"><i></i></span>';
+
       function render() {
         if (!actionEl) return;
-        var html = '';
         if (!status.loaded) {
-          html = '<span class="conn-loading">Checking…</span>';
+          // Status check in flight: show the Connect button with an inline
+          // loading bar instead of the old "Checking…" text.
+          actionEl.innerHTML = '<button class="conn-btn conn-btn-primary loading" id="drive-checking-btn" type="button" disabled>Connect' + LOAD_BAR + '</button>';
         } else if (!status.loggedIn) {
-          html = '<button class="conn-btn conn-btn-primary" id="drive-login-btn" type="button">Log in to connect</button>';
+          actionEl.innerHTML = '<button class="conn-btn conn-btn-primary" id="drive-login-btn" type="button">Log in to connect</button>';
         } else if (status.connected) {
-          html = '<span class="conn-pill"><span class="conn-status-dot"></span>Connected</span>' +
-                 '<button class="conn-btn conn-btn-ghost" id="drive-disconnect-btn" type="button"' + (status.busy ? ' disabled' : '') + '>Disconnect</button>';
+          actionEl.innerHTML = '<button class="conn-btn conn-btn-primary' + (status.busy ? ' loading' : '') + '" id="drive-disconnect-btn" type="button"' + (status.busy ? ' disabled' : '') + '>Disconnect' + LOAD_BAR + '</button>';
         } else {
-          html = '<button class="conn-btn conn-btn-primary" id="drive-connect-btn" type="button"' + (status.busy ? ' disabled' : '') + '>' +
-                 (status.busy ? 'Opening Google…' : 'Connect') + '</button>';
+          actionEl.innerHTML = '<button class="conn-btn conn-btn-primary' + (status.busy ? ' loading' : '') + '" id="drive-connect-btn" type="button"' + (status.busy ? ' disabled' : '') + '>Connect' + LOAD_BAR + '</button>';
         }
-        actionEl.innerHTML = html;
 
         if (emailEl && emailTextEl) {
           if (status.connected && status.email) {
@@ -400,7 +332,7 @@
           var p = new URLSearchParams(location.search);
           var v = p.get('drive');
           if (!v) return;
-          if (v === 'connected') banner('ok', 'Google Drive connected. Your AI Tutor can now create and edit files in your Drive.');
+          if (v === 'connected') banner('ok', 'Google connected. Your AI Tutor can now create and edit files in your Drive and manage your study calendar events.');
           else if (v === 'cancelled') banner('ok', 'Google Drive connection was cancelled.');
           else {
             var reason = p.get('reason') || '';
@@ -483,25 +415,102 @@
         });
       }
 
+      // ── Google Calendar card (same Google connection as Drive) ──
+      var calActionEl = document.getElementById('cal-action');
+      var calEmailEl = document.getElementById('cal-email');
+      var calEmailTextEl = document.getElementById('cal-email-text');
+      var cal = { loaded: false, loggedIn: false, connected: false, calEnabled: false, email: null, busy: false };
+
+      var CAL_SVG_CONNECTED = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+
+      function renderCal() {
+        if (!calActionEl) return;
+        calEmailEl.hidden = !(cal.connected && cal.calEnabled && cal.email);
+        if (cal.connected && cal.calEnabled && cal.email) calEmailTextEl.textContent = cal.email;
+        if (!cal.loaded) {
+          calActionEl.innerHTML = '<button class="conn-btn conn-btn-primary loading" type="button" disabled>Connect' + LOAD_BAR + '</button>';
+          return;
+        }
+        if (!cal.loggedIn) {
+          calActionEl.innerHTML = '<button type="button" class="conn-btn conn-btn-primary" id="cal-login-btn">Log in to connect</button>';
+          var lb = document.getElementById('cal-login-btn');
+          if (lb) lb.addEventListener('click', function () { if (typeof window.openLoginModal === 'function') window.openLoginModal(); });
+          return;
+        }
+        if (cal.connected && cal.calEnabled) {
+          calActionEl.innerHTML =
+            '<span class="conn-pill"><span class="conn-check">' + CAL_SVG_CONNECTED + '</span>Calendar connected</span>';
+          return;
+        }
+        var busy = !!(cal.busy || window.__slameDriveBusy);
+        if (cal.connected) {
+          calActionEl.innerHTML =
+            '<button type="button" class="conn-btn conn-btn-primary' + (busy ? ' loading' : '') + '" id="cal-connect-btn"' + (busy ? ' disabled' : '') + '>Grant access' + LOAD_BAR + '</button>';
+        } else {
+          calActionEl.innerHTML =
+            '<button type="button" class="conn-btn conn-btn-primary' + (busy ? ' loading' : '') + '" id="cal-connect-btn"' + (busy ? ' disabled' : '') + '>Connect' + LOAD_BAR + '</button>';
+        }
+        var cb = document.getElementById('cal-connect-btn');
+        if (cb) cb.addEventListener('click', function () { calConnect(); });
+      }
+
+      async function calConnect() {
+        var token = await accessToken();
+        if (!token) { if (typeof window.openLoginModal === 'function') window.openLoginModal(); return; }
+        cal.busy = true; window.__slameDriveBusy = true; render(); renderCal();
+        try {
+          var data = await callFn('drive-oauth-start', { origin: location.origin }, token);
+          if (data && data.url) { location.href = data.url; return; }
+          if (data && data.error === 'not_configured') throw new Error('Google connection is not set up on the server yet.');
+          throw new Error('Could not start the Google connection.');
+        } catch (e) {
+          cal.busy = false; window.__slameDriveBusy = false; render(); renderCal();
+          banner('error', (e && e.message) || 'Could not start the Google connection.');
+        }
+      }
+
+      async function refreshCal() {
+        var token = await accessToken();
+        if (!token) {
+          cal.loaded = true; cal.loggedIn = false; cal.connected = false; cal.calEnabled = false; cal.email = null;
+          renderCal();
+          return;
+        }
+        try {
+          var data = await callFn('calendar-api', { action: 'status' }, token);
+          cal.loaded = true; cal.loggedIn = true;
+          cal.connected = !!data.connected;
+          cal.calEnabled = data.calendar_enabled === true;
+          cal.email = data.email || null;
+        } catch (_) {
+          cal.loaded = true; cal.loggedIn = true; cal.connected = false; cal.calEnabled = false;
+        }
+        renderCal();
+      }
+
       // Auth state lands asynchronously (app.js loads it after us), so render
       // immediately, then follow the auth events and poll briefly as a net.
       readUrlBanner();
       render();
+      renderCal();
       refresh();
+      refreshCal();
       try {
         if (typeof db !== 'undefined' && db && db.auth && db.auth.onAuthStateChange) {
-          db.auth.onAuthStateChange(function () { refresh(); });
+          db.auth.onAuthStateChange(function () { refresh(); refreshCal(); });
         }
       } catch (_) {}
       var tries = 0;
       var timer = setInterval(function () {
         tries++;
-        if (status.loggedIn || tries > 30) { clearInterval(timer); return; }
+        if ((status.loggedIn && cal.loggedIn) || tries > 30) { clearInterval(timer); return; }
         refresh();
+        refreshCal();
       }, 800);
       window.addEventListener('focus', function () {
         if (window.__slameDriveBusy) return;
         refresh();
+        refreshCal();
       });
     })();
   </script>
@@ -515,6 +524,5 @@
       </div>
     </div>
   </div>
-  <script src="../js/header-ai-dropdown.js?v=7"></script>
 </body>
 </html>

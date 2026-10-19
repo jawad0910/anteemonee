@@ -26,78 +26,11 @@
   <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
   <meta property="og:url" content="https://anteemonee.com/">
   <link rel="icon" href="assets/anteemonee.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=36">
+  <link rel="stylesheet" href="css/style.css?v=38">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
-    /* ── CA-style header: flat bar, inline nav ── */
-    .header { padding: 0; }
-    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
-    .header-inner::before { display: none; }
-    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family:var(--font-serif); font-size: 21px; }
-    .landing-nav { display: flex; align-items: center; gap: 4px; position: absolute; left: 50%; transform: translateX(-50%); background: none; border: none; padding: 0; box-shadow: none; }
-    .landing-nav a { font-size: 14.5px; font-weight: 500; color: var(--text-secondary); padding: 10px 14px; border-radius: 8px; white-space: nowrap; transition: color .15s; display: inline-flex; align-items: center; gap: 5px; }
-    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
-    .landing-nav a .caret { font-size: 10px; opacity: 0.6; }
-    .nav-drop { position: relative; }
-    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
-    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
-    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
-    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text-secondary); }
-    .nav-menu a:hover { background: var(--surface); }
-    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s; }
-    .icon-btn:hover { background: var(--surface); color: var(--text); }
-    .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .avatar-btn .av-circle { width: 30px; height: 30px; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
-    @media (max-width: 1100px) { .landing-nav { display: none; } }
-    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
-    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: all .2s; }
-    .landing-nav a:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-    @media (max-width: 900px) { .landing-nav { display: none; } }
-    .landing-hero-visual { position: relative; min-width: 0; }
-    .call-mock {
-      background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur);
-      border: 1px solid var(--liquid-border); border-radius: var(--radius-xl);
-      box-shadow: var(--liquid-inset), var(--liquid-shadow);
-      padding: 20px; max-width: 420px; margin-left: auto;
-    }
-    .call-mock-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .call-mock-head img { width: 36px; height: 36px; border-radius: 11px; }
-    .call-mock-head b { display: block; font-size: 14px; }
-    .call-mock-head span { font-size: 11.5px; color: var(--text-muted); }
-    .mock-bubble { border-radius: 14px; padding: 10px 14px; font-size: 13px; line-height: 1.55; margin-bottom: 8px; max-width: 92%; }
-    .mock-bubble.user { background: var(--accent); color: var(--on-accent); margin-left: auto; border-bottom-right-radius: 4px; }
-    .mock-bubble.ai { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-bottom-left-radius: 4px; }
-    .mock-voice { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 14px; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--liquid-border-soft); font-size: 12.5px; font-weight: 600; color: var(--text); }
-    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); animation: pdot 1.2s infinite; }
-    @keyframes pdot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 30px; }
-    .step { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 20px 16px; position: relative; }
-    .step .n { font-family:var(--font-serif); font-size: 26px; font-weight: 700; color: var(--accent); }
-    .step h3 { font-size: 14.5px; margin: 8px 0 6px; }
-    .step p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
-    .step.star { background: linear-gradient(135deg, #000000 0%, #333333 100%); border: none; color: #fff; }
-    .step.star p { color: rgba(255,255,255,0.85); }
-    .step.star .n { color: #fff; }
-    @media (max-width: 900px) { .steps { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
-    .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 26px; }
-    .tool { background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-lg); padding: 18px 16px; transition: all .2s; }
-    .tool:hover { transform: translateY(-3px); border-color: var(--liquid-border); }
-    .tool .ti { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--text); margin-bottom: 12px; font-size: 18px; }
-    .tool h3 { font-size: 14px; margin-bottom: 4px; }
-    .tool h3 .soon { font-size: 10px; font-weight: 700; background: var(--accent-soft); color: var(--text); border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
-    .tool p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
-    @media (max-width: 900px) { .tools-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px) { .tools-grid { grid-template-columns: 1fr; } }
-
-
     /* ── Plan buttons ────────────────────────────────────────────────────────
        One shared control for a consistent look. Each variant differs
        in surface only; the motion, press and focus ring are identical. */
@@ -155,31 +88,6 @@
     .faq-q span:last-child { color: var(--text); font-size: 20px; flex-shrink: 0; }
     .faq-a { display: none; padding: 0 4px 18px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 720px; }
     .faq-item.open .faq-a { display: block; }
-    
-    /* Landing profile dropdown */
-    .landing-profile-dropdown { position: relative; }
-    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
-    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
-    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
-    .landing-profile-dropdown .profile-dropdown.open { display: block; }
-    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
-    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
-    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: #242424; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
-    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
-    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
-    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background var(--neo-duration) var(--neo-tween); }
-    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
-    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
-    .landing-profile-dropdown .dropdown-logout { color: var(--error); width: 100%; text-align: left; }
-    .cta-band { background: linear-gradient(135deg, #000000 0%, #333333 100%); border-radius: var(--radius-xl); padding: 56px 32px; text-align: center; color: #fff; margin-top: 70px; }
-    .cta-band h2 { font-family:var(--font-serif); font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 10px; }
-    .cta-band p { opacity: 0.85; margin-bottom: 24px; }
-    .btn-white { display: inline-block; background: #fff; color: #111; font-weight: 700; padding: 14px 34px; border-radius: 999px; font-size: 15px; }
     /* Hero primary CTA — modern smooth button */
     #hero-primary-cta {
       min-height: 52px; padding: 0 34px; font-size: 15.5px;
@@ -218,98 +126,25 @@
     .section { padding: 70px 24px; }
     .section-inner { max-width: 1280px; margin: 0 auto; }
   </style>
-  <link rel="stylesheet" href="css/header.css?v=8">
+  <link rel="stylesheet" href="css/header.css?v=10">
   <script src="js/header-notifications.js?v=3" defer></script>
-  <link rel="stylesheet" href="css/home.css?v=2">
+  <link rel="stylesheet" href="css/home.css?v=4">
 </head>
 <body>
-  <header class="header" id="site-header" id="header">
-    <div class="header-inner">
-      <a href="index.html" class="logo-link">
-        <img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
-      </a>
-<nav class="landing-nav" aria-label="Primary">
-  <div class="nav-drop">
-    <a href="#features">Library <span class="caret">▾</span></a>
-    <div class="nav-menu">
-      <a href="ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
-      <a href="flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-      <a href="past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
-    </div>
-  </div>
-  <div class="nav-drop">
-    <a href="ai-chat/">AI Assistant <span class="caret">▾</span></a>
-    <div class="nav-menu">
-      <a href="ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-      <a href="ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    </div>
-  </div>
-  <a href="ai-test-builder/">AI Test Builder</a>
-  <a href="slame/">Slame</a>
-      <a href="century-club/">Century Club</a>
-  <a href="premium/">Premium</a>
-</nav>
-      <div class="header-actions">
-        <a href="mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </a>
-        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="pages/login.html" class="btn-login">Log in</a>
-          <a href="pages/signup.html" class="btn-signup">Sign Up</a>
-        </div>
-        <div id="landing-auth-in" class="auth-logged-in" style="display:none; position: relative;"></div>
-        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
-      </div>
-    </div>
-  </header>
-  <div class="mobile-menu" id="mobile-menu">
+  <div data-site-header></div>
+  <script src="./js/site-chrome.js?v=2"></script>
 
-    <div class="mobile-acc-dropdown">
-      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
-      <div class="mobile-acc-list">
-        <a href="ebooks/" class="mobile-nav-link">eBooks</a>
-        <a href="flashcards/" class="mobile-nav-link">Flashcards</a>
-        <a href="past-papers/" class="mobile-nav-link">Past Papers</a>
-      </div>
-    </div>
-    <a href="ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-    <a href="ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    <a href="ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
-    <a href="slame/" class="mobile-nav-link">Slame</a>
-    <a href="century-club/" class="mobile-nav-link">Century Club</a>
-    <a href="premium/" class="mobile-nav-link">Premium</a>
-        <a href="mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
-    <div class="mobile-cta">
-      <a href="pages/login.html" class="btn-login">Log in</a>
-      <a href="pages/signup.html" class="btn-signup">Sign Up</a>
-    </div>
-  </div>
 
   <main>
     <!-- HERO -->
     <section class="hero">
-      <div class="hero-glow hero-glow-1"></div>
-      <div class="hero-glow hero-glow-2"></div>
       <div class="hero-inner">
         <div class="hero-text">
-          <div class="hero-badge">🇵🇰 Pakistan's Student OS for FSc, Matric & Intermediate</div>
           <h1>Your board prep, finally sorted.</h1>
           <p class="hero-desc">Notes, past papers, AI tutor, flashcards & test builder. Everything you need in one place.</p>
           <div class="hero-actions">
             <a href="pages/signup.html" class="btn-primary" id="hero-primary-cta">Start free →</a>
             <a href="past-papers/" class="btn-secondary" id="hero-secondary-cta">Explore past papers</a>
-          </div>
-          <div class="hero-chips">
-            <div class="hero-chip">📖<span>Notes</span></div>
-            <div class="hero-chip">📝<span>Past Papers</span></div>
-            <div class="hero-chip">🤖<span>AI Tutor</span></div>
-            <div class="hero-chip">🃏<span>Flashcards</span></div>
-            <div class="hero-chip">🎙️<span>Voice Call</span></div>
-            <div class="hero-chip">📊<span>Test Builder</span></div>
           </div>
         </div>
         <div class="landing-hero-visual">
@@ -846,152 +681,26 @@
           <div class="faq-item"><button class="faq-q">Does it work on mobile?<span>+</span></button><div class="faq-a">Fully. Anteemonee is a web app that works on any phone browser, plus a downloadable app on the Download page.</div></div>
           <div class="faq-item"><button class="faq-q">How accurate are the AI answers?<span>+</span></button><div class="faq-a">Answers are grounded in your course textbooks with page references, and every response can be verified. Always cross-check critical exam answers with your book.</div></div>
         </div>
-        <div class="cta-band" style="display:none">
-          <h2>Ready to top your board?</h2>
-          <p>Start free in seconds. No card needed.</p>
-          <a href="pages/signup.html" class="btn-white">Start free →</a>
-        </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="index.html" class="logo-link"><img src="assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="brand-stack"><span class="logo-text">Anteemonee</span></span><span class="logo-sub">Student OS</span></span></a>
-          <p>The Student OS for Pakistan: FSc, matric & intermediate.</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>Explore</h4>
-            <a href="index.html">Home</a>
-            <a href="ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-            <a href="flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-            <a href="pages/download.html">Download App</a>
-          </div>
-          <div class="footer-col">
-            <h4>Features</h4>
-            <a href="ai-chat/">AI Tutor</a>
-            <a href="flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-        </div>
-          <div class="footer-col">
-            <h4>Legal</h4>
-            <a href="/privacy/">Privacy Policy</a>
-            <a href="/terms/">Terms of Service</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
-    </div>
-  </footer>
+  <div data-site-footer></div>
+  <script src="./js/site-chrome.js?v=2"></script>
+
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="js/account-manager.js?v=11"></script>
   <script src="js/app.js?v=37"></script>
-<script src="js/login-modal.js?v=5"></script>
+<script src="js/login-modal.js?v=6"></script>
 <script src="js/forgot-modal.js?v=2"></script>
-<script src="js/signup-modal.js?v=3"></script>
+<script src="js/signup-modal.js?v=4"></script>
   <script>
     // Landing: mobile menu, auth buttons, FAQ. Theme handled by app.js via .theme-toggle class.
     (function () {
       // Mobile menu is handled by setupMobileMenu() in app.js — a second
       // toggle listener here would immediately undo its open/close state.
       // Auth-aware header buttons - wait for app.js to set currentUser
-      var heroLastChatDone = false;
-      function escHtml(s) {
-        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      }
-      function stripMd(s) {
-        var t = String(s || '');
-        t = t.replace(/```[\s\S]*?```/g, ' ');
-        t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-        t = t.replace(/(\*\*|__)(.*?)\1/g, '$2');
-        t = t.replace(/(^|[\s(>])\*([^*\n]+)\*/g, '$1$2');
-        t = t.replace(/`([^`\n]+)`/g, '$1');
-        t = t.replace(/^#{1,6}\s+/gm, '');
-        t = t.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
-        return t;
-      }
-      async function loadHeroLastChat() {
-        if (heroLastChatDone) return;
-        var userEl = document.getElementById('hero-last-user');
-        var aiEl = document.getElementById('hero-last-ai');
-        if (!userEl || !aiEl) return;
-        // Keep fake data as fallback — only overwrite when a real chat exists
-        var user = null;
-        try { if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) user = currentUser; } catch (_) {}
-        var best = null; // {userText, aiText, ts}
-        // 1) Try Supabase (premium, cross-device)
-        try {
-          if (user && typeof db !== 'undefined' && db) {
-            var res = await db.from('chat_conversations')
-              .select('messages,updated_at')
-              .eq('user_id', user.id)
-              .order('updated_at', { ascending: false })
-              .limit(10);
-            var rows = (res && !res.error && Array.isArray(res.data)) ? res.data : [];
-            for (var i = 0; i < rows.length; i++) {
-              var msgs = rows[i] && rows[i].messages;
-              if (!Array.isArray(msgs) || !msgs.length) continue;
-              var u = null, a = null;
-              for (var k = msgs.length - 1; k >= 0; k--) {
-                if (!a && msgs[k] && msgs[k].role === 'assistant' && msgs[k].content) a = msgs[k].content;
-                if (!u && msgs[k] && msgs[k].role === 'user' && msgs[k].content) u = msgs[k].content;
-                if (u && a) break;
-              }
-              if (u && a) {
-                best = { userText: u, aiText: a, ts: rows[i].updated_at };
-                break;
-              }
-            }
-          }
-        } catch (_) {}
-        // 2) Fallback: localStorage per-subject keys (free tier)
-        if (!best) {
-          try {
-            var uid = user && user.id ? user.id : 'anon';
-            var prefix = 'Anteemonee_ai_conversations_' + uid + '_';
-            var legacyKeys = ['Anteemonee_ai_conversations_' + uid, 'Anteemonee_ai_conversations_anon'];
-            var candidates = [];
-            for (var s = 0; s < localStorage.length; s++) {
-              var key = localStorage.key(s);
-              if (key && key.indexOf(prefix) === 0) {
-                try {
-                  var arr = JSON.parse(localStorage.getItem(key) || '[]');
-                  if (Array.isArray(arr)) arr.forEach(function(c){ candidates.push(c); });
-                } catch (_) {}
-              }
-            }
-            legacyKeys.forEach(function(key){
-              try {
-                var arr = JSON.parse(localStorage.getItem(key) || '[]');
-                if (Array.isArray(arr)) arr.forEach(function(c){ candidates.push(c); });
-              } catch (_) {}
-            });
-            candidates.sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); });
-            for (var j = 0; j < candidates.length; j++) {
-              var msgs = candidates[j] && candidates[j].messages;
-              if (!Array.isArray(msgs) || !msgs.length) continue;
-              var u2 = null, a2 = null;
-              for (var k2 = msgs.length - 1; k2 >= 0; k2--) {
-                if (!a2 && msgs[k2] && msgs[k2].role === 'assistant' && msgs[k2].content) a2 = msgs[k2].content;
-                if (!u2 && msgs[k2] && msgs[k2].role === 'user' && msgs[k2].content) u2 = msgs[k2].content;
-                if (u2 && a2) break;
-              }
-              if (u2 && a2) { best = { userText: u2, aiText: a2 }; break; }
-            }
-          } catch (_) {}
-        }
-        if (!best) return; // keep fake data
-        heroLastChatDone = true;
-        try {
-          var uText = stripMd(best.userText).slice(0, 90);
-          var aText = stripMd(best.aiText).slice(0, 160);
-          if (uText) userEl.textContent = uText;
-          if (aText) aiEl.textContent = aText;
-        } catch (_) {}
-      }
       function renderLandingAuth() {
         try {
           var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
@@ -1085,7 +794,6 @@
               }
             } catch (_) {}
             // Show last AI chat in hero preview (keep fake data if none)
-            try { loadHeroLastChat(); } catch (_) {}
           } else {
             loggedIn.style.display = 'none';
             loggedOut.style.display = 'flex';
@@ -1187,11 +895,10 @@
         });
       });
       // Header shadow on scroll
-      var hdr = document.getElementById('header');
+      var hdr = document.getElementById('site-header');
       window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
   </script>
-  <script src="js/header-ai-dropdown.js?v=7"></script>
   </script>
 </body>
 </html>

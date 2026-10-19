@@ -18,17 +18,14 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#000000">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=35">
+  <link rel="stylesheet" href="../css/style.css?v=38">
   <style>
     :root {
       --ob-ease: cubic-bezier(.22, 1, .36, 1);
       --ob-spring: cubic-bezier(.34, 1.56, .64, 1);
-      --ob-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      --ob-serif: 'Fraunces', Georgia, serif;
+      --ob-font: var(--font-ui);
+      --ob-serif: var(--font-ui);
       --ob-hairline: inset 0 1px 0 rgba(255,255,255,.07);
     }
     [data-theme="light"] { --ob-hairline: inset 0 1px 0 rgba(255,255,255,.9); }
@@ -36,63 +33,17 @@
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; font-family: var(--ob-font); }
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
-
-    /* ── Site header (matches all pages) ── */
-    .header { padding: 0; }
-    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
-    .header-inner::before { display: none; }
-    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family: 'Fraunces', Georgia, serif; font-size: 21px; }
-    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
-    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: color .2s, background-color .2s; }
-    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
-    .landing-nav a .caret { font-size: 10px; opacity: .6; }
-    .nav-drop { position: relative; }
-    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
-    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
-    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
-    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text-secondary); border-radius: 10px; }
-    .nav-menu a:hover { background: var(--surface); }
-    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s, color .15s; }
-    .icon-btn:hover { background: var(--surface); color: var(--text); }
-    .landing-profile-dropdown { position: relative; }
-    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
-    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--text-secondary); }
-    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
-    .landing-profile-dropdown .profile-dropdown.open { display: block; }
-    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
-    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
-    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--text); }
-    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
-    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
-    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background .2s var(--ob-ease); }
-    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
-    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: .7; }
-    .landing-profile-dropdown .dropdown-logout { color: var(--error); text-align: left; }
-
     /* ══════════════ SHELL ══════════════ */
     .ob-shell { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 104px 24px 72px; overflow: hidden; isolation: isolate; }
-    .ob-aurora { position: absolute; inset: -20% -10% auto -10%; height: 720px; z-index: -1; pointer-events: none; }
-    .ob-aurora span { position: absolute; display: block; border-radius: 50%; filter: blur(95px); will-change: transform; }
-    .ob-aurora span:nth-child(1) { width: 460px; height: 460px; left: 6%; top: 4%; background: radial-gradient(circle, var(--aurora-1), transparent 68%); animation: obDrift1 28s ease-in-out infinite alternate; }
-    .ob-aurora span:nth-child(2) { width: 400px; height: 400px; right: 8%; top: 12%; background: radial-gradient(circle, var(--aurora-2), transparent 68%); animation: obDrift2 34s ease-in-out infinite alternate; }
-    @keyframes obDrift1 { to { transform: translate3d(64px, 48px, 0) scale(1.12); } }
-    @keyframes obDrift2 { to { transform: translate3d(-58px, 56px, 0) scale(1.1); } }
 
     /* ══════════════ THE SINGLE BOX ══════════════ */
     .ob-box { position: relative; width: 100%; max-width: 560px; padding: clamp(26px, 4.4vw, 40px); border-radius: var(--radius-xl); background: var(--bg-card); border: 1px solid var(--liquid-border); box-shadow: var(--neo-shadow-raised-lg); }
-    .ob-box::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: var(--radius-xl) var(--radius-xl) 0 0; background: linear-gradient(90deg, transparent, var(--liquid-border), transparent); }
+    .ob-box::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: var(--radius-xl) var(--radius-xl) 0 0; background: var(--liquid-border); }
     .ob-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 11px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--ob-hairline); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-secondary); }
     .ob-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--text); animation: obPulse 2.6s var(--ob-ease) infinite; }
     @keyframes obPulse { 0% { box-shadow: 0 0 0 0 rgba(127,127,127,.5); } 70% { box-shadow: 0 0 0 9px rgba(127,127,127,0); } 100% { box-shadow: 0 0 0 0 rgba(127,127,127,0); } }
 
-    .ob-box h1 { font-family: var(--ob-serif); font-weight: 700; font-size: clamp(1.75rem, 4.4vw, 2.4rem); letter-spacing: -.035em; line-height: 1.06; margin: 20px 0 0; }
+    .ob-box h1 { font-family:var(--ob-serif); font-weight: 700; font-size: clamp(1.75rem, 4.4vw, 2.4rem); letter-spacing: -.035em; line-height: 1.06; margin: 20px 0 0; }
     .ob-sub { margin: 12px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--text-secondary); max-width: 44ch; }
 
     .ob-fields { display: grid; gap: 20px; margin-top: 30px; }
@@ -164,7 +115,7 @@
     .ob-done.is-on { display: block; }
     .ob-done-tick { width: 62px; height: 62px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); animation: obPop .6s var(--ob-spring) both; }
     @keyframes obPop { from { transform: scale(.6); opacity: 0; } }
-    .ob-done h2 { font-family: var(--ob-serif); font-weight: 700; font-size: 1.6rem; letter-spacing: -.03em; margin: 0 0 9px; }
+    .ob-done h2 { font-family:var(--ob-serif); font-weight: 700; font-size: 1.6rem; letter-spacing: -.03em; margin: 0 0 9px; }
     .ob-done p { margin: 0 auto; max-width: 34ch; font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
 
     /* skeleton */
@@ -180,7 +131,6 @@
     .ob-box.is-settled .ob-in { animation: none; opacity: 1; transform: none; }
 
     /* ── responsive ── */
-    @media (max-width: 1100px) { .landing-nav { display: none; } }
     @media (max-width: 700px) {
       .ob-shell { padding: 96px 18px 56px; }
       .ob-box { padding: 24px 20px; border-radius: var(--radius-lg); }
@@ -191,81 +141,22 @@
     /* ── reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      .ob-aurora span, .ob-eyebrow i { animation: none !important; }
+ .ob-eyebrow i { animation: none !important; }
       .ob-in { opacity: 1 !important; transform: none !important; animation: none !important; }
       .ob-list, .ob-chip, .ob-submit, .ob-trigger, .ob-btn, .ob-opt { transition: none !important; }
       .ob-done-tick { animation: none !important; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=7">
+  <link rel="stylesheet" href="../css/header.css?v=10">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
-  <header class="header" id="site-header">
-    <div class="header-inner">
-      <a href="../index.html" class="logo-link">
-        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
-      </a>
-      <nav class="landing-nav" aria-label="Primary">
-        <div class="nav-drop">
-          <a href="#">Library <span class="caret">▾</span></a>
-          <div class="nav-menu">
-            <a href="../ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
-            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-            <a href="../past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
-          </div>
-        </div>
-        <div class="nav-drop">
-    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
-    <div class="nav-menu">
-      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    </div>
-  </div>
-        <a href="../ai-test-builder/">AI Test Builder</a>
-  <a href="../century-club/">Century Club</a>
-      </nav>
-      <div class="header-actions">
-        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </a>
-        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="../pages/login.html" class="btn-login">Log in</a>
-          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-        </div>
-        <div id="landing-auth-in" class="auth-logged-in" style="display:none;position:relative"></div>
-        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
-      </div>
-    </div>
-  </header>
+  <div data-site-header></div>
+  <script src="../js/site-chrome.js?v=2"></script>
 
-  <div class="mobile-menu" id="mobile-menu">
 
-    <div class="mobile-acc-dropdown">
-      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
-      <div class="mobile-acc-list">
-        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
-        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
-        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
-      </div>
-    </div>
-    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
-    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-    <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
-    <div class="mobile-cta">
-      <a href="../pages/login.html" class="btn-login">Log in</a>
-      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-    </div>
-  </div>
 
   <main class="ob-shell">
-    <div class="ob-aurora" aria-hidden="true"><span></span><span></span></div>
 
     <section class="ob-box" id="ob-box">
       <div id="ob-form">
@@ -313,10 +204,10 @@
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=31"></script>
-  <script src="../js/login-modal.js?v=5"></script>
+  <script src="../js/app.js?v=37"></script>
+  <script src="../js/login-modal.js?v=6"></script>
   <script src="../js/forgot-modal.js?v=2"></script>
-  <script src="../js/signup-modal.js?v=3"></script>
+  <script src="../js/signup-modal.js?v=4"></script>
   <script>
     (function () {
       // Mobile menu handled solely by setupMobileMenu() in app.js.
@@ -387,7 +278,6 @@
       });
     })();
   </script>
-  <script src="../js/header-ai-dropdown.js?v=7"></script>
   <script>
   (function () {
     'use strict';

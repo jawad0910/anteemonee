@@ -17,18 +17,15 @@
   <meta name="description" content="The Century Club: the first 100 students who joined Anteemonee, listed oldest first. Your place in the roll of honour.">
   <meta name="theme-color" content="#000000">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=36">
+  <link rel="stylesheet" href="../css/style.css?v=38">
   <style>
     /* ── Tokens local to this page ── */
     :root {
       --cc-ease: cubic-bezier(.22, 1, .36, 1);
       --cc-spring: cubic-bezier(.34, 1.56, .64, 1);
-      --cc-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Noto Emoji', sans-serif;
-      --cc-serif: 'Fraunces', Georgia, serif;
+      --cc-font: var(--font-ui);
+      --cc-serif: var(--font-ui);
       --cc-hairline: inset 0 1px 0 rgba(255,255,255,.07);
     }
     [data-theme="light"] { --cc-hairline: inset 0 1px 0 rgba(255,255,255,.9); }
@@ -36,47 +33,6 @@
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; font-family: var(--cc-font); }
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
-
-    /* ── Site header (matches all pages) ── */
-    .header { padding: 0; }
-    .header-inner { max-width: 1400px; height: 72px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 28px; }
-    .header-inner::before { display: none; }
-    .header.scrolled .header-inner { background: var(--liquid-bg-strong); -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
-    .logo-text { font-family:'Fraunces', Georgia, 'Noto Emoji', serif; font-size: 21px; }
-    .landing-nav { display: flex; align-items: center; gap: 2px; position: absolute; left: 50%; transform: translateX(-50%); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: var(--radius-pill); padding: 4px; }
-    .landing-nav a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-pill); white-space: nowrap; transition: color .2s, background-color .2s; }
-    .landing-nav a:hover { color: var(--text); background: var(--accent-soft); }
-    .landing-nav a.is-current { color: var(--text); background: var(--accent-soft); }
-    .landing-nav a .caret { font-size: 10px; opacity: .6; }
-    .nav-drop { position: relative; }
-    .nav-drop::before { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; display: none; }
-    .nav-drop:hover::before, .nav-drop.open::before { display: block; }
-    .nav-menu { display: none; position: absolute; top: calc(100% + 10px); left: 0; min-width: 210px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 50; }
-    .nav-drop:hover .nav-menu, .nav-drop:focus-within .nav-menu, .nav-drop.open .nav-menu { display: block; }
-    .nav-menu a { display: flex; width: 100%; box-sizing: border-box; font-size: 13.5px; padding: 9px 12px; color: var(--text-secondary); border-radius: 10px; }
-    .nav-menu a:hover { background: var(--surface); }
-    .icon-btn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); border: none; background: transparent; cursor: pointer; transition: background .15s, color .15s; }
-    .icon-btn:hover { background: var(--surface); color: var(--text); }
-    .landing-profile-dropdown { position: relative; }
-    .landing-profile-dropdown .avatar-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); border-radius: 14px; padding: 5px 10px 5px 5px; cursor: pointer; color: var(--text); font-family: inherit; }
-    .landing-profile-dropdown .avatar-wrapper { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
-    .landing-profile-dropdown .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--text-secondary); }
-    .landing-profile-dropdown .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: var(--neo-shadow-float); z-index: 100; display: none; }
-    .landing-profile-dropdown .profile-dropdown.open { display: block; }
-    .landing-profile-dropdown .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 4px; }
-    .landing-profile-dropdown .dropdown-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
-    .landing-profile-dropdown .dropdown-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    .landing-profile-dropdown .dropdown-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--text); }
-    .landing-profile-dropdown .dropdown-info { display: flex; flex-direction: column; min-width: 0; }
-    .landing-profile-dropdown .dropdown-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .landing-profile-dropdown .dropdown-divider { height: 1px; background: var(--border); margin: 6px 4px; }
-    .landing-profile-dropdown .dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--text); font-size: 13.5px; font-weight: 500; background: none; border: none; font-family: inherit; cursor: pointer; text-decoration: none; transition: background .2s var(--cc-ease); }
-    .landing-profile-dropdown .dropdown-item:hover { background: var(--surface); }
-    .landing-profile-dropdown .dropdown-item svg { flex-shrink: 0; opacity: .7; }
-    .landing-profile-dropdown .dropdown-logout { color: var(--error); text-align: left; }
-
     /* ══════════════ HERO ══════════════ */
     .cc-hero { position: relative; padding: 132px 24px 66px; overflow: hidden; isolation: isolate; }
     .cc-hero-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 56px; align-items: center; }
@@ -84,11 +40,11 @@
     .cc-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 0 var(--text); animation: ccPulse 2.6s var(--cc-ease) infinite; }
     @keyframes ccPulse { 0% { box-shadow: 0 0 0 0 rgba(127,127,127,.5); } 70% { box-shadow: 0 0 0 9px rgba(127,127,127,0); } 100% { box-shadow: 0 0 0 0 rgba(127,127,127,0); } }
 
-    .cc-title { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(2.6rem, 8.2vw, 5.4rem); line-height: .94; letter-spacing: -.035em; margin: 22px 0 0; }
+    .cc-title { font-family:var(--cc-serif); font-weight: 700; font-size: clamp(2.6rem, 8.2vw, 5.4rem); line-height: .94; letter-spacing: -.035em; margin: 22px 0 0; }
     .cc-title .cc-word { display: inline-block; opacity: 0; transform: translateY(.55em) rotate(1.5deg); filter: blur(6px); }
     .cc-hero.is-in .cc-word { animation: ccWord .95s var(--cc-ease) forwards; animation-delay: calc(var(--w) * .085s + .08s); }
     @keyframes ccWord { to { opacity: 1; transform: none; filter: blur(0); } }
-    .cc-title em { font-style: normal; background: linear-gradient(180deg, var(--text) 42%, color-mix(in srgb, var(--text) 52%, transparent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .cc-title em { font-style: normal; color: var(--text); }
 
     .cc-lede { margin: 22px 0 0; max-width: 46ch; font-size: clamp(.95rem, 1.6vw, 1.075rem); line-height: 1.65; color: var(--text-secondary); letter-spacing: -.005em; }
     .cc-lede strong { color: var(--text); font-weight: 600; }
@@ -104,13 +60,6 @@
     .cc-btn svg { flex-shrink: 0; transition: transform .35s var(--cc-ease); }
     .cc-btn:hover svg { transform: translateX(3px); }
 
-    /* Ambient field: two slow-drifting radial washes */
-    .cc-aurora { position: absolute; inset: -30% -10% auto -10%; height: 620px; z-index: -1; pointer-events: none; opacity: .9; }
-    .cc-aurora span { position: absolute; display: block; border-radius: 50%; filter: blur(90px); will-change: transform; }
-    .cc-aurora span:nth-child(1) { width: 460px; height: 460px; left: 4%; top: 6%; background: radial-gradient(circle, var(--aurora-1), transparent 68%); animation: ccDrift1 26s ease-in-out infinite alternate; }
-    .cc-aurora span:nth-child(2) { width: 400px; height: 400px; right: 8%; top: 0%; background: radial-gradient(circle, var(--aurora-2), transparent 68%); animation: ccDrift2 32s ease-in-out infinite alternate; }
-    @keyframes ccDrift1 { to { transform: translate3d(70px, 46px, 0) scale(1.14); } }
-    @keyframes ccDrift2 { to { transform: translate3d(-64px, 60px, 0) scale(1.1); } }
 
     /* ══════════════ RING ══════════════ */
     .cc-ring-wrap { display: grid; place-items: center; position: relative; }
@@ -119,7 +68,7 @@
     .cc-ring .cc-track { fill: none; stroke: var(--border); stroke-width: 9; }
     .cc-ring .cc-fill { fill: none; stroke: var(--text); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 1.6s var(--cc-ease); }
     .cc-ring-core { position: absolute; inset: 20px; display: grid; place-content: center; text-align: center; gap: 1px; }
-    .cc-ring-num { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(2.5rem, 5.4vw, 3.35rem); line-height: 1; letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-ring-num { font-family:var(--cc-serif); font-weight: 700; font-size: clamp(2.5rem, 5.4vw, 3.35rem); line-height: 1; letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; }
     .cc-ring-of { font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
     .cc-ring-badge { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 7px 15px; border-radius: var(--radius-pill); background: var(--bg-elevated); border: 1px solid var(--liquid-border-soft); box-shadow: var(--neo-shadow-float); font-size: 12px; font-weight: 600; letter-spacing: -.005em; }
 
@@ -128,14 +77,14 @@
     .cc-stat { position: relative; padding: 20px 20px 18px; border-radius: var(--radius-lg); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); overflow: hidden; transition: transform .5s var(--cc-ease), box-shadow .5s var(--cc-ease); }
     .cc-stat:hover { transform: translateY(-3px); box-shadow: var(--neo-shadow-raised); }
     .cc-stat .k { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
-    .cc-stat .v { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 1.95rem); letter-spacing: -.035em; line-height: 1.15; margin-top: 7px; font-variant-numeric: lining-nums tabular-nums; }
+    .cc-stat .v { font-family:var(--cc-serif); font-weight: 700; font-size: clamp(1.5rem, 3vw, 1.95rem); letter-spacing: -.035em; line-height: 1.15; margin-top: 7px; font-variant-numeric: lining-nums tabular-nums; }
     .cc-stat .v small { font-family: var(--cc-font); font-size: 12.5px; font-weight: 500; letter-spacing: -.005em; color: var(--text-muted); margin-left: 4px; }
     #cc-since { letter-spacing: -.01em !important; word-spacing: .1em; }
 
     /* ══════════════ ROSTER ══════════════ */
     .cc-roster-wrap { max-width: 1180px; margin: 0 auto; padding: 84px 24px 20px; }
     .cc-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 26px; }
-    .cc-section-head h2 { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(1.6rem, 3.6vw, 2.3rem); letter-spacing: -.03em; margin: 0; line-height: 1.05; }
+    .cc-section-head h2 { font-family:var(--cc-serif); font-weight: 700; font-size: clamp(1.6rem, 3.6vw, 2.3rem); letter-spacing: -.03em; margin: 0; line-height: 1.05; }
     .cc-section-head p { margin: 9px 0 0; font-size: 14px; color: var(--text-secondary); max-width: 48ch; line-height: 1.6; }
 
     .cc-search { position: relative; display: flex; align-items: center; gap: 9px; padding: 0 15px; height: 44px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); transition: border-color .25s var(--cc-ease), background-color .25s var(--cc-ease), box-shadow .25s var(--cc-ease); min-width: 268px; }
@@ -155,7 +104,7 @@
     .cc-card:hover::after { transform: translateX(115%); }
     .cc-card[hidden] { display: none; }
 
-    .cc-rank { position: relative; z-index: 1; flex-shrink: 0; width: 34px; text-align: right; font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: 15px; letter-spacing: -.03em; color: var(--text-muted); font-variant-numeric: lining-nums tabular-nums; }
+    .cc-rank { position: relative; z-index: 1; flex-shrink: 0; width: 34px; text-align: right; font-family:var(--cc-serif); font-weight: 700; font-size: 15px; letter-spacing: -.03em; color: var(--text-muted); font-variant-numeric: lining-nums tabular-nums; }
     .cc-rank sup { font-family: var(--cc-font); font-size: 8.5px; font-weight: 700; vertical-align: super; margin-left: .5px; }
 
     .cc-av { position: relative; z-index: 1; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--surface); border: 1px solid var(--liquid-border-soft); }
@@ -185,17 +134,16 @@
 
     .cc-state { text-align: center; padding: 74px 24px; }
     .cc-state-icon { width: 58px; height: 58px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); color: var(--text-secondary); }
-    .cc-state h3 { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; margin: 0 0 9px; }
+    .cc-state h3 { font-family:var(--cc-serif); font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; margin: 0 0 9px; }
     .cc-state p { margin: 0 auto 24px; max-width: 42ch; font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
 
     /* ══════════════ CLAIM CARD ══════════════ */
     .cc-closer { max-width: 1180px; margin: 0 auto; padding: 60px 24px 92px; }
     .cc-claim { position: relative; overflow: hidden; padding: clamp(28px, 4.6vw, 48px); border-radius: var(--radius-xl); background: var(--bg-card); border: 1px solid var(--liquid-border); box-shadow: var(--neo-shadow-raised-lg); }
-    .cc-claim::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; background: linear-gradient(90deg, transparent, var(--liquid-border), transparent); }
-    .cc-claim-glow { position: absolute; width: 420px; height: 420px; right: -110px; top: -170px; border-radius: 50%; filter: blur(88px); background: radial-gradient(circle, var(--aurora-1), transparent 70%); pointer-events: none; }
+    .cc-claim::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; background: var(--liquid-border); }
     .cc-claim-top { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 30px; align-items: center; }
     .cc-claim .cc-eyebrow { margin-bottom: 16px; }
-    .cc-claim h2 { font-family:var(--cc-'Noto Emoji', serif); font-weight: 700; font-size: clamp(1.55rem, 3.5vw, 2.15rem); letter-spacing: -.032em; margin: 0 0 11px; line-height: 1.08; }
+    .cc-claim h2 { font-family:var(--cc-serif); font-weight: 700; font-size: clamp(1.55rem, 3.5vw, 2.15rem); letter-spacing: -.032em; margin: 0 0 11px; line-height: 1.08; }
     .cc-claim p { margin: 0; max-width: 50ch; font-size: 14.5px; line-height: 1.65; color: var(--text-secondary); }
     .cc-claim-cta { display: flex; flex-direction: column; gap: 9px; flex-shrink: 0; }
     .cc-claim-cta .cc-btn { justify-content: center; white-space: nowrap; }
@@ -212,7 +160,6 @@
     .cc-perks li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text); opacity: .55; }
 
     /* ══════════════ RESPONSIVE ══════════════ */
-    @media (max-width: 1100px) { .landing-nav { display: none; } }
     @media (max-width: 1000px) {
       .cc-hero-inner { grid-template-columns: 1fr; gap: 46px; justify-items: start; }
       .cc-ring-wrap { justify-self: center; }
@@ -230,85 +177,24 @@
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      .cc-aurora span, .cc-eyebrow i { animation: none !important; }
+      .cc-eyebrow i { animation: none !important; }
       .cc-title .cc-word { opacity: 1 !important; transform: none !important; filter: none !important; animation: none !important; }
       .cc-ring .cc-fill { transition: none; }
       .cc-card, .cc-card::after, .cc-btn, .cc-stat { transition: none !important; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=8">
+  <link rel="stylesheet" href="../css/header.css?v=10">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
-  <header class="header" id="site-header">
-    <div class="header-inner">
-      <a href="../index.html" class="logo-link">
-        <img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img">
-        <span class="brand-stack"><span class="logo-text">Anteemonee</span></span>
-      </a>
-      <nav class="landing-nav" aria-label="Primary">
-        <div class="nav-drop">
-          <a href="#">Library <span class="caret">▾</span></a>
-          <div class="nav-menu">
-            <a href="../ebooks/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</a>
-            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-            <a href="../past-papers/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Past Papers</a>
-          </div>
-        </div>
-        <div class="nav-drop">
-    <a href="../ai-chat/">AI Assistant <span class="caret">▾</span></a>
-    <div class="nav-menu">
-      <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-      <a href="../ai-examiner/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    </div>
-  </div>
-        <a href="../ai-test-builder/">AI Test Builder</a>
-  <a href="../slame/">Slame</a>
-      <a href="../century-club/" class="is-current" aria-current="page">Century Club</a>
-      </nav>
-      <div class="header-actions">
-        <a href="../mx-9f2c4e7a/" class="icon-btn" aria-label="Messenger" title="Messenger">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </a>
-        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <div id="landing-auth" class="auth-logged-out" style="display:none">
-          <a href="../pages/login.html" class="btn-login">Log in</a>
-          <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-        </div>
-        <div id="landing-auth-in" class="auth-logged-in" style="display:none;position:relative"></div>
-        <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Menu"><span></span></button>
-      </div>
-    </div>
-  </header>
+  <div data-site-header></div>
+  <script src="../js/site-chrome.js?v=2"></script>
 
-  <div class="mobile-menu" id="mobile-menu">
 
-    <div class="mobile-acc-dropdown">
-      <button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>
-      <div class="mobile-acc-list">
-        <a href="../ebooks/" class="mobile-nav-link">eBooks</a>
-        <a href="../flashcards/" class="mobile-nav-link">Flashcards</a>
-        <a href="../past-papers/" class="mobile-nav-link">Past Papers</a>
-      </div>
-    </div>
-    <a href="../ai-chat/" class="mobile-nav-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-    <a href="../ai-examiner/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> AI Examiner</a>
-    <a href="../ai-test-builder/" class="mobile-nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> AI Test Builder</a>
-    <a href="../slame/" class="mobile-nav-link">Slame</a>
-    <a href="../century-club/" class="mobile-nav-link">Century Club</a>
-    <a href="../mx-9f2c4e7a/" class="mobile-nav-link">Messenger</a>
-    <div class="mobile-cta">
-      <a href="../pages/login.html" class="btn-login">Log in</a>
-      <a href="../pages/signup.html" class="btn-signup">Sign Up</a>
-    </div>
-  </div>
 
   <main>
     <!-- ══ HERO ══ -->
     <section class="cc-hero" id="cc-hero">
-      <div class="cc-aurora" aria-hidden="true"><span></span><span></span></div>
       <div class="cc-hero-inner">
         <div>
           <span class="cc-eyebrow"><i></i> The First 100</span>
@@ -400,7 +286,7 @@
     <!-- ══ CLAIM ══ -->
     <section class="cc-closer">
       <div class="cc-claim">
-        <span class="cc-claim-glow" aria-hidden="true"></span>
+</span>
         <div class="cc-claim-top">
           <div>
             <span class="cc-eyebrow"><i></i> <span id="cc-claim-eyebrow">Open roll</span></span>
@@ -430,43 +316,16 @@
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="../index.html" class="logo-link"><img src="../assets/anteemonee.png" alt="Anteemonee" class="logo-img"><span class="logo-text-wrap"><span class="brand-stack"><span class="logo-text">Anteemonee</span></span><span class="logo-sub">Student OS</span></span></a>
-          <p>The Student OS for Pakistan: FSc, matric &amp; intermediate.</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>Explore</h4>
-            <a href="../index.html">Home</a>
-            <a href="../ai-chat/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg> AI Tutor</a>
-            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-            <a href="../century-club/">Century Club</a>
-          </div>
-          <div class="footer-col">
-            <h4>Features</h4>
-            <a href="../ai-chat/">AI Tutor</a>
-            <a href="../flashcards/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Flashcards</a>
-        </div>
-          <div class="footer-col">
-            <h4>Legal</h4>
-            <a href="/privacy/">Privacy Policy</a>
-            <a href="/terms/">Terms of Service</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom"><p>© 2026 Anteemonee. Made for Pakistan's students.</p></div>
-    </div>
-  </footer>
+  <div data-site-footer></div>
+  <script src="../js/site-chrome.js?v=2"></script>
+
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
   <script src="../js/app.js?v=37"></script>
-  <script src="../js/login-modal.js?v=5"></script>
+  <script src="../js/login-modal.js?v=6"></script>
   <script src="../js/forgot-modal.js?v=2"></script>
-  <script src="../js/signup-modal.js?v=3"></script>
+  <script src="../js/signup-modal.js?v=4"></script>
   <script>
     (function () {
       // Mobile menu handled solely by setupMobileMenu() in app.js.
@@ -546,7 +405,6 @@
       });
     })();
   </script>
-  <script src="../js/header-ai-dropdown.js?v=7"></script>
   <script>
   (function () {
     'use strict';
