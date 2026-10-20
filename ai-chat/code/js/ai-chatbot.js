@@ -264,7 +264,10 @@
       db.from('chat_conversations').select('id').eq('user_id', uid).order('updated_at', { ascending: false }).range(50, 500)
         .then(({ data }) => {
           const ids = (data || []).map(r => r.id).filter(Boolean);
-          if (ids.length && typeof purgeOrDeleteChats !== 'undefined') purgeOrDeleteChats(ids);
+          if (!ids.length) return;
+          // Snapshot the full objects for the undo toast before they go.
+          var snaps = ids.map(function (id) { const c = conversations.find(x => x.id === id); return c ? JSON.parse(JSON.stringify(c)) : null; }).filter(Boolean);
+          purgeOrDeleteChats(ids, snaps);
         }).catch(() => {});
     } catch (_) {}
   }
@@ -441,14 +444,15 @@
         var rows = (sel && sel.data) || [];
         var expired = rows.filter(r => r && !r.pinned).map(r => r.id).filter(Boolean);
         if (!expired.length) return;
-        if (typeof purgeOrDeleteChats !== 'undefined') purgeOrDeleteChats(expired);
+        var snaps = expired.map(function (id) { const c = conversations.find(x => x.id === id); return c ? JSON.parse(JSON.stringify(c)) : null; }).filter(Boolean);
+        if (typeof purgeOrDeleteChats !== 'undefined') purgeOrDeleteChats(expired, snaps);
       } catch (_) {}
     } catch (_) {}
   }
 
   // Shared server-side delete: image purge + row delete via chat-delete,
   // falling back to the direct RLS delete when the edge call fails.
-  async function purgeOrDeleteChats(ids) {
+  async function purgeOrDeleteChats(ids, undoSnaps) {
     if (!ids || !ids.length) return;
     try {
       const base = (typeof api !== 'undefined' && api && api.supabaseUrl) || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
@@ -459,10 +463,16 @@
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ ids: ids }),
         });
-        if (res.ok) return;
+        if (res.ok) {
+          // Deleted from the server too: the undo snapshot must also restore
+          // the row through saveConversationToDb (server side).
+          try { if (undoSnaps && undoSnaps.length && typeof showDeleteUndoToast === 'function') showDeleteUndoToast(undoSnaps); } catch (_) {}
+          return;
+        }
       }
     } catch (_) {}
     try { await db.from('chat_conversations').delete().in('id', ids); } catch (_) {}
+    try { if (undoSnaps && undoSnaps.length && typeof showDeleteUndoToast === 'function') showDeleteUndoToast(undoSnaps); } catch (_) {}
   }
 
   // Chats written while the store was loading live in localStorage only. Fold
@@ -739,6 +749,7 @@
       if (pill) {
         pill.style.setProperty('--subj-color', meta.color);
       }
+      if (typeof subjectGlide !== 'undefined' && subjectGlide && subjectGlide.getValue && subjectGlide.getValue() !== selectedSubject) subjectGlide.setValue(selectedSubject);
       // Update welcome subtitle if needed
       var sub = document.querySelector('.welcome-subtitle');
       if (sub && selectedSubject) {
@@ -889,51 +900,70 @@
     if (dd) dd.classList.remove('open');
     if (pill) { pill.classList.remove('open'); pill.setAttribute('aria-expanded','false'); }
   }
+  // Subject picker: React Bits GlideSelect port. The old pill + dropdown
+  // markup is replaced by the glide chip; legacy subject fns keep working.
+  let subjectGlide = null;
+
+  function glideChipHtml(meta) {
+    return '<span class="gs-dot" style="--c:' + (meta && meta.color ? meta.color : 'var(--text)') + '"></span>' +
+      '<span style="font-weight:600">' + escapeHtml(meta && meta.name ? meta.name : 'Physics') + '</span>';
+  }
+
+  function mountSubjectGlide() {
+    const wrap = document.getElementById('subject-pill-wrap');
+    if (!wrap || typeof window.GlideSelect === 'undefined') return;
+    if (subjectGlide) return;
+    subjectGlide = window.GlideSelect.create({
+      options: CHAT_SUBJECTS.map(function (s) {
+        return { value: s.name, label: s.name, labelHtml: glideChipHtml(getSubjectMeta(s.name)) };
+      }),
+      defaultValue: selectedSubject,
+      showTags: false,
+      size: 'md',
+      radius: 16,
+      menuWidth: 200,
+      placement: 'bottom',
+      align: 'left',
+      popDuration: 180,
+      glideDuration: 220,
+      ariaLabel: 'Subject',
+      onChange: function (value) {
+        if (value && value !== selectedSubject) selectSubject(value);
+        else void 0;
+      },
+    });
+    wrap.appendChild(subjectGlide.el);
+    const trigger = subjectGlide.el.querySelector('.glide-select__trigger');
+    if (trigger) trigger.id = 'subject-pill';
+  }
+
   function setupSubjectDropdown() {
-    var pill = document.getElementById('subject-pill');
-    var dd = document.getElementById('subject-dropdown');
-    var wrap = document.getElementById('subject-pill-wrap');
-    if (!pill || !dd) return;
-    if (pill.dataset.bound) return;
-    pill.dataset.bound = '1';
-    pill.addEventListener('click', function(e){
-      e.stopPropagation();
-      var isOpen = dd.classList.contains('open');
-      if (isOpen) {
-        closeSubjectDropdown(dd, pill);
-      } else {
-        renderSubjectList();
-        portalSubjectDropdown(dd, pill);
-        dd.classList.add('open');
-        pill.classList.add('open');
-        pill.setAttribute('aria-expanded','true');
-        // One correction pass after layout settles.
-        try {
-          requestAnimationFrame(function(){ if (dd.classList.contains('open')) portalSubjectDropdown(dd, pill); });
-        } catch (_) {}
-        // Keep it correct if the window resizes while open.
-        try {
-          window.addEventListener('resize', function onRs(){
-            if (!dd.classList.contains('open')) { window.removeEventListener('resize', onRs); return; }
-            portalSubjectDropdown(dd, pill);
-          }, { passive: true });
-        } catch (_) {}
-      }
-    });
-    document.addEventListener('click', function(e){
-      // Once portalled the sheet is outside the wrap, so check the pill too.
-      if (!wrap.contains(e.target) && e.target !== pill && !dd.contains(e.target)) {
-        closeSubjectDropdown(dd, pill);
-      }
-    });
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape' || e.key === 'Tab') {
-        if (dd.classList.contains('open')) closeSubjectDropdown(dd, pill);
-      }
-    });
-    renderSubjectList();
+    mountSubjectGlide();
+    // Storage already knows the subject by now (defined above this point).
+    try { loadSelectedSubject(); } catch (_) {}
     updateSubjectUI();
   }
+  // Old dropdown rendered from static HTML, so it appeared on first paint.
+  // Keep that instant feel: mount the glide chip as soon as the DOM (and this
+  // script) is ready, independent of the async session/profile init.
+  function mountSubjectGlideNow() {
+    try {
+      if (typeof loadSelectedSubject === 'function') loadSelectedSubject();
+      mountSubjectGlide();
+      updateSubjectUI();
+    } catch (_) {}
+  }
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountSubjectGlideNow);
+    } else {
+      mountSubjectGlideNow();
+    }
+  }
+
+  // Legacy no-op floaters kept for call sites above.
+  function closeSubjectDropdown() { if (typeof subjectGlide !== 'undefined' && subjectGlide) subjectGlide.close(); }
+  function portalSubjectDropdown() {}
 
   // Subject selector is for signed-in users only — guests keep the default
   // subject. Default markup stays visible; hide only once logged-out state
@@ -3283,15 +3313,68 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     });
   }
 
+  // ── SwipeToast undo (React Bits port) → chat delete epilogue ──
+  // The deleted conversation object is snapshotted BEFORE removal so Undo
+  // can put it back: client-side instantly + DB upsert for signed-in users.
+  // Generated images that the edge function already purged stay gone (the
+  // text and quota records return; a missing image shows its placeholder).
+  function restoreConversations(snaps) {
+    if (!Array.isArray(snaps) || !snaps.length) return;
+    snaps.forEach(function (snap) {
+      if (!snap || !snap.id) return;
+      if (conversations.some(c => c.id === snap.id)) return;
+      conversations.push(snap);
+      try { if (loadPinnedMap()[snap.id]) {} } catch (_) {}
+      try { if (typeof snap.pinned === 'boolean') { var pm = loadPinnedMap(); pm[snap.id] = snap.pinned; savePinnedMap(pm); } } catch (_) {}
+    });
+    try {
+      conversations.sort(function (a, b) {
+        var ta = new Date(a.updatedAt || a.updated_at || 0).getTime() || 0;
+        var tb = new Date(b.updatedAt || b.updated_at || 0).getTime() || 0;
+        return tb - ta;
+      });
+    } catch (_) {}
+    if (currentUserId()) {
+      snaps.forEach(async function (snap) {
+        try { await saveConversationToDb(snap); } catch (_) {}
+        try { pendingDbUploads.add(snap.id); } catch (_) {}
+      });
+    } else { try { writeLocalConversations(); } catch (_) {} }
+    renderHistory();
+  }
+
+  function snap_0_title(c) { return (c && (c.title || c.name)) || 'this chat'; }
+
+  function showDeleteUndoToast(snaps, opts) {
+    if (!window.SwipeToast || !Array.isArray(snaps) || !snaps.length) return;
+    opts = opts || {};
+    const single = snaps.length === 1;
+    const title = single ? 'Chat deleted' : snaps.length + ' chats deleted';
+    const desc = single ? ('"' + escapeHtml(snap_0_title(snaps[0])) + '"') : '';
+    window.SwipeToast.show({
+      title: title,
+      description: desc,
+      icon: HISTORY_MENU_SVG.delete,
+      actionLabel: 'Undo',
+      onAction: function () { restoreConversations(snaps); },
+      duration: 5000,
+      fuse: 'bottom',
+      pauseOnHover: true,
+      width: 356, radius: 12, swipeDistance: 40, settleBounce: 0.2,
+    });
+  }
+
   function deleteConversation(id) {
     const idx = conversations.findIndex(c => c.id === id);
     if (idx === -1) return;
+    const snap = JSON.parse(JSON.stringify(conversations[idx]));
     conversations.splice(idx, 1);
     try { var m=loadPinnedMap(); if(m[id]){ delete m[id]; savePinnedMap(m);} } catch(_){}
     try { removeMappedConvSubject(id); } catch (_) {}
     if (currentUserId()) deleteConversationFromDb(id);
     else writeLocalConversations();
-    if (activeConversationId === id) {
+    const wasActive = activeConversationId === id;
+    if (wasActive) {
       Object.keys(_graphCharts || {}).forEach(function (gid) {
         try { _graphCharts[gid].destroy(); } catch (_) {}
         delete _graphCharts[gid];
@@ -3305,6 +3388,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       syncWelcomeMode();
     }
     renderHistory();
+    try { showDeleteUndoToast([snap]); } catch (_) {}
+    if (wasActive) try { window.__lastDeletedActiveId = id; } catch (_) {}
   }
 
   // ── Delete confirmation dialog ────────────────────────────────
@@ -3588,15 +3673,38 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       <div class="msg-body"><div class="msg-content"><div class="thinking-indicator"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span class="thinking-status ${statusClass}" id="streaming-status">${statusLabel}</span></div></div></div>
     `;
     messagesList.appendChild(div);
+    // LatticeLoader (React Bits port) takes over the thinking indicator:
+    // 3x3 orbit wave + verb + live stopwatch, freezing into a check/cross.
+    try {
+      const ind = div.querySelector('.thinking-indicator');
+      const dots = ind ? ind.querySelectorAll('.thinking-dot') : [];
+      if (dots.length) dots.forEach(d => d.remove());
+      if (typeof window.LatticeLoader !== 'undefined' && ind) {
+        div.__lattice = window.LatticeLoader.create({
+          label: 'Thinking', doneLabel: 'Done in', errorLabel: 'Failed after',
+          pattern: 'orbit', grid: 3, shape: 'round',
+          cellSize: 5, gap: 1.5, fontSize: 13, step: 110, idleOpacity: 0.18,
+          showTimer: true, glow: false,
+        });
+        ind.insertBefore(div.__lattice.el, ind.firstChild);
+      }
+    } catch (_) {}
     return div;
   }
 
   function updateStreamingStatus(div, text, statusClass) {
-    const status = div.querySelector('.thinking-status');
+    // The lattice shows the verb itself — keep the muted styling class on the
+    // (hidden) status span for CSS colour hooks, keep latter flow intact.
+    const status = div ? div.querySelector('.thinking-status') : null;
     if (status) {
       status.textContent = text;
       status.className = 'thinking-status ' + (statusClass || '');
     }
+    try {
+      if (div && div.__lattice && typeof div.__lattice.setLabel === 'function') {
+        div.__lattice.setLabel(text);
+      }
+    } catch (_) {}
   }
 
   /**
@@ -3691,15 +3799,11 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     } catch (_) { return null; }
   }
 
-  // Cycle through real status messages while waiting for first chunk
+  // Wait label — the lattice already shows the verb; keep it at "Thinking".
+  // The old dot cycle (., .., ...) replaced the verb and read as bare dots.
   function startStatusCycle(div, mode) {
-    let idx = 0;
-    const interval = setInterval(() => {
-      idx = (idx + 1) % 3;
-      const dots = '.'.repeat(idx + 1);
-      updateStreamingStatus(div, dots, mode === 'think' ? 'thinking' : 'analyzing');
-    }, 1500);
-    return interval;
+    updateStreamingStatus(div, 'Thinking', mode === 'think' ? 'thinking' : 'analyzing');
+    return null;
   }
 
   function stopStatusCycle(interval) {
@@ -6203,6 +6307,36 @@ function handleFileBlocks(div, text, opts) {
 
 
   function finalizeStreamingMessage(div, text) {
+    // LatticeLoader epilogue: freeze the stopwatch and flash the frozen
+    // time as a small pill under the reply (green check / red cross).
+    try {
+      const llEnd = div && div.__lattice;
+      if (llEnd && !div.querySelector('.msg-latellite')) {
+        const ms = llEnd.stop();
+        const wasErr = div.__llError === true;
+        llEnd.setStatus(wasErr ? 'error' : 'done');
+        const ds = Math.round(ms / 100);
+        var secs = ds < 600 ? (ds / 10).toFixed(1) + 's'
+          : Math.floor(ds / 600) + 'm ' + ((ds % 600) / 10).toFixed(1) + 's';
+        const pill = document.createElement('div');
+        pill.className = 'msg-latellite ' + (wasErr ? 'error' : 'done');
+        const icon = wasErr
+          ? '<span class="lat-icon"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>'
+          : '<span class="lat-icon"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>';
+        pill.innerHTML = icon + '<span>' + (wasErr ? 'Failed after ' : 'Done in ') + secs + '</span>';
+        const bodyEnd = div.querySelector('.msg-body');
+        if (bodyEnd) {
+          bodyEnd.appendChild(pill);
+          setTimeout(function () {
+            try {
+              pill.classList.add('fading');
+              setTimeout(function () { try { pill.remove(); } catch (_) {} }, 300);
+            } catch (_) {}
+          }, wasErr ? 4200 : 2400);
+        }
+        div.__lattice = null;
+      }
+    } catch (_) {}
     // A finalized bubble is never "still sending": mark it done and drop any
     // dead-send watchdog so it can neither fire late nor leak.
     try { div.dataset.done = '1'; } catch (_) {}
@@ -7577,7 +7711,16 @@ function handleFileBlocks(div, text, opts) {
       streamDiv.__watchdog = setTimeout(function () {
         try {
           var content = streamDiv && streamDiv.querySelector ? streamDiv.querySelector('.msg-content') : null;
-          var txt = content && content.textContent ? content.textContent.replace(/[\s.…]+/g, '') : '';
+          var txt = '';
+          try {
+            if (content) {
+              var probe = content.cloneNode(true);
+              probe.querySelectorAll('.thinking-indicator').forEach(function (n) { n.remove(); });
+              var tc = probe.textContent || '';
+              txt = tc.replace(/[\s.\u2026]+/g, '');
+              if (/^[0-9.]+s$/.test(txt)) txt = '';
+            }
+          } catch (_) { txt = ''; }
           if (isStreaming && streamDiv && streamDiv.isConnected && !txt && !streamDiv.dataset.done) {
             try { stopStatusCycle(statusCycle); } catch (_) {}
             finalizeStreamingMessage(streamDiv, 'Sorry, something went wrong. The reply never started — please send your message again.');
@@ -8038,6 +8181,7 @@ function handleFileBlocks(div, text, opts) {
         const errText = expired
           ? 'Your session expired. Please sign in again to keep chatting \u2014 your chats are saved.'
           : `Sorry, something went wrong. ${error.message}`;
+        try { streamDiv.__llError = true; } catch (_) {}
         finalizeStreamingMessage(streamDiv, errText);
         const errorMessage = createAssistantMessage(errText, streamDiv);
         messages.push(errorMessage);

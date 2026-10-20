@@ -34,7 +34,8 @@
   <meta name="twitter:description" content="Chat with an AI tutor, create flashcards, track your study streak and master FSc, matric and intermediate subjects.">
   <meta name="twitter:image" content="https://anteemonee.com/assets/anteemonee.png">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=38">
+  <link rel="stylesheet" href="../css/style.css?v=39">
+  <link rel="stylesheet" href="../css/apple.css?v=2">
   <link rel="stylesheet" href="code/css/ai-chatbot.css?v=90">
   <link rel="stylesheet" href="../assets/js/vendor/katex/katex.min.css">
   <style>
@@ -47,17 +48,20 @@
   <!-- macOS / iOS Messages design system -->
   <link rel="stylesheet" href="code/css/tokens.css?v=4">
   <link rel="stylesheet" href="code/css/layout.css?v=3">
+  <link rel="stylesheet" href="code/css/lattice-loader.css?v=2">
+  <link rel="stylesheet" href="code/css/swipe-toast.css?v=1">
+  <link rel="stylesheet" href="code/css/glide-select.css?v=2">
   <link rel="stylesheet" href="code/css/messages.css?v=106">
   <link rel="stylesheet" href="code/css/composer.css?v=104">
   <link rel="stylesheet" href="code/css/responsive.css?v=106">
-  <link rel="stylesheet" href="../css/header.css?v=10">
+  <link rel="stylesheet" href="../css/header.css?v=11">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body class="welcome-center">
 
   <!-- ── SITE HEADER ── -->
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=2"></script>
+  <script src="../js/site-chrome.js?v=4"></script>
 
 
   <div class="chatbot-layout">
@@ -146,17 +150,7 @@
           </div>
           <div class="chat-input-row-bottom">
             <div class="chat-input-row-left">
-              <div class="subject-pill-wrap" id="subject-pill-wrap">
-                <button class="subject-pill" id="subject-pill" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="subject-dot" id="subject-dot"></span>
-                  <span id="subject-name">Physics</span>
-                  <span class="subject-caret"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
-                </button>
-                <div class="subject-dropdown" id="subject-dropdown" role="listbox">
-                  <div class="subject-dropdown-label">Subject</div>
-                  <div class="subject-list" id="subject-list"></div>
-                </div>
-              </div>
+              <div class="subject-pill-wrap" id="subject-pill-wrap"></div>
               <div class="modes-bar" id="modes-bar"></div>
             </div>
             <div class="chat-input-row-right">
@@ -309,14 +303,17 @@
   <script>if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = '../assets/js/vendor/pdf.worker.min.js'; }</script>
   <script src="../assets/js/vendor/docx.umd.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=37"></script>
+  <script src="../js/app.js?v=38"></script>
 <script src="../js/login-modal.js?v=6"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=4"></script>
   <script src="code/js/ai-api-service.js?v=27"></script>
   <script src="../js/mistral-key-modal.js?v=1"></script>
   <script src="code/js/image-limit-card.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=135"></script>
+  <script src="code/js/lattice-loader.js?v=1"></script>
+  <script src="code/js/swipe-toast.js?v=1"></script>
+  <script src="code/js/glide-select.js?v=2"></script>
+  <script src="code/js/ai-chatbot.js?v=142"></script>
   <script src="../assets/js/vendor/chart.umd.min.js"></script>
   <script src="code/js/voice-chat.js?v=46"></script>
   <script src="code/js/realtime-call.js?v=8"></script>
@@ -725,36 +722,12 @@
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
 
-      /* Mobile menu toggle. The chat topbar ships a second, id-less hamburger
-         next to the history button, so bind every .mobile-menu-toggle on the
-         page to the same panel instead of leaving that one dead. */
-      var menu = document.getElementById('mobile-menu');
-      var siteMenu = document.getElementById('site-mobile-menu');
-      function syncMobileMenuButtons() {
-        var open = !!(siteMenu && siteMenu.classList.contains('open'));
-        document.querySelectorAll('.mobile-menu-toggle').forEach(function (b) {
-          b.classList.toggle('active', open);
-        });
-      }
-      document.querySelectorAll('.mobile-menu-toggle').forEach(function (toggle) {
-        if (toggle.dataset.bound) return;
-        toggle.dataset.bound = '1';
-        toggle.addEventListener('click', function () {
-          if (menu) menu.classList.remove('open');
-          if (siteMenu) siteMenu.classList.toggle('open');
-          syncMobileMenuButtons();
-        });
-      });
-      // Outside tap closes the panel. This listener also sees the click that
-      // opened it (the event bubbles to document), so taps on a toggle have to
-      // be ignored here or the panel would open and close in the same tap.
-      document.addEventListener('click', function (e) {
-        if (!siteMenu || !siteMenu.classList.contains('open')) return;
-        var t = e.target;
-        if (t && t.closest && (t.closest('#site-mobile-menu') || t.closest('.mobile-menu-toggle'))) return;
-        siteMenu.classList.remove('open');
-        syncMobileMenuButtons();
-      });
+      /* Mobile menu is owned by app.js (setupMobileMenu) — it binds every
+         .mobile-menu-toggle on the page, including the chat topbar's
+         id-less hamburger, and toggles the X icon state itself. The old
+         inline binding here ran alongside app.js on the same tap, so the
+         open/close fought each other and the X button never closed the
+         panel. Removed. */
 
       function renderLandingAuth() {
         try {
