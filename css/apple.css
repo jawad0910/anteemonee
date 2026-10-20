@@ -1,0 +1,273 @@
+/* ==========================================================================
+   Anteemonee — Apple design skin (loads after header.css + style.css)
+   Reference: VoltAgent/awesome-design-md → design-md/apple (DESIGN.md)
+   Pillars: photo-first chrome, SF Pro 600 display w/ negative tracking,
+   single Action Blue accent, hairline cards, one product shadow, pills.
+   ========================================================================== */
+
+:root {
+  /* Apple surfaces */
+  --canvas: #ffffff;
+  --canvas-parchment: #f5f5f7;
+  --surface-pearl: #fafafc;
+  --tile-1: #272729;
+  --tile-2: #2a2a2c;
+  --tile-3: #252527;
+  --ink: #1d1d1f;
+  --ink-muted-80: #333333;
+  --ink-muted-48: #7a7a7a;
+  --hairline: #e0e0e0;
+  --divider-soft: #f0f0f0;
+  --chip-gray: #d2d2d7;
+  /* Apple interactive */
+  --apple-blue: #0066cc;
+  --apple-blue-hover: #0071e3;
+  --apple-sky: #2997ff;      /* on dark tiles */
+  /* The one product shadow */
+  --apple-product-shadow: 3px 5px 30px rgba(0, 0, 0, 0.22);
+  /* Radii */
+  --r-xs: 5px; --r-sm: 8px; --r-md: 11px; --r-lg: 18px; --r-pill: 9999px;
+}
+
+/* ── Typography cadence ───────────────────────────────────────────────── */
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.021em;
+  font-variant-numeric: numerator;
+}
+h1 { line-height: 1.07; }
+h2 { line-height: 1.1; }
+h3 { line-height: 1.19; }
+p, li { line-height: 1.47; }
+
+/* Marketing surfaces get the exact hero scale */
+.hero h1, .page-hero h1, .landing h1 {
+  font-size: clamp(32px, 5.6vw, 56px);
+  font-weight: 600;
+  letter-spacing: -0.28px;
+  line-height: 1.07;
+}
+.hero .hero-sub, .page-hero p, .hero-tagline {
+  font-size: clamp(19px, 2.4vw, 21px);
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: 0.011em;
+}
+.hero-badge {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  border-radius: var(--r-pill);
+}
+
+/* ── Buttons: two grammars — blue pill & ghost pill ───────────────────── */
+.btn-primary,
+.btn-cta-header, .btn-signup,
+.hero-btn, button.btn-primary, a.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: -0.022em;
+  line-height: 1.24;
+  padding: 11px 22px !important;
+  min-height: 0;
+  box-shadow: none !important;
+  filter: none;
+}
+.btn-secondary,
+.btn-login {
+  background: var(--canvas);
+  color: var(--accent);
+  border: 1px solid var(--apple-blue);
+  border-radius: var(--r-pill);
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: -0.022em;
+  padding: 10px 21px !important;
+  box-shadow: none !important;
+}
+.btn-secondary:hover, .btn-login:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--apple-blue);
+  transform: none;
+  filter: none;
+}
+.btn-primary:hover, .btn-signup:hover, .btn-cta-header:hover,
+.hero-btn:hover, button.btn-primary:hover, a.btn-primary:hover {
+  background: var(--apple-blue-hover);
+  transform: none;
+  filter: none;
+}
+.btn-primary:active, .btn-signup:active, .btn-cta-header:active,
+.btn-secondary:active, .btn-login:active {
+  transform: scale(0.95) !important;
+}
+/* Large store-hero scale */
+.hero .btn-primary, .hero .btn-signup, .store-hero .btn-primary {
+  font-size: 18px;
+  font-weight: 300;
+  padding: 14px 28px !important;
+}
+
+/* System-wide press micro-interaction on pill CTAs */
+.cta, .pill-btn, .qa-choice, .conn-btn { transition: transform 0.15s ease, background 0.15s ease; }
+.cta:active, .pill-btn:active { transform: scale(0.95); }
+
+/* ── Focus: the single blue ring ──────────────────────────────────────── */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--apple-blue-hover) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Nav chrome: frosted global bar ───────────────────────────────────── */
+.site-header, .landing-header {
+  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+[data-theme="light"] .site-header,
+[data-theme="light"] .landing-header { background: rgba(255,255,255,0.82) !important; }
+[data-theme="dark"] .site-header,
+[data-theme="dark"] .landing-header { background: rgba(18,18,20,0.78) !important; }
+
+.desktop-nav, .landing-nav {
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+.desktop-nav a, .landing-nav a {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: -0.012px;
+  color: var(--text-secondary);
+  padding: 8px 14px !important;
+  border-radius: var(--r-pill);
+}
+.desktop-nav a:hover, .landing-nav a:hover { color: var(--text); background: transparent !important; }
+.desktop-nav a.active, .landing-nav a.active {
+  color: var(--accent);
+  background: transparent !important;
+  font-weight: 400;
+  box-shadow: none !important;
+}
+
+/* Header icons/nav pills quiet */
+.theme-toggle, .mobile-menu-toggle {
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-secondary);
+}
+.theme-toggle:hover, .mobile-menu-toggle:hover { color: var(--text); background: var(--accent-soft) !important; }
+
+/* Dropdown panels: soft surface + hairline */
+.has-dropdown > .dropdown, .dropdown-panel, .site-dropdown, [data-menu-panel] {
+  border: 1px solid var(--border-card) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.18) !important;
+}
+[data-theme="light"] .has-dropdown > .dropdown,
+[data-theme="light"] .dropdown-panel, [data-theme="light"] [data-menu-panel] {
+  background: rgba(255,255,255,0.92) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+[data-theme="dark"] .has-dropdown > .dropdown,
+[data-theme="dark"] .dropdown-panel, [data-theme="dark"] [data-menu-panel] {
+  background: rgba(23,23,25,0.9) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* ── Cards: hairline, 18px, shadow-free ───────────────────────────────── */
+.ha-card, .card, [class*="card-"] {
+  border-radius: var(--r-lg);
+  box-shadow: none !important;
+}
+[data-theme="light"] .ha-card { border: 1px solid var(--hairline); }
+[data-theme="dark"] .ha-card { border: 1px solid rgba(255,255,255,0.10); }
+
+/* ── Footer: parchment, dense links, fine print ───────────────────────── */
+#site-footer, footer, .site-footer {
+  background: var(--canvas-parchment) !important;
+  color: var(--ink-muted-80) !important;
+}
+[data-theme="dark"] #site-footer, [data-theme="dark"] footer, [data-theme="dark"] .site-footer {
+  background: var(--canvas-parchment) !important;
+  color: var(--ink-muted-80) !important;
+}
+[data-theme="dark"] #site-footer a, [data-theme="dark"] footer a { color: var(--ink-muted-80); }
+#site-footer a { line-height: 2.0; }
+#site-footer h4, #site-footer .footer-title { font-size: 14px; letter-spacing: -0.022em; color: var(--ink); }
+#site-footer .fine, #site-footer .copyright { font-size: 12px; color: var(--ink-muted-48); }
+
+/* ── Modal surfaces: quiet glass, hairline, 24px ──────────────────────── */
+.modal, .modal-card, .lm-card, .sm-card, .settings-popup, .search-panel {
+  border: 1px solid var(--border-card);
+  border-radius: 24px;
+  box-shadow: 0 32px 64px rgba(0,0,0,0.22) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+}
+[data-theme="light"] .modal, [data-theme="light"] .modal-card,
+[data-theme="light"] .lm-card, [data-theme="light"] .sm-card {
+  background: rgba(255,255,255,0.9) !important;
+}
+[data-theme="dark"] .modal, [data-theme="dark"] .modal-card,
+[data-theme="dark"] .lm-card, [data-theme="dark"] .sm-card {
+  background: rgba(28,28,30,0.85) !important;
+}
+
+/* Inputs */
+input[type="text"], input[type="email"], input[type="password"], input[type="search"], textarea, select {
+  letter-spacing: -0.022em;
+}
+
+/* Chips & search pill */
+input[type="search"], .search-field, .quiz-search {
+  border-radius: var(--r-pill) !important;
+}
+
+/* Remove greedy glass-inset effects left over from other eras */
+.btn-primary::before, .btn-secondary::before, .btn-signup::before { display: none !important; }
+
+/* Reduce big rounded shadows on sticky sub-bars */
+.floating-sticky, .sticky-bar, .composer-sticky {
+  background: color-mix(in srgb, var(--canvas-parchment) 82%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Scrollbars quiet */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(128,128,132,0.45); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128,128,132,0.7); border: 3px solid transparent; background-clip: content-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ── Mobile menu — Apple sheet skin ───────────────────────────── */
+.mobile-menu { padding: max(88px, env(safe-area-inset-top) + 74px) 12px max(14px, env(safe-area-inset-bottom)); }
+.mobile-menu-veil { background: rgba(0, 0, 0, 0.5); }
+.mobile-menu-sheet {
+  background: color-mix(in srgb, var(--liquid-bg-strong) 90%, transparent);
+  border-color: var(--m-hairline);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 28px 70px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.28);
+  border-radius: 24px;
+}
+.mobile-nav-link { font-size: 15px; letter-spacing: -0.01em; color: var(--text-secondary); }
+.mobile-nav-link.is-current { color: var(--accent); }
+.mobile-menu-label { color: var(--text-muted); }
+.mobile-menu .ha-name { font-size: 14.5px; letter-spacing: -0.01em; }
+.mobile-cta .btn-signup, .mobile-cta .btn-login { font-size: 15px; letter-spacing: -0.01em; }

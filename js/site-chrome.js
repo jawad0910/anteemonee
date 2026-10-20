@@ -86,6 +86,9 @@
         '</div>' +
       '</header>' +
       '<div class="mobile-menu" id="mobile-menu">' +
+        '<div class="mobile-menu-veil" aria-hidden="true"></div>' +
+        '<div class="mobile-menu-sheet">' +
+        '<div class="mobile-menu-label">Menu</div>' +
         '<div class="mobile-acc-dropdown">' +
           '<button type="button" class="mobile-nav-link mobile-acc-toggle">Library <span class="mobile-acc-chevron">▾</span></button>' +
           '<div class="mobile-acc-list">' +
@@ -104,7 +107,7 @@
           '<a href="' + root + 'pages/login.html" class="btn-login">Log in</a>' +
           '<a href="' + root + 'pages/signup.html" class="btn-signup">Sign Up</a>' +
         '</div>' +
-      '</div>'
+        '</div></div>'
     );
   }
 

@@ -742,43 +742,61 @@ function setupNav() {
 }
 
 function setupMobileMenu() {
-  // Pair every hamburger button with its menu panel (pages may ship more
-  // than one header). Guard makes this idempotent: app.js can be included
-  // more than once, and pages used to add a second inline toggle listener
-  // which immediately undid this one (menu never opened).
+  // Pair hamburger buttons with their menu panel. When a page ships more
+  // toggles than panels (ai-chat has a header + a topbar hamburger) every
+  // toggle drives the ONE panel — index pairing would leave extras dead.
+  // Idempotence guard: app.js can load twice, and stale inline bindings
+  // double-toggling the same tap made the X button unable to close panels.
   const toggles = Array.from(document.querySelectorAll('.mobile-menu-toggle'));
   const panels = Array.from(document.querySelectorAll('.mobile-menu'));
-  const count = Math.min(toggles.length, panels.length);
 
-  for (let i = 0; i < count; i++) {
-    const toggle = toggles[i];
-    const panel = panels[i];
-    if (toggle.dataset.menuBound === '1') continue;
-    toggle.dataset.menuBound = '1';
+  if (panels.length === 0) return;
+  const sharedPanel = panels.length === 1 ? panels[0] : null;
+
+  panels.forEach((panel) => {
+    const myToggles = sharedPanel
+      ? toggles
+      : toggles.filter(t => t.dataset.menuPanel === panel.id);
+    if (!myToggles.length) return;
+    if (panel.dataset.menuBound === '1' && panel.dataset.menuToggleCount === String(myToggles.length)) return;
     panel.dataset.menuBound = '1';
+    panel.dataset.menuToggleCount = String(myToggles.length);
 
-    function openMenu() {
+    const openMenu = () => {
       panel.classList.add('open');
-      toggle.classList.add('active');
       document.body.style.overflow = 'hidden';
-    }
-    function closeMenu() {
+      myToggles.forEach(t => t.classList.add('active'));
+    };
+    const closeMenu = () => {
       panel.classList.remove('open');
-      toggle.classList.remove('active');
       document.body.style.overflow = '';
+      myToggles.forEach(t => t.classList.remove('active'));
       panel.querySelectorAll('.mobile-acc-dropdown.open').forEach(d => d.classList.remove('open'));
-    }
+    };
+    panel.__closeMenu = closeMenu;
 
-    toggle.addEventListener('click', () => {
-      panel.classList.contains('open') ? closeMenu() : openMenu();
+    myToggles.forEach((toggle) => {
+      if (toggle.dataset.menuBound === '1') return;
+      toggle.dataset.menuBound = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-controls', panel.id || 'mobile-menu');
+      toggle.addEventListener('click', () => {
+        const open = panel.classList.contains('open');
+        open ? closeMenu() : openMenu();
+        toggle.setAttribute('aria-expanded', String(!open));
+      });
     });
 
     // Delegated so accordions injected later (e.g. AI Assistant dropdown
-    // from header-ai-dropdown.js) also open/close, and so link taps still
-    // close the menu without needing per-element bindings.
+    // from header-ai-dropdown.js) also open/close, and so link taps,
+    // veil taps and Esc still close the menu without per-element bindings.
     if (panel.dataset.menuEvents !== '1') {
       panel.dataset.menuEvents = '1';
       panel.addEventListener('click', (e) => {
+        if (e.target.classList && e.target.classList.contains('mobile-menu-veil')) {
+          closeMenu();
+          return;
+        }
         const acc = e.target.closest('.mobile-acc-toggle');
         if (acc && panel.contains(acc)) {
           const dd = acc.closest('.mobile-acc-dropdown');
@@ -788,8 +806,11 @@ function setupMobileMenu() {
         const item = e.target.closest('a, button');
         if (item && panel.contains(item)) closeMenu();
       });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && panel.classList.contains('open')) closeMenu();
+      });
     }
-  }
+  });
 
   // Site menus (ai-chat / settings) manage their own open/close; give them
   // accordion delegation too (Library + account dropdown). Delegated on the
