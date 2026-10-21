@@ -18,7 +18,8 @@
   <meta name="description" content="Manage your Anteemonee account settings, preferences, and privacy.">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=38">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=4">
   <link rel="stylesheet" href="../css/settings.css?v=21">
   <style>
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
@@ -28,12 +29,12 @@
     .site-nav .caret { font-size: 10px; opacity: 0.6; }
     .settings-page { padding-top: 100px; }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=10">
+  <link rel="stylesheet" href="../css/header.css?v=11">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=2"></script>
+  <script src="../js/site-chrome.js?v=5"></script>
 
 
   <main class="settings-page" id="settings-page">
@@ -72,10 +73,6 @@
             Appearance
           </button>
           <div class="settings-nav-divider"></div>
-          <button class="settings-nav-item" data-cat="api">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/></svg>
-            API Keys
-          </button>
           <button class="settings-nav-item" data-cat="connected">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
             Connected Accounts
@@ -152,19 +149,6 @@
             <div id="settings-appearance-content"></div>
           </div>
 
-          <!-- ============ API ============ -->
-          <div class="settings-category" data-cat="api">
-            <button class="settings-mobile-back" onclick="showSidebar()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-              Settings
-            </button>
-            <div class="settings-category-header">
-              <h2>API Keys</h2>
-              <p>Add your own Mistral API key for 400 images/day.</p>
-            </div>
-            <div id="settings-api-content"></div>
-          </div>
-
           <!-- ============ CONNECTED ACCOUNTS ============ -->
           <div class="settings-category" data-cat="connected">
             <button class="settings-mobile-back" onclick="showSidebar()">
@@ -230,16 +214,15 @@
   </main>
 
   <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=2"></script>
+  <script src="../js/site-chrome.js?v=5"></script>
 
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=37"></script>
+  <script src="../js/app.js?v=38"></script>
 <script src="../js/login-modal.js?v=6"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=4"></script>
-  <script src="../js/mistral-key-modal.js?v=1"></script>
   <script src="../js/settings.js?v=17"></script>
   <script>
     // Settings page: mobile menu, auth buttons
