@@ -170,15 +170,16 @@ class AiApiService {
    * their own Mistral API key (Settings → AI Keys).
    * Returns { image, provider, model, used, limit, remaining, resetsAt }.
    */
-  async generateImage(prompt) {
+  async generateImage(prompt, context) {
     const authHeader = this._accessToken
       ? `Bearer ${this._accessToken}`
       : `Bearer ${this.supabaseKey}`;
 
+    const payload = context && context.length ? { prompt, context } : { prompt };
     const res = await this._postWithAuthRetry(`${this.supabaseUrl}/functions/v1/ai-image`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify(payload),
     });
 
     const text = await res.text();

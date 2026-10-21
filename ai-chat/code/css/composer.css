@@ -56,6 +56,22 @@
 .chat-input-row-top { padding: 5px 2px 4px; }
 .chat-input-row-bottom { padding: 3px 2px; }
 
+/* xai.css paints every page-level textarea with a filled panel, border and
+   radius using !important; inside the composer the capsule IS the field, so
+   the textarea itself must stay silent or the input shows a grey box. The
+   id is used on purpose: it outranks xai.css's [data-theme] textarea rules.
+   The focus ring goes too: the capsule already lights up on focus-within,
+   so the inner ring was a second, brighter box inside the composer. */
+#chat-input,
+#chat-input:focus,
+#chat-input:focus-visible {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  outline: none !important;
+}
+
 /* ── Subject pill — tinted capsule ────────────────────────────── */
 .subject-pill {
   height: 30px;

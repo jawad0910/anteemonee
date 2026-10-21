@@ -150,6 +150,35 @@
 }
 .msg-content strong { font-weight: 600; color: var(--chat-bubble-text); }
 .msg-content img { max-width: 100%; border-radius: 12px; }
+
+/* ── AI highlights — note-marker treatment ──────────────────────
+   The model fingerprints its few key lines with ==...== and the
+   renderer turns them into <mark class="msg-hl msg-hl-N">. Successive
+   highlights rotate through six inks, so a reply that names several
+   exam points reads like a student's own highlighted notes. */
+.msg-content mark.msg-hl {
+  padding: 0.08em 0.3em;
+  border-radius: 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  font-weight: 600;
+  /* Marker strokes bleed past the glyph edges like a real highlighter. */
+  margin-left: -0.05em;
+  margin-right: -0.05em;
+}
+.msg-content mark.msg-hl-1 { background: rgba(255, 213, 79, 0.24); color: #FFD54F; }
+.msg-content mark.msg-hl-2 { background: rgba(102, 187, 106, 0.24); color: #9CCC65; }
+.msg-content mark.msg-hl-3 { background: rgba(100, 181, 246, 0.24); color: #82B1FF; }
+.msg-content mark.msg-hl-4 { background: rgba(240, 98, 146, 0.24); color: #F48FB1; }
+.msg-content mark.msg-hl-5 { background: rgba(186, 104, 200, 0.24); color: #CE93D8; }
+.msg-content mark.msg-hl-6 { background: rgba(255, 167, 38, 0.24); color: #FFB74D; }
+/* Paper theme: deeper washes, dark ink on top, exactly as a pen lands. */
+[data-theme="light"] .msg-content mark.msg-hl-1 { background: rgba(255, 193, 7, 0.34); color: #4d3a00; }
+[data-theme="light"] .msg-content mark.msg-hl-2 { background: rgba(102, 187, 106, 0.3); color: #143d16; }
+[data-theme="light"] .msg-content mark.msg-hl-3 { background: rgba(100, 181, 246, 0.3); color: #0d3066; }
+[data-theme="light"] .msg-content mark.msg-hl-4 { background: rgba(240, 98, 146, 0.28); color: #5f0f28; }
+[data-theme="light"] .msg-content mark.msg-hl-5 { background: rgba(186, 104, 200, 0.28); color: #3f1049; }
+[data-theme="light"] .msg-content mark.msg-hl-6 { background: rgba(255, 152, 0, 0.3); color: #4d2700; }
 .msg-content a {
   color: var(--chat-tint);
   border-bottom-color: transparent;
@@ -341,6 +370,72 @@
   border-radius: 4px;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.65);
+}
+/* ── Clickable textbook references: open the cited book page in /ebooks ── */
+/* Inline form: a calm pill inside flowing text. */
+.msg-content a.ai-book-ref {
+  display: inline-block;
+  padding: 3px 10px 4px;
+  margin: 2px 4px 2px 0;
+  border-radius: 10px;
+  background: var(--chat-recessed, rgba(127, 127, 127, 0.10));
+  color: var(--chat-bubble-text);
+  font-size: 0.92em;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s;
+}
+/* Reference-section form: a full-width row, icon left, chevron right. */
+.msg-content a.ai-book-ref-row {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 12px 9px 11px;
+  margin: 6px 0;
+  border-radius: 12px;
+  font-weight: 500;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+/* Book icon on the left, tinted to follow the theme accent. */
+.msg-content a.ai-book-ref::before {
+  content: '';
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-right: 8px;
+  margin-bottom: -2px;
+  background-color: var(--accent-primary, var(--accent));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20'/%3E%3Cpath%20d='M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z'/%3E%3C/svg%3E") no-repeat center / contain;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20'/%3E%3Cpath%20d='M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+/* Chevron on the right of row-style references, nudges open on hover. */
+.msg-content a.ai-book-ref-row::after {
+  content: '\203A';
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--chat-text-meta, rgba(127, 127, 127, 0.8));
+  font-weight: 700;
+  transform: translateY(-0.5px);
+  transition: transform 0.18s, color 0.18s;
+}
+/* No borders anywhere: the "white lines" banner border is gone. Hover keeps
+   the text color readable in both themes — only the surface brightens. */
+.msg-content a.ai-book-ref:hover,
+.msg-content a.ai-book-ref:focus-visible {
+  background: var(--chat-tint-soft, rgba(127, 127, 127, 0.14));
+  color: var(--chat-bubble-text);
+  text-decoration: none;
+  border-bottom-color: transparent;
+}
+.msg-content a.ai-book-ref-row:hover::after,
+.msg-content a.ai-book-ref-row:focus-visible::after {
+  color: var(--accent-primary, var(--accent));
+  transform: translate3d(3px, -0.5px, 0);
+}
+.msg-content a.ai-book-ref:active {
+  transform: scale(0.995);
 }
 /* ── Streaming tool line (OpenCode-style): shown while a web search is
    expected, removed on finalize — the permanent chip takes over. ── */

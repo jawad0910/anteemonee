@@ -1,3 +1,22 @@
+/* Subject identity colors — dark theme (Apple system palette) */
+:root,
+:root[data-theme="dark"] {
+  --sub-physics: #2997ff;
+  --sub-chemistry: #32d74b;
+  --sub-biology: #bf5af2;
+  --sub-cs: #ff9f0a;
+  --sub-math: #ff375f;
+  --sub-english: #ffd60a;
+}
+:root[data-theme="light"] {
+  --sub-physics: #0071e3;
+  --sub-chemistry: #248a3d;
+  --sub-biology: #af52de;
+  --sub-cs: #ff9500;
+  --sub-math: #ff2d55;
+  --sub-english: #c9a600;
+}
+
 /* GlideSelect (React Bits) — vanilla port CSS for Anteemonee AI Tutor.
    Colors arrive as CSS custom properties so chat theme tokens flow in. */
 
@@ -105,6 +124,7 @@ span.gs-dot {
   border-radius: 50% !important;
   background-color: var(--c, var(--text)) !important;
   background: var(--c, var(--text)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, var(--text)) 22%, transparent) !important;
   color: transparent !important;
   flex: none;
   margin-right: 0;

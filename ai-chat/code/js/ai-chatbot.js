@@ -661,12 +661,12 @@
 
   // ── Subject State ──
   const CHAT_SUBJECTS = [
-    { name: 'Physics', code: '9702', color: '#dcdcdc', bg: 'rgba(220,220,220,0.15)' },
-    { name: 'Chemistry', code: '9701', color: '#c2c2c2', bg: 'rgba(194,194,194,0.15)' },
-    { name: 'Biology', code: '9700', color: '#a8a8a8', bg: 'rgba(168,168,168,0.15)' },
-    { name: 'Computer Science', code: '9618', color: '#e8e8e8', bg: 'rgba(232,232,232,0.15)' },
-    { name: 'Mathematics', code: '9709', color: '#909090', bg: 'rgba(144,144,144,0.15)' },
-    { name: 'English', code: '9093', color: '#b4b4b4', bg: 'rgba(180,180,180,0.15)' }
+    { name: 'Physics', code: '9702', color: 'var(--sub-physics)', bg: 'color-mix(in srgb, var(--sub-physics) 15%, transparent)' },
+    { name: 'Chemistry', code: '9701', color: 'var(--sub-chemistry)', bg: 'color-mix(in srgb, var(--sub-chemistry) 15%, transparent)' },
+    { name: 'Biology', code: '9700', color: 'var(--sub-biology)', bg: 'color-mix(in srgb, var(--sub-biology) 15%, transparent)' },
+    { name: 'Computer Science', code: '9618', color: 'var(--sub-cs)', bg: 'color-mix(in srgb, var(--sub-cs) 15%, transparent)' },
+    { name: 'Mathematics', code: '9709', color: 'var(--sub-math)', bg: 'color-mix(in srgb, var(--sub-math) 15%, transparent)' },
+    { name: 'English', code: '9093', color: 'var(--sub-english)', bg: 'color-mix(in srgb, var(--sub-english) 15%, transparent)' }
   ];
   let selectedSubject = 'Physics';
   function subjectSlug(name) { return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'physics'; }
@@ -1210,6 +1210,251 @@ Rules:
     t = t.replace(/^\s*i\s+(want|need)\s+(an?\s+|the\s+)?(image|picture|photo|illustration|drawing|diagram|poster|logo|art|painting)\s+(of|for|about|showing|with|depicting)?\s*/i, '');
     t = t.replace(/^[:\-\s]+/, '').trim();
     return t.slice(0, 500) || String(text || '').trim().slice(0, 500);
+  }
+
+  // Recent conversation for image requests: the provider can turn
+  // "image of this" into a real prompt only if it can see what "this" is.
+  function imageContextWindow() {
+    var out = [];
+    var total = 0;
+    for (var i = messages.length - 1; i >= 0 && out.length < 6 && total < 4800; i--) {
+      var m = messages[i];
+      var c = String((m && m.content) || '').trim();
+      if (!c || c.length < 2) continue;
+      var cap = Math.min(c.length, 1200, 4800 - total);
+      var keep = cap < c.length ? c.slice(0, cap) : c;
+      total += keep.length;
+      out.push(keep);
+    }
+    out.reverse();
+    return out;
+  }
+
+  // ── User-side image generation ──
+  // Pollinations and our edge share infra IPs, so their anonymous per-IP
+  // bucket drains fast. Calling pollinations straight from the browser keys
+  // the rate limit on the STUDENT's IP (one student = one bucket, rarely
+  // drained), so try that first; the edge chain stays as the fallback.
+  async function generateImageUserSide(prompt, supaUrl, anonKey, token) {
+    const H = (t) => String(t || '').trim().replace(/[\r\n]+/g, ' ');
+    const clean = H(prompt).slice(0, 900);
+    // Pollinations anonymous tier refills ~1 image per minute per IP:
+    // space the retries past that gap instead of hammering.
+    const waits = [0, 30000, 65000];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, waits[attempt]));
+      const seed = (Date.now() % 100000) + attempt * 857;
+      const ctl = new AbortController();
+      const to = setTimeout(() => ctl.abort(), 75000);
+      try {
+        const res = await fetch('https://image.pollinations.ai/prompt/' + encodeURIComponent(clean) +
+          '?width=1024&height=1024&nologo=true&seed=' + seed, { signal: ctl.signal, cache: 'no-store' });
+        clearTimeout(to);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        if (!blob.size || !/image\//.test(blob.type)) continue;
+        return await new Promise((resolve) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result));
+          fr.onerror = () => resolve(null);
+          fr.readAsDataURL(blob);
+        });
+      } catch (_) { clearTimeout(to); }
+    }
+    return null;
+  }
+
+  // Quota gate + row bookkeeping for the user-side path. Returns
+  // { ok, used, limit, remaining, uploaded } so the caller can decide.
+  async function userImageQuotaAndStore(supaUrl, anonKey, token, dataUrl, prompt, provider, model) {
+    const payload = (p_user_id, p_limit) => JSON.stringify({ p_user_id, p_limit });
+    const commonHeaders = { Authorization: 'Bearer ' + token, apikey: anonKey, 'Content-Type': 'application/json' };
+    const uid = currentUserId() || '';
+    if (!uid) return { ok: false };
+    let used = 0, limit = 4;
+    try {
+      const r = await fetch(supaUrl + '/rest/v1/rpc/check_generated_image_limit', {
+        method: 'POST', headers: commonHeaders,
+        body: payload(uid, 4),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        used = Number((j && j.used) || 0);
+        limit = Number((j && j.limit) || 4);
+      }
+    } catch (_) {}
+    const remaining = Math.max(0, limit - used);
+    // The rpc counts the row it just inserted, so count BEFORE generating:
+    // if remaining is 0 after the insert the cap is spent.
+    return { ok: true, uid, used, limit, remaining };
+  }
+
+  async function storeUserImage(supaUrl, anonKey, token, dataUrl, uid, prompt, provider, model) {
+    try {
+      const b64 = String(dataUrl).split(',')[1];
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const path = uid + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+      const up = await fetch(supaUrl + '/storage/v1/object/ai-images/' + path, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, apikey: anonKey, 'Content-Type': 'image/jpeg' },
+        body: bytes,
+      });
+      if (!up.ok) return dataUrl;
+      const pub = supaUrl + '/storage/v1/object/public/ai-images/' + path;
+      // Count this generation against the cap.
+      try {
+        await fetch(supaUrl + '/rest/v1/ai_generated_images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, apikey: anonKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ user_id: uid, prompt: String(prompt || '').slice(0, 500), provider: provider || 'pollinations_user', model: model || 'flux-schnell' }),
+        });
+      } catch (_) {}
+      return pub;
+    } catch (_) {
+      return dataUrl;
+    }
+  }
+
+  // ── Table image (client-side, exact) ──
+  // When the student asks for an image of a table/data they just discussed,
+  // a diffusion model invents numbers and mangles text. So we render the
+  // REAL table from the conversation into a canvas and use that as the
+  // generated image. Providers only see actual photo-style prompts then.
+  window.__findTable = function () { return findRecentMarkdownTable(); };
+  function findRecentMarkdownTable() {
+    for (var i = messages.length - 1; i >= 0 && i >= messages.length - 8; i--) {
+      var m = messages[i];
+      if (!m || !m.content) continue;
+      var c = String(m.content);
+      var lines = c.split('\n').map(function (l) { return l.trim(); });
+      // Accept both markdown pipe tables and ASCII tables inside code fences:
+      // any contiguous run of pipe lines around a `-|-` separator row.
+      var rows = [];
+      var sepIdx = -1;
+      for (var j = 0; j < lines.length; j++) {
+        var l = lines[j];
+        if (!l) continue;
+        var isSep = l.indexOf('|') >= 0 && l.indexOf('-') >= 0 && /^[-:\s|]{2,}$/.test(l) && !/[A-Za-z0-9]/.test(l);
+        if (isSep) {
+          if (rows.length && sepIdx < 0) sepIdx = rows.length;
+          continue;
+        }
+        if (l.indexOf('|') >= 0 && l.replace(/[\s|]/g, '')) {
+          rows.push(l);
+          continue;
+        }
+        // Non-pipe prose: after a complete header+data start the table has
+        // ended; prose before the header is ignorable.
+        if (rows.length && sepIdx >= 0) break;
+        if (sepIdx < 0) continue;
+      }
+      if (sepIdx < 1 || rows.length < 3) continue;
+      var title = '';
+      for (var k = i - 1; k >= 0 && k >= i - 2; k--) {
+        var pm = messages[k];
+        if (pm && pm.role === 'assistant') {
+          title = String(pm.content || '').split('\n').filter(function (l) {
+            return l.trim() && l.trim().charAt(0) !== '|' && !/^[-:\s|]+$/.test(l.trim());
+          }).pop() || '';
+          if (title.length > 90) title = title.slice(0, 87) + '…';
+          break;
+        }
+      }
+      var parsed = rows.map(function (r) {
+        if (r.charAt(0) === '|') r = r.slice(1);
+        if (r.charAt(r.length - 1) === '|') r = r.slice(0, -1);
+        return r.split('|').map(function (cell) { return cell.trim(); });
+      });
+      return { rows: parsed, title: title.replace(/[\*#`]/g, '').trim() };
+    }
+    return null;
+  }
+
+  function renderTableImage(table) {
+    return new Promise(function (resolve) {
+      if (!table || !Array.isArray(table.rows) || table.rows.length < 2) { resolve(null); return; }
+      try {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(null); return; }
+        var S = 2; // supersampled for crispness
+        var PAD = 26 * S, ROW_H = 52 * S, COL_GAP = 34 * S, EDGE = 48 * S;
+        var TITLE_H = (table.title ? 88 : 0) * S;
+        var FONT = 15.5 * S;
+        var cols = Math.max.apply(null, table.rows.map(function (r) { return r.length; }));
+        var canvas0 = document.createElement('canvas');
+        var c0 = canvas0.getContext('2d');
+        c0.font = '500 ' + FONT + 'px -apple-system, system-ui, sans-serif';
+        var widths = [];
+        for (var ci = 0; ci < cols; ci++) {
+          var wMax = 0;
+          for (var ri = 0; ri < table.rows.length; ri++) {
+            var cell = table.rows[ri][ci] == null ? '' : String(table.rows[ri][ci]);
+            wMax = Math.max(wMax, c0.measureText(cell).width);
+          }
+          widths.push(Math.max(wMax + 26 * S, 64 * S));
+        }
+        var w = EDGE * 2 + widths.reduce(function (a, b) { return a + b; }, 0) + COL_GAP * (cols - 1);
+        var h = TITLE_H + PAD * 2 + ROW_H * table.rows.length;
+        canvas.width = w; canvas.height = h;
+        // Backdrop
+        ctx.fillStyle = '#101113';
+        ctx.fillRect(0, 0, w, h);
+        // Sheet
+        var sheetX = 32 * S, sheetY = 32 * S;
+        sheetRound(ctx, sheetX, sheetY, w - sheetX * 2, h - sheetY * 2, 24 * S);
+        ctx.fillStyle = '#191919';
+        ctx.fill();
+        ctx.strokeStyle = '#212327';
+        ctx.lineWidth = 1.5 * S;
+        ctx.stroke();
+        var tx = sheetX + EDGE;
+        var ty = sheetY + PAD;
+        if (table.title) {
+          ctx.fillStyle = '#7d8187';
+          ctx.font = '500 ' + 12 * S + 'px "Geist Mono", ui-monospace, monospace';
+          ctx.textBaseline = 'top';
+          var label = (table.title).toUpperCase();
+          while (ctx.measureText(label).width > w - (EDGE + sheetX) * 2 && label.length > 8) label = label.slice(0, -2);
+          ctx.fillText(label, tx, ty - 8 * S);
+          ty += 60 * S;
+        }
+        for (var row = 0; row < table.rows.length; row++) {
+          var y = ty + row * ROW_H;
+          if (row === 0) {
+            sheetRound(ctx, tx - 12 * S, y - 8 * S, w - (EDGE + sheetX) * 2 + 24 * S, ROW_H - 2 * S, 10 * S);
+            ctx.fillStyle = '#232323';
+            ctx.fill();
+          } else if (row % 2 === 1) {
+            ctx.fillStyle = 'rgba(255,255,255,0.025)';
+            ctx.fillRect(tx - 12 * S, y - 6 * S, w - (EDGE + sheetX) * 2 + 24 * S, ROW_H - 12 * S);
+          }
+          var cx = tx;
+          for (var col = 0; col < cols; col++) {
+            var val = table.rows[row][col] == null ? '' : String(table.rows[row][col]);
+            var cxW = widths[col];
+            ctx.font = '500 ' + FONT + 'px -apple-system, system-ui, sans-serif';
+            ctx.fillStyle = row === 0 ? '#ffffff' : '#dadbdf';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(val, cx, y + (ROW_H - 2 * S) / 2);
+            cx += cxW + COL_GAP;
+          }
+        }
+        function sheetRound(c, x, y, rw, rh, rad) {
+          c.beginPath();
+          if (c.roundRect) { c.roundRect(x, y, rw, rh, rad); return; }
+          c.moveTo(x + rad, y);
+          c.arcTo(x + rw, y, x + rw, y + rh, rad);
+          c.arcTo(x + rw, y + rh, x, y + rh, rad);
+          c.arcTo(x, y + rh, x, y, rad);
+          c.arcTo(x, y, x + rw, y, rad);
+          c.closePath();
+        }
+        resolve(canvas.toDataURL('image/png'));
+      } catch (_) { resolve(null); }
+    });
   }
 
   function quizProtocolPrompt() {
@@ -2244,7 +2489,10 @@ Rules: cite the exact book, chapter number/name, and page values from the excerp
           ? 'KEEP IT TIGHT: this is the concise style. Do not write long sections, do not add multiple examples, and do not pad. But always include the definition and the key idea.'
           : '');
 
-    return [foundationRule, styleRule, levelRule, depthRule, langRule, suggestRule, emojiRule, referencesRule, personalRule].filter(Boolean).join('\n\n');
+    const highlightRule =
+      'HIGHLIGHTS: mark only the key lines of the answer with ==...== (the app paints them as coloured note marks). At most 1-3 short lines, each one key definition, formula, result or exam fact. Never mark most of the reply, and never mark headings, code, file blocks or References. Never mention the marker.\n';
+
+    return [foundationRule, styleRule, levelRule, depthRule, langRule, suggestRule, emojiRule, referencesRule, highlightRule, personalRule].filter(Boolean).join('\n\n');
   }
 
   // â”€â”€ System Prompt â”€â”€
@@ -2324,7 +2572,8 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
 - NEVER use filler words: hmm, ohh, yess, um, uh, well, so, basically, actually, right, okay so. Just answer.
 - Speak naturally like a helpful tutor, not like you're reading an essay.
 - For simple questions: answer in ONE sentence.
-- Never say "Sure!", "Of course!", "Great question!" — just answer.`;
+- Never say "Sure!", "Of course!", "Great question!" — just answer.
+- NEVER use ==highlight== markers: your words are spoken aloud, not rendered.`;
       }
       // The coding persona used to skip the student's response style and
       // explanation level entirely, so those settings had no effect here.
@@ -2425,7 +2674,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 - Speak naturally like a helpful tutor, not like you're reading an essay.
 - For simple questions (definitions, formulas, yes/no): answer in ONE sentence.
 - For explanations: give the key idea first, then only add detail if needed.
-- Never say "Sure!", "Of course!", "Great question!" or similar — just answer.`;
+- Never say "Sure!", "Of course!", "Great question!" or similar — just answer.
+- NEVER use ==highlight== markers: your words are spoken aloud, not rendered.`;
     }
 
     return ctx + drivePromptBlock();
@@ -2543,6 +2793,39 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+  // ==key line== → <mark class="msg-hl msg-hl-N">. Colours rotate per
+  // occurrence so consecutive key lines read like coloured notes marks.
+  // Text nodes only (pre/code depth tracked) so an equation like a == b
+  // inside a code span is never wrapped. Inner = signs stay legal
+  // (==Rate = k[A][B]== must highlight), only a literal == closes.
+  (function highlightPass() {
+    var ROUND = 6, n = 0;
+    var segs = html.split(/(<[^>]+>)/g);
+    var depth = 0;
+    for (var i = 0; i < segs.length; i++) {
+      var s = segs[i];
+      if (!s) continue;
+      if (s.charAt(0) === '<') {
+        var tm = /^<\/?([a-z0-9]+)/i.exec(s);
+        var tn = tm ? tm[1].toLowerCase() : '';
+        var isClose = s.charAt(1) === '/';
+        var selfClose = /\/>$/.test(s) || tn === 'br' || tn === 'img' || tn === 'hr';
+        if (tn === 'pre' || tn === 'code') {
+          if (!isClose && !selfClose) depth++;
+          else if (isClose && depth > 0) depth--;
+        }
+        continue;
+      }
+      if (depth > 0) continue;
+      if (s.indexOf('==') === -1) continue;
+      segs[i] = s.replace(/==((?:[^=\n]|=(?!=))+?)==/g, function (m0, inner) {
+        if (inner.trim().length < 2 || inner.trim().length > 400) return m0;
+        var cls = 'msg-hl-' + ((n++ % ROUND) + 1);
+        return '<mark class="msg-hl ' + cls + '">' + inner + '</mark>';
+      });
+    }
+    html = segs.join('');
+  })();
     html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
@@ -2628,6 +2911,130 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         );
       }
     }
+
+    // ── Book references become clickable deep links into the eBooks viewer ──
+    // Two passes, cheapest first:
+    // 1. REFERENCE BLOCK pass — everything after a "References" heading is a
+    //    citation list, so EVERY non-URL line becomes one chip that opens the
+    //    book in /ebooks, however the model words the line: bold names,
+    //    numbered lists, "printed page 12", "p101", ranges, missing pages.
+    // 2. INLINE pass — strict case for citations woven into the answer body,
+    //    like "(Physics Class 11, p. 35)".
+    // Both run before the favicon autolinker, which never touches text inside
+    // an existing anchor, so nothing is ever double-processed.
+
+    // Turns one citation line into a chip anchor, or null to leave it alone.
+    function buildBookRefAnchor(raw) {
+      var line = String(raw || '').replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!line) return null;
+      // Website references stay for the favicon autolinker; "no sources"
+      // notices stay plain text.
+      if (/^(?:https?:\/\/|www\.)/i.test(line)) return null;
+      if (/^no\s+(?:usable\s+)?(?:sources?|websites?|pages?)\b/i.test(line)) return null;
+      line = line.replace(/^\s*(?:[-\u2013\u2014\u2022\u00b7*+]+|#+|\(\d{1,2}\)|\d{1,2}[.)])\s+/, '');
+      if (!line) return null;
+
+      var chapter = null, printed = null, pdf = null;
+      var chM = line.match(/chapter\s*(\d{1,2})\b/i);
+      if (chM) chapter = chM[1];
+      // The PDF lead ("(PDF p. 101)") is cut OUT FIRST so its number can
+      // never be mistaken for the printed page during the page scan.
+      var pdfM = line.match(/\bpdf\b[^0-9]{0,10}?(\d{1,4})\b/i);
+      if (pdfM) pdf = pdfM[1];
+      var work = pdfM ? (line.slice(0, pdfM.index) + line.slice(pdfM.index + pdfM[0].length)) : line;
+      var pM = work.match(/printed\s*(?:page|pg|p)\.?\s*(\d{1,4})\b/i) ||
+               work.match(/printed\s+(\d{1,4})\b/i) ||
+               work.match(/(?:^|[\s,(])p(?:age|g)?s?\.?\s*(\d{1,4})\b/i);
+      if (pM) printed = pM[1];
+
+      if (printed === null && pdf === null && chapter === null) return null;
+
+      // Book name: text before the first comma/semicolon; when the line has
+      // none, cut before the chapter/page part. Stray quotes are trimmed so
+      // the eBooks matcher sees a clean title.
+      var cut = line.search(/[,;]/);
+      var book = cut > 0 ? line.slice(0, cut) : line;
+      if (cut <= 0) {
+        var bm = line.match(/\bchapter\b|\bprinted\b|\bpp?\.|page\s|\bpdf\b/i);
+        if (bm && bm.index > 1) book = line.slice(0, bm.index);
+      }
+      book = book.replace(/[:,;\s]+$/, '').replace(/^["'\s]+/, '').replace(/["'\s]+$/, '').trim();
+      if (!book) book = line;   // the eBooks side fuzzy-matches the whole line
+
+      var href = '../ebooks/index.html#book=' + encodeURIComponent(book);
+      if (chapter) href += '&chapter=' + encodeURIComponent(String(chapter));
+      if (printed) href += '&printed=' + encodeURIComponent(String(printed));
+      if (pdf) href += '&pdf=' + encodeURIComponent(String(pdf));
+      return '<a class="ai-book-ref ai-book-ref-row" href="' + href + '" target="_blank" rel="noopener">' + line + '</a>';
+    }
+
+    // Pass 1 — the References section: every citation line becomes a chip.
+    (function linkifyReferenceBlock() {
+      var MARK_RE = /<strong>\s*references?\s*:<\/strong>|<strong>\s*references?\s*<\/strong>|<h[1-6][^>]*>\s*references?\s*:?[^<]*<\/h[1-6]>/i;
+      var found = html.match(MARK_RE);
+      if (!found) return;
+      var marker = found[0];
+      var at = html.indexOf(marker);
+      if (at < 0) return;
+      var head = html.slice(0, at + marker.length);
+      var body = html.slice(at + marker.length);
+      // A divider under the heading is decoration — drop it.
+      body = body.replace(/^\s*(?:<hr>\s*)+/, '');
+      // Inline formatting inside a citation (e.g. "**Chemistry Class 11**,
+      // Chapter 5: …") would split the text across tags and break matching —
+      // flatten those tags; the chip styling replaces them.
+      body = body.replace(/<\/?(?:strong|b|em|i|u)\b[^>]*>/g, '');
+
+      var parts = body.split(/(<\/?li[^>]*>|<\/?[ou]l[^>]*>|<br[^>]*>|<\/?p[^>]*>|<hr[^>]*>)/gi);
+      var tail = '';
+      for (var i = 0; i < parts.length; i++) {
+        var part = parts[i];
+        if (!part) continue;
+        if (part.charAt(0) === '<' || !part.trim()) { tail += part; continue; }
+        var anchor = buildBookRefAnchor(part);
+        tail += anchor ? anchor : part;
+      }
+      html = head + tail.replace(/^\s+/, '');
+    })();
+
+    // Pass 2 — inline citations in the answer body ("(Physics Class 11, p. 35)").
+    // Stricter than the block pass since these sit in flowing prose.
+    (function linkifyInlineBookRefs() {
+      var REF_RE = /([A-Z][A-Za-z0-9 .+&;'’\-]{1,60}?)(?:,\s*Chapter\s*(\d{1,2}))?\s*,?\s*(?:printed\s+)?(?:p\.|page|pg)\s*(\d{1,4})(?:\s*\(\s*PDF\s*p\.?\s*(\d{1,4})\s*\))?/i;
+      var segs = html.split(/(<[^>]+>)/g);
+      var depth = 0;
+      for (var i = 0; i < segs.length; i++) {
+        var s = segs[i];
+        if (!s) continue;
+        if (s.charAt(0) === '<') {
+          var tm2 = /^<\/?([a-z0-9]+)/i.exec(s);
+          var tn2 = tm2 ? tm2[1].toLowerCase() : '';
+          var isClose2 = s.charAt(1) === '/';
+          var selfClose2 = /\/>$/.test(s) || tn2 === 'br' || tn2 === 'img' || tn2 === 'hr';
+          if (tn2 === 'a' || tn2 === 'pre' || tn2 === 'code') {
+            if (!isClose2 && !selfClose2) depth++;
+            else if (isClose2 && depth > 0) depth--;
+          }
+          continue;
+        }
+        if (depth > 0) continue;
+        if (!/(?:^|\W)p\.?\s*\d|\bpage\s*\d/i.test(s)) continue;
+        segs[i] = s.replace(new RegExp(REF_RE.source, 'gi'),
+          function (m0, book, chapter, printed, pdf) {
+            if (!book || !printed) return m0;
+            var name = book.replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+            var looksLikeBook = /(class\s*[-–—]?\s*(\d{1,3}|xi{0,2}|iv|v[xi]{0,2}|ix|x)\b)/i.test(name) ||
+              /^(?:[a-z]+\s+)?(?:new\s+|punjab\s+|fsc\s+)*(chemistry|physics|biology|mathematics|maths|math|computer|english|urdu|islamiat|history|geography|economics|statistics)/i.test(name);
+            if (!looksLikeBook) return m0;
+            var href = '../ebooks/index.html#book=' + encodeURIComponent(name);
+            if (chapter) href += '&chapter=' + encodeURIComponent(chapter);
+            href += '&printed=' + encodeURIComponent(String(printed));
+            if (pdf) href += '&pdf=' + encodeURIComponent(String(pdf));
+            return '<a class="ai-book-ref" href="' + href + '" target="_blank" rel="noopener">' + m0 + '</a>';
+          });
+      }
+      html = segs.join('');
+    })();
 
     // Bare URLs (with or without scheme) become favicon link chips. Runs LAST
     // so paragraph breaks (<br>) are already in place and chip boundaries are
@@ -3822,6 +4229,14 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // ==key line== → rotating notes-style highlight (colour order matches
+    // the final render: Nth occurrence gets the Nth ink). Inner = signs
+    // stay legal, only a literal == closes, so formulas keep highlighting.
+    var hlN = 0;
+    html = html.replace(/==((?:[^=\n]|=(?!=))+?)==/g, function (m0, inner) {
+      if (inner.trim().length < 2 || inner.trim().length > 400) return m0;
+      return '<mark class="msg-hl msg-hl-' + ((hlN++ % 6) + 1) + '">' + inner + '</mark>';
+    });
     // Inline code
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     // Line breaks
@@ -3917,6 +4332,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   function markdownToPlain(md) {
     let t = String(md || '');
     t = t.replace(/```\w*\n?([\s\S]*?)```/g, '$1');
+    // ==note highlights== copy as plain text, marker dropped
+    t = t.replace(/==([^=\n]*)==/g, '$1');
     t = t.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
     t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     t = t.replace(/^#{1,6}\s+/gm, '');
@@ -3938,6 +4355,11 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       return ' COPYBLOCK' + (secret.length - 1) + ' ';
     });
     let html = esc(t);
+    var copyHlN = 0;
+    html = html.replace(/==((?:[^=\n]|=(?!=))+?)==/g, function (m0, inner) {
+      if (inner.trim().length < 2 || inner.trim().length > 400) return m0;
+      return '<mark class="msg-hl msg-hl-' + ((copyHlN++ % 6) + 1) + '">' + inner + '</mark>';
+    });
     html = html.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
     html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     html = html.replace(/^#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
@@ -7414,31 +7836,11 @@ function handleFileBlocks(div, text, opts) {
     }
   }
 
-  // ── Text -> image: Qwen/Mistral, 4/day cap (400/day with own key) ──
+  // ── Text -> image ──
 
-  // Shared "limit reached" renderer: beautiful card + live renewal countdown.
-  function renderImageLimitCard(streamDiv, error, prompt) {
-    var used = (error && typeof error.used === 'number') ? error.used : 4;
-    var limit = (error && typeof error.limit === 'number') ? error.limit : 4;
-    var resetsAt = (error && (error.resetsAt || error.resets_at)) || null;
-    var content = null;
-    try { content = streamDiv && streamDiv.querySelector('.msg-content'); } catch (_) {}
-    var retry = null;
-    if (prompt && typeof regenerateImage === 'function') {
-      retry = function () { try { regenerateImage(prompt); } catch (e) { console.warn('[ImageGen] retry failed', e); } };
-    }
-    if (window.ImageLimitCard && content) {
-      try {
-        window.ImageLimitCard.show(content, { used: used, limit: limit, resetsAt: resetsAt, onRetry: retry });
-        return;
-      } catch (e) { console.warn('[ImageGen] limit card failed', e); }
-    }
-    finalizeStreamingMessage(streamDiv, "You've used all " + limit + ' images for today. Your limit renews at midnight UTC.');
-  }
-
-  function isImageLimitError(error, msg) {
-    return !!(error && (error.code === 'IMAGE_GEN_LIMIT' || /IMAGE_GEN_LIMIT/.test(String(msg || ''))));
-  }
+  // One message for every image failure: the student should never have to
+  // read a provider error code.
+  var IMAGE_FAILURE_MESSAGE = 'Server is not running, please wait a while and try again';
 
   // Retry a failed generation (used by the limit card once a key is added).
   async function regenerateImage(prompt) {
@@ -7465,7 +7867,7 @@ function handleFileBlocks(div, text, opts) {
 
     api.setAccessToken(getAccessToken());
     try {
-      const result = await api.generateImage(prompt);
+      const result = await api.generateImage(prompt, imageContextWindow());
       try { streamDiv.remove(); } catch (_) {}
       var div = appendMessage('assistant', '', true, { idx: messages.length, generatedImage: result.image });
       messages.push({ role: 'assistant', content: '', generatedImage: result.image });
@@ -7473,14 +7875,11 @@ function handleFileBlocks(div, text, opts) {
       bumpCounters(['total_messages', 'ai_messages']);
     } catch (error) {
       var msg = String((error && error.message) || 'Image generation failed');
-      try { console.warn('[ImageGen] retry failed:', msg); } catch (_) {}
-      if (isImageLimitError(error, msg)) {
-        renderImageLimitCard(streamDiv, error, prompt);
-      } else if (error && (error.code === 'session_expired' || /\b(401|403)\b/.test(msg))) {
-        finalizeStreamingMessage(streamDiv, 'Your session expired. Please sign in again to generate images.');
-        try { refreshAuthGate(); } catch (_) {}
+      try { console.warn('[ImageGen] failed:', msg); } catch (_) {}
+      if (error && (error.code === 'session_expired' || /\b(401|403)\b/.test(msg))) {
+        finalizeStreamingMessage(streamDiv, IMAGE_FAILURE_MESSAGE);
       } else {
-        finalizeStreamingMessage(streamDiv, "Anteemonee can't generate an image for this prompt. Try another one.");
+        finalizeStreamingMessage(streamDiv, IMAGE_FAILURE_MESSAGE);
       }
     }
     isStreaming = false;
@@ -7528,6 +7927,77 @@ function handleFileBlocks(div, text, opts) {
     btnSend.style.display = 'none';
     btnStop.style.display = 'flex';
 
+    // ── User-side generation first: the student's own IP drives the external
+    // rate limit, so a shared server bucket cannot block everyone at once.
+    var serverFallback = true;
+    // The gateway stream calls set this late; the image path runs earlier, so
+    // resolve the token up front (localStorage session is the source of truth).
+    try { api.setAccessToken(getAccessToken()); } catch (_) {}
+    try { console.log('[image] us side start uid=' + (currentUserId() || 'none') + ' tok=' + Number(getAccessToken() ? 1 : 0)); } catch (mErr) { console.log('[image] us marker err ' + String(mErr).slice(0, 60)); }
+    try {
+      var supaUrl = api.supabaseUrl;
+      var anonKey = api.supabaseKey;
+      var accessTok = getAccessToken();
+      var supaUid = currentUserId();
+      var userSideActive = true;
+      if (supaUid && accessTok && anonKey) {
+        console.log('[image] calling user-side gen');
+        const userImg = await generateImageUserSide(prompt, supaUrl, anonKey, accessTok);
+        console.log('[image] user-side result ' + (userImg ? (userImg.slice(0, 16)) : 'NULL'));
+        if (userImg) {
+          serverFallback = false;
+          const stored = await storeUserImage(supaUrl, anonKey, accessTok, userImg, supaUid, prompt, 'pollinations_user', 'flux-schnell');
+          var imgDiv = appendMessage('assistant', '', true, { idx: messages.length, generatedImage: stored });
+          messages.push({ role: 'assistant', content: '', generatedImage: stored });
+          attachFeedbackButtons(imgDiv);
+          bumpCounters(['total_messages', 'ai_messages']);
+          try { refreshStreak(); } catch (_) {}
+          isStreaming = false;
+          btnStop.style.display = 'none';
+          btnSend.style.display = 'flex';
+          chatInput.disabled = false;
+          chatInput.focus();
+          saveConversation();
+          scrollToBottom();
+          return;
+        }
+      }
+    } catch (uErr) {
+      console.log('[image] user-side path failed, using server:', String(uErr && uErr.message || uErr).slice(0, 140));
+    }
+
+    // Table/data requests are rendered locally from the real conversation
+    // data — exact numbers and readable labels, never diffusion guesses.
+    var localTable = findRecentMarkdownTable();
+    var tableIntent = /\b(table|data|readings|rows|columns|values|graph|chart|table\s+as|this|that|it)\b/i.test(text || '');
+    window.__imgdbg = (window.__imgdbg || []).concat([{
+      step: 'local',
+      table: !!localTable,
+      rows: localTable ? localTable.rows.length : 0,
+      sample: localTable ? JSON.stringify(localTable.rows.slice(0, 3)) : null,
+      intent: tableIntent,
+      lastMsgs: messages.slice(-3).map(function (mm) { return String(mm && mm.content || '').slice(0, 160); }),
+    }]);
+    if (localTable && tableIntent) {
+      var localImg = await renderTableImage(localTable);
+      if (localImg) {
+        try { streamDiv.remove(); } catch (_) {}
+        var tblDiv = appendMessage('assistant', '', true, { idx: messages.length, generatedImage: localImg });
+        messages.push({ role: 'assistant', content: '', generatedImage: localImg });
+        attachFeedbackButtons(tblDiv);
+        bumpCounters(['total_messages', 'ai_messages']);
+        isStreaming = false;
+        btnStop.style.display = 'none';
+        btnSend.style.display = 'flex';
+        chatInput.disabled = false;
+        chatInput.disabled = false;
+        chatInput.focus();
+        saveConversation();
+        scrollToBottom();
+        return;
+      }
+    }
+
     const streamDiv = createStreamingMessage(null);
     var statusCycle = null;
     try {
@@ -7546,7 +8016,7 @@ function handleFileBlocks(div, text, opts) {
 
     api.setAccessToken(getAccessToken());
     try {
-      const result = await api.generateImage(prompt);
+      const result = await api.generateImage(prompt, imageContextWindow());
       stopStatusCycle(statusCycle);
       try { streamDiv.remove(); } catch (_) {}
       var div = appendMessage('assistant', '', true, { idx: messages.length, generatedImage: result.image });
@@ -7558,15 +8028,12 @@ function handleFileBlocks(div, text, opts) {
       stopStatusCycle(statusCycle);
       var msg = String((error && error.message) || 'Image generation failed');
       try { console.warn('[ImageGen] failed:', msg, (error && error.detail) || ''); } catch (_) {}
-      if (isImageLimitError(error, msg)) {
-        renderImageLimitCard(streamDiv, error, prompt);
-        messages.pop();
-      } else if (error && (error.code === 'session_expired' || /\b(401|403)\b/.test(msg))) {
-        finalizeStreamingMessage(streamDiv, 'Your session expired. Please sign in again to generate images.');
+      if (error && (error.code === 'session_expired' || /\b(401|403)\b/.test(msg))) {
+        finalizeStreamingMessage(streamDiv, IMAGE_FAILURE_MESSAGE);
         messages.pop();
         try { refreshAuthGate(); } catch (_) {}
       } else {
-        finalizeStreamingMessage(streamDiv, "Anteemonee can't generate an image for this prompt. Try another one.");
+        finalizeStreamingMessage(streamDiv, IMAGE_FAILURE_MESSAGE);
         messages.pop();
       }
     }
@@ -8098,7 +8565,7 @@ function handleFileBlocks(div, text, opts) {
       // ── IMAGE_GEN_LIMIT: generated-image cap (4/day, 400 with own key) ──
       if (error.message && error.message.includes('IMAGE_GEN_LIMIT')) {
         console.warn('[AI] Generated-image limit reached');
-        renderImageLimitCard(streamDiv, error, null);
+        finalizeStreamingMessage(streamDiv, IMAGE_FAILURE_MESSAGE);
         stopStatusCycle(statusCycle);
         messages.pop();
         isStreaming = false;

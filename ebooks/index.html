@@ -17,8 +17,8 @@
   <meta name="description" content="Full Punjab board textbooks for 11th and 12th class. Read and download eBooks inside Anteemonee.">
   <link rel="canonical" href="https://anteemonee.com/ebooks/">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <link rel="stylesheet" href="../css/apple.css?v=2">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=4">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -31,7 +31,7 @@
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=5"></script>
 
 
   <style>
@@ -319,6 +319,84 @@
       });
       return [...keep.values()];
     }
+    // Deep links from AI chat references: #book=Chemistry%20Class%2011&chapter=1&printed=3&pdf=5
+    // The chat linkifier turns citation text into this hash; landing here must
+    // open the exact book and scroll the viewer to the exact page.
+    function parseRefHash(){
+      let h=location.hash||''; if(h.charAt(0)==='#') h=h.slice(1);
+      if(!h) return null;
+      let p=new URLSearchParams(h);
+      let book=(p.get('book')||'').trim();
+      if(!book) return null;
+      return { book: book, chapter: (p.get('chapter')||'').trim(), printed: (p.get('printed')||'').trim(), pdf: (p.get('pdf')||'').trim() };
+    }
+    function normBookName(name){ return String(name||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+    // Subjects the chat cites, so a cite like "Class 11 Chemistry" or just
+    // "Chemistry" still lands on the right shelf copy.
+    const REF_SUBJECTS=['chemistry','physics','biology','mathematics','maths','math','computer science','computer','english','urdu','islamiat','economics','statistics','history','geography','fsc'];
+    function findBookByRef(name){
+      let want=normBookName(name);
+      if(!want) return null;
+      // Citation may carry edition/filler beyond the stored title; compare the
+      // trimmed-down subject+class core too ("chemistry class 11").
+      let bare=want.replace(/(\d{4}\b).*$/,'').replace(/\b(full|complete|syllabus|edition|book|textbook|new|punjab board|fsc)\b/g,' ').replace(/\s+/g,' ').trim();
+      if(!bare) bare=want;
+      // A class stated in the cite must match the book's class, on ANY branch.
+      let clWant=null, mw=want.match(/\bclass\s*(1[12])\b/) || want.match(/\b(1[12])\s*(?:th|st|nd|rd)\b/) || want.match(/\b(xii|xi)\b/);
+      if(mw){ clWant = mw[1]==='xii'?'12':mw[1]==='xi'?'11':mw[1]; }
+      let clNamed='';
+      if(clWant){ for(let c of classes){ if(String(c.value)===String(clWant)){ clNamed=String(c.id); break; } } }
+      let score=0, best=null;
+      all.forEach(b=>{
+        let t=normBookName(b.title);
+        // class match via class_level_id when the cite names a class
+        if(clNamed && b.class_level_id && String(b.class_level_id)!==String(clNamed)){
+          // fall back to the title holding the class to not lose copies whose FK is unset
+          let clT=t.match(/\bclass\s*(1[12])\b/);
+          if(clT && clT[1]!==String(clWant)) return;   // wrong class — never open this one
+          if(!clT) return;
+        }
+        let s=normBookName(subjectName(b.subject_id));
+        let sc=0;
+        if(t===want) sc=100;
+        else if(t && (t===bare)) sc=90;
+        else if(t && want && t.includes(want) && want.length>=4) sc=88;
+        else if(t && bare && bare.length>=5 && (t.includes(bare)||bare.includes(t))) sc=84;
+        else if(s && (s===bare||bare.includes(s)||bare.startsWith(s))) sc=72;
+        else if(!sc){
+          // last resort: any subject keyword the cite names (math/maths/
+          // mathematics all count as the same word)
+          let citeHas=REF_SUBJECTS.find(w=>bare.includes(w)||want.includes(w));
+          let cand=null;
+          for(let w of REF_SUBJECTS){ if(s && (s===w||s.includes(w))){ cand=w; break; } }
+          if(citeHas && cand && citeHas.replace(/s$/,'').slice(0,5)===cand.replace(/s$/,'').slice(0,5)) sc=64;
+        }
+        if(sc>score){ score=sc; best=b; }
+      });
+      return score>=64?best:null;
+    }
+    // The AI cites "PDF p." when the stored page differs from the printed one;
+    // when only a printed page is cited, look up the stored PDF page for it.
+    async function resolvePrintedPage(book, ref){
+      if(!ref) return null;
+      if(ref.pdf) return parseInt(ref.pdf,10)||null;
+      if(!ref.printed) return null;
+      try{
+        let db=getDb(); if(!db) return null;
+        let subj=subjects.find(s=>String(s.id)===String(book.subject_id));
+        let cl=classes.find(c=>String(c.id)===String(book.class_level_id));
+        let res=await db.rpc('get_textbook_page_by_number',{
+          p_subject_name: subj?subj.name:'',
+          p_printed_page: parseInt(ref.printed,10)||1,
+          p_class_level_id: cl?cl.id:null,
+        });
+        if(!res.error && res.data && res.data.length){
+          let hit=res.data.find(r=>String(r.book_id)===String(book.id))||res.data[0];
+          return hit.page_number||parseInt(ref.printed,10)||null;
+        }
+      }catch(_){}
+      return parseInt(ref.printed,10)||null;
+    }
     async function init(){
       if(initStarted) return; initStarted=true;
       let db=getDb(); if(!db){ document.getElementById('eb-count').textContent='Database not ready'; document.getElementById('eb-loading').style.display='none'; return; }
@@ -361,12 +439,30 @@
         for(let i=all.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
         fillFilters();
         await applyUserPrefs();
+        // Deep-link handling wins over the student's saved filters: the hash
+        // names the book, so show its board/class no matter what, and skip
+        // the "random book opens on load" auto-open.
+        let refHash=parseRefHash();
+        let refBook=refHash?findBookByRef(refHash.book):null;
+        if(refHash&&!refBook) console.warn('[ebooks] deep link: book not found:', refHash.book);
+        if(refBook){
+          let clR=classes.find(c=>String(c.id)===String(refBook.class_level_id));
+          if(clR&&clR.value===12) activeClass='12';
+          else if(clR&&clR.label==='12th') activeClass='12';
+          else if(clR) activeClass='11';
+          activeBoard=refBook.board_id?String(refBook.board_id):'';
+          openedOnce=true;
+        }
         // reflect prefs in UI
         let bSel=document.getElementById('eb-board-select');
         if(bSel){ bSel.value=activeBoard||''; }
         let seg=document.getElementById('eb-class-seg');
         if(seg){ seg.querySelectorAll('.eb-seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.v===activeClass)); }
         render();
+        if(refBook){
+          let startPg=await resolvePrintedPage(refBook, refHash);
+          window.openPdf(refBook.source_url, refBook.title, startPg);
+        }
       }catch(e){
         document.getElementById('eb-count').textContent='Failed to load: '+(e.message||'error');
         document.getElementById('eb-loading').style.display='none';
@@ -605,7 +701,7 @@
       let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ —';
       pdfSetPos(1);
     }
-    window.openPdf=async function(url,title){
+    window.openPdf=async function(url,title,startPg){
       let viewer=document.getElementById('pdf-modal'), w=document.getElementById('eb-welcome');
       if(!viewer) return;
       pdfUrl=url||''; pdfTitle=title||'eBook';
@@ -639,6 +735,15 @@
         pdfPages.slice(0,3).forEach(renderPdfPage);
         let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ '+pdfDoc.numPages;
         pdfSetPos(1);
+        // Deep links (AI chat references) jump straight to the cited page —
+        // render it immediately so the jump never shows empty placeholders.
+        startPg=parseInt(startPg,10)||0;
+        if(startPg>1){
+          startPg=Math.min(startPg, pdfPages.length);
+          if(pdfScrollEl){ pdfScrollEl.scrollTop=(pdfPages[startPg-1].el.offsetTop-12); }
+          pdfSetPos(startPg);
+          pdfPages.slice(Math.max(0,startPg-2), startPg+2).forEach(renderPdfPage);
+        }
         viewerOpen=true;
         document.querySelectorAll('.eb-row').forEach(r=>r.classList.toggle('active', r.getAttribute('data-url')===String(pdfUrl)));
       }catch(e){
@@ -682,7 +787,7 @@
   })();
   </script>
   <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=5"></script>
 
 </body>
 </html>
