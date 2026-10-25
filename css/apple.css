@@ -197,19 +197,25 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
 [data-theme="light"] .ha-card { border: 1px solid var(--hairline); }
 [data-theme="dark"] .ha-card { border: 1px solid rgba(255,255,255,0.10); }
 
-/* ── Footer: parchment, dense links, fine print ───────────────────────── */
-#site-footer, footer, .site-footer {
+/* ── Footer: parchment in light, page-dark in dark ────────────────────── */
+#site-footer, footer, .site-footer, .footer {
   background: var(--canvas-parchment) !important;
-  color: var(--ink-muted-80) !important;
+  color: #6e6e73 !important;
+  border-top: 1px solid var(--m-hairline, rgba(0, 0, 0, 0.12));
 }
-[data-theme="dark"] #site-footer, [data-theme="dark"] footer, [data-theme="dark"] .site-footer {
-  background: var(--canvas-parchment) !important;
-  color: var(--ink-muted-80) !important;
-}
-[data-theme="dark"] #site-footer a, [data-theme="dark"] footer a { color: var(--ink-muted-80); }
+#site-footer a, footer a, .site-footer a { color: #424245 !important; }
 #site-footer a { line-height: 2.0; }
-#site-footer h4, #site-footer .footer-title { font-size: 14px; letter-spacing: -0.022em; color: var(--ink); }
-#site-footer .fine, #site-footer .copyright { font-size: 12px; color: var(--ink-muted-48); }
+#site-footer h4, #site-footer .footer-title { font-size: 14px; letter-spacing: -0.022em; color: #1d1d1f !important; }
+#site-footer .fine, #site-footer .copyright { font-size: 12px; color: #86868b !important; }
+[data-theme="dark"] #site-footer, [data-theme="dark"] footer, [data-theme="dark"] .site-footer, [data-theme="dark"] .footer {
+  background: var(--bg, #0A0A0A) !important;
+  color: var(--text-secondary) !important;
+  border-top: 1px solid var(--m-hairline, var(--border));
+}
+[data-theme="dark"] #site-footer a, [data-theme="dark"] footer a, [data-theme="dark"] .site-footer a { color: var(--text-secondary) !important; }
+[data-theme="dark"] #site-footer h4, [data-theme="dark"] #site-footer .footer-title { color: var(--text) !important; }
+[data-theme="dark"] #site-footer .fine, [data-theme="dark"] #site-footer .copyright { color: var(--text-muted) !important; }
+[data-theme="dark"] .footer-col a:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
 
 /* ── Modal surfaces: quiet glass, hairline, 24px ──────────────────────── */
 .modal, .modal-card, .lm-card, .sm-card, .settings-popup, .search-panel {

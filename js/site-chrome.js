@@ -33,6 +33,16 @@
     return new Array(Math.max(depth, 0) + 1).join('../') || './';
   }
 
+  /* Paid users skip the Premium upsell link; localStorage hint (written by
+     app.js from the entitlement snapshot) applies before first paint. */
+  try {
+    if (localStorage.getItem('Anteemonee_paid') === '1') {
+      document.documentElement.classList.add('has-premium');
+    } else {
+      document.documentElement.classList.remove('has-premium');
+    }
+  } catch (_) {}
+
   /* ── Templates ──────────────────────────────────────────────── */
   // Small line icons for the header nav (15px, stroke 1.8).
   var NAV_ICON = {

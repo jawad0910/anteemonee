@@ -1,0 +1,359 @@
+/* ==========================================================
+   Anteemonee — xAI skin (VoltAgent design-md / x.ai)
+   Engineered-cosmic: near-black canvas, white weight-400 display
+   with tight tracking, Geist Mono uppercase eyebrows, white /
+   outline pill buttons, hairline 8px cards, zero shadows.
+   Loaded after style.css / home.css — wins ties.
+   ========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap');
+
+/* ── Tokens ──────────────────────────────────────────────────── */
+:root {
+  /* xAI surfaces (dark canvas is the brand) */
+  --xai-canvas: #0a0a0a;
+  --xai-canvas-soft: #1a1c20;
+  --xai-card: #191919;
+  --xai-mid: #363a3f;
+  --xai-hairline: #212327;
+  --xai-hairline-soft: rgba(255, 255, 255, 0.25);
+  --xai-ink: #ffffff;
+  --xai-body: #dadbdf;
+  --xai-mute: #7d8187;
+  --xai-sunset: #ff7a17;
+  --xai-sunset-soft: #ffc285;
+  --xai-dusk: #7c3aed;
+  --xai-twilight: #c4b5fd;
+  --xai-breeze: #a0c3ec;
+
+  --font-mono-xai: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Dark theme — the canonical xAI look */
+[data-theme="dark"] {
+  --bg: var(--xai-canvas) !important;
+  --bg-card: var(--xai-card) !important;
+  --surface: var(--xai-canvas-soft) !important;
+  --surface-hover: var(--xai-mid) !important;
+  --border: var(--xai-hairline) !important;
+  --text: var(--xai-ink) !important;
+  --text-secondary: var(--xai-body) !important;
+  --text-muted: var(--xai-mute) !important;
+  --accent: var(--xai-ink) !important;
+  --accent-hover: #fafaf7 !important;
+  --on-accent: var(--xai-canvas) !important;
+  --liquid-bg: #141518 !important;
+  --liquid-bg-soft: rgba(255, 255, 255, 0.05) !important;
+  --liquid-bg-strong: rgba(16, 17, 19, 0.92) !important;
+  --liquid-border: var(--xai-hairline) !important;
+  --neo-shadow: none !important;
+  --neo-shadow-pressed: none !important;
+  --neo-shadow-recessed: none !important;
+  --neo-shadow-recessed-sm: none !important;
+  --liquid-shadow: none !important;
+  --liquid-inset: none !important;
+  --m-sh-1: none !important;
+  --m-sh-2: 0 24px 60px rgba(0, 0, 0, 0.6) !important;
+  --radius-sm: 8px !important;
+  --radius-md: 8px !important;
+  --radius-lg: 12px !important;
+  --radius-xl: 16px !important;
+}
+
+/* Light theme — inverted translation of the same voice */
+[data-theme="light"] {
+  --bg: #fafaf7 !important;
+  --bg-card: #ffffff !important;
+  --surface: #f3f3ef !important;
+  --surface-hover: #e9e9e4 !important;
+  --border: #e4e4df !important;
+  --text: #0a0a0a !important;
+  --text-secondary: #424245 !important;
+  --text-muted: #7d8187 !important;
+  --accent: #0a0a0a !important;
+  --accent-hover: #212327 !important;
+  --on-accent: #ffffff !important;
+  --liquid-bg: #ffffff !important;
+  --liquid-bg-soft: rgba(10, 10, 10, 0.05) !important;
+  --liquid-bg-strong: rgba(255, 255, 255, 0.94) !important;
+  --liquid-border: #e4e4df !important;
+  --neo-shadow: none !important;
+  --neo-shadow-pressed: none !important;
+  --neo-shadow-recessed: none !important;
+  --neo-shadow-recessed-sm: none !important;
+  --liquid-shadow: none !important;
+  --liquid-inset: none !important;
+  --m-sh-1: none !important;
+  --m-sh-2: 0 24px 60px rgba(10, 10, 10, 0.14) !important;
+  --radius-sm: 8px !important;
+  --radius-md: 8px !important;
+  --radius-lg: 12px !important;
+  --radius-xl: 16px !important;
+}
+
+
+/* Accent family → white on dark, near-black on light (xAI has no blue) */
+[data-theme="dark"] {
+  --accent-hi: #ffffff !important;
+  --accent-soft: rgba(255, 255, 255, 0.10) !important;
+  --accent-ink: #ffffff !important;
+  --color-focus: #ffffff !important;
+  --success: #32d74b !important;
+  --error: #ff453a !important;
+  --warning: #ffd60a !important;
+}
+[data-theme="light"] {
+  --accent-hi: #0a0a0a !important;
+  --accent-soft: rgba(10, 10, 10, 0.07) !important;
+  --accent-ink: #0a0a0a !important;
+  --color-focus: #0a0a0a !important;
+}
+
+/* ── Typography: weight 400 everywhere, mono eyebrows ───────── */
+body {
+  font-weight: 400 !important;
+  letter-spacing: -0.006em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 400 !important;
+  letter-spacing: -0.03em !important;
+}
+h1 { letter-spacing: -0.045em !important; }
+b, strong { font-weight: 600; }
+
+.section-label,
+.eyebrow,
+.footer-col h4,
+.dash-stat-sub {
+  font-family: var(--font-mono-xai) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  font-size: 12px !important;
+  color: var(--xai-mute) !important;
+}
+.section-title {
+  font-size: 44px !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.032em !important;
+}
+.tv-simple {
+  font-family: var(--font-mono-xai) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em !important;
+  font-size: 13px !important;
+  color: var(--xai-mute) !important;
+}
+
+/* ── Buttons: the pill is the entire shape system ────────────── */
+.btn-primary,
+.btn-signup,
+.btn-cta-header,
+#landing-auth .btn-signup,
+.hero-actions .btn-primary {
+  background: var(--xai-ink) !important;
+  color: var(--xai-canvas) !important;
+  border: 1px solid var(--xai-hairline-soft) !important;
+  border-radius: 9999px !important;
+  font-weight: 400 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.btn-primary:hover,
+.btn-signup:hover,
+.btn-cta-header:hover {
+  background: #fafaf7 !important;
+  color: var(--xai-canvas) !important;
+}
+
+/* Light mode: polarity flips — black filled pill, white text */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-signup,
+[data-theme="light"] .btn-cta-header,
+[data-theme="light"] .mobile-cta .btn-signup {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  border-color: rgba(10, 10, 10, 0.2) !important;
+}
+[data-theme="light"] .btn-primary:hover,
+[data-theme="light"] .btn-signup:hover,
+[data-theme="light"] .btn-cta-header:hover {
+  background: #212327 !important;
+  color: #ffffff !important;
+}
+
+/* Secondary + all ghost actions = white-translucent outline pill */
+.btn-secondary,
+.btn-login,
+.hero-actions .btn-secondary,
+.icon-btn,
+.mobile-menu-toggle,
+.site-menu-toggle {
+  background: transparent !important;
+  color: var(--xai-ink) !important;
+  border: 1px solid var(--xai-hairline-soft) !important;
+  border-radius: 9999px !important;
+  font-weight: 400 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.btn-secondary:hover,
+.btn-login:hover,
+.icon-btn:hover {
+  background: var(--xai-canvas-soft) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--xai-ink) !important;
+}
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] .btn-login,
+[data-theme="light"] .icon-btn {
+  color: #0a0a0a !important;
+  border-color: rgba(10, 10, 10, 0.22) !important;
+}
+[data-theme="light"] .btn-secondary:hover,
+[data-theme="light"] .btn-login:hover,
+[data-theme="light"] .icon-btn:hover {
+  background: #f3f3ef !important;
+  border-color: rgba(10, 10, 10, 0.38) !important;
+}
+.btn-primary:active, .btn-signup:active,
+.btn-secondary:active, .btn-login:active { transform: scale(0.98); }
+
+/* ── Inputs: no painted panel ──────────────────────────────────
+   This sheet used to force every input/textarea/select to a filled
+   grey card (--xai-canvas-soft) with its own border and radius.
+   That grey box landed on top of each page's own field design and
+   read as a stray panel — the chat search box, the composer, the
+   eBooks search, the account forms. Fields now keep the look their
+   page already gives them (recessed, frosted or flat), so no page
+   shows a grey rectangle that was not asked for. */
+input[type="text"], input[type="email"], input[type="password"],
+input[type="search"], input[type="tel"], input[type="number"], textarea, select {
+  font-weight: 400 !important;
+}
+
+/* ── Cards: hairline 8px, no shadows ─────────────────────────── */
+.card, .glass-card, .feature-card, .plan-card,
+.rstep, .mk-card, .sett-card, .stat-card, .dash-card {
+  background: var(--xai-card) !important;
+  border: 1px solid var(--xai-hairline) !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] .card, [data-theme="light"] .glass-card,
+[data-theme="light"] .feature-card, [data-theme="light"] .plan-card {
+  background: #ffffff !important;
+  border-color: #e4e4df !important;
+}
+/* .faq-item stays out of that list on purpose: an FAQ question is a
+   hairline row, not a card. Painting it grey boxed every question on
+   the home page behind a panel nobody asked for. */
+.rstep { border-radius: 8px !important; }
+
+/* ── Header / nav: canvas, hairline, mono-less quiet links ───── */
+.header, .site-header, #site-header {
+  background: color-mix(in srgb, var(--xai-canvas) 82%, transparent) !important;
+  border-bottom: 1px solid var(--xai-hairline) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: none !important;
+}
+[data-theme="light"] .header, [data-theme="light"] .site-header, [data-theme="light"] #site-header {
+  background: color-mix(in srgb, #fafaf7 85%, transparent) !important;
+  border-bottom-color: #e4e4df !important;
+}
+.landing-nav > a, .desktop-nav > a {
+  font-weight: 400 !important;
+  color: var(--text-secondary) !important;
+}
+.landing-nav > a:hover, .desktop-nav > a:hover {
+  color: var(--xai-ink) !important;
+  background: var(--xai-canvas-soft) !important;
+}
+.landing-nav > a.is-current, .desktop-nav > a.is-current { color: var(--xai-ink) !important; }
+.nav-menu {
+  background: var(--xai-canvas-soft) !important;
+  border: 1px solid var(--xai-hairline) !important;
+  box-shadow: none !important;
+}
+.logo-text { font-weight: 500 !important; letter-spacing: -0.02em; }
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.footer, #site-footer, footer, .site-footer {
+  background: var(--xai-canvas) !important;
+  color: var(--xai-body) !important;
+  border-top: 1px solid var(--xai-hairline) !important;
+}
+[data-theme="light"] .footer, [data-theme="light"] #site-footer {
+  background: #fafaf7 !important;
+  border-top-color: #e4e4df !important;
+}
+.footer a { color: var(--text-muted) !important; }
+.footer a:hover { color: var(--xai-ink) !important; background: transparent !important; }
+.footer-col h4 { color: var(--xai-body) !important; }
+.footer-bottom p { color: var(--xai-mute) !important; }
+.footer-bottom { border-top: 1px solid var(--xai-hairline) !important; }
+
+/* ── Hero band ───────────────────────────────────────────────── */
+.hero {
+  background: transparent !important;
+  padding-top: 120px !important;
+}
+.hero h1, .hero-title {
+  font-weight: 400 !important;
+  letter-spacing: -0.045em !important;
+}
+.hero-desc { color: var(--text-secondary) !important; font-weight: 400 !important; }
+.hero-badge, .hero-pill {
+  background: transparent !important;
+  border: 1px solid var(--xai-hairline-soft) !important;
+  border-radius: 9999px !important;
+  box-shadow: none !important;
+  color: var(--xai-body) !important;
+}
+
+/* ── Mobile menu: canvas-soft sheet, hairline, no glass glow ─── */
+.mobile-menu-sheet {
+  background: color-mix(in srgb, var(--xai-canvas-soft) 94%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) !important;
+  backdrop-filter: blur(22px) !important;
+  border: 1px solid var(--xai-hairline) !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 16px !important;
+}
+[data-theme="light"] .mobile-menu-sheet {
+  background: color-mix(in srgb, #ffffff 96%, transparent) !important;
+  border-color: #e4e4df !important;
+  box-shadow: 0 30px 80px rgba(10, 10, 10, 0.16) !important;
+}
+.mobile-menu-label {
+  font-family: var(--font-mono-xai) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+  font-size: 11px !important;
+}
+.mobile-nav-link { font-weight: 400 !important; color: var(--text-secondary) !important; }
+.mobile-nav-link.is-current { color: var(--xai-ink) !important; }
+.mobile-nav-link:hover { background: rgba(255, 255, 255, 0.05) !important; }
+[data-theme="light"] .mobile-nav-link:hover { background: rgba(10, 10, 10, 0.05) !important; }
+
+/* ── Misc: avatars/chips quiet ───────────────────────────────── */
+.mobile-cta .btn-signup,
+.mobile-cta .btn-login {
+  border-radius: 9999px !important;
+  box-shadow: none !important;
+  font-weight: 400 !important;
+}
+.mobile-cta .btn-signup {
+  background: var(--xai-ink) !important;
+  color: var(--xai-canvas) !important;
+}
+[data-theme="light"] .mobile-cta .btn-signup { background: #0a0a0a !important; color: #ffffff !important; }
+.section { padding: 64px 24px; }
+
+/* Focus rings: white, quiet */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  outline-offset: 2px;
+}
+[data-theme="light"] a:focus-visible, [data-theme="light"] button:focus-visible {
+  outline-color: rgba(10, 10, 10, 0.5) !important;
+}

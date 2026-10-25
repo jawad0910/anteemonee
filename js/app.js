@@ -339,6 +339,20 @@ async function checkAuth() {
   } catch (e) {
     console.error('Auth check failed:', e);
   }
+  // Header chrome: users on a paid plan never see the "Premium" upsell link
+  // (desktop nav, mobile menu). localStorage hint lets site-chrome apply the
+  // class synchronously at render time — no flicker after auth resolves.
+  if (currentUser) {
+    try {
+      const entRes = await db.rpc('get_entitlement_snapshot');
+      const paid = !!Access.isPaidEntitlement(entRes && entRes.data);
+      document.documentElement.classList.toggle('has-premium', paid);
+      try { paid ? localStorage.setItem('Anteemonee_paid', '1') : localStorage.removeItem('Anteemonee_paid'); } catch (_) {}
+    } catch (_) {}
+  } else {
+    document.documentElement.classList.remove('has-premium');
+    try { localStorage.removeItem('Anteemonee_paid'); } catch (_) {}
+  }
   // If already logged in, never land on the login/signup pages (unless adding another account).
   if (currentUser && /login\.html|signup\.html/.test(window.location.pathname)) {
     const params = new URLSearchParams(window.location.search);

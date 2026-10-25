@@ -381,6 +381,25 @@ ul { list-style: none; }
 .site-menu-toggle.active span::before { top: 0; transform: rotate(45deg); }
 .site-menu-toggle.active span::after { top: 0; transform: rotate(-45deg); }
 
+/* Paid users: hide the Premium upsell link everywhere in the header chrome
+   (desktop nav, hamburger menus). Toggled by .has-premium on <html>, set from
+   the entitlement snapshot in app.js checkAuth(). */
+/* Roadmap to 90+ — identity colors, theme-aware (Apple system palette) */
+:root,
+[data-theme="dark"] {
+  --rm-1: #0071e3; --rm-2: #248a3d; --rm-3: #ff9500; --rm-4: #ff2d55;
+  --rm-5: #af52de; --rm-6: #007aff; --rm-trophy: #c9a600;
+}
+[data-theme="light"] {
+  --rm-1: #0066cc; --rm-2: #248a3d; --rm-3: #e08400; --rm-4: #e0315b;
+  --rm-5: #9d45d3; --rm-6: #0071e3; --rm-trophy: #a88a00;
+}
+html.has-premium .landing-nav > a[href*="/premium/"],
+html.has-premium .mobile-menu a[href*="/premium/"],
+html.has-premium .site-mobile-menu a[href*="/premium/"] {
+  display: none !important;
+}
+
 /* Mobile Menu — dimmed viewport + glass sheet sliding from the top */
 .mobile-menu {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
