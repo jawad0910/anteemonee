@@ -12,6 +12,9 @@
 function tunnelDisplayName(model) {
   var m = String(model || '').toLowerCase();
   if (m.indexOf('space-bunny') !== -1) return 'Space Bunny';
+  if (m.indexOf('glm-5.3-flash') !== -1) return 'Zen GLM 5.3 Flash';
+  if (m.indexOf('big-pickle') !== -1) return 'Zen Big Pickle';
+  if (m.indexOf('glm') !== -1) return 'Zen GLM';
   if (m.indexOf('gpt-oss-120b') !== -1) return 'GPT-OSS 120B';
   if (m.indexOf('gpt-oss-20b') !== -1) return 'GPT-OSS 20B';
   if (m.indexOf('muse-spark') !== -1) return 'Muse Spark 1.3';
@@ -214,6 +217,8 @@ class AiApiService {
     this._lastStreamModel = null;
     this.lastServed = null;
     this.lastSearched = false;
+    this._wantsWeb = false;
+    this._webtools = [];
     this._gatewayModel = null; // exact serving model id, from X-Model
     this._abortRequested = false;
 
@@ -271,6 +276,20 @@ class AiApiService {
    *
    * Any throw here means "fall back to the normal chain".
    */
+  /**
+   * Whether web tools are considered useful for this message. Set from
+   * ai-chatbot (clientWillSearch mirror) right before streaming; the
+   * gateway treats the model as free to decide on top of this.
+   */
+  setWantsWeb(v) {
+    this._wantsWeb = v === true;
+  }
+
+  /** Tool rows the gateway reported for the current/last streamed reply. */
+  getWebTools() {
+    return Array.isArray(this._webtools) ? this._webtools.slice() : [];
+  }
+
   async *_streamAstra(messages) {
     const controller = new AbortController();
     this._currentAbort = controller;
@@ -317,6 +336,7 @@ class AiApiService {
             mode: 'astra',
             messages,
             requestId: this._currentRequestId,
+            web: this._wantsWeb === true,
           }),
           signal: controller.signal,
         });
@@ -434,6 +454,13 @@ class AiApiService {
             if (json.model) this._lastStreamModel = json.model;
             const fr = json.choices?.[0]?.finish_reason;
             if (fr) this._lastFinishReason = fr;
+            // Gateway tool metadata ("Web Search: …" / "Web Fetch: …" rows).
+            if (json.webtool) {
+              if (!Array.isArray(this._webtools)) this._webtools = [];
+              this._webtools.push(json.webtool);
+              // Control chunk (never text): the caller renders it live.
+              yield '\u0000WEBTOOL\u0001' + JSON.stringify(json.webtool);
+            }
             const content = json.choices?.[0]?.delta?.content;
             if (content) {
               receivedContent = true;

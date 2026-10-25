@@ -1693,6 +1693,110 @@ Use this context if the student refers to the quiz, an answer, or a question num
 
   document.addEventListener('DOMContentLoaded', init);
 
+  // ── Chat ad: slim sponsored strip above the composer ──
+  // Edit CHAT_ADS to change what runs. Free-tier students only; a dismissed ad
+  // stays hidden for the browser (localStorage) and premium never sees one.
+  var CHAT_ADS = [
+    { title: 'Upgrade to Premium', text: 'Unlimited chats & images — opens in Settings', url: '#premium' },
+  ];
+  // Adsterra banner units (atOptions style from the dashboard). Each unit is
+  // sandboxed in its own iframe document because the delivery script uses
+  // document.write at load; runs 728x90 on desktop, 320x50 below 768px.
+  var CHAT_AD_BANNERS = {
+    desktop: {
+      key: '05697105d3a6c1a120590b0789958b49',
+      src: 'https://bicea.org/22/05697105d3a6c1a120590b0789958b49',
+      w: 728, h: 90,
+    },
+    mobile: {
+      key: '4d6394dfe5c1d636666736451f97f1c5',
+      src: 'https://bicea.org/22/4d6394dfe5c1d636666736451f97f1c5',
+      w: 320, h: 50,
+    },
+  };
+
+  function initChatAd() {
+    var ad = document.getElementById('chat-ad');
+    if (!ad) return;
+    function hide(reason) {
+      console.log('[Ad] hidden:', reason || 'unknown');
+      ad.style.display = 'none';
+    }
+    // Dismissal is time-boxed (24h) so an accidental close can never hide the
+    // slot forever, and old permanent ('1') flags self-heal into an expiry.
+    try {
+      var d = localStorage.getItem('chat_ad_dismissed');
+      if (d) {
+        var until = 0;
+        if (d.length < 13 && d === '1') {
+          // Legacy permanent flag: treat as just-expired so the ad returns.
+          until = 0;
+        } else {
+          until = Number(d) || 0;
+        }
+        if (until > Date.now()) return hide('dismissed until ' + new Date(until).toTimeString());
+        try { localStorage.removeItem('chat_ad_dismissed'); } catch (_) {}
+      }
+    } catch (_) {}
+    try {
+      if (typeof Access !== 'undefined' && Access.state && Access.state.ready && Access.state.paid) return hide('paid user');
+    } catch (_) {}
+    console.log('[Ad] showing, paid:', (typeof Access !== 'undefined' && Access.state) ? Access.state.paid : 'n/a');
+
+    // Network banner mode: 728x90 / 320x50 box instead of the text promo.
+    if (CHAT_AD_BANNERS) {
+      var box = document.getElementById('chat-ad-banner');
+      if (!box) return hide();
+      ad.classList.add('chat-ad-banner-live');
+      var unit = CHAT_AD_BANNERS.mobile; // 320x50 everywhere per request
+      try {
+        // Isolated loader iframe: atOptions/scripts write into their own
+        // document, so they can never break the chat DOM.
+        var ifr = document.createElement('iframe');
+        ifr.width = unit.w;
+        ifr.height = unit.h;
+        ifr.scrolling = 'no';
+        ifr.frameBorder = '0';
+        ifr.style.cssText = 'border:0;margin:0 auto;display:block;background:transparent;';
+        box.appendChild(ifr);
+        var idoc = ifr.contentWindow.document;
+        idoc.open();
+        idoc.write(
+          '<body style="margin:0">' +
+          '<scr' + 'ipt>atOptions = {"key":' + JSON.stringify(unit.key) +
+          ',"format":"iframe","height":' + unit.h + ',"width":' + unit.w + ',"params":{}};</scr' + 'ipt>' +
+          '<scr' + 'ipt src="' + unit.src.replace(/"/g, '&quot;') + '"></scr' + 'ipt>' +
+          '</body>'
+        );
+        idoc.close();
+      } catch (e) {
+        console.warn('[Ad] banner mount failed:', e && (e.message || e));
+      }
+      ad.style.display = 'flex';
+      return;
+    }
+
+    var pick = CHAT_ADS[Math.floor(Math.random() * CHAT_ADS.length)];
+    if (!pick) return hide();
+    var link = document.getElementById('chat-ad-link');
+    document.getElementById('chat-ad-title').textContent = pick.title || '';
+    document.getElementById('chat-ad-text').textContent = pick.text || '';
+    if (link) {
+      link.href = pick.url || '#';
+      link.onclick = function (ev) {
+        try { localStorage.setItem('chat_ad_dismissed', String(Date.now() + 24*60*60*1000)); } catch (_) {}
+        if (pick.url === '#premium') {
+          ev.preventDefault();
+          var btn = document.getElementById('upgrade-btn') || document.querySelector('[data-upgrade-open]');
+          if (btn && btn.click) btn.click();
+        }
+        hide();
+      };
+    }
+    // No close button by design: the strip stays minimal (Ad tag + creative).
+    ad.style.display = 'flex';
+  }
+
   async function init() {
     if (typeof currentUser === 'undefined' || !currentUser) {
       try {
@@ -1811,6 +1915,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
     // Free & unlimited: just sync access state in the background.
     try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
+    try { initChatAd(); } catch (_) {}
     const token = getAccessToken();
     if (!token) {
       if (!cached) showSessionError('Log in to start using AI chat.');
@@ -2970,7 +3075,11 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 
     // Pass 1 — the References section: every citation line becomes a chip.
     (function linkifyReferenceBlock() {
-      var MARK_RE = /<strong>\s*references?\s*:<\/strong>|<strong>\s*references?\s*<\/strong>|<h[1-6][^>]*>\s*references?\s*:?[^<]*<\/h[1-6]>/i;
+      var MARK_RE = new RegExp(
+        '<strong>\\s*(?:references?|sources?|bibliography|works\\s+cited)\\s*:?\\s*<\\/strong>' +
+        '|<h[1-6][^>]*>\\s*(?:references?|sources?|bibliography|works\\s+cited)\\s*:?[^<]*<\\/h[1-6]>' +
+        '|<p>\\s*(?:references?|sources?|bibliography)\\s*:?\\s*(?:<br[^>]*>)?\\s*<\\/p>' +
+        '|<p>\\s*(?:references?|sources?|bibliography)\\s*:?\\s*(?=<ul|<ol|<li|<br)', 'i');
       var found = html.match(MARK_RE);
       if (!found) return;
       var marker = found[0];
@@ -3320,6 +3429,9 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     try {
       var active = welcome.style.display !== 'none';
       document.body.classList.toggle('welcome-center', active);
+      // The ad slot only exists once an actual chat has started, so it never
+      // clutters the greeting screen that new visitors see.
+      document.body.classList.toggle('no-chat-yet', active);
       if (active) try { scrollToBottom(); } catch (_) {}
     } catch (_) {}
   }
@@ -4115,11 +4227,12 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
-   * Client mirror of the gateway's shouldWebSearch(). When it matches we show
-   * the OpenCode-style tool line immediately ("Websearch <query> ↗"), so the
-   * wait for search + answer has visible feedback instead of a bare spinner.
-   * The gateway is authoritative: on finalize the line is always removed and
-   * only the X-Web-Searched header decides whether the permanent chip stays.
+   * Client mirror of the gateway's shouldWebSearch(). When it matches we
+   * flag the request (api.setWantsWeb) and show the OpenCode-style tool
+   * line immediately ("Websearch <query> ↗") so the wait for search +
+   * answer has visible feedback instead of a bare spinner. The gateway is
+   * authoritative: on finalize the line is always removed and only the
+   * X-Web-Searched header decides whether the permanent chip stays.
    * Keep these patterns in sync with shouldWebSearch() in ai-chat-gateway.
    */
   function clientWillSearch(text) {
@@ -4133,6 +4246,69 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 
   function escToolText(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /**
+   * Groq's browser_search prints internal citation markers like
+   * 【1†L12-L16】 after "source". They are index artifacts, not links —
+   * the chat UI strips them everywhere content is shown or saved.
+   */
+  function stripGroqCitations(text) {
+    return String(text == null ? '' : text)
+      .replace(/[\u3010][^\u3011]*\u2020[^\u3011]*\u3011/g, '')
+      .replace(/[\u3010][^\u3011]*\u2020[^\u3011]*$/g, '');
+  }
+
+  /**
+   * Opencode-style tool row: bold tool name + muted detail. Appends a row —
+   * the gateway can report a search plus up to 3 fetches for one reply.
+   */
+  function showToolCallRow(div, wt) {
+    try {
+      if (!div) return;
+      var body = div.querySelector('.msg-body');
+      if (!body) return;
+      var label = wt && wt.type === 'fetch' ? 'Web Fetch' : 'Web Search';
+      var detail = wt && wt.type === 'fetch'
+        ? (wt.title && wt.title !== wt.url ? wt.title : (wt.url || ''))
+        : String((wt && wt.query) || '').slice(0, 70);
+      detail = String(detail || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+      // The gateway's own search row replaces the client-side guess row, so
+      // the same search never shows twice with two labels.
+      if (wt && wt.type === 'search') {
+        Array.prototype.slice.call(body.querySelectorAll('.msg-toolcall')).forEach(function (r) {
+          if (!r.__webtool && r.textContent.indexOf('Websearch') === 0) r.remove();
+        });
+      }
+      var rows = body.querySelectorAll('.msg-toolcall');
+      if (rows.length >= 6) return;
+      var line = document.createElement('div');
+      line.className = 'msg-toolcall';
+      line.innerHTML = '<span class="msg-toolcall-name">' + escToolText(label) + '</span>' +
+        '<span class="msg-toolcall-query">' + escToolText(detail) + '</span>' +
+        '<span class="msg-toolcall-arrow">' + (wt && wt.type === 'fetch' ? '\u2192' : '\u2197') + '</span>';
+      line.__webtool = wt;
+      var content = body.querySelector('.msg-content');
+      if (content) body.insertBefore(line, content);
+      else body.appendChild(line);
+    } catch (_) {}
+  }
+
+  /** Keep only the web-tool rows at finalize; drop the pre-stream iframes. */
+  function finalizeWebToolRows(div) {
+    try {
+      if (!div) return;
+      var rows = Array.prototype.slice.call(div.querySelectorAll('.msg-toolcall'));
+      if (!rows.length) {
+        var tools = (typeof api !== 'undefined' && api.getWebTools) ? api.getWebTools() : [];
+        tools.slice(0, 6).forEach(function (wt) { showToolCallRow(div, wt); });
+      }
+      var body = div.querySelector('.msg-body');
+      var content = body && body.querySelector('.msg-content');
+      Array.prototype.slice.call(div.querySelectorAll('.msg-toolcall')).forEach(function (line) {
+        if (content) body.insertBefore(line, content);
+      });
+    } catch (_) {}
   }
 
   function showWebSearchToolLine(div, query) {
@@ -4246,7 +4422,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 
   function updateStreamingMessageImmediate(div, text) {
     const content = div.querySelector('.msg-content');
-    var displayText = stripQuizStreamBlock(text);
+    var displayText = stripGroqCitations(stripQuizStreamBlock(text));
     var graphExpected = !!(div && div.__graphRequested) || /```\s*graph\s*\n/i.test(text);
     if (graphExpected) displayText = '';
     displayText = displayText.replace(/```\s*graph\s*\n[\s\S]*?```/gi, '<span class="graph-stream-placeholder">📊 Building your chart…</span>');
@@ -6788,19 +6964,21 @@ function handleFileBlocks(div, text, opts) {
     if (!graphData && div.__graphRequested) {
       try { graphData = randomDemoGraph(text); } catch (_) {}
     }
-    var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(text), !!div.__quizRequested))));
+    var displayText = stripEmptyReferences(stripFileBlocks(stripRedoxComponent(stripQuizBlock(stripSwitchMarkers(stripGroqCitations(text)), !!div.__quizRequested))));
     displayText = stripGraphBlock(displayText);
     displayText = stripDriveReadBlock(displayText);
     displayText = stripCalendarBlocks(displayText);
     // The streaming tool line (if shown) always comes off here: the permanent
-    // "Searched the web" chip is added separately by attachFeedbackButtons and
-    // only when the server confirms it searched.
+    // block (opencode-style rows, kept visible) is appended right after by
+    // finalizeWebToolRows. The "Searched the web" chip is added separately by
+    // attachFeedbackButtons and only when the server confirms it searched.
     hideWebSearchToolLine(div);
     // A graph card is showing: collapse the bubble to one tiny caption line
     // (or nothing). Full explanation remains in the stored message content.
     if (graphData && !quiz) displayText = shortGraphCaption(graphData);
     content.innerHTML = displayText ? renderMarkdown(displayText) : '';
     content.classList.toggle('is-empty', !displayText);
+    try { finalizeWebToolRows(div); } catch (_) {}
     try {
       if (typeof GitHub !== 'undefined' && getActivePersona().codingOnly) GitHub.handleAssistantMessage(div, text);
     } catch (_) {}
@@ -8167,6 +8345,7 @@ function handleFileBlocks(div, text, opts) {
     // finalize — the line always comes off, the chip stays only if the server
     // confirms it searched. (Placed after isGreetingMsg: referencing it any
     // earlier throws a TDZ ReferenceError that strands the bubble spinning.)
+    api.setWantsWeb(clientWillSearch(text));
     if (!isGreetingMsg && clientWillSearch(text)) showWebSearchToolLine(streamDiv, text);
     // Dead-send watchdog: every transport timeout in the stack is far shorter
     // than this (60s connect, 15s first byte), so a bubble with no text and no
@@ -8378,6 +8557,7 @@ function handleFileBlocks(div, text, opts) {
     lastApiMessages = apiMessages;
 
     let fullResponse = '';
+    let finalResponseClean = '';
     let firstChunk = true;
     // Redox remaps which provider answers first; Beta uses the persona default.
     const selectedProviderIndex = getActivePersona().providerIndex;
@@ -8387,6 +8567,15 @@ function handleFileBlocks(div, text, opts) {
     // the bytes would cost upload time and prompt tokens and be ignored. The
     // vision pass above already turned them into text context.
     for await (const chunk of api.streamChat(apiMessages, selectedProviderIndex, null)) {
+        // Gateway tool metadata ("Web Search: …" / "Web Fetch: …"): render an
+        // opencode-style row live, never append it to the reply text.
+        if (chunk && chunk.indexOf('\u0000WEBTOOL\u0001') === 0) {
+          try {
+            var wt = JSON.parse(chunk.slice(8));
+            showToolCallRow(streamDiv, wt);
+          } catch (_) {}
+          continue;
+        }
         // Check for streak event from Edge Function
         if (chunk && chunk.includes('"type":"streak"')) {
           try {
@@ -8413,15 +8602,16 @@ function handleFileBlocks(div, text, opts) {
         if (userNearBottom) scrollToBottom();
       }
 
-      finalizeStreamingMessage(streamDiv, fullResponse);
-      autoCreateFlashcardFromReply(text, fullResponse);
+      finalResponseClean = stripGroqCitations(fullResponse);
+      finalizeStreamingMessage(streamDiv, finalResponseClean);
+      autoCreateFlashcardFromReply(text, finalResponseClean);
       stopStatusCycle(statusCycle);
-            const assistantMessage = createAssistantMessage(fullResponse, streamDiv);
+            const assistantMessage = createAssistantMessage(finalResponseClean, streamDiv);
             messages.push(assistantMessage);
             if (assistantMessage.quiz) pendingQuizTopic = false;
       attachFeedbackButtons(streamDiv);
       bumpCounters(['total_messages', 'ai_messages']);
-      updateTokensAfterResponse(text, fullResponse);
+      updateTokensAfterResponse(text, finalResponseClean);
       // Auto-play TTS if the message was sent via voice (within last 30s)
       try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(messages[messages.length - 1].content); } catch (_) {}
       userNearBottom = true;
@@ -8492,6 +8682,10 @@ function handleFileBlocks(div, text, opts) {
               ];
               lastPromptTokens = estimatePromptTokens(continuationMessages);
               for await (const chunk of api.streamChat(continuationMessages, fallbackIndex)) {
+                if (chunk && chunk.indexOf('\u0000WEBTOOL\u0001') === 0) {
+                  try { var wt2 = JSON.parse(chunk.slice(8)); showToolCallRow(streamDiv, wt2); } catch (_) {}
+                  continue;
+                }
                 if (chunk && chunk.includes('"type":"streak"')) {
                   try { const p = JSON.parse(chunk); if (p.type === 'streak') { streakCount = p.current_streak || 0; longestStreak = p.longest_streak || 0; updateSessionPanel(); saveSessionState(); continue; } } catch (_) {}
                 }
@@ -8504,9 +8698,10 @@ function handleFileBlocks(div, text, opts) {
             } catch (_) { continue; }
           }
           if (continued) {
-            finalizeStreamingMessage(streamDiv, fullResponse);
-            autoCreateFlashcardFromReply(text, fullResponse);
-      const assistantMessage = createAssistantMessage(fullResponse, streamDiv);
+            finalResponseClean = stripGroqCitations(fullResponse);
+            finalizeStreamingMessage(streamDiv, finalResponseClean);
+            autoCreateFlashcardFromReply(text, finalResponseClean);
+      const assistantMessage = createAssistantMessage(finalResponseClean, streamDiv);
       messages.push(assistantMessage);
       if (assistantMessage.quiz) pendingQuizTopic = false;
             attachFeedbackButtons(streamDiv);
@@ -8589,6 +8784,10 @@ function handleFileBlocks(div, text, opts) {
 
         try {
           for await (const chunk of api.streamChat(continuationMessages, fallbackIndex)) {
+            if (chunk && chunk.indexOf('\u0000WEBTOOL\u0001') === 0) {
+              try { var wt3 = JSON.parse(chunk.slice(8)); showToolCallRow(streamDiv, wt3); } catch (_) {}
+              continue;
+            }
             if (chunk && chunk.includes('"type":"streak"')) {
               try {
                 const parsed = JSON.parse(chunk);
@@ -8609,14 +8808,15 @@ function handleFileBlocks(div, text, opts) {
           fullResponse += '\n\n*[Response continued but may be incomplete]*';
         }
 
-        finalizeStreamingMessage(streamDiv, fullResponse);
-        autoCreateFlashcardFromReply(text, fullResponse);
-              const assistantMessage = createAssistantMessage(fullResponse, streamDiv);
+        finalResponseClean = stripGroqCitations(fullResponse);
+        finalizeStreamingMessage(streamDiv, finalResponseClean);
+        autoCreateFlashcardFromReply(text, finalResponseClean);
+              const assistantMessage = createAssistantMessage(finalResponseClean, streamDiv);
             messages.push(assistantMessage);
             if (assistantMessage.quiz) pendingQuizTopic = false;
         attachFeedbackButtons(streamDiv);
         bumpCounters(['total_messages', 'ai_messages']);
-        updateTokensAfterResponse(text, fullResponse);
+        updateTokensAfterResponse(text, finalResponseClean);
         assistantReplied = true;
         try { if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.onAiResponseComplete) window.AnteemoneeVoice.onAiResponseComplete(messages[messages.length - 1].content); } catch (_) {}
       } else if (error && (error.name === 'AbortError' || /aborted|abort/i.test(error.message || ''))) {

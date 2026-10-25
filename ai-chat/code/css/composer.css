@@ -1,3 +1,11 @@
+
+/* Banner-live mode: the network banner takes over the strip; text rows hide,
+   the Ad tag stays for compliance, the × still dismisses. */
+.chat-ad.chat-ad-banner-live {
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
 /* ==========================================================
    Anteemonee AI Chat — Design System
    Layer 4 · Composer · iOS Messages input bar
@@ -56,12 +64,10 @@
 .chat-input-row-top { padding: 5px 2px 4px; }
 .chat-input-row-bottom { padding: 3px 2px; }
 
-/* xai.css paints every page-level textarea with a filled panel, border and
-   radius using !important; inside the composer the capsule IS the field, so
-   the textarea itself must stay silent or the input shows a grey box. The
-   id is used on purpose: it outranks xai.css's [data-theme] textarea rules.
-   The focus ring goes too: the capsule already lights up on focus-within,
-   so the inner ring was a second, brighter box inside the composer. */
+/* The composer field must stay flat: the capsule around it is the frame, so
+   a panel inside the capsule (grey fill, border, its own focus ring) reads as
+   a second box. The id is used on purpose so it outranks any generic form
+   theme the page loads. */
 #chat-input,
 #chat-input:focus,
 #chat-input:focus-visible {
@@ -296,3 +302,61 @@
 .test-chip-text { font-size: 13px; font-weight: 600; color: var(--m-text, var(--text)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .test-chip-cancel { width: 24px; height: 24px; border-radius: 8px; border: none; background: rgba(0,0,0,.08); color: inherit; cursor: pointer; font-size: 13px; line-height: 1; }
 .test-chip-cancel:hover { background: rgba(0,0,0,.16); }
+
+/* ---- Chat ad: slim, quiet strip above the composer ---- */
+.chat-ad {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 6px 4px;
+  padding: 1px 4px;
+  border: none;
+  background: transparent;
+  color: var(--chat-bubble-text, #1A1A1A);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.chat-ad-label {
+  flex: none;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--chat-text-meta, rgba(0,0,0,.45));
+  border: none;
+  padding: 0;
+}
+.chat-ad-body { min-width: 0; text-decoration: none; color: inherit; display: flex; gap: 8px; align-items: baseline; }
+.chat-ad-banner { width: 100%; margin: 4px 0 2px; }
+.chat-ad-banner > * { margin: 0 auto; }
+.chat-ad-banner iframe { display: block; border: 0; }
+@media (min-width: 768px) {
+  .chat-ad-banner { max-width: 728px; min-height: 90px; }
+}
+@media (max-width: 767px) {
+  .chat-ad-banner { max-width: 320px; min-height: 50px; }
+}
+/* Mini strip: the bare creative, centered, nothing else */
+.chat-ad-mini { padding: 0; border: none; background: transparent; }
+.chat-ad-mini { justify-content: center; }
+.chat-ad-title { font-weight: 600; color: var(--chat-bubble-text, #1A1A1A); white-space: nowrap; }
+.chat-ad-text { color: var(--chat-text-meta, rgba(0,0,0,.5)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-ad-close {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 22px; height: 22px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--chat-text-meta, rgba(0,0,0,.5));
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.chat-ad-close:hover { background: var(--chat-tint-soft, rgba(0,0,0,.08)); }
+
+/* Ad rule: show only once a conversation exists (welcome screen hides it) */
+body.no-chat-yet .chat-ad { display: none !important; }
