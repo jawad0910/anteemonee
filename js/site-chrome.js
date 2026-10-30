@@ -41,6 +41,13 @@
     } else {
       document.documentElement.classList.remove('has-premium');
     }
+    /* Yellow top strip ("Start learning free →") is a signed-out upsell:
+       hidden right away when the user's last known state is signed in. */
+    if (localStorage.getItem('Anteemonee_signed_in') === '1') {
+      document.documentElement.classList.add('is-signed-in');
+    } else {
+      document.documentElement.classList.remove('is-signed-in');
+    }
   } catch (_) {}
 
   /* ── Templates ──────────────────────────────────────────────── */
@@ -54,8 +61,29 @@
   };
 
   function headerTemplate(root) {
+    // Sitewide theme skin (fonts, cream canvas, ink borders, hard shadows).
+    if (!document.getElementById('sj-theme-css')) {
+      var skinLink = document.createElement('link');
+      skinLink.id = 'sj-theme-css';
+      skinLink.rel = 'stylesheet';
+      skinLink.href = root + 'css/sj-theme.css?v=7';
+      document.head.appendChild(skinLink);
+    }
+    // Google fonts: Poppins (UI) + Caveat (handwritten accents).
+    var fontsLink = document.createElement('link');
+    fontsLink.id = 'sj-fonts';
+    fontsLink.rel = 'stylesheet';
+    fontsLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@600&display=swap';
+    if (!document.getElementById('sj-fonts')) document.head.appendChild(fontsLink);
     return (
       '<header class="header" id="site-header">' +
+        '<div class="sj-strip">' +
+          '<div class="sj-strip-msg">' +
+            '<span class="sj-tag">free to start</span>' +
+            '<p class="sj-strip-text"><b>Your board\'s textbook, inside your AI tutor.</b> Notes, past papers &amp; flashcards for FSc &amp; matric — no cost to begin.</p>' +
+          '</div>' +
+          '<a href="' + root + 'pages/signup.html" class="sj-strip-cta">Start learning free →</a>' +
+        '</div>' +
         '<div class="header-inner">' +
           '<a href="' + root + 'index.html" class="logo-link">' +
             '<img src="' + root + 'assets/anteemonee.png" alt="Anteemonee" class="logo-img">' +
@@ -83,9 +111,7 @@
             '<a href="' + root + 'premium/">Premium</a>' +
           '</nav>' +
           '<div class="header-actions">' +
-            '<button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle theme">' +
-              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' +
-            '</button>' +
+            /* Theme toggle hidden: light mode only for now, dark disabled sitewide. */
             '<div id="landing-auth" class="auth-logged-out" style="display:none">' +
               '<a href="' + root + 'pages/login.html" class="btn-login">Log in</a>' +
               '<a href="' + root + 'pages/signup.html" class="btn-signup">Sign Up</a>' +
@@ -211,6 +237,34 @@
     }
   }
 
+  /* ── Page offset below the fixed header ───────────────────────
+     The header renders position:fixed (plus the announcement
+     strip), so without reserving its real height page content
+     slides underneath it. Measure the rendered header and push
+     the page down by that height + a small breathing gap, and
+     keep it in sync whenever the header changes size. */
+  var HEADER_GAP = 22; // default breathing room between header and page content
+  var headerSpaceHooked = false;
+  function applyHeaderSpace() {
+    var header = document.querySelector('header.header, header.site-header');
+    if (!header || !document.body) return;
+    var h = header.offsetHeight;
+    if (!h) return;
+    /* Optional per-page override: <body data-header-gap="0"> (e.g. home
+       pulls itself closer). Negative values tuck slightly under the header. */
+    var gap = HEADER_GAP;
+    var custom = parseInt(document.body.getAttribute('data-header-gap'), 10);
+    if (!isNaN(custom)) gap = custom;
+    document.body.style.paddingTop = (h + gap) + 'px';
+    if (!headerSpaceHooked) {
+      headerSpaceHooked = true;
+      if (window.ResizeObserver) {
+        try { new ResizeObserver(applyHeaderSpace).observe(header); } catch (e) {}
+      }
+      window.addEventListener('resize', applyHeaderSpace);
+    }
+  }
+
   function render(root) {
     var spots = document.querySelectorAll('[data-site-header]');
     for (var i = 0; i < spots.length; i++) {
@@ -225,6 +279,9 @@
       if (fp.dataset.chromeDone === '1') continue;
       fp.dataset.chromeDone = '1';
       fp.outerHTML = footerTemplate(root);
+    }
+    if (spots.length) {
+      try { applyHeaderSpace(); } catch (e) {}
     }
     if ((spots.length || footers.length) && !markCurrent.done) {
       markCurrent.done = true;

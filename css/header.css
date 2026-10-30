@@ -689,6 +689,13 @@
   background: transparent;
 }
 .header-auth .header-inner { justify-content: center; }
+
+/* Static (non-JS) auth headers are also position:fixed — reserve their
+   bar so the centered card never slides underneath them. */
+body:has(> header.header-auth),
+body:has(> header.header-authed) {
+  padding-top: calc(var(--hdr-height) + 22px);
+}
 /* Keep the bell (and its panel) out of the centered flex row. */
 .notif-wrap--floating {
   position: absolute;

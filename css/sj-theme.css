@@ -1,0 +1,575 @@
+/* ============================================================
+   Anteemonee — "Academy" visual language (v1)
+   Warm light-only skn: cream canvas, ink borders, hard offset
+   shadows, dot-pattern textures, handwritten Caveat accents.
+   Loaded last so it wins the cascade; fine-tunes the existing
+   header/home stylesheets instead of replacing them wholesale.
+   ============================================================ */
+
+/* ---------- design tokens ---------- */
+:root {
+  --sj-yellow: #FCE004;
+  --sj-yellow-soft: #FEF9C8;
+  --sj-ink: #151515;
+  --sj-ink-soft: rgba(21,21,21,.62);
+  --sj-muted: rgba(21,21,21,.45);
+  --sj-cream: #F4F1E8;
+  --sj-cream-deep: #EDE9DC;
+  --sj-cta: #FE6100;
+  --sj-cta-deep: #E15100;
+  --sj-wa: #25D366;
+  --sj-line: rgba(21,21,21,.22);
+  --sj-radius: 12px;
+  --sj-shadow: 3px 3px 0 var(--sj-ink);
+  --sj-shadow-lg: 7px 7px 0 var(--sj-yellow), 7px 7px 0 1.5px var(--sj-ink);
+  --sj-dots: radial-gradient(rgba(21,21,21,.10) 1.1px, transparent 1.2px) 0 0 / 22px 22px;
+
+  /* re-skin the existing token system (light values everywhere) */
+  --bg: var(--sj-cream);
+  --bg-elevated: #FFFFFF;
+  --elevated: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: var(--sj-yellow-soft);
+  --surface: #FFFFFF;
+  --surface-recessed: var(--sj-cream-deep);
+  --border: var(--sj-line);
+  --border-card: var(--sj-line);
+  --text: var(--sj-ink);
+  --text-primary: var(--sj-ink);
+  --text-secondary: var(--sj-ink-soft);
+  --text-muted: var(--sj-muted);
+  --accent: var(--sj-cta);
+  --accent-hover: var(--sj-cta-deep);
+  --accent-hi: var(--sj-cta);
+  --on-accent: #FFFFFF;
+  --accent-soft: var(--sj-yellow-soft);
+  --accent-ink: var(--sj-cta);
+  --success: var(--sj-wa);
+
+  --font-ui: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Poppins', system-ui, sans-serif;
+  --sj-hand: 'Caveat', 'Segoe Script', cursive;
+
+  color-scheme: light;
+}
+
+/* ---------- foundations ---------- */
+body {
+  background: var(--sj-dots), var(--sj-cream) !important;
+  color: var(--sj-ink);
+  font-family: var(--font-ui) !important;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, .logo-text, .hero h1, .section-title, .card-title {
+  font-family: var(--font-ui);
+  color: var(--sj-ink);
+  letter-spacing: -.01em;
+}
+
+/* hand-written Caveat accent — use <em class="sj-hand"> */
+.sj-hand, .sj-tag {
+  font-family: var(--sj-hand);
+  font-weight: 600;
+  color: var(--sj-cta);
+}
+
+/* ink tag (the little tilted label on the strip) */
+.sj .sj-tag, .sj-tag {
+  display: inline-block;
+  background: var(--sj-ink);
+  color: var(--sj-yellow);
+  font-family: var(--sj-hand);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  padding: 1px 12px 2px;
+  border-radius: 6px;
+  transform: rotate(-2deg);
+  white-space: nowrap;
+}
+
+/* yellow marker highlight behind words */
+.sj-mark {
+  background-image: linear-gradient(100deg, transparent 0, var(--sj-yellow) .14em, var(--sj-yellow) calc(100% - .14em), transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 100% .42em;
+  background-position: 0 calc(100% - .28em);
+  padding: 0 .14em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* eyebrow label with the small ink dash */
+.sj-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--sj-ink-soft);
+  margin-bottom: 12px;
+  font-family: var(--font-ui);
+}
+.sj-eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  background: var(--sj-ink);
+  flex: none;
+}
+
+/* ---------- SJ-style buttons (override the pill system) ----------
+   The [data-theme] prefix lifts specificity above xai.css's
+   [data-theme="light"] rules — the same cascade tie-breaker they
+   themselves rely on. */
+[data-theme] .btn-primary, [data-theme] #hero-primary-cta, #landing-auth .btn-signup, .header-actions .btn-signup,
+[data-theme] .plan-btn.is-featured {
+  background: var(--sj-cta) !important;
+  color: #fff !important;
+  border: 1.5px solid var(--sj-ink) !important;
+  border-radius: var(--sj-radius) !important;
+  box-shadow: var(--sj-shadow) !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 500 !important;
+  transition: transform .15s ease-out, box-shadow .15s ease-out, background-color .15s ease-out;
+}
+#landing-auth .btn-signup:hover, .header-actions .btn-signup:hover, #hero-primary-cta:hover, [data-theme] .btn-primary:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0 var(--sj-ink) !important;
+  background: var(--sj-cta-deep) !important;
+}
+#landing-auth .btn-signup:active, .header-actions .btn-signup:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0 var(--sj-ink) !important;
+}
+#landing-auth .btn-login, .header-actions .btn-login, [data-theme] .btn-secondary, #hero-secondary-cta, [data-theme] .plan-btn.is-recommended {
+  background: #fff !important;
+  color: var(--sj-ink) !important;
+  border: 1.5px solid var(--sj-ink) !important;
+  border-radius: var(--sj-radius) !important;
+  box-shadow: 3px 3px 0 rgba(21,21,21,.16) !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 500 !important;
+  transition: transform .15s ease-out, box-shadow .15s ease-out, background-color .15s ease-out;
+}
+#landing-auth .btn-login:hover, .header-actions .btn-login:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0 rgba(21,21,21,.22) !important;
+  background: var(--sj-yellow-soft) !important;
+}
+#landing-auth .btn-login:active, .header-actions .btn-login:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0 rgba(21,21,21,.2) !important;
+}
+
+/* ---------- top announcement strip ---------- */
+.sj-strip {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 10px 20px;
+  background: var(--sj-dots), var(--sj-yellow);
+  border-bottom: 1.5px solid var(--sj-ink);
+  font-family: var(--font-ui);
+  color: var(--sj-ink);
+  text-align: center;
+  position: relative;
+  z-index: 1002;
+}
+.sj-strip-msg { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 14px; }
+.sj-strip-msg b { font-weight: 600; }
+.sj-strip-text { margin: 0; font-size: 15px; line-height: 1.45; }
+.sj-strip a.sj-strip-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 16px;
+  border: 1.5px solid var(--sj-ink);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sj-ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  text-decoration: none !important;
+  box-shadow: 3px 3px 0 var(--sj-ink);
+  transition: transform .12s ease-out, box-shadow .12s ease-out;
+}
+.sj-strip a.sj-strip-cta:hover { background: var(--sj-yellow-soft); transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--sj-ink); }
+.sj-strip a.sj-strip-cta:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--sj-ink); }
+
+/* Signed-in visitors don't get the "Start learning free" upsell strip.
+   Hidden via .is-signed-in on <html> (see app.js / site-chrome.js). */
+.is-signed-in .sj-strip { display: none !important; }
+header.site-header, header.header { border-top: none; }
+
+/* ---------- header bar ---------- */
+.site-header, .header { background: transparent; }
+.site-header-inner, .header-inner {
+  background: var(--sj-cream) !important;
+  border-bottom: 1.5px solid var(--sj-ink) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: 1550px;
+  margin: 0 auto;
+}
+.site-header.scrolled .site-header-inner, .header.scrolled .header-inner {
+  background: var(--sj-cream) !important;
+  box-shadow: 0 1.5px 0 var(--sj-ink) !important;
+}
+.logo-text {
+  font-family: var(--font-ui) !important;
+  font-weight: 700;
+  color: var(--sj-ink);
+  letter-spacing: -.02em;
+}
+.landing-nav > a, .landing-nav .nav-drop > a {
+  font-family: var(--font-ui) !important;
+  color: var(--sj-ink) !important;
+  font-weight: 500;
+  font-size: 15px;
+  opacity: 1 !important;
+  border-bottom: 2px solid transparent;
+}
+.landing-nav > a:hover, .landing-nav .nav-drop > a:hover {
+  border-bottom-color: var(--sj-yellow);
+  background: transparent;
+}
+.landing-nav .nav-drop > a .caret { color: var(--sj-ink-soft); }
+.nav-menu {
+  background: #fff !important;
+  border: 1.5px solid var(--sj-ink) !important;
+  border-radius: 14px !important;
+  box-shadow: 5px 5px 0 var(--sj-yellow), 5px 5px 0 1.5px var(--sj-ink) !important;
+  padding: 8px !important;
+}
+.nav-menu a {
+  border-radius: 9px !important;
+  color: var(--sj-ink) !important;
+  font-family: var(--font-ui) !important;
+}
+.nav-menu a:hover { background: var(--sj-yellow-soft) !important; }
+.btn-login {
+  min-height: 44px !important;
+  padding: 8px 18px !important;
+  font-size: 15px !important;
+}
+.btn-signup {
+  min-height: 44px !important;
+  padding: 8px 18px !important;
+  font-size: 15px !important;
+}
+.mobile-menu-sheet {
+  background: var(--sj-cream) !important;
+  border-left: 1.5px solid var(--sj-ink) !important;
+}
+.mobile-nav-link { font-family: var(--font-ui) !important; color: var(--sj-ink) !important; }
+
+/* ---------- hero (home) ---------- */
+.hero {
+  background: var(--sj-dots), var(--sj-cream);
+  padding-top: 0;
+}
+.hero-text::before, .hero h1 { color: var(--sj-ink); }
+.hero .sj-eyebrow { margin-bottom: 14px; }
+.hero h1 { font-weight: 700; }
+.hero-desc { color: var(--sj-ink-soft) !important; font-family: var(--font-ui); }
+.hero-actions { margin-top: 22px; }
+.hero .sj-hand-note {
+  font-family: var(--sj-hand);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--sj-cta);
+  display: inline-block;
+  transform: rotate(-1.5deg);
+  transform-origin: left;
+  margin-top: 18px;
+}
+
+/* cards get the white + ink border + hard yellow shadow treatment */
+.bri-card, .card, .content-card, .demo-card, .faq-card, .step-card {
+  background: #fff !important;
+  border: 1.5px solid var(--sj-ink) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--sj-shadow-lg) !important;
+}
+.bri-card { padding: 18px !important; }
+
+/* stats strip (proof) */
+.sj-proof {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 12px;
+  border-top: 1.5px solid var(--sj-ink);
+  border-bottom: 1.5px solid var(--sj-ink);
+  margin: 26px 0 0;
+  max-width: 720px;
+}
+.sj-proof > div { padding: 14px 6px 14px 0; font-size: 13px; color: var(--sj-ink-soft); line-height: 1.35; }
+.sj-proof b {
+  display: block;
+  font-weight: 600;
+  font-size: 27px;
+  line-height: 1.1;
+  color: var(--sj-ink);
+  letter-spacing: -1px;
+  margin-bottom: 2px;
+  font-family: var(--font-ui);
+}
+
+/* stacked checker chips ribbon under hero actions */
+.sj-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.sj-chip {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 50px;
+  border: 1.5px solid var(--sj-ink);
+  background: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--sj-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-ui);
+}
+.sj-chip:hover { border-color: var(--sj-ink); background: var(--sj-yellow-soft); }
+
+/* ---------- "Ask AI Tutor" badge (interactive bridge card) ----------
+   Matches the site UI: white card, ink border, hard ink shadow, soft yellow
+   hover (same treatment as the top-strip CTA). No emojis. */
+.bri-foot {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--sj-ink) !important;
+  background: #fff !important;
+  color: var(--sj-ink) !important;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 3px 3px 0 var(--sj-ink);
+  transition: transform .12s ease-out, box-shadow .12s ease-out, background-color .15s ease-out;
+}
+.bri-foot:hover {
+  background: var(--sj-yellow-soft) !important;
+  color: var(--sj-ink) !important;
+  transform: translate(-1px,-1px);
+  box-shadow: 4px 4px 0 var(--sj-ink);
+}
+.bri-foot:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--sj-ink); }
+.bri-foot-icon { color: var(--sj-cta); flex: none; transition: transform .18s ease-out; }
+.bri-foot:hover .bri-foot-icon { transform: rotate(14deg) scale(1.12); }
+.bri-foot-arrow { margin-left: auto; font-weight: 700; transition: transform .18s ease-out; }
+.bri-foot:hover .bri-foot-arrow { transform: translateX(3px); }
+
+/* ---------- sections / titles ---------- */
+.section-title, .section h2, #demo h2, #roadmap h2, #faq h2 {
+  font-family: var(--font-ui);
+  color: var(--sj-ink);
+  font-weight: 700;
+}
+.section .lead, #demo p, #roadmap p {
+  color: var(--sj-ink-soft) !important;
+  font-family: var(--font-ui);
+}
+
+/* footer */
+footer, .site-footer, .footer {
+  background: var(--sj-ink) !important;
+  color: rgba(255,255,255,.8) !important;
+}
+footer a, .site-footer a, .footer a { color: var(--sj-yellow) !important; }
+
+/* keep the settings modal & misc surfaces light */
+[data-theme="dark"] {
+  --bg: var(--sj-cream) !important;
+  --text: var(--sj-ink) !important;
+  background: var(--sj-cream);
+}
+[data-theme="dark"]{--bg-elevated:#fff;--elevated:#fff;--bg-card:#fff;--bg-card-hover:var(--sj-yellow-soft);--surface:#fff;--surface-recessed:var(--sj-cream-deep);--footer-bg:var(--sj-ink)}
+
+@media (max-width: 767px) {
+  .sj-strip { flex-wrap: nowrap; justify-content: space-between; text-align: left; padding: 8px 12px 9px 14px; }
+  .sj-strip-msg { flex: 1 1 auto; justify-content: flex-start; }
+  .sj-strip-text { font-size: 13px; }
+  .sj-proof { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
+   v3 — remaining home-page pieces (TV demo, roadmap, labels)
+   ============================================================ */
+
+/* section eyebrows: readable on cream */
+[data-theme] .section-label {
+  color: var(--sj-ink-soft);
+  font-family: var(--font-ui);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+[data-theme] .section-label::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  background: var(--sj-ink);
+  flex: none;
+}
+
+/* ---------- retro TV demo → light "classroom projector" skin ---------- */
+[data-theme] .tv {
+  background: #fff;
+  border: 1.5px solid var(--sj-ink);
+  border-radius: 22px;
+  box-shadow: var(--sj-shadow-lg);
+}
+[data-theme] .tv-brand { color: var(--sj-ink-soft); }
+[data-theme] .tv-channel {
+  color: var(--sj-ink);
+  background: var(--sj-yellow);
+  border: 1.5px solid var(--sj-ink);
+}
+[data-theme] .tv-led { background: var(--sj-cta); box-shadow: 0 0 8px rgba(225,81,0,.55); }
+[data-theme] .tv-screen {
+  background: var(--sj-cream);
+  border: 1.5px solid var(--sj-line);
+}
+[data-theme] .tv-scan { background: repeating-linear-gradient(0deg, rgba(21,21,21,.045) 0 1px, transparent 1px 3px); }
+[data-theme] .tv-static { background: repeating-linear-gradient(0deg, rgba(21,21,21,.16) 0 2px, rgba(21,21,21,.05) 2px 4px); }
+[data-theme] .tv-scene { color: var(--sj-ink); }
+[data-theme] .tv-bubble.user { background: var(--sj-yellow); border: 1.5px solid var(--sj-ink); color: var(--sj-ink); }
+[data-theme] .tv-bubble.ai { background: #fff; border: 1.5px solid var(--sj-line); color: var(--sj-ink); }
+[data-theme] .tv-caret { background: var(--sj-cta); }
+[data-theme] .tv-ref { color: var(--sj-ink); background: #fff; border: 1.5px solid var(--sj-ink); }
+[data-theme] .tv-step { color: var(--sj-ink); background: #fff; border: 1.5px solid var(--sj-line); }
+[data-theme] .tv-btn {
+  color: var(--sj-ink);
+  background: #fff;
+  border: 1.5px solid var(--sj-ink);
+}
+[data-theme] .tv-btn:hover { background: var(--sj-yellow-soft); }
+[data-theme] .tv-stand,
+[data-theme] .tv-stand::before,
+[data-theme] .tv-stand::after { border-color: var(--sj-line) !important; background: var(--sj-cream-deep) !important; }
+[data-theme] .tv-simple { color: var(--sj-ink); }
+[data-theme] .tv-simple .tv-ref { background: #fff; border-color: var(--sj-ink); color: var(--sj-ink); }
+[data-theme] .call-mock, [data-theme] .u-tool { background: #fff; color: var(--sj-ink); border-color: var(--sj-line); }
+
+/* liquid plan buttons under the TV → SJ grammar */
+[data-theme] .plan-btn {
+  background: #fff;
+  color: var(--sj-ink);
+  border: 1.5px solid var(--sj-ink);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--sj-ink);
+  font-family: var(--font-ui);
+}
+[data-theme] .plan-btn:hover {
+  background: var(--sj-yellow-soft);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--sj-ink);
+}
+[data-theme] .plan-btn:active,
+[data-theme] #hero-primary-cta:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sj-ink); }
+[data-theme] .plan-btn-primary {
+  background: var(--sj-cta);
+  color: #fff;
+  border-color: var(--sj-ink);
+}
+[data-theme] .plan-btn-primary:hover { background: var(--sj-cta-deep); }
+[data-theme] .plan-btn::after { display: none; }
+
+/* ---------- roadmap steps → white cards with colored numerals ---------- */
+[data-theme] .rstep {
+  background: #fff;
+  border: 1.5px solid var(--sj-ink);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--sj-ink);
+  color: var(--sj-ink);
+}
+[data-theme] a.rstep:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--sj-ink);
+  background: #fff;
+}
+[data-theme] .rstep-num { font-family: var(--font-ui); font-weight: 800; letter-spacing: -.02em; }
+[data-theme] .rstep-ic {
+  border-radius: 10px;
+  border: 1.5px solid var(--sj-ink);
+  box-shadow: 2px 2px 0 var(--sj-ink);
+}
+[data-theme] .rstep-tx { color: var(--sj-ink); }
+[data-theme] .rstep-tx small { color: var(--sj-ink-soft); }
+[data-theme] .roadmap { gap: 14px; }
+
+/* ---------- FAQ hairlines ---------- */
+[data-theme] .faq-item { border-bottom: 1px solid var(--sj-line); }
+[data-theme] .faq-q { color: var(--sj-ink); font-family: var(--font-ui); }
+[data-theme] .faq-a { color: var(--sj-ink-soft); font-family: var(--font-ui); }
+[data-theme] .faq-item::after,
+[data-theme] .faq-q::after,
+[data-theme] .faq-icon { color: var(--sj-cta); }
+
+/* cta-band + step / tool cards if present */
+[data-theme] .cta-band {
+  background: var(--sj-yellow);
+  border: 1.5px solid var(--sj-ink);
+  border-radius: 22px;
+  box-shadow: var(--sj-shadow-lg);
+}
+[data-theme] .cta-band h2 { color: var(--sj-ink); }
+[data-theme] .cta-band p { color: var(--sj-ink-soft); }
+
+/* generic leftovers from the dark skin that can leak on light */
+[data-theme] .pulse-dot { background: var(--sj-cta); }
+[data-theme] section.section { background: transparent; }
+
+/* ============================================================
+   v5 — fixes
+   - xai.css paints .rstep dark xai-card !important and its
+     light rescue list skips .rstep — re-light it here (we load
+     later + ours carries the [data-theme] attribute boost).
+   - .tv-simple paragraphs become SJ eyebrow labels.
+   ============================================================ */
+[data-theme] .rstep {
+  background: #fff !important;
+  border: 1.5px solid var(--sj-ink) !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 3px 0 var(--sj-ink) !important;
+}
+[data-theme] .rstep:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--sj-ink) !important;
+}
+[data-theme] .rstep.trophy {
+  background: #fff !important;
+  border-color: var(--sj-ink) !important;
+}
+
+/* the loose little labels above the TV + roadmap */
+[data-theme] .tv-simple {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-ui) !important;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--sj-ink-soft) !important;
+  margin: 0 0 26px;
+}
+[data-theme] .tv-simple::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  background: var(--sj-ink);
+  flex: none;
+}

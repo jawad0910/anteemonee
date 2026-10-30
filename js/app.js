@@ -250,11 +250,8 @@ function getThemeMode() {
   return 'system';
 }
 function resolveTheme(mode) {
-  if (mode === 'light' || mode === 'dark') return mode;
-  try {
-    if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
-  } catch (e) {}
-  return 'dark';
+  // Light mode only for now — dark is disabled sitewide ("for now").
+  return 'light';
 }
 function applyThemeMode(mode) {
   document.documentElement.setAttribute('data-theme', resolveTheme(mode));
@@ -462,6 +459,14 @@ async function ensureProfile() {
 }
 
 function updateAuthUI() {
+  // Yellow "start learning free" strip only for signed-out visitors.
+  // localStorage hint lets site-chrome hide it synchronously at render time
+  // (same flicker-free pattern as the Anteemonee_paid / has-premium hint).
+  document.documentElement.classList.toggle('is-signed-in', !!currentUser);
+  try {
+    currentUser ? localStorage.setItem('Anteemonee_signed_in', '1') : localStorage.removeItem('Anteemonee_signed_in');
+  } catch (_) {}
+
   const loggedOut = document.getElementById('auth-logged-out');
   const loggedIn = document.getElementById('auth-logged-in');
   const authLoading = document.getElementById('auth-loading');
