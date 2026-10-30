@@ -7,7 +7,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -17,8 +17,8 @@
   <meta name="description" content="Build custom AI practice tests for FSc and intermediate prep.">
   <meta name="robots" content="index, follow">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <link rel="stylesheet" href="../css/apple.css?v=2">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; background: var(--bg) !important; }
@@ -197,7 +197,7 @@
       .atb-wrap { padding-top: 96px; }
     }
 
-    /* ── Test builder - site design system (flat, monochrome + sky blue) ── */
+    /* -- Test builder - site design system (flat, monochrome + sky blue) -- */
     #atb-page .tb-root {
       --tb-primary: var(--accent);
       --tb-primary-mid: var(--accent-hover);
@@ -396,7 +396,7 @@
     #atb-not-auth { position: fixed; inset: 0; z-index: 60; width: 100%; max-width: none; margin: 0; background: var(--bg); overflow-y: auto; }
     #atb-not-auth { padding: 120px 22px 60px; }
 
-    /* ── Mobile responsiveness ────────────────────────────────────── */
+    /* -- Mobile responsiveness -------------------------------------- */
     @media (max-width: 640px) {
       #atb-page { padding-top: 84px; }
       .tb-root { padding: 8px 10px 48px; }
@@ -429,7 +429,7 @@
       .atb-panel, .atb-toggle { padding-left: 12px; padding-right: 12px; }
     }
 
-    /* ── Build-in-progress state ───────────────────────────────────── */
+    /* -- Build-in-progress state ------------------------------------- */
     #atb-progress { padding: 26px 26px 22px; }
     .tb-build-state-head { display: flex; align-items: center; gap: 16px; }
     .tb-build-spinner { position: relative; width: 46px; height: 46px; border-radius: 14px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -453,7 +453,7 @@
       .tb-build-actions .tb-btn { width: 100%; }
     }
 
-    /* ── Test-ready state ──────────────────────────────────────────── */
+    /* -- Test-ready state -------------------------------------------- */
     #atb-done { text-align: center; padding: 36px 26px 32px; }
     .tb-done-check { width: 60px; height: 60px; margin: 0 auto 16px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
     #atb-done h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; color: var(--text); }
@@ -468,12 +468,12 @@
       .tb-done-actions .tb-btn { width: 100%; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=11">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <div id="atb-not-auth" class="atb-gate" style="display:none">
@@ -527,13 +527,13 @@
           <div class="tb-two-col">
             <div class="tb-card tb-card-chapters">
               <div class="tb-card-header">
-                <span class="tb-card-header-icon">✦</span>
+                <span class="tb-card-header-icon">?</span>
                 <h2 class="tb-card-title">Subject</h2>
                 <span class="tb-card-hint">Class 11</span>
               </div>
               <div class="tb-card-body">
                 <select id="atb-subject" style="display:none" aria-hidden="true" tabindex="-1">
-                  <option value="">Choose subject…</option>
+                  <option value="">Choose subject�</option>
                   <option>Physics</option>
                   <option>Chemistry</option>
                   <option>Biology</option>
@@ -553,14 +553,14 @@
 
             <div class="tb-card">
               <div class="tb-card-header">
-                <span class="tb-card-header-icon">☰</span>
+                <span class="tb-card-header-icon">?</span>
                 <h2 class="tb-card-title">Chapters</h2>
                 <span class="tb-card-hint" id="tb-ch-hint">0 of 3</span>
               </div>
               <div class="tb-card-body">
                 <div class="atb-select-wrap" id="atb-chapter-wrap">
                   <button type="button" class="atb-select tb-select" id="atb-chapter-btn" aria-haspopup="listbox" aria-expanded="false">
-                    <span id="atb-chapter-text" class="atb-select-placeholder">Select up to 3 chapters…</span>
+                    <span id="atb-chapter-text" class="atb-select-placeholder">Select up to 3 chapters�</span>
                     <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </button>
                   <div class="atb-select-menu atb-select-menu-scroll" id="atb-chapter-menu" role="listbox" aria-multiselectable="true" aria-label="Chapters"></div>
@@ -575,7 +575,7 @@
         <section class="tb-pane" id="pane-step2" data-step="2">
           <div class="tb-card">
             <div class="tb-card-header">
-              <span class="tb-card-header-icon">◈</span>
+              <span class="tb-card-header-icon">?</span>
               <h2 class="tb-card-title">Topics</h2>
               <span class="tb-card-hint" id="tb-topics-hint-count">Optional</span>
             </div>
@@ -587,9 +587,9 @@
               <textarea id="atb-topics" style="display:none" aria-hidden="true" tabindex="-1"></textarea>
               <div class="atb-topics-box" id="atb-topics-box">
                 <div id="atb-topics-chips" style="display:contents"></div>
-                <input id="atb-topics-input" class="atb-topics-input" type="text" placeholder="Add a topic, press comma…" autocomplete="off" enterkeyhint="done">
+                <input id="atb-topics-input" class="atb-topics-input" type="text" placeholder="Add a topic, press comma�" autocomplete="off" enterkeyhint="done">
               </div>
-              <div class="hint" id="atb-topics-hint">Separate topics with commas · max 10</div>
+              <div class="hint" id="atb-topics-hint">Separate topics with commas � max 10</div>
               <div class="atb-panel" id="atb-weight-panel">
                 <h3>Topic weightage</h3>
                 <div id="atb-weight-list"></div>
@@ -603,7 +603,7 @@
           <div class="tb-config-grid">
             <div class="tb-card">
               <div class="tb-card-header">
-                <span class="tb-card-header-icon">✎</span>
+                <span class="tb-card-header-icon">?</span>
                 <h2 class="tb-card-title">Paper style</h2>
                 <span class="tb-card-hint">Board or conceptual</span>
               </div>
@@ -628,16 +628,16 @@
                   <h3>Past paper setup</h3>
                   <div class="atb-field">
                     <label for="atb-board-btn">Board</label>
-                    <select id="atb-board" style="display:none" aria-hidden="true" tabindex="-1"><option value="">Choose board…</option></select>
+                    <select id="atb-board" style="display:none" aria-hidden="true" tabindex="-1"><option value="">Choose board�</option></select>
                     <div class="atb-select-wrap" id="atb-board-wrap">
                       <button type="button" class="atb-select" id="atb-board-btn" aria-haspopup="listbox" aria-expanded="false">
-                        <span id="atb-board-text" class="atb-select-placeholder">Choose board…</span>
+                        <span id="atb-board-text" class="atb-select-placeholder">Choose board�</span>
                         <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                       <div class="atb-select-menu atb-select-menu-scroll" id="atb-board-menu" role="listbox" aria-label="Board"></div>
                     </div>
                   </div>
-                  <div class="atb-eta" id="atb-eta-static">Expected time: calculating…</div>
+                  <div class="atb-eta" id="atb-eta-static">Expected time: calculating�</div>
                 </div>
               </div>
             </div>
@@ -656,7 +656,7 @@
                 </div>
                 <div class="atb-total"><span>Total marks</span><b id="atb-total-marks">25</b></div>
                 <div class="atb-eta" id="atb-time-allowed">Time allowed: 60 min</div>
-                <div class="atb-eta" id="atb-eta-concept">Expected time: calculating…</div>
+                <div class="atb-eta" id="atb-eta-concept">Expected time: calculating�</div>
               </div>
             </div>
           </div>
@@ -672,7 +672,7 @@
         <div class="tb-build-state-head">
           <span class="tb-build-spinner" aria-hidden="true"><i></i></span>
           <div class="tb-build-state-copy">
-            <p class="tb-build-stage" id="atb-stage">Starting…</p>
+            <p class="tb-build-stage" id="atb-stage">Starting�</p>
             <p class="tb-build-eta" id="atb-eta-live"></p>
           </div>
           <span class="tb-build-pct" id="atb-pct">0%</span>
@@ -710,7 +710,7 @@
     <div class="tb-modal-card">
       <div class="tb-modal-head">
         <h3>Your built tests</h3>
-        <button type="button" class="tb-modal-close" id="atb-history-close" aria-label="Close history">✕</button>
+        <button type="button" class="tb-modal-close" id="atb-history-close" aria-label="Close history">?</button>
       </div>
       <div class="tb-modal-body">
         <div id="atb-history-loading" style="display:none" aria-hidden="true">
@@ -737,33 +737,32 @@
           </div>
         </div>
         <div class="pdf-bar-actions">
-          <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">−</button>
+          <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">-</button>
           <span id="pdf-zoom-label" style="font-size:12px;color:var(--text-secondary);min-width:44px;text-align:center">100%</span>
           <button class="pdf-icon-btn" id="pdf-zoom-in" title="Zoom in">+</button>
           <button class="pdf-icon-btn" id="pdf-fs" title="Fullscreen" aria-label="Fullscreen">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
           </button>
-          <button class="pdf-icon-btn" id="pdf-close" title="Close">✕</button>
+          <button class="pdf-icon-btn" id="pdf-close" title="Close">?</button>
         </div>
       </div>
       <div id="pdf-stage" class="pdf-stage">
         <div class="pdf-canvas-wrap" id="pdf-scroll">
-          <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF…</div></div>
+          <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF�</div></div>
           <canvas id="pdf-canvas"></canvas>
         </div>
       </div>
       <div class="pdf-pagebar">
-        <button class="pdf-icon-btn" id="pdf-prev" title="Previous page">‹</button>
+        <button class="pdf-icon-btn" id="pdf-prev" title="Previous page">�</button>
         <span style="font-size:12px;color:var(--text-secondary)">Page</span>
         <input id="pdf-page-input" type="number" min="1" value="1">
         <span id="pdf-page-count" style="font-size:12px;color:var(--text-secondary)">/ -</span>
-        <button class="pdf-icon-btn" id="pdf-next" title="Next page">›</button>
+        <button class="pdf-icon-btn" id="pdf-next" title="Next page">�</button>
       </div>
     </div>
   </div>
 
-  <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <script src="../assets/js/vendor/supabase.min.js"></script>
@@ -969,7 +968,7 @@
         var star = document.createElement('button');
         star.type = 'button';
         star.className = 'atb-w-star' + (row.important ? ' on' : '');
-        star.textContent = '★';
+        star.textContent = '?';
         star.setAttribute('aria-label', row.important ? ('Unmark ' + row.t + ' as important') : ('Mark ' + row.t + ' as important'));
         star.setAttribute('aria-pressed', row.important ? 'true' : 'false');
         star.title = row.important ? 'Important (tap to unmark)' : 'Mark as important';
@@ -1069,7 +1068,7 @@
     $('atb-total-marks').textContent = String(totalMarks());
     $('atb-time-allowed').textContent = 'Time allowed: ' + suggestedTime() + ' min';
     var est = formatEstimate(estimateBuildSeconds());
-    var label = est ? ('Expected time: ' + est) : 'Expected time: calculating…';
+    var label = est ? ('Expected time: ' + est) : 'Expected time: calculating�';
     $('atb-eta-static').textContent = label;
     $('atb-eta-concept').textContent = label;
   }
@@ -1164,7 +1163,7 @@
         }
         label = label || boardNameById(val) || 'Board selected';
       }
-      txt.textContent = label || 'Choose board…';
+      txt.textContent = label || 'Choose board�';
       txt.classList.toggle('atb-select-placeholder', !val);
     }
     var menu = $('atb-board-menu');
@@ -1255,7 +1254,7 @@
     syncBoardBtn();
   }
 
-  // ── Chapter selector: multi-select, chapters come from the DB per subject ──
+  // -- Chapter selector: multi-select, chapters come from the DB per subject --
   var chapterList = [];
   var selectedChapters = [];
   var MAX_CHAPTERS = 3;
@@ -1301,7 +1300,7 @@
     var txt = $('atb-chapter-text');
     if (txt) {
       if (selectedChapters.length === 0) {
-        txt.textContent = 'Select up to ' + MAX_CHAPTERS + ' chapters…';
+        txt.textContent = 'Select up to ' + MAX_CHAPTERS + ' chapters�';
         txt.classList.add('atb-select-placeholder');
       } else {
         txt.textContent = selectedChapters.length + ' of ' + MAX_CHAPTERS + ' selected';
@@ -1479,7 +1478,7 @@
     syncChapterUi();
   }
 
-  // ── Wizard: 3 steps (subject & chapters → topics → configure) ──
+  // -- Wizard: 3 steps (subject & chapters ? topics ? configure) --
   var tbStep = 1;
   var TB_STEPS = {
     1: ['Step 1 of 3', 'Choose your <em>subject &amp; chapters</em>', 'Pick one subject, then mark up to three chapters to keep the AI inside those pages.'],
@@ -1595,7 +1594,7 @@
     }
   }
 
-  // ── Subject grid (list-style cards mirroring the hidden select) ──
+  // -- Subject grid (list-style cards mirroring the hidden select) --
   function syncSubjectGrid() {
     var val = $('atb-subject') ? $('atb-subject').value : '';
     var items = document.querySelectorAll('#atb-subject-grid .tb-subject-item');
@@ -1632,7 +1631,7 @@
       var bits = [];
       if (selectedChapters.length) bits.push(selectedChapters.length + (selectedChapters.length === 1 ? ' chapter' : ' chapters'));
       if (topics.length) bits.push(topics.length + (topics.length === 1 ? ' topic' : ' topics'));
-      pill.textContent = bits.length ? bits.join(' · ') : 'Nothing selected';
+      pill.textContent = bits.length ? bits.join(' � ') : 'Nothing selected';
     }
     var chHint = $('tb-ch-hint');
     if (chHint) chHint.textContent = selectedChapters.length + ' of 3';
@@ -1896,7 +1895,7 @@
       try { err.status = r.status; err.detail = detail; } catch (_) {}
       // The free plan allows 1 AI test build a day. The Edge Function spends
       // that allowance before generating anything, so a 429 here is the
-      // server saying "today's build is already spent" — not a failure.
+      // server saying "today's build is already spent" � not a failure.
       if (r.status === 429 && data && data.code === 'FREE_DAILY_LIMIT') {
         err.code = 'FREE_DAILY_LIMIT';
         err.limit = data.limit; err.used = data.used; err.resetsAt = data.resetsAt;
@@ -2017,7 +2016,7 @@
         var url = r.pdf_url || (SUPA_URL + '/storage/v1/object/public/ai-tests/' + r.pdf_path);
         var when = '';
         try { when = new Date(r.created_at || Date.now()).toLocaleDateString(); } catch (_) {}
-        var sub = [r.subject, r.board_name, when].filter(Boolean).join(' · ');
+        var sub = [r.subject, r.board_name, when].filter(Boolean).join(' � ');
         var custom = (r.config && r.config.paper_title) || null;
         var title = String((custom || r.title) || 'Test');
         var escTitle = escAttr(title);
@@ -2299,7 +2298,7 @@
     var val = $('atb-subject') ? $('atb-subject').value : '';
     var txt = $('atb-subject-text');
     if (txt) {
-      txt.textContent = val || 'Choose subject…';
+      txt.textContent = val || 'Choose subject�';
       txt.classList.toggle('atb-select-placeholder', !val);
     }
     var opts = document.querySelectorAll('#atb-subject-menu .atb-select-opt');
@@ -2372,7 +2371,7 @@
     var hint = $('atb-topics-hint');
     if (hint) {
       var n = topicsChips().length;
-      hint.textContent = n ? (n + '/10 topics') : 'Comma-separated · up to 10 topics';
+      hint.textContent = n ? (n + '/10 topics') : 'Comma-separated � up to 10 topics';
     }
     renderWeightage();
     try { updateScopeUi(); } catch (_) {}
@@ -2397,7 +2396,7 @@
     x.type = 'button';
     x.className = 'atb-chip-x';
     x.setAttribute('aria-label', 'Remove ' + t);
-    x.textContent = '×';
+    x.textContent = '�';
     x.addEventListener('click', function (e) {
       e.stopPropagation();
       chip.remove();
@@ -2532,7 +2531,7 @@
     // Supabase Storage: ?download= sets Content-Disposition: attachment with a filename
     var dlUrl = url + sep + 'download=' + encodeURIComponent(fname);
     var oldText = btn ? btn.textContent : '';
-    if (btn) { btn.textContent = 'Downloading…'; btn.setAttribute('aria-disabled', 'true'); }
+    if (btn) { btn.textContent = 'Downloading�'; btn.setAttribute('aria-disabled', 'true'); }
     try {
       var res = await fetch(dlUrl);
       if (!res.ok) throw new Error('HTTP ' + res.status);

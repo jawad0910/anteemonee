@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now — dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -32,9 +32,9 @@
   <title>AI Examiner - Anteemonee</title>
   <meta name="description" content="Type or upload your answers and get instant marking and feedback.">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <link rel="stylesheet" href="../css/apple.css?v=2">
-  <link rel="stylesheet" href="../css/header.css?v=11">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
   <style>
     /* Same type system as the homepage + AI chat. */
@@ -292,7 +292,7 @@
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <div class="ex-layout">
@@ -1589,8 +1589,7 @@
       setTimeout(function () { wire(); handleDeepRoute(); }, 400);
     });
   </script>
-  <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 </body>
 </html>

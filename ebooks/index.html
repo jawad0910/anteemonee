@@ -7,7 +7,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -18,7 +18,7 @@
   <link rel="canonical" href="https://anteemonee.com/ebooks/">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=42">
-  <link rel="stylesheet" href="../css/xai.css?v=4">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -26,12 +26,12 @@
     .section { padding: 70px 24px; }
     .section-inner { max-width: 1280px; margin: 0 auto; }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=11">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=5"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <style>
@@ -44,7 +44,7 @@
     .eb-gate-actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center}
     .eb-skel{height:168px;border-radius:20px;background:linear-gradient(90deg,var(--surface)25%,var(--bg-card)50%,var(--surface)75%);background-size:200% 100%;animation:sk 1.2s infinite}
     @keyframes sk{to{background-position:-200% 0}}
-    /* ── App shell (mirrors AI chat layout) ── */
+    /* -- App shell (mirrors AI chat layout) -- */
     .eb-layout{display:flex;height:100dvh;padding-top:72px;box-sizing:border-box}
     .eb-sidebar{width:288px;min-width:288px;display:flex;flex-direction:column;gap:10px;padding:14px 12px;border-right:1px solid var(--border);background:var(--bg-card);min-height:0}
     .eb-side-head{display:flex;align-items:center;gap:10px;padding:2px 4px 4px}
@@ -166,29 +166,29 @@
             <div class="pdf-shell" role="dialog" aria-modal="true" aria-label="PDF viewer">
               <div class="pdf-bar">
                 <div class="pdf-bar-left" style="min-width:0">
-                  <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">◐</div>
+                  <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">?</div>
                   <div style="min-width:0;flex:1">
                     <div id="pdf-title" class="pdf-bar-title">eBook</div>
                   </div>
                 </div>
                 <div class="pdf-bar-actions">
-                  <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">−</button>
+                  <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">-</button>
                   <span id="pdf-zoom-label" style="font-size:12px;color:var(--text-secondary);min-width:44px;text-align:center">100%</span>
                   <button class="pdf-icon-btn" id="pdf-zoom-in" title="Zoom in">+</button>
                   <button class="pdf-icon-btn" id="pdf-fs" title="Fullscreen" aria-label="Fullscreen">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
                   </button>
-                  <button class="pdf-icon-btn" onclick="closePdf()" title="Close">✕</button>
+                  <button class="pdf-icon-btn" onclick="closePdf()" title="Close">?</button>
                 </div>
               </div>
               <div id="pdf-stage" class="pdf-stage">
                 <div class="pdf-canvas-wrap" id="pdf-scroll">
-                  <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF…</div></div>
+                  <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF�</div></div>
                   <div id="pdf-pages"></div>
                 </div>
               </div>
               <div class="pdf-pagebar">
-                <span class="pdf-pos-wrap">Page&nbsp;<input id="pdf-pos-input" type="number" min="1" step="1" value="1" aria-label="Current page — type a page number and press Enter">&nbsp;<span id="pdf-page-count">/ —</span></span>
+                <span class="pdf-pos-wrap">Page&nbsp;<input id="pdf-pos-input" type="number" min="1" step="1" value="1" aria-label="Current page � type a page number and press Enter">&nbsp;<span id="pdf-page-count">/ �</span></span>
               </div>
             </div>
           </div>
@@ -302,13 +302,13 @@
     function getDb(){ if(window.db) return window.db; if(sdb) return sdb; try{ sdb=supabase.createClient(SUPA_URL,SUPA_ANON); return sdb; }catch(e){ return null; } }
     let all=[], boards=[], subjects=[], classes=[];
     function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function boardName(id){ let b=boards.find(x=>String(x.id)===String(id)); return b?b.name:'—'; }
-    function subjectName(id){ let s=subjects.find(x=>String(x.id)===String(id)); return s?s.name:'—'; }
-    function className(id){ let c=classes.find(x=>String(x.id)===String(id)); if(!c) return '—'; if(c.value===11) return '11th'; if(c.value===12) return '12th'; return c.label||'—'; }
+    function boardName(id){ let b=boards.find(x=>String(x.id)===String(id)); return b?b.name:'�'; }
+    function subjectName(id){ let s=subjects.find(x=>String(x.id)===String(id)); return s?s.name:'�'; }
+    function className(id){ let c=classes.find(x=>String(x.id)===String(id)); if(!c) return '�'; if(c.value===11) return '11th'; if(c.value===12) return '12th'; return c.label||'�'; }
     function isPdfLink(url){ return /^https?:\/\/\S+$/i.test(String(url||'').trim()); }
     // Several rows can describe the same book (one per upload batch, plus the
     // odd duplicate subject/class pair). Same subject + class + board = the same
-    // book, so keep a single card — the newest row that actually has a link.
+    // book, so keep a single card � the newest row that actually has a link.
     function dedupeBooks(rows){
       let rank=b=>(Date.parse(b.created_at||'')||0);
       let keep=new Map();
@@ -353,7 +353,7 @@
         if(clNamed && b.class_level_id && String(b.class_level_id)!==String(clNamed)){
           // fall back to the title holding the class to not lose copies whose FK is unset
           let clT=t.match(/\bclass\s*(1[12])\b/);
-          if(clT && clT[1]!==String(clWant)) return;   // wrong class — never open this one
+          if(clT && clT[1]!==String(clWant)) return;   // wrong class � never open this one
           if(!clT) return;
         }
         let s=normBookName(subjectName(b.subject_id));
@@ -401,11 +401,11 @@
       if(initStarted) return; initStarted=true;
       let db=getDb(); if(!db){ document.getElementById('eb-count').textContent='Database not ready'; document.getElementById('eb-loading').style.display='none'; return; }
       for(let i=0;i<10 && !db;i++){ await new Promise(r=>setTimeout(r,200)); db=getDb(); }
-      // eBooks are for signed-in users only — guests get a sign-in gate.
+      // eBooks are for signed-in users only � guests get a sign-in gate.
       try{
         let { data: { user } } = await db.auth.getUser();
         if(!user){ showGate(); return; }
-      }catch(_){ /* auth check failed — fall through to normal load */ }
+      }catch(_){ /* auth check failed � fall through to normal load */ }
       try{
         let [bR,sR,cR,bkR,stR]=await Promise.all([
           db.from('boards').select('id,name,region').order('name'),
@@ -549,12 +549,12 @@
         wantedBoards.forEach(label=>{
           let id=findBoardIdByLabel(label);
           if(id) addOpt(label.replace(/ Board$/,''), id);
-          // skip boards missing from the database — no dead options
+          // skip boards missing from the database � no dead options
         });
         sel.onchange=()=>{ activeBoard=sel.value||null; render(); };
       }
       if(seg){
-        // ensure only 11th/12th — remove All if present from older HTML
+        // ensure only 11th/12th � remove All if present from older HTML
         seg.querySelectorAll('.eb-seg-btn').forEach(btn=>{
           if(btn.dataset.v==='') btn.remove();
         });
@@ -596,13 +596,13 @@
         let bN=boardName(x.board_id), sN=subjectName(x.subject_id), cN=className(x.class_level_id);
         let letter=esc((sN||'B').charAt(0));
         let col=subjectColor(sN||'book');
-        let title=sN!=='—'?sN:(x.title||'eBook').replace(/\s*Class\s*\d+.*$/i,'');
+        let title=sN!=='�'?sN:(x.title||'eBook').replace(/\s*Class\s*\d+.*$/i,'');
         let active=(viewerOpen && x===current)?' active':'';
         return '<button class="eb-row'+active+'" data-url="'+escA(x.source_url||'')+'" data-title="'+escA(x.title||'eBook')+'">'
           +'<span class="eb-row-icon" style="background:'+col+'">'+letter+'</span>'
           +'<span class="eb-row-text"><b>'+esc(title)+'</b>'
-          +'<small>'+esc(bN)+' · '+esc(cN)+(x.total_pages?' · '+esc(x.total_pages)+' pages':'')+'</small></span>'
-          +'<span class="eb-row-go">›</span></button>';
+          +'<small>'+esc(bN)+' � '+esc(cN)+(x.total_pages?' � '+esc(x.total_pages)+' pages':'')+'</small></span>'
+          +'<span class="eb-row-go">�</span></button>';
       }).join('');
       list.querySelectorAll('.eb-row').forEach(r=>{ r.addEventListener('click',()=>{ openPdf(r.getAttribute('data-url'), r.getAttribute('data-title')); if(window.innerWidth<=900){ document.getElementById('eb-sidebar').classList.remove('open'); document.getElementById('eb-overlay').classList.remove('on'); } }); });
       if(!openedOnce && current){ openedOnce=true; openPdf(current.source_url, current.title); }
@@ -698,7 +698,7 @@
       if(pdfDoc){ try{pdfDoc.destroy();}catch(_){} }
       pdfDoc=null; pdfPages=[]; pdfActive=1;
       if(pdfPagesEl) pdfPagesEl.innerHTML='';
-      let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ —';
+      let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ �';
       pdfSetPos(1);
     }
     window.openPdf=async function(url,title,startPg){
@@ -735,7 +735,7 @@
         pdfPages.slice(0,3).forEach(renderPdfPage);
         let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ '+pdfDoc.numPages;
         pdfSetPos(1);
-        // Deep links (AI chat references) jump straight to the cited page —
+        // Deep links (AI chat references) jump straight to the cited page �
         // render it immediately so the jump never shows empty placeholders.
         startPg=parseInt(startPg,10)||0;
         if(startPg>1){
@@ -786,8 +786,7 @@
     });
   })();
   </script>
-  <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=5"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 </body>
 </html>

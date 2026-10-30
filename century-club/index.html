@@ -7,7 +7,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -18,10 +18,10 @@
   <meta name="theme-color" content="#000000">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <link rel="stylesheet" href="../css/apple.css?v=2">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
   <style>
-    /* ── Tokens local to this page ── */
+    /* -- Tokens local to this page -- */
     :root {
       --cc-ease: cubic-bezier(.22, 1, .36, 1);
       --cc-spring: cubic-bezier(.34, 1.56, .64, 1);
@@ -34,7 +34,7 @@
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; font-family: var(--cc-font); }
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
-    /* ══════════════ HERO ══════════════ */
+    /* -------------- HERO -------------- */
     .cc-hero { position: relative; padding: 132px 24px 66px; overflow: hidden; isolation: isolate; }
     .cc-hero-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 56px; align-items: center; }
     .cc-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 15px 7px 11px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
@@ -62,7 +62,7 @@
     .cc-btn:hover svg { transform: translateX(3px); }
 
 
-    /* ══════════════ RING ══════════════ */
+    /* -------------- RING -------------- */
     .cc-ring-wrap { display: grid; place-items: center; position: relative; }
     .cc-ring { position: relative; width: clamp(190px, 24vw, 250px); aspect-ratio: 1; }
     .cc-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
@@ -73,7 +73,7 @@
     .cc-ring-of { font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
     .cc-ring-badge { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 7px 15px; border-radius: var(--radius-pill); background: var(--bg-elevated); border: 1px solid var(--liquid-border-soft); box-shadow: var(--neo-shadow-float); font-size: 12px; font-weight: 600; letter-spacing: -.005em; }
 
-    /* ══════════════ STATS ══════════════ */
+    /* -------------- STATS -------------- */
     .cc-stats { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .cc-stat { position: relative; padding: 20px 20px 18px; border-radius: var(--radius-lg); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); box-shadow: var(--cc-hairline); overflow: hidden; transition: transform .5s var(--cc-ease), box-shadow .5s var(--cc-ease); }
     .cc-stat:hover { transform: translateY(-3px); box-shadow: var(--neo-shadow-raised); }
@@ -82,7 +82,7 @@
     .cc-stat .v small { font-family: var(--cc-font); font-size: 12.5px; font-weight: 500; letter-spacing: -.005em; color: var(--text-muted); margin-left: 4px; }
     #cc-since { letter-spacing: -.01em !important; word-spacing: .1em; }
 
-    /* ══════════════ ROSTER ══════════════ */
+    /* -------------- ROSTER -------------- */
     .cc-roster-wrap { max-width: 1180px; margin: 0 auto; padding: 84px 24px 20px; }
     .cc-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 26px; }
     .cc-section-head h2 { font-family:var(--cc-serif); font-weight: 700; font-size: clamp(1.6rem, 3.6vw, 2.3rem); letter-spacing: -.03em; margin: 0; line-height: 1.05; }
@@ -128,7 +128,7 @@
     .cc-you-bar b { font-weight: 700; font-size: 14.5px; letter-spacing: -.015em; }
     .cc-you-bar span { font-size: 13.5px; opacity: .78; }
 
-    /* ══════════════ STATES ══════════════ */
+    /* -------------- STATES -------------- */
     .cc-skel { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-top: 22px; }
     .cc-skel-item { height: 74px; border-radius: var(--radius-lg); background: linear-gradient(90deg, var(--surface) 25%, var(--bg-card-hover) 50%, var(--surface) 75%); background-size: 200% 100%; animation: ccShimmer 1.4s linear infinite; }
     @keyframes ccShimmer { to { background-position: -200% 0; } }
@@ -138,7 +138,7 @@
     .cc-state h3 { font-family:var(--cc-serif); font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; margin: 0 0 9px; }
     .cc-state p { margin: 0 auto 24px; max-width: 42ch; font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
 
-    /* ══════════════ CLAIM CARD ══════════════ */
+    /* -------------- CLAIM CARD -------------- */
     .cc-closer { max-width: 1180px; margin: 0 auto; padding: 60px 24px 92px; }
     .cc-claim { position: relative; overflow: hidden; padding: clamp(28px, 4.6vw, 48px); border-radius: var(--radius-xl); background: var(--bg-card); border: 1px solid var(--liquid-border); box-shadow: var(--neo-shadow-raised-lg); }
     .cc-claim::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; background: var(--liquid-border); }
@@ -160,7 +160,7 @@
     .cc-perks li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); font-size: 12.5px; font-weight: 600; letter-spacing: -.005em; color: var(--text-secondary); }
     .cc-perks li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--text); opacity: .55; }
 
-    /* ══════════════ RESPONSIVE ══════════════ */
+    /* -------------- RESPONSIVE -------------- */
     @media (max-width: 1000px) {
       .cc-hero-inner { grid-template-columns: 1fr; gap: 46px; justify-items: start; }
       .cc-ring-wrap { justify-self: center; }
@@ -184,17 +184,17 @@
       .cc-card, .cc-card::after, .cc-btn, .cc-stat { transition: none !important; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=11">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
 
   <main>
-    <!-- ══ HERO ══ -->
+    <!-- -- HERO -- -->
     <section class="cc-hero" id="cc-hero">
       <div class="cc-hero-inner">
         <div>
@@ -230,23 +230,23 @@
               <span class="cc-ring-num" id="cc-ring-num">0</span>
               <span class="cc-ring-of">of 100</span>
             </div>
-            <span class="cc-ring-badge" id="cc-ring-badge">Counting…</span>
+            <span class="cc-ring-badge" id="cc-ring-badge">Counting�</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══ STATS ══ -->
+    <!-- -- STATS -- -->
     <section class="cc-stats" id="cc-stats" aria-label="Club at a glance">
       <div class="cc-stat"><div class="k">On the roll</div><div class="v" data-count>&nbsp;</div></div>
       <div class="cc-stat"><div class="k">Spots left</div><div class="v" data-count>&nbsp;</div></div>
       <div class="cc-stat"><div class="k">First member</div><div class="v" id="cc-since" style="font-size:clamp(1.15rem,2.4vw,1.5rem)">&nbsp;</div></div>
     </section>
 
-    <!-- ══ YOUR PLACE ══ -->
+    <!-- -- YOUR PLACE -- -->
     <div class="cc-you"><div class="cc-you-bar" id="cc-you-bar"></div></div>
 
-    <!-- ══ ROSTER ══ -->
+    <!-- -- ROSTER -- -->
     <section class="cc-roster-wrap" id="roster">
       <div class="cc-section-head">
         <div>
@@ -255,7 +255,7 @@
         </div>
         <div class="cc-search" id="cc-search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input id="cc-search" type="search" placeholder="Find a member…" autocomplete="off" aria-label="Search club members">
+          <input id="cc-search" type="search" placeholder="Find a member�" autocomplete="off" aria-label="Search club members">
           <button class="cc-search-x" type="button" id="cc-search-x" aria-label="Clear search">&times;</button>
           <span class="cc-search-count" id="cc-search-count">100</span>
         </div>
@@ -284,7 +284,7 @@
       </div>
     </section>
 
-    <!-- ══ CLAIM ══ -->
+    <!-- -- CLAIM -- -->
     <section class="cc-closer">
       <div class="cc-claim">
 </span>
@@ -317,8 +317,7 @@
     </section>
   </main>
 
-  <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
@@ -512,7 +511,7 @@ function monthYear(iso) {
             '<span class="cc-name"><span class="cc-nm">' + esc(nm) + '</span>' +
               (youId && m.id === youId ? '<span class="cc-you-flag">You</span>' : '') +
             '</span>' +
-            '<span class="cc-sub">' + (handle ? '@' + esc(handle) + ' · ' : '') + esc(fullDate(m.created_at)) + '</span>' +
+            '<span class="cc-sub">' + (handle ? '@' + esc(handle) + ' � ' : '') + esc(fullDate(m.created_at)) + '</span>' +
           '</span>' +
         '</article>';
     }

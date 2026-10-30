@@ -8,7 +8,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -30,12 +30,13 @@
   <meta name="twitter:title" content="Privacy Policy - Anteemonee">
   <meta name="twitter:description" content="Read the Privacy Policy for Anteemonee. Learn how we collect, use and protect your personal data.">
   <link rel="icon" href="../assets/anteemonee.png">
-  <link rel="stylesheet" href="../css/style.css?v=38">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
-    /* ── Legal (new theme) ── */
+    /* -- Legal (new theme) -- */
     .legal-wrap { max-width: 780px; margin: 0 auto; padding: 104px 24px 80px; }
     .legal-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 13.5px; font-weight: 600; text-decoration: none; margin-bottom: 20px; padding: 10px 18px 10px 14px; border-radius: var(--radius-pill); background: var(--liquid-bg-soft); border: 1px solid var(--liquid-border-soft); transition: all var(--neo-duration) var(--neo-tween); cursor: pointer; }
     .legal-back:hover { color: var(--text); border-color: var(--liquid-border); transform: translateX(-3px); }
@@ -48,12 +49,12 @@
     .legal-card li { margin-bottom: 6px; }
     @media (max-width: 560px) { .legal-wrap { padding: 96px 16px 60px; } .legal-card { padding: 28px 20px; } }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=10">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=2"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <main class="legal-wrap">
@@ -120,13 +121,12 @@
     </div>
   </main>
 
-  <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=2"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
   <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=37"></script>
+  <script src="../js/app.js?v=38"></script>
 <script src="../js/login-modal.js?v=6"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=4"></script>

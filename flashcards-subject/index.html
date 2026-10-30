@@ -1,6 +1,6 @@
 ﻿
 
-﻿<!DOCTYPE html>
+?<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +10,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -19,11 +19,11 @@
   <meta name="theme-color" content="#000000">
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=39">
-  <link rel="stylesheet" href="../css/apple.css?v=2">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
   <link rel="preload" href="/assets/js/vendor/supabase.min.js" as="script">
   <style>
-    /* One font everywhere — the native macOS / Apple UI face. */
+    /* One font everywhere � the native macOS / Apple UI face. */
     :root{
       --fc-font: var(--font-ui);
       --fc-ease:cubic-bezier(.32,.72,0,1);
@@ -246,14 +246,14 @@
       .ch-topics{padding:0 16px 12px;grid-template-columns:1fr}
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=11">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
 
   <!-- HEADER -->
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
 
@@ -269,7 +269,7 @@
 
     <!-- Subject header -->
     <div class="sub-header" id="sub-header" style="display:none">
-      <button class="study-back" id="study-back-chapters" style="width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border-radius:12px">←</button>
+      <button class="study-back" id="study-back-chapters" style="width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border-radius:12px">?</button>
       <div class="sub-icon" id="sub-icon"></div>
       <div class="sub-info">
         <h2 id="sub-title">Biology</h2>
@@ -292,7 +292,7 @@
     <!-- ===== STUDY VIEW (one card at a time) ===== -->
     <div class="study-view" id="study-view">
       <div class="study-top-bar">
-        <button class="study-back" id="study-back-btn" style="width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border-radius:12px">←</button>
+        <button class="study-back" id="study-back-btn" style="width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border-radius:12px">?</button>
         <div class="study-chapter-info">
           <div class="study-chapter-name" id="study-chapter-name"></div>
           <div class="study-chapter-meta" id="study-chapter-meta"></div>
@@ -312,7 +312,7 @@
       </div>
 
       <div class="card-area">
-        <button class="card-nav" id="prev-btn" disabled>‹</button>
+        <button class="card-nav" id="prev-btn" disabled>�</button>
         <div class="flip-container" id="flip-container">
           <div class="flip-card" id="flip-card">
             <div class="flip-face flip-front">
@@ -330,26 +330,26 @@
                 <div class="card-content-text" id="back-text"></div>
               </div>
               <div class="card-topic-label" id="card-topic-back"></div>
-              <div class="card-flip-hint" id="flip-hint-back">↻ Show question</div>
+              <div class="card-flip-hint" id="flip-hint-back">? Show question</div>
             </div>
           </div>
         </div>
-        <button class="card-nav" id="next-btn" disabled>›</button>
+        <button class="card-nav" id="next-btn" disabled>�</button>
       </div>
 
-      <button class="show-answer-btn" id="show-answer-btn">👁 Show Answer</button>
+      <button class="show-answer-btn" id="show-answer-btn">?? Show Answer</button>
 
       <div class="card-actions" id="card-actions">
-        <button class="action-btn btn-nailed" id="btn-nailed">✓ Nailed it <span class="action-count" id="nailed-count">0</span></button>
-        <button class="action-btn btn-review" id="btn-review">🔖 Review later <span class="action-count" id="review-count">0</span></button>
+        <button class="action-btn btn-nailed" id="btn-nailed">? Nailed it <span class="action-count" id="nailed-count">0</span></button>
+        <button class="action-btn btn-review" id="btn-review">?? Review later <span class="action-count" id="review-count">0</span></button>
       </div>
 
-      <div class="keyboard-hint">Press <b>Space</b> to flip · <b>←</b> <b>→</b> to navigate</div>
+      <div class="keyboard-hint">Press <b>Space</b> to flip � <b>?</b> <b>?</b> to navigate</div>
     </div>
 
     <!-- ===== COMPLETION VIEW ===== -->
     <div class="completion-view" id="completion-view">
-      <div class="completion-icon">🎉</div>
+      <div class="completion-icon">??</div>
       <div class="completion-title">All done!</div>
       <div class="completion-subtitle">You've gone through all the flashcards in this chapter.</div>
       <div class="completion-stats">
@@ -363,8 +363,8 @@
         </div>
       </div>
       <div class="completion-actions">
-        <button class="completion-btn primary" id="comp-restart">↻ Study again</button>
-        <button class="completion-btn secondary" id="comp-back">← Back to chapters</button>
+        <button class="completion-btn primary" id="comp-restart">? Study again</button>
+        <button class="completion-btn secondary" id="comp-back">? Back to chapters</button>
       </div>
 
       <div class="review-section" id="review-section" style="display:none">
@@ -387,7 +387,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -529,7 +529,7 @@
       window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
   </script>
-  <!-- Supabase / account-manager / app.js already loaded above — a second
+  <!-- Supabase / account-manager / app.js already loaded above � a second
        include re-ran initApp() and double-bound the mobile menu. -->
   <script>
     (function(){
@@ -640,7 +640,7 @@
         $('sub-header').style.display='flex';
         $('sub-icon').style.cssText='background:'+info.bg+';color:'+info.color;
         $('sub-icon').textContent=info.letter;
-        $('sub-title').textContent=classLabel?(classLabel+' — '+subjectName):subjectName;
+        $('sub-title').textContent=classLabel?(classLabel+' � '+subjectName):subjectName;
         $('sub-code').textContent=chCount+' chapter'+(chCount===1?'':'s');
         $('sub-code').style.color=info.color;
       }
@@ -680,7 +680,7 @@
               var nameStr=t.topic||'';
               html+='<div class="ch-topic">'
                 +(numStr?'<span class="tn" style="color:'+info.color+'">'+esc(numStr)+'</span>':'<span class="tn"></span>')
-                +'<span class="ch-topic-name">'+esc(nameStr||'—')+'</span>'
+                +'<span class="ch-topic-name">'+esc(nameStr||'�')+'</span>'
                 +'</div>';
             });
             html+='</div>';
@@ -720,7 +720,7 @@
 
         $('study-chapter-name').textContent=name;
         var info=SUBJECTS[subjectName]||{};
-        $('study-chapter-meta').textContent=(info.code?info.code+' · ':'')+study.cards.length+' cards';
+        $('study-chapter-meta').textContent=(info.code?info.code+' � ':'')+study.cards.length+' cards';
 
         renderCard();
       };
@@ -741,7 +741,7 @@
 
         var topicLabel='';
         if(c.topic_no) topicLabel+=c.topic_no;
-        if(c.topic) topicLabel+=(topicLabel?' — ':'')+c.topic;
+        if(c.topic) topicLabel+=(topicLabel?' � ':'')+c.topic;
         if(!topicLabel&&c.chapter&&c.chapter!=='Uncategorized') topicLabel=c.chapter;
         $('card-topic-front').textContent=topicLabel||study.currentChapter;
         $('card-topic-back').textContent=topicLabel||study.currentChapter;
@@ -858,7 +858,7 @@
           study.reviewList.forEach(function(c){
             var topicLabel='';
             if(c.topic_no) topicLabel+=c.topic_no;
-            if(c.topic) topicLabel+=(topicLabel?' — ':'')+c.topic;
+            if(c.topic) topicLabel+=(topicLabel?' � ':'')+c.topic;
             html+='<div class="review-card">'
               +'<div class="rc-front">'+esc(c.front)+'</div>'
               +'<div class="rc-back">'+esc(c.back)+'</div>'
@@ -915,7 +915,7 @@
         // Flashcards are part of the free library: no plan gate here.
         try{if(typeof Access!=='undefined')await Access.init()}catch(_){}
         $('fc-page').style.display='block';
-        document.title=subjectName+' Flashcards — Anteemonee';
+        document.title=subjectName+' Flashcards � Anteemonee';
 
         window.addEventListener('scroll',function(){
           var h=$('header');if(h) h.classList.toggle('scrolled',window.scrollY>20);
@@ -929,8 +929,7 @@
       }else{init()}
     })();
   </script>
-  <div data-site-footer></div>
-  <script src="../js/site-chrome.js?v=4"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 </body>
 </html>

@@ -1,0 +1,673 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = 'light'; /* Light mode only for now — dark is disabled sitewide. */
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <title>Past Papers - Anteemonee</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
+  <link rel="preload" href="/assets/js/vendor/supabase.min.js" as="script">
+  <style>
+    :root{
+      --fc-font: var(--font-ui);
+      --fc-ease:cubic-bezier(.32,.72,0,1);
+      --fc-tint:var(--accent-soft);
+    }
+    html{scroll-behavior:smooth;background:var(--bg)}
+    body{overflow-x:hidden;overflow-y:auto;background:var(--bg)!important}
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
+
+    .fc-page{max-width:860px;margin:0 auto;padding:112px 24px 90px;min-height:100vh}
+
+    .fc-loading{display:flex;flex-direction:column;gap:12px}
+    .fc-skeleton{height:96px;border-radius:18px;background:linear-gradient(90deg,var(--surface) 25%,var(--bg-card) 50%,var(--surface) 75%);background-size:200% 100%;animation:fcShimmer 1.2s infinite}
+    @keyframes fcShimmer{to{background-position:-200% 0}}
+
+    .fc-empty{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+    .fc-empty h3{font-size:17px;color:var(--text);margin-bottom:8px}
+
+    .fc-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--liquid-bg-strong);-webkit-backdrop-filter:var(--liquid-blur);backdrop-filter:var(--liquid-blur);border:1px solid var(--liquid-border);color:var(--text);padding:13px 22px;border-radius:999px;font-size:14px;font-weight:600;z-index:3000;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;box-shadow:var(--liquid-inset),var(--liquid-shadow);max-width:calc(100vw - 32px);text-align:center}
+    .fc-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    .sub-header{display:flex;align-items:center;gap:13px;margin-bottom:18px}
+    .sub-header .study-back{
+      width:38px;height:38px;border-radius:50%;padding:0;font-size:16px;
+      display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+      background:var(--liquid-bg-soft);border:1px solid var(--liquid-border-soft);
+      color:var(--text-secondary);cursor:pointer;
+      transition:transform .25s var(--fc-ease),background-color .25s,color .25s,border-color .25s;
+    }
+    .sub-header .study-back:hover{background:var(--liquid-bg);color:var(--text);transform:translateX(-2px);border-color:var(--liquid-border)}
+    .sub-header .study-back:active{transform:translateX(-2px) scale(.94)}
+    .sub-icon{
+      width:46px;height:46px;border-radius:14px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--fc-font);font-weight:700;font-size:13px;letter-spacing:-.02em;
+      background:var(--accent-soft);color:var(--text);
+    }
+    .sub-info{flex:1;min-width:0}
+    .sub-info h2{
+      font-family:var(--fc-font);font-size:1.4rem;font-weight:700;letter-spacing:-.022em;
+      margin:0 0 3px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .sub-info .sub-code{
+      font-family:var(--fc-font);font-size:12.5px;font-weight:600;letter-spacing:-.01em;
+      color:var(--text-muted);opacity:1;
+    }
+
+    /* ===== Class chips ===== */
+    .chips-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+    .pp-chip{padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--text-secondary);background:var(--liquid-bg-soft);border:1px solid var(--liquid-border-soft);box-shadow:var(--liquid-inset);cursor:pointer;transition:all .15s ease;font-family:inherit}
+    .pp-chip:hover{color:var(--text);border-color:var(--liquid-border)}
+    .pp-chip.active{color:var(--nav-active-text);background:var(--nav-active-bg);border-color:var(--liquid-border);box-shadow:var(--liquid-inset),0 2px 10px rgba(0,0,0,0.2)}
+
+    /* ===== Year sections + paper rows ===== */
+    .year-section{margin-bottom:26px}
+    .year-label{
+      font-family:var(--fc-font);font-size:12px;font-weight:750;letter-spacing:.09em;
+      color:var(--text-muted);margin:0 0 10px;
+    }
+    .paper-list{display:flex;flex-direction:column;gap:10px}
+
+    .paper-row{
+      background:var(--liquid-bg-soft);border:1px solid var(--liquid-border-soft);
+      border-radius:16px;overflow:hidden;
+      will-change:transform;
+      display:flex;align-items:center;gap:13px;width:100%;
+      padding:13px 14px;margin:0;
+      color:inherit;font-family:var(--fc-font);text-align:left;cursor:pointer;
+      transition:transform .3s var(--fc-ease),border-color .3s var(--fc-ease),box-shadow .3s var(--fc-ease),background-color .25s var(--fc-ease);
+    }
+    .paper-row:hover{transform:translateY(-2px);border-color:var(--liquid-border);box-shadow:0 10px 34px rgba(0,0,0,.24)}
+    .paper-row:active{background:var(--liquid-bg)}
+    .paper-row:focus-visible{outline:2px solid var(--text);outline-offset:-3px}
+
+    .paper-class{
+      width:34px;height:34px;border-radius:11px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:11.5px;font-weight:750;letter-spacing:.01em;
+      background:var(--accent-soft);color:var(--text);
+    }
+    .paper-title{
+      flex:1;min-width:0;font-size:14.5px;font-weight:650;letter-spacing:-.015em;color:var(--text);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .paper-badge{
+      display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
+      padding:4px 10px;border-radius:999px;
+      background:var(--accent-soft);border:none;color:var(--text-secondary);
+      font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap;
+    }
+    .paper-view{
+      display:inline-flex;align-items:center;gap:7px;flex-shrink:0;
+      padding:8px 14px;border-radius:999px;border:none;
+      background:var(--accent);color:var(--on-accent);
+      font-family:var(--fc-font);font-size:12.5px;font-weight:650;letter-spacing:-.01em;white-space:nowrap;
+      box-shadow:0 1px 2px rgba(0,0,0,.28);
+      transition:transform .22s var(--fc-ease),box-shadow .22s var(--fc-ease);
+    }
+    .paper-view svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    .paper-row:hover .paper-view{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.3)}
+    .paper-row:active .paper-view{transform:translateY(0) scale(.97);box-shadow:0 1px 2px rgba(0,0,0,.28)}
+
+    .chips-note{font-size:13px;color:var(--text-secondary);padding:14px 2px 0}
+
+    @media(max-width:560px){
+      .paper-title{font-size:13.5px}
+      .paper-view{padding:7px 11px;font-size:12px}
+      .paper-badge{display:none}
+    }
+
+    @media(max-width:640px){
+      .fc-page{padding:100px 16px 70px}
+    }
+
+    /* PDF shower (pdf.js — same as the old past papers page) */
+    #pdf-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(7,7,7,.72);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);align-items:center;justify-content:center;padding:18px}
+    .pdf-shell{position:relative;width:min(1000px,100%);height:min(88vh,900px);background:var(--bg-elevated);border:1px solid rgba(255,255,255,.12);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+    .pdf-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent)}
+    .pdf-bar-left{display:flex;align-items:center;gap:10px;min-width:0}
+    .pdf-bar-title{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pdf-bar-sub{font-size:11px;color:var(--text-muted)}
+    .pdf-icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .pdf-icon-btn:hover{background:rgba(255,255,255,.10)}
+    .pdf-stage{flex:1;display:flex;position:relative;background:#000000;overflow:hidden;justify-content:center}
+    .pdf-canvas-wrap{position:relative;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:18px;background:radial-gradient(900px 500px at 50% 0%, var(--accent-soft), transparent 60%), #000000}
+    #pdf-canvas{max-width:100%;background:#fff;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+    .pdf-loader{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(0,0,0,.92);color:var(--text);z-index:2}
+    .pdf-loader.show{display:flex}
+    .pdf-spinner{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.16);border-top-color:var(--accent);animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .pdf-pagebar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);justify-content:center;flex-wrap:wrap}
+    .pdf-pagebar input{width:64px;text-align:center;padding:7px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--text);font:inherit;font-size:13px;outline:none}
+    .pdf-shell:fullscreen{width:100vw;height:100vh;max-width:100vw;max-height:100vh;border-radius:0;border:none}
+    .pdf-shell:fullscreen .pdf-canvas-wrap{padding:0;background:#000}
+    .pdf-shell:fullscreen #pdf-canvas{border-radius:0}
+  </style>
+  <link rel="stylesheet" href="../css/header.css?v=12">
+  <script src="../js/header-notifications.js?v=3" defer></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div data-site-header></div>
+  <script src="../js/site-chrome.js?v=9"></script>
+
+  <!-- NOT AUTH -->
+  <div id="pp-not-auth" style="display:none;max-width:560px;margin:0 auto;padding:160px 24px 80px;text-align:center">
+    <h2 style="margin-bottom:12px">Sign in required</h2>
+    <p style="color:var(--text-secondary);margin-bottom:24px">Please sign in to view past papers.</p>
+    <a href="../pages/login.html" class="btn-primary" style="text-decoration:none">Sign In</a>
+  </div>
+
+  <!-- PAGE -->
+  <main class="fc-page" id="pp-page" style="display:none">
+
+    <!-- Board header -->
+    <div class="sub-header" id="sub-header" style="display:none">
+      <button class="study-back" id="back-btn" style="width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border-radius:12px" aria-label="Back to boards">←</button>
+      <div class="sub-icon" id="sub-icon"></div>
+      <div class="sub-info">
+        <h2 id="sub-title">Board</h2>
+        <span class="sub-code" id="sub-code"></span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="fc-loading" id="pp-loading">
+      <div class="fc-skeleton"></div>
+      <div class="fc-skeleton"></div>
+      <div class="fc-skeleton"></div>
+    </div>
+
+    <!-- ===== PAPERS VIEW ===== -->
+    <div id="papers-view" style="display:none">
+      <div class="chips-row" id="chips-row"></div>
+      <div id="year-sections"></div>
+      <div class="chips-note" id="chips-note" style="display:none"></div>
+    </div>
+
+    <!-- Empty -->
+    <div class="fc-empty" id="pp-empty" style="display:none">
+      <h3>No past papers available</h3>
+      <p id="pp-empty-text">There are no papers for this board and subject yet.</p>
+    </div>
+  </main>
+
+  <!-- PDF modal -->
+  <div id="pdf-modal">
+    <div class="pdf-shell" role="dialog" aria-modal="true" aria-label="PDF viewer">
+      <div class="pdf-bar">
+        <div class="pdf-bar-left" style="min-width:0">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">◐</div>
+          <div style="min-width:0">
+            <div id="pdf-title" class="pdf-bar-title">Past Paper</div>
+            <div id="pdf-subtitle" class="pdf-bar-sub">PDF</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="pdf-icon-btn" id="pdf-open-tab" title="Open in new tab">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <button class="pdf-icon-btn" id="pdf-download" title="Download">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">−</button>
+          <span id="pdf-zoom-label" style="font-size:12px;color:var(--text-secondary);min-width:44px;text-align:center">100%</span>
+          <button class="pdf-icon-btn" id="pdf-zoom-in" title="Zoom in">+</button>
+          <button class="pdf-icon-btn" id="pdf-fs" title="Fullscreen" aria-label="Fullscreen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+          <button class="pdf-icon-btn" onclick="closePdf()" title="Close">✕</button>
+        </div>
+      </div>
+      <div id="pdf-stage" class="pdf-stage">
+        <div class="pdf-canvas-wrap" id="pdf-scroll">
+          <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF…</div></div>
+          <canvas id="pdf-canvas"></canvas>
+        </div>
+      </div>
+      <div class="pdf-pagebar">
+        <button class="pdf-icon-btn" id="pdf-prev" title="Previous page">‹</button>
+        <span style="font-size:12px;color:var(--text-secondary)">Page</span>
+        <input id="pdf-page-input" type="number" min="1" value="1">
+        <span id="pdf-page-count" style="font-size:12px;color:var(--text-secondary)">/ —</span>
+        <button class="pdf-icon-btn" id="pdf-next" title="Next page">›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fc-toast" id="pp-toast" role="status"></div>
+
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="/assets/js/vendor/pdf.min.js"></script>
+  <script>if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='/assets/js/vendor/pdf.worker.min.js'; }</script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=38"></script>
+  <script src="../js/login-modal.js?v=6"></script>
+  <script src="../js/forgot-modal.js?v=2"></script>
+  <script src="../js/signup-modal.js?v=4"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var SUPA_URL='https://zkuytvjeqkpexcbyoyhz.supabase.co';
+
+      var subjectName='', boardId='', boardName='', papers=[], classes=[];
+      var classFilter='';   // '', '11', '12'
+
+      function $(id){return document.getElementById(id)}
+      function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+      function uid(){try{if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id)return currentUser.id}catch(_){}return null}
+      function toast(msg){var el=$('pp-toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show')},2600)}
+
+      function usable(p){
+        var u=String(p.file_path||p.source_url||'').trim();
+        if(!u) return false;
+        if(!/^https?:\/\//i.test(u)) return /past-papers-pdf/i.test(u);
+        return u.indexOf('past-papers-pdf')!==-1||u.indexOf('res.cloudinary.com')!==-1||u.indexOf('/raw/upload/')!==-1;
+      }
+      function boardInitials(name){
+        var m=String(name||'').match(/BISE\s+([A-Za-z]+)/i);
+        var word=m?m[1]:String(name||'').replace(/FBISE/gi,'Federal').split(' ')[0];
+        word=String(word||'').replace(/[^A-Za-z]/g,'');
+        if(!word) return '';
+        return word.slice(0,2).toUpperCase();
+      }
+      function fileUrl(p){
+        var u=String(p.file_path||p.source_url||'').trim();
+        if(!u) return '';
+        if(/^https?:\/\//i.test(u)) return u;
+        if(/^past-papers-pdf\//i.test(u)) return SUPA_URL.replace(/\/$/,'') + '/storage/v1/object/public/' + u;
+        return '';
+      }
+      function className(id){
+        var c=classes.find(function(x){return String(x.id)===String(id)});
+        if(!c) return '';
+        if(c.value===11) return '11th';
+        if(c.value===12) return '12th';
+        return c.label||'';
+      }
+      function drivePreview(url){
+        // Google Drive links open in Drive's preview UI; everything else stays raw
+        try{
+          var m=null;
+          if(url.indexOf('drive.google.com/file/d/')!==-1) m=url.match(/\/file\/d\/([^\/]+)/);
+          else if(url.indexOf('drive.google.com/uc?id=')!==-1) m=url.match(/id=([^&]+)/);
+          else if(url.indexOf('drive.google.com/open?id=')!==-1) m=url.match(/id=([^&]+)/);
+          else if(url.indexOf('drive.usercontent.google.com')!==-1) m=url.match(/id=([^&]+)/);
+          if(m&&m[1]) return 'https://drive.google.com/file/d/'+m[1]+'/preview';
+          if(url.indexOf('drive.usercontent.google.com')!==-1&&url.indexOf('export=download')!==-1) return url.replace('export=download','export=view');
+        }catch(_){}
+        return url;
+      }
+
+      /* ====== SUB HEADER ====== */
+      function renderSubHeader(){
+        $('sub-header').style.display='flex';
+        $('sub-icon').textContent=boardInitials(boardName)||'PP';
+        $('sub-title').textContent=boardName||'Past Papers';
+        var n=papers.length;
+        $('sub-code').textContent=subjectName+' · '+n+' paper'+(n===1?'':'s');
+      }
+
+      /* ====== CLASS CHIPS ====== */
+      function renderChips(){
+        var clsIn=papers.map(function(p){return className(p.paper.class_level_id)}).filter(Boolean);
+        var has11=clsIn.indexOf('11th')!==-1;
+        var has12=clsIn.indexOf('12th')!==-1;
+        var chips=[{v:'',t:'All classes'}];
+        if(has11) chips.push({v:'11',t:'11th'});
+        if(has12) chips.push({v:'12',t:'12th'});
+        var html=chips.map(function(c){
+          return '<button type="button" class="pp-chip'+(classFilter===c.v?' active':'')+'" data-cls="'+c.v+'">'+esc(c.t)+'</button>';
+        }).join('');
+        $('chips-row').innerHTML=html;
+        $('chips-row').querySelectorAll('[data-cls]').forEach(function(el){
+          el.addEventListener('click',function(){
+            classFilter=el.getAttribute('data-cls');
+            renderChips();
+            renderYears();
+          });
+        });
+      }
+
+      /* ====== YEAR SECTIONS ====== */
+      var EYE_SVG='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+      function renderYears(){
+        var filtered=papers.filter(function(p){
+          if(!classFilter) return true;
+          return className(p.paper.class_level_id)===(classFilter==='11'?'11th':'12th');
+        });
+        var secs=$('year-sections');
+        if(!filtered.length){
+          secs.innerHTML='';
+          var note=$('chips-note');
+          note.style.display='block';
+          note.textContent='No '+(classFilter==='12'?'2nd Year':'1st Year')+' papers on this board yet.';
+          return;
+        }
+        $('chips-note').style.display='none';
+
+        var byYear={};
+        filtered.forEach(function(p){
+          var y=String(p.paper.year||'Unknown');
+          if(!byYear[y]) byYear[y]=[];
+          byYear[y].push(p.paper);
+        });
+        var years=Object.keys(byYear).sort(function(a,b){
+          var na=parseFloat(a),nb=parseFloat(b);
+          if(isNaN(na)||isNaN(nb)) return String(a)<String(b)?1:-1;
+          return nb-na;
+        });
+
+        var html='';
+        years.forEach(function(y){
+          var rows=byYear[y].sort(function(a,b){
+            var ca=(a.class_level_id||0),cb=(b.class_level_id||0);
+            return ca-cb;
+          });
+          html+='<section class="year-section">'
+            +'<div class="year-label">'+(y==='Unknown'?'':'PAPERS · ')+esc(y)+'</div>'
+            +'<div class="paper-list">'
+            +rows.map(function(x){
+              var cn=className(x.class_level_id);
+              var title=String(x.title||'').trim()||(subjectName+(cn?' '+cn:'')+(boardName?' '+boardName:'')+(x.year?' '+x.year:''));
+              var url=fileUrl(x);
+              var badge=String(x.paper_type||'annual');
+              var meta=[];
+              if(cn) meta.push(cn);
+              if(badge) meta.push(badge.charAt(0).toUpperCase()+badge.slice(1));
+              var rowClass='paper-row'+(url?'':' is-no-file');
+              return '<button type="button" class="'+rowClass+'" data-title="'+esc(title)+'" data-url="'+esc(drivePreview(url))+'"'+(url?'':' disabled')+' style="'+(url?'':'opacity:.55;cursor:default')+'">'
+                +'<span class="paper-class">'+esc(cn?cn.replace('th',''):'—')+'</span>'
+                +'<span class="paper-title">'+esc(title)+'</span>'
+                +'<span class="paper-badge">'+esc(meta.join(' · '))+'</span>'
+                +'<span class="paper-view">'+EYE_SVG+'View</span>'
+                +'</button>';
+            }).join('')
+            +'</div></section>';
+        });
+        secs.innerHTML=html;
+      }
+
+      // Row click → open the PDF
+      document.addEventListener('click',function(e){
+        var row=e.target&&e.target.closest?e.target.closest('.paper-row[data-url]'):null;
+        if(!row) return;
+        var url=row.getAttribute('data-url')||'';
+        var title=row.getAttribute('data-title')||('Past Paper');
+        if(!url){ toast('No file for this paper yet'); return; }
+        openPdf(url,title);
+      });
+
+      $('back-btn').addEventListener('click',function(){
+        window.location.href='../past-papers-subject/?subject='+encodeURIComponent(subjectName);
+      });
+
+      /* ====== LOAD ====== */
+
+      async function loadPapers(){
+        var sRes=await withTimeout(db.from('subjects').select('id,name'),15000,'load subjects');
+        var subjectIds=(sRes.data||[]).filter(function(s){return s.name===subjectName}).map(function(s){return s.id});
+        var cRes=await withTimeout(db.from('class_levels').select('id,label,value').order('id'),10000,'load classes');
+        if(!cRes.error) classes=cRes.data||[];
+        var query=db.from('past_papers').select('*').eq('status','published').eq('board_id',boardId)
+          .order('year',{ascending:false}).order('created_at',{ascending:false});
+        if(subjectIds.length) query=query.in('subject_id',subjectIds); else query=query.limit(0);
+        var res=await withTimeout(query.limit(400),20000,'load papers');
+        if(res.error) throw res.error;
+        papers=(res.data||[]).filter(usable).map(function(p){return {paper:p}});
+
+        $('pp-loading').style.display='none';
+        if(!papers.length){showEmpty();return}
+        renderSubHeader();
+        renderChips();
+        renderYears();
+        $('papers-view').style.display='block';
+      }
+
+      function showEmpty(){
+        $('pp-loading').style.display='none';
+        $('sub-header').style.display='none';
+        $('papers-view').style.display='none';
+        $('pp-empty').style.display='block';
+      }
+
+      /* ====== INIT ====== */
+
+      async function init(){
+        var q=new URLSearchParams(window.location.search);
+        subjectName=q.get('subject')||'';
+        boardId=q.get('board')||'';
+        boardName=q.get('boardname')||'';
+        if(!subjectName||!boardId){window.location.href='../past-papers/';return}
+
+        try{await checkAuth()}catch(_){}
+        if(!uid()){$('pp-not-auth').style.display='block';return}
+        try{if(typeof Access!=='undefined')await Access.init()}catch(_){}
+        $('pp-page').style.display='block';
+        document.title=(boardName?boardName+' ':'')+subjectName+' Past Papers — Anteemonee';
+
+        // Board name for the header: use the URL hint, else fetch this board
+        if(!boardName){
+          try{
+            var bRes=await withTimeout(db.from('boards').select('id,name,region').eq('id',boardId).maybeSingle(),10000,'load board');
+            if(bRes.data&&bRes.data.name){ boardName=bRes.data.name; document.title=(boardName?boardName+' ':'')+subjectName+' Past Papers — Anteemonee'; }
+          }catch(_){}
+        }
+
+        window.addEventListener('scroll',function(){
+          var h=$('header');if(h) h.classList.toggle('scrolled',window.scrollY>20);
+        },{passive:true});
+
+        loadPapers().catch(function(err){
+          console.warn('[PastPapers] load failed:',err);
+          showEmpty();
+          $('pp-empty-text').textContent='Could not load papers. Please refresh the page.';
+          toast('Could not load papers');
+        });
+      }
+
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',function(){init()});
+      }else{init()}
+
+      /* ====== PDF SHOWER (pdf.js) ====== */
+      var pdfDoc=null, pdfPageNum=1, pdfScale=1.0, pdfUrl='', pdfTitle='';
+      var canvas=document.getElementById('pdf-canvas');
+      var ctx=canvas?canvas.getContext('2d'):null;
+      var loaderEl=document.getElementById('pdf-loader');
+      function showLoader(v){ if(loaderEl) loaderEl.classList.toggle('show', !!v); }
+      async function renderPage(num){
+        if(!pdfDoc || !ctx) return;
+        pdfPageNum=Math.max(1, Math.min(num, pdfDoc.numPages));
+        var page=await pdfDoc.getPage(pdfPageNum);
+        var viewport=page.getViewport({scale: pdfScale});
+        var dpr=window.devicePixelRatio||1;
+        canvas.width=Math.floor(viewport.width*dpr);
+        canvas.height=Math.floor(viewport.height*dpr);
+        canvas.style.width=viewport.width+'px';
+        canvas.style.height=viewport.height+'px';
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        await page.render({canvasContext:ctx, viewport}).promise;
+        var inp=document.getElementById('pdf-page-input'); if(inp) inp.value=pdfPageNum;
+        var cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ '+pdfDoc.numPages;
+      }
+      window.openPdf=async function(url,title){
+        var m=document.getElementById('pdf-modal'), tt=document.getElementById('pdf-title'), sub=document.getElementById('pdf-subtitle');
+        if(!m) return;
+        pdfUrl=url||''; pdfTitle=title||'Past Paper';
+        if(tt) tt.textContent=pdfTitle;
+        if(sub) sub.textContent='PDF';
+        window.__pdfSourceUrl=pdfUrl;
+        if(!pdfUrl || !pdfUrl.startsWith('http')){ m.style.display='flex'; document.body.style.overflow='hidden'; return; }
+        m.style.display='flex'; document.body.style.overflow='hidden';
+        showLoader(true);
+        try{
+          if(!window.pdfjsLib) throw new Error('PDF engine not loaded');
+          pdfDoc=await pdfjsLib.getDocument({url: pdfUrl}).promise;
+          pdfPageNum=1; pdfScale=1.0;
+          var lbl=document.getElementById('pdf-zoom-label'); if(lbl) lbl.textContent=Math.round(pdfScale*100)+'%';
+          await renderPage(1);
+        }catch(e){
+          console.error(e);
+          var c=document.getElementById('pdf-canvas'); if(c && ctx){ ctx.clearRect(0,0,c.width,c.height); }
+        }finally{ showLoader(false); }
+      };
+      window.closePdf=function(){
+        var m=document.getElementById('pdf-modal'); if(m) m.style.display='none';
+        document.body.style.overflow=''; pdfDoc=null; showLoader(false);
+      };
+      var pm=document.getElementById('pdf-modal'); if(pm) pm.addEventListener('click',function(e){ if(e.target===pm) closePdf(); });
+      document.addEventListener('keydown',function(e){ if(e.key==='Escape') closePdf(); if(e.key==='ArrowRight') renderPage(pdfPageNum+1); if(e.key==='ArrowLeft') renderPage(pdfPageNum-1); });
+      ['pdf-prev','pdf-next','pdf-zoom-in','pdf-zoom-out'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(!el) return;
+        el.addEventListener('click', function(){
+          if(!pdfDoc) return;
+          if(id==='pdf-prev') renderPage(pdfPageNum-1);
+          if(id==='pdf-next') renderPage(pdfPageNum+1);
+          if(id==='pdf-zoom-in'){ pdfScale=Math.min(2.4, pdfScale+0.15); var l=document.getElementById('pdf-zoom-label'); if(l) l.textContent=Math.round(pdfScale*100)+'%'; renderPage(pdfPageNum); }
+          if(id==='pdf-zoom-out'){ pdfScale=Math.max(0.55, pdfScale-0.15); var l=document.getElementById('pdf-zoom-label'); if(l) l.textContent=Math.round(pdfScale*100)+'%'; renderPage(pdfPageNum); }
+        });
+      });
+      var pageIn=document.getElementById('pdf-page-input'); if(pageIn) pageIn.addEventListener('change', function(){ var v=parseInt(pageIn.value,10); if(Number.isFinite(v)) renderPage(v); });
+      var openTab=document.getElementById('pdf-open-tab'); if(openTab) openTab.addEventListener('click', function(){ if(window.__pdfSourceUrl) window.open(window.__pdfSourceUrl,'_blank','noopener'); });
+      var dlBtn=document.getElementById('pdf-download'); if(dlBtn) dlBtn.addEventListener('click', function(){ if(window.__pdfSourceUrl) window.open(window.__pdfSourceUrl,'_blank','noopener'); });
+      var fsBtn=document.getElementById('pdf-fs'); if(fsBtn) fsBtn.addEventListener('click', function(){
+        var shell=document.querySelector('.pdf-shell');
+        if(!shell) return;
+        if(!document.fullscreenElement){ shell.requestFullscreen().catch(function(){}); }
+        else document.exitFullscreen().catch(function(){});
+      });
+      document.addEventListener('fullscreenchange', function(){
+        var shell=document.querySelector('.pdf-shell');
+        if(document.fullscreenElement===shell){ shell.style.borderRadius='0'; document.body.style.overflow='hidden'; }
+        else { if(shell) shell.style.borderRadius=''; }
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      function renderLandingAuth() {
+        try {
+          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+          var loggedOut = document.getElementById('landing-auth');
+          var loggedIn = document.getElementById('landing-auth-in');
+          if (!loggedOut || !loggedIn) return;
+          if (user) {
+            loggedOut.style.display = 'none';
+            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
+            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
+            var dropdownHtml =
+              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+                  '<div class="avatar-wrapper">' +
+                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+                  '</div>' +
+                '</button>' +
+                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+                  '<div class="dropdown-header">' +
+                    '<div class="dropdown-avatar">' +
+                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+                    '</div>' +
+                    '<div class="dropdown-info">' +
+                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<a href="../account/" class="dropdown-item">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                    'Account' +
+                  '</a>' +
+                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                    'Settings' +
+                  '</a>' +
+                  '<div class="dropdown-divider"></div>' +
+                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                    'Logout' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            loggedIn.innerHTML = dropdownHtml;
+            loggedIn.style.display = 'flex';
+            setupLandingProfileDropdown();
+          } else {
+            loggedIn.style.display = 'none';
+            loggedOut.style.display = 'flex';
+          }
+        } catch (_) {}
+      }
+      function setupLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        var container = document.getElementById('landing-profile-dropdown');
+        if (!dropdown || !container) return;
+        var hideTimer = null;
+        function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
+        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+        container.addEventListener('mouseenter', cancelHide);
+        container.addEventListener('mouseleave', scheduleHide);
+        dropdown.addEventListener('mouseenter', cancelHide);
+        dropdown.addEventListener('mouseleave', scheduleHide);
+      }
+      if (!window._landingDropdownClickHandler) {
+        document.addEventListener('click', function(e) {
+          var container = document.getElementById('landing-profile-dropdown');
+          var dropdown = document.getElementById('landing-profile-dropdown-menu');
+          if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
+        });
+        window._landingDropdownClickHandler = true;
+      }
+      function toggleLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.toggle('open');
+      }
+      function closeLandingProfileDropdown() {
+        var dropdown = document.getElementById('landing-profile-dropdown-menu');
+        if (dropdown) dropdown.classList.remove('open');
+      }
+      function handleLandingLogout() {
+        try {
+          if (typeof handleLogout === 'function') handleLogout();
+          else window.location.href = '../index.html';
+        } catch (_) { window.location.href = '../index.html'; }
+      }
+      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+      window.handleLandingLogout = handleLandingLogout;
+      renderLandingAuth();
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        renderLandingAuth();
+        if (tries > 40) clearInterval(timer);
+        if (window.__authReady === true) clearInterval(timer);
+      }, 300);
+      var hdr = document.getElementById('site-header');
+      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
+    })();
+  </script>
+  <script src="../js/site-chrome.js?v=9"></script>
+
+</body>
+</html>
