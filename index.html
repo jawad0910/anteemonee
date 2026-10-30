@@ -8,7 +8,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now — dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -32,7 +32,7 @@
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
-    /* ── Plan buttons ────────────────────────────────────────────────────────
+    /* -- Plan buttons --------------------------------------------------------
        One shared control for a consistent look. Each variant differs
        in surface only; the motion, press and focus ring are identical. */
     .plan-btn {
@@ -127,13 +127,15 @@
     .section { padding: 70px 24px; }
     .section-inner { max-width: 1280px; margin: 0 auto; }
   </style>
-  <link rel="stylesheet" href="css/header.css?v=11">
+  <link rel="stylesheet" href="css/header.css?v=12">
   <script src="js/header-notifications.js?v=3" defer></script>
   <link rel="stylesheet" href="css/home.css?v=5">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/sj-theme.css?v=7">
 </head>
-<body>
+<body data-header-gap="-28">
   <div data-site-header></div>
-  <script src="./js/site-chrome.js?v=5"></script>
+  <script src="./js/site-chrome.js?v=9"></script>
 
 
   <main>
@@ -141,29 +143,43 @@
     <section class="hero">
       <div class="hero-inner">
         <div class="hero-text">
-          <h1>Your board prep, finally sorted.</h1>
-          <p class="hero-desc">Notes, past papers, AI tutor, flashcards & test builder. Everything you need in one place.</p>
+          <p class="sj-eyebrow">FSc &amp; Matric — Student OS</p>
+          <h1>Your board prep, <span class="sj-mark">finally sorted.</span></h1>
+          <p class="hero-desc">Notes, past papers, AI tutor, flashcards &amp; test builder. Everything you need in one place.</p>
+          <span class="sj-hand-note">teaches from your own textbook!</span>
           <div class="hero-actions">
-            <a href="pages/signup.html" class="btn-primary" id="hero-primary-cta">Start free →</a>
+            <a href="pages/signup.html" class="btn-primary" id="hero-primary-cta">Start free</a>
             <a href="past-papers/" class="btn-secondary" id="hero-secondary-cta">Explore past papers</a>
+          </div>
+          <div class="sj-proof">
+            <div><b>BISE</b>all Pakistan boards covered, yearly &amp; topical</div>
+            <div><b>24/7</b>AI tutor that reads the book with you</div>
+            <div><b>Free</b>start today, upgrade only when it helps</div>
+          </div>
+          <div class="sj-chips">
+            <a class="sj-chip" href="ebooks/">eBooks &amp; notes</a>
+            <a class="sj-chip" href="past-papers/">Past papers</a>
+            <a class="sj-chip" href="ai-chat/">AI tutor</a>
+            <a class="sj-chip" href="flashcards/">Flashcards</a>
+            <a class="sj-chip" href="ai-test-builder/">Test builder</a>
           </div>
         </div>
         <div class="landing-hero-visual">
           <div class="bri-card" id="bri-card" aria-label="Interactive practice">
             <div class="bri-subjs" id="bri-subjs" role="tablist" aria-label="Subjects">
-              <button data-i="0" class="on" role="tab">⚛ Phy</button>
-              <button data-i="1" role="tab">🧪 Chem</button>
-              <button data-i="2" role="tab">🧬 Bio</button>
-              <button data-i="3" role="tab">💻 CS</button>
-              <button data-i="4" role="tab">📐 Math</button>
+              <button data-i="0" class="on" role="tab">Phy</button>
+              <button data-i="1" role="tab">Chem</button>
+              <button data-i="2" role="tab">Bio</button>
+              <button data-i="3" role="tab">CS</button>
+              <button data-i="4" role="tab">Math</button>
             </div>
 
-            <!-- SLIDE 0: Physics — F = ma, BISE numerical -->
+            <!-- SLIDE 0: Physics · F = ma, BISE numerical -->
             <div class="bri-slide is-active" data-slide="0">
               <p class="bri-q">A 2 kg cart is pushed with F = 10 N. Find the acceleration.</p>
               <div class="bri-viz bri-phy">
                 <div class="bri-track">
-                  <div class="bri-cart" id="bri-cart">🛒</div>
+                  <div class="bri-cart" id="bri-cart" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
                   <div class="bri-force-arrow" id="bri-force-arrow"><span>F</span></div>
                 </div>
                 <div class="bri-phy-numbers"><span>F = <b id="bri-f-val">10</b> N</span><span>m = 2 kg</span><span>a = <b id="bri-a-val">5.0</b> m/s²</span></div>
@@ -175,20 +191,20 @@
               <p class="bri-status" id="bri-phy-feedback">a = 5.0 m/s²</p>
             </div>
 
-            <!-- SLIDE 1: Chemistry — stoichiometry -->
+            <!-- SLIDE 1: Chemistry · stoichiometry -->
             <div class="bri-slide" data-slide="1" hidden>
-              <p class="bri-q">Balance the equation: <b><span id="bri-h2-coef">2</span>H₂ + O₂ → 2H₂O</b></p>
+              <p class="bri-q">Balance the equation: <b><span id="bri-h2-coef">2</span>H2 + O2 → 2H2O</b></p>
               <div class="bri-viz bri-chem">
                 <div class="bri-mols" id="bri-mols"></div>
               </div>
               <div class="bri-slider-row">
                 <input type="range" id="bri-chem-slider" min="1" max="4" value="2" step="1" aria-label="Coefficient of H2">
-                <span class="bri-val"><span id="bri-chem-val">2</span>H₂</span>
+                <span class="bri-val"><span id="bri-chem-val">2</span>H2</span>
               </div>
-              <p class="bri-status" id="bri-chem-feedback">Balanced · 2H₂</p>
+              <p class="bri-status" id="bri-chem-feedback">Balanced → 2H2</p>
             </div>
 
-            <!-- SLIDE 2: Biology — Punnett square -->
+            <!-- SLIDE 2: Biology · Punnett square -->
             <div class="bri-slide" data-slide="2" hidden>
               <p class="bri-q">In a <b>Tt × tt</b> cross, what percentage of offspring are tall?</p>
               <div class="bri-viz bri-bio">
@@ -205,9 +221,9 @@
               <p class="bri-status" id="bri-bio-feedback">50% tall</p>
             </div>
 
-            <!-- SLIDE 3: CS — binary -->
+            <!-- SLIDE 3: CS · binary -->
             <div class="bri-slide" data-slide="3" hidden>
-              <p class="bri-q">What is <b>1011₂</b> in decimal?</p>
+              <p class="bri-q">What is <b>10112</b> in decimal?</p>
               <div class="bri-viz bri-cs">
                 <div class="bri-bits" id="bri-bits"></div>
               </div>
@@ -215,10 +231,10 @@
                 <input type="range" id="bri-cs-slider" min="0" max="15" value="11" step="1" aria-label="Decimal value">
                 <span class="bri-val"><span id="bri-cs-val">11</span></span>
               </div>
-              <p class="bri-status" id="bri-cs-feedback">1011₂ = 11</p>
+              <p class="bri-status" id="bri-cs-feedback">10112 = 11</p>
             </div>
 
-            <!-- SLIDE 4: Maths — geometry MCQ favourite -->
+            <!-- SLIDE 4: Maths · geometry MCQ favourite -->
             <div class="bri-slide" data-slide="4" hidden>
               <p class="bri-q">Exterior angles of a polygon always add to 360°. Find the missing angle.</p>
               <div class="bri-viz bri-geo">
@@ -256,7 +272,11 @@
               <p class="bri-status" id="bri-math-feedback">Missing angle = 50°</p>
             </div>
 
-            <a class="bri-foot" id="bri-foot" href="ai-chat/?subject=Physics"><span id="bri-foot-text">Ask AI Tutor →</span></a>
+            <a class="bri-foot" id="bri-foot" href="ai-chat/?subject=Physics" aria-label="Ask AI Tutor">
+              <svg class="bri-foot-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/><path d="M18.5 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg>
+              <span id="bri-foot-text">Ask AI Tutor</span>
+              <span class="bri-foot-arrow" aria-hidden="true">→</span>
+            </a>
           </div>
         </div>
       </div>
@@ -270,11 +290,11 @@
       var footLink = document.getElementById('bri-foot');
       var subjsWrap = document.getElementById('bri-subjs');
       var meta = [
-        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Physics' },
-        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Chemistry' },
-        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Biology' },
-        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Computer%20Science' },
-        { f: 'Ask AI Tutor →', link: 'ai-chat/?subject=Mathematics' }
+        { f: 'Ask AI Tutor', link: 'ai-chat/?subject=Physics' },
+        { f: 'Ask AI Tutor', link: 'ai-chat/?subject=Chemistry' },
+        { f: 'Ask AI Tutor', link: 'ai-chat/?subject=Biology' },
+        { f: 'Ask AI Tutor', link: 'ai-chat/?subject=Computer%20Science' },
+        { f: 'Ask AI Tutor', link: 'ai-chat/?subject=Mathematics' }
       ];
       var cur = 0, timer = null, userHold = false;
       var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -304,7 +324,7 @@
         if (userHold) setTimeout(function () { userHold = false; }, 16000);
       }
 
-      // — Physics: F = ma, m = 2kg, target a = 5 —
+      // Physics: F = ma, m = 2kg, target a = 5
       var pSlider = document.getElementById('bri-phy-slider');
       var pVal = document.getElementById('bri-phy-val');
       var pF = document.getElementById('bri-f-val');
@@ -324,7 +344,7 @@
       pSlider.addEventListener('input', function () { phyCheck(pSlider.value); userHold = true; });
       phyCheck(10);
 
-      // — Chemistry: coef of H2, 2H2 + O2 -> 2H2O —
+      // Chemistry: coef of H2, 2H2 + O2 -> 2H2O
       var cSlider = document.getElementById('bri-chem-slider');
       var cVal = document.getElementById('bri-chem-val');
       var cFb = document.getElementById('bri-chem-feedback');
@@ -332,9 +352,9 @@
       var cCoef = document.getElementById('bri-h2-coef');
       function renderMols(n) {
         var h = '';
-        for (var k = 0; k < n; k++) h += '<span class="bri-mol"><span class="bri-atom h">H</span><span class="bri-atom h">H</span> H₂</span>';
-        h += '<span class="bri-mol"><span class="bri-atom o">O</span><span class="bri-atom o">O</span> O₂</span>';
-        h += '<span style="font-weight:800">→</span><span class="bri-mol"><span class="bri-atom h">H</span><span class="bri-atom h">H</span><span class="bri-atom o">O</span> H₂O</span>';
+        for (var k = 0; k < n; k++) h += '<span class="bri-mol"><span class="bri-atom h">H</span><span class="bri-atom h">H</span> H2</span>';
+        h += '<span class="bri-mol"><span class="bri-atom o">O</span><span class="bri-atom o">O</span> O2</span>';
+        h += '<span style="font-weight:800">→</span><span class="bri-mol"><span class="bri-atom h">H</span><span class="bri-atom h">H</span><span class="bri-atom o">O</span> H2O</span>';
         cMols.innerHTML = h;
       }
       function chemCheck(n) {
@@ -343,12 +363,12 @@
         renderMols(n);
         var ok = (n === 2);
         cFb.classList.toggle('good', ok); cFb.classList.toggle('miss', !ok);
-        cFb.textContent = (n === 2) ? 'Balanced · 2H₂' : n + 'H₂ · unbalanced';
+        cFb.textContent = (n === 2) ? 'Balanced → 2H2' : n + 'H2 — unbalanced';
       }
       cSlider.addEventListener('input', function () { chemCheck(cSlider.value); userHold = true; });
       chemCheck(2);
 
-      // — Biology: Tt x tt = 50% tall —
+      // Biology: Tt x tt = 50% tall
       var bSlider = document.getElementById('bri-bio-slider');
       var bVal = document.getElementById('bri-bio-val');
       var bFb = document.getElementById('bri-bio-feedback');
@@ -362,7 +382,7 @@
       bSlider.addEventListener('input', function () { bioCheck(bSlider.value); userHold = true; });
       bioCheck(50);
 
-      // — CS: 1011_2 = 11 —
+      // CS: 1011_2 = 11
       var csSlider = document.getElementById('bri-cs-slider');
       var csVal = document.getElementById('bri-cs-val');
       var csFb = document.getElementById('bri-cs-feedback');
@@ -389,12 +409,12 @@
         renderBits(v);
         var ok = (v === 11);
         csFb.classList.toggle('good', ok); csFb.classList.toggle('miss', !ok);
-        csFb.textContent = '1011₂ = ' + v;
+        csFb.textContent = '10112 = ' + v;
       }
       csSlider.addEventListener('input', function () { csCheck(csSlider.value); userHold = true; });
       csCheck(11);
 
-      // — Maths: exterior angles sum to 360 —
+      // Maths: exterior angles sum to 360
       var mSlider = document.getElementById('bri-math-slider');
       var mVal = document.getElementById('bri-math-val');
       var mFb = document.getElementById('bri-math-feedback');
@@ -438,17 +458,17 @@
                 <div class="tv-chat">
                   <div class="tv-bubble user"><span>YOU</span><p>Explain Newton&apos;s second law, Physics Ch 3</p></div>
                   <div class="tv-bubble ai"><span>AI TUTOR</span><p><span class="tv-type" data-text="Force equals mass times acceleration: F = ma. Your book introduces it in Chapter 3, page 48 — the net force on a body equals its mass times acceleration. Worked example: a 2 kg cart pushed with a 10 N force accelerates at 5 m/s². Common mistake: mixing mass (kg) with weight (N). Key idea: bigger force or smaller mass means bigger acceleration."></span><span class="tv-caret"></span></p></div>
-                  <div class="tv-ref" data-ref>📖 Physics Class 11 · Chapter 3 · p. 48</div>
+                  <div class="tv-ref" data-ref>Physics Class 11 · Chapter 3 · p. 48</div>
                   <div class="tv-bubble user tv-reveal" data-follow-q hidden><span>YOU</span><p>Give one exam tip for this</p></div>
                   <div class="tv-bubble ai tv-reveal" data-follow-a hidden><span>AI TUTOR</span><p>Always write the formula first, then substitute values with units — the formula alone earns a mark.</p></div>
                 </div>
               </div>
               <div class="tv-scene" data-scene="1" hidden>
                 <div class="tv-build">
-                  <div class="tv-step" data-step>✓ Subject: Physics Class 11</div>
-                  <div class="tv-step" data-step>✓ Chapters: Force &amp; Motion · Work &amp; Energy</div>
-                  <div class="tv-step" data-step>✓ 10 MCQs + 5 short questions</div>
-                  <div class="tv-step" data-step>✓ Board pattern: BISE Lahore · Answer key included</div>
+                  <div class="tv-step" data-step>Subject: Physics Class 11</div>
+                  <div class="tv-step" data-step>Chapters: Force &amp; Motion · Work &amp; Energy</div>
+                  <div class="tv-step" data-step>10 MCQs + 5 short questions</div>
+                  <div class="tv-step" data-step>Board pattern: BISE Lahore · Answer key included</div>
                   <div class="tv-progress" data-progress><i></i></div>
                   <div class="tv-paper" data-paper hidden>
                     <b>Physics Practice Test</b>
@@ -456,24 +476,24 @@
                     <p>Q2. Work done = <em>force × displacement</em></p>
                     <p>Q3. Define power. <em>(2 marks)</em></p>
                     <p>Q4. A 5 kg box moves 4 m. Work? <em>196 J ✓</em></p>
-                    <span class="tv-dl">⬇ Download PDF</span>
+                    <span class="tv-dl">Download PDF</span>
                   </div>
                 </div>
               </div>
               <div class="tv-scene" data-scene="2" hidden>
                 <div class="tv-chat">
-                  <div class="tv-bubble user"><span>YOU</span><p>Q1: SI unit of force? — Newton · Q2: first equation of motion? — v = u + at (no unit)</p></div>
+                  <div class="tv-bubble user"><span>YOU</span><p>Q1: SI unit of force? → Newton · Q2: first equation of motion? → v = u + at (no unit)</p></div>
                   <div class="tv-check" data-check><span class="tv-spin"></span>Checking 2 answers against the book…</div>
                   <div class="tv-grade" data-grade hidden><b>2 / 2</b><span>Q1 Correct ✓ — matches Physics Ch 3, p. 48</span></div>
                   <div class="tv-grade" data-grade2 hidden><b>1 / 2</b><span>Q2 Partial — right formula, missing unit</span></div>
-                  <div class="tv-overall" data-overall hidden>Physics check · Grade <b>B</b> · 3/4</div>
+                  <div class="tv-overall" data-overall hidden>Physics check — Grade <b>B</b> — 3/4</div>
                 </div>
               </div>
               <div class="tv-scan"></div>
               <div class="tv-static" id="tv-static"></div>
             </div>
             <div class="tv-controls">
-              <button class="tv-btn" id="tv-prev" aria-label="Previous channel">CH−</button>
+              <button class="tv-btn" id="tv-prev" aria-label="Previous channel">CH-</button>
               <div class="tv-dots" id="tv-dots"></div>
               <button class="tv-btn" id="tv-next" aria-label="Next channel">CH+</button>
             </div>
@@ -481,7 +501,7 @@
           </div>
         </div>
         <div class="tv-cta-row">
-          <a href="ai-chat/" class="plan-btn plan-btn-primary">Try the AI tutor →</a>
+          <a href="ai-chat/" class="plan-btn plan-btn-primary">Try the AI tutor</a>
           <a href="pages/signup.html" class="plan-btn plan-btn-ghost" id="tv-signup">Create free account</a>
         </div>
       </div>
@@ -663,7 +683,7 @@
             <span class="rstep-go">→</span>
           </a>
           <div class="rstep trophy">
-            <span class="rstep-ic">🏆</span>
+            <span class="rstep-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
             <span class="rstep-tx"><b>90%+ in boards</b><small>Learn it · Memorize it · Practice it · Test it · Fix it · Repeat it</small></span>
           </div>
         </div>        </div>
@@ -687,7 +707,7 @@
   </main>
 
   <div data-site-footer></div>
-  <script src="./js/site-chrome.js?v=5"></script>
+  <script src="./js/site-chrome.js?v=9"></script>
 
 
   <script src="/assets/js/vendor/supabase.min.js"></script>
@@ -790,7 +810,7 @@
             try {
               var heroCta = document.getElementById('hero-primary-cta');
               if (heroCta) {
-                if (heroCta.textContent !== 'Open AI Tutor →') heroCta.textContent = 'Open AI Tutor →';
+                if (heroCta.textContent !== 'Open AI Tutor') heroCta.textContent = 'Open AI Tutor';
                 if (heroCta.getAttribute('href') !== 'ai-chat/') heroCta.setAttribute('href', 'ai-chat/');
               }
             } catch (_) {}
@@ -803,7 +823,7 @@
             try {
               var heroCtaOut = document.getElementById('hero-primary-cta');
               if (heroCtaOut) {
-                if (heroCtaOut.textContent !== 'Start free →') heroCtaOut.textContent = 'Start free →';
+                if (heroCtaOut.textContent !== 'Start free') heroCtaOut.textContent = 'Start free';
                 if (heroCtaOut.getAttribute('href') !== 'pages/signup.html') heroCtaOut.setAttribute('href', 'pages/signup.html');
               }
               var pricingElOut = document.getElementById('pricing');
@@ -892,14 +912,13 @@
         it.querySelector('.faq-q').addEventListener('click', function () {
           var open = it.classList.contains('open');
           document.querySelectorAll('.faq-item').forEach(function (o) { o.classList.remove('open'); o.querySelector('.faq-q span').textContent = '+'; });
-          if (!open) { it.classList.add('open'); it.querySelector('.faq-q span').textContent = '–'; }
+          if (!open) { it.classList.add('open'); it.querySelector('.faq-q span').textContent = '−'; }
         });
       });
       // Header shadow on scroll
       var hdr = document.getElementById('site-header');
       window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
     })();
-  </script>
   </script>
 </body>
 </html>

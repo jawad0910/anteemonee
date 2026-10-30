@@ -8,7 +8,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = (m === 'light' || m === 'dark') ? m : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -53,16 +53,16 @@
   <link rel="stylesheet" href="code/css/glide-select.css?v=3">
   <link rel="stylesheet" href="code/css/quiz.css?v=1">
   <link rel="stylesheet" href="code/css/messages.css?v=109">
-  <link rel="stylesheet" href="code/css/composer.css?v=114">
+  <link rel="stylesheet" href="code/css/composer.css?v=117">
   <link rel="stylesheet" href="code/css/responsive.css?v=106">
-  <link rel="stylesheet" href="../css/header.css?v=11">
+  <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body class="welcome-center">
 
-  <!-- ── SITE HEADER ── -->
+  <!-- -- SITE HEADER -- -->
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=5"></script>
+  <script src="../js/site-chrome.js?v=9"></script>
 
 
   <div class="chatbot-layout">
@@ -233,7 +233,7 @@
     </div>
   </div>
 
-  <!-- VOICE MODE — compact card, tap the orb to talk / send -->
+  <!-- VOICE MODE � compact card, tap the orb to talk / send -->
   <div class="voice-overlay" id="voice-overlay" aria-hidden="true">
     <div class="voice-overlay-bg"></div>
     <button class="voice-close" id="voice-close" aria-label="Close voice mode"></button>
@@ -290,8 +290,8 @@
       <div class="logout-account">
         <span class="logout-avatar" id="logout-avatar"><span>?</span></span>
         <span class="logout-meta">
-          <span class="logout-name" id="logout-name">…</span>
-          <span class="logout-email" id="logout-email">…</span>
+          <span class="logout-name" id="logout-name">�</span>
+          <span class="logout-email" id="logout-email">�</span>
         </span>
       </div>
       <button class="logout-confirm" id="logout-confirm" type="button">Log out</button>
@@ -311,11 +311,11 @@
 <script src="../js/login-modal.js?v=6"></script>
 <script src="../js/forgot-modal.js?v=2"></script>
 <script src="../js/signup-modal.js?v=4"></script>
-  <script src="code/js/ai-api-service.js?v=34"></script>
+  <script src="code/js/ai-api-service.js?v=36"></script>
   <script src="code/js/lattice-loader.js?v=1"></script>
   <script src="code/js/swipe-toast.js?v=1"></script>
   <script src="code/js/glide-select.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=172"></script>
+  <script src="code/js/ai-chatbot.js?v=185"></script>
   <script src="../assets/js/vendor/chart.umd.min.js"></script>
   <script src="code/js/voice-chat.js?v=46"></script>
   <script src="code/js/realtime-call.js?v=8"></script>
@@ -422,11 +422,7 @@
         } catch (_) { return 'system'; }
       }
       function applyDeviceTheme() {
-        if (currentMode() !== 'system') return;
-        try {
-          var mq = window.matchMedia('(prefers-color-scheme: light)');
-          document.documentElement.setAttribute('data-theme', mq.matches ? 'light' : 'dark');
-        } catch (_) {}
+        // Light mode only for now � dark is disabled sitewide.
       }
       document.addEventListener('DOMContentLoaded', applyDeviceTheme);
       try {
@@ -438,7 +434,7 @@
     })();
   </script>
   <script>
-    // Model selector removed — auto-switching handles persona. Just clear
+    // Model selector removed � auto-switching handles persona. Just clear
     // any skeleton states immediately so the welcome UI shows instantly.
     (function () {
       try {
@@ -724,7 +720,7 @@
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
 
-      /* Mobile menu is owned by app.js (setupMobileMenu) — it binds every
+      /* Mobile menu is owned by app.js (setupMobileMenu) � it binds every
          .mobile-menu-toggle on the page, including the chat topbar's
          id-less hamburger, and toggles the X icon state itself. The old
          inline binding here ran alongside app.js on the same tap, so the

@@ -63,6 +63,17 @@ class AiApiService {
   /**
    * Set the active AI session ID for this request.
    */
+  async fetchYtVideos(query, klass) {
+    const token = this._accessToken;
+    const r = await fetch(`${this.supabaseUrl}/functions/v1/ai-video-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ query: query || '', class: klass || '' }),
+    });
+    if (!r.ok) throw new Error(`video search ${r.status}`);
+    return r.json();
+  }
+
   setSessionId(id) {
     this._sessionId = id;
   }

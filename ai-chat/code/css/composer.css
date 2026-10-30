@@ -360,3 +360,122 @@
 
 /* Ad rule: show only once a conversation exists (welcome screen hides it) */
 body.no-chat-yet .chat-ad { display: none !important; }
+
+/* In-stream ad: slim creative block between messages */
+.msg-ad {
+  margin: 8px 0 2px;
+  width: 100%;
+}
+.msg-ad iframe { display: block; margin: 0 auto; border: 0; background: transparent; }
+
+/* ── YouTube suggestions in-stream ─────────────────────────────── */
+.yt-shell { margin: 8px 0 2px; }
+.yt-shell.yt-empty { font-size: 12px; color: var(--chat-text-meta, rgba(0,0,0,.5)); }
+
+.yt-panel {
+  border: 1px solid var(--chat-composer-border, rgba(0,0,0,.14));
+  border-radius: 12px;
+  background: var(--chat-field, #F4F4F6);
+  overflow: hidden;
+}
+.yt-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.yt-head.yt-red { color: #B42318; }
+.yt-head.yt-direct { color: #0B5CFF; }
+
+.yt-video-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  text-decoration: none;
+  color: inherit;
+  border-top: 1px solid var(--chat-composer-border, rgba(0,0,0,.08));
+  transition: background .15s ease;
+}
+.yt-video-row:hover { background: var(--chat-tint-soft, rgba(0,0,0,.05)); }
+.yt-thumb {
+  width: 88px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: none;
+  background: rgba(128,128,128,.15);
+}
+.yt-meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.yt-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--chat-bubble-text, #1A1A1A);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.yt-channel { font-size: 11px; color: var(--chat-text-meta, rgba(0,0,0,.5)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.yt-go { flex: none; color: var(--chat-text-meta, rgba(0,0,0,.45)); }
+
+/* Amber offer strip */
+.yt-offer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 2px;
+  padding: 8px 12px;
+  border: 1px solid rgba(190,146,0,.45);
+  border-radius: 12px;
+  background: rgba(255,196,0,.13);
+  color: #8A6D00;
+  font-size: 12.5px;
+}
+.yt-offer-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.yt-offer-btn {
+  margin-left: auto;
+  flex: none;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #FFC400;
+  color: #1A1A1A;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+.yt-offer-btn:hover { filter: brightness(1.06); }
+
+/* Row of "about to auto-load" spinner for red/ask panels */
+.yt-shell:not(.yt-empty) .yt-panel { animation: yt-in .18s ease-out; }
+@keyframes yt-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+/* ── YouTube skeleton loader ───────────────────────────────────── */
+.yt-skel-head { padding: 8px 10px 4px; }
+.yt-skel-line {
+  height: 9px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(128,128,128,.14) 25%, rgba(128,128,128,.24) 50%, rgba(128,128,128,.14) 75%);
+  background-size: 200% 100%;
+  animation: yt-skel 1.2s ease-in-out infinite;
+}
+.yt-skel-line-short { width: 45%; }
+.yt-skel-thumb {
+  width: 88px; height: 50px;
+  border-radius: 8px;
+  flex: none;
+  background: linear-gradient(90deg, rgba(128,128,128,.14) 25%, rgba(128,128,128,.24) 50%, rgba(128,128,128,.14) 75%);
+  background-size: 200% 100%;
+  animation: yt-skel 1.2s ease-in-out infinite;
+}
+.yt-skel-row { pointer-events: none; }
+.yt-skel-row .yt-video-row { pointer-events: none; }
+.yt-skel-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+@keyframes yt-skel {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

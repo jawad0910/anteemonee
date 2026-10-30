@@ -1457,6 +1457,139 @@ Rules:
     });
   }
 
+  // ── YouTube suggestion policy ──
+  // The model decides WHEN a video helps (amber offer / red auto / explicit
+  // ask), and writes the exact search query for the Punjab Board context.
+  // ai-video-search does the actual finding, oEmbed verification and ranking.
+  function ytProtocolPrompt() {
+    return '\n\nYOUTUBE VIDEO PROTOCOL (Punjab Board student):\n' +
+      'You may end your response with EXACTLY ONE marker line as the last line. Formats (must be literal, one line, no code fence):\n' +
+      '[YT:SUGGEST|<search query>|<one short reason>] - the student seems stuck/confused/struggling. RENDERS AN AMBER OFFER with a button. Use when help might land well; do NOT attach videos yourself.\n' +
+      '[YT:NOW|<search query>|<one short reason>] - use ONLY when you judge the student is clearly stuck (repeated confusion, repeatedly wrong, explicitly overwhelmed) so YOU decide to attach videos immediately. RENDERS A RED ATTACHED SUGGESTION. Use sparingly.\n' +
+      '[YT:ASK|<search query>|] - the student EXPLICITLY asked for a video; attach right away.\n' +
+      'No marker = no video suggestion this turn (normal short answers, greetings, brief factual replies).\n' +
+      '<search query> rules: English keywords only, include the topic/concept name and the class level (e.g. "Newton laws of motion class 9"), add "Punjab board" ONLY for PCTB-specific topics; for concept-only topics keep the concept phrase.\n' +
+      '<reason> max 8 words.\n' +
+      'Never use the markers in any other context. Only substantively-study-related replies.\n';
+  }
+
+  // ── YouTube suggestion UI (amber offer / red auto / direct) ──
+  var YT_MARK_RE = /\[YT:(SUGGEST|NOW|ASK)\|([^\]|]+?)\s*(?:\||])\s*([^\]]*)\]/;
+
+  function stripYtMarkers(text) {
+    return String(text || '')
+      .replace(/\s*\[YT:(SUGGEST|NOW|ASK)\][^\n]*/g, '')   // malformed marker w/o pipes
+      .replace(YT_MARK_RE, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  function videoRowHtml(v) {
+    var safeTitle = String(v.title || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    var chan = String(v.channel || 'YouTube').replace(/</g, '&lt;');
+    return '' +
+      '<a class="yt-video-row" href="' + (v.watch || '') + '" target="_blank" rel="noopener">' +
+        '<img class="yt-thumb" src="' + (v.thumb || '') + '" alt="" loading="lazy">' +
+        '<span class="yt-meta">' +
+          '<span class="yt-title">' + safeTitle + '</span>' +
+          '<span class="yt-channel">' + chan + '</span>' +
+        '</span>' +
+        '<svg class="yt-go" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>' +
+      '</a>';
+  }
+
+  function ytPanelHtml(kind, reason, videos) {
+    var head = kind === 'auto'
+      ? '<div class="yt-head yt-red"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>' + (reason || 'Suggested for you') + '</span></div>'
+      : '<div class="yt-head yt-direct"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>' + (reason || 'Videos') + '</span></div>';
+    var rows = (videos || []).map(videoRowHtml).join('');
+    return '<div class="yt-panel">' + head + rows + '</div>';
+  }
+
+  function ytOfferHtml(reason) {
+    return '<div class="yt-offer">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>' +
+      '<span class="yt-offer-text">I can suggest a YouTube video for this' + (reason ? ' - ' + reason : '') + '.</span>' +
+      '<button class="yt-offer-btn" type="button">Suggest</button>' +
+    '</div>';
+  }
+
+  async function loadYtVideos(div, query, kind, reason) {
+    var host = div.querySelector('.msg-body');
+    if (!host) return;
+    var existing = host.querySelector('.yt-panel, .yt-offer, .yt-shell, .yt-empty');
+    if (existing) existing.remove();
+    var shell = document.createElement('div');
+    shell.className = 'yt-shell' + (kind === 'auto' ? ' yt-auto' : '');
+    // Instant skeleton while the search runs — the reply text is already
+    // readable; this only fills the video slot when it lands.
+    shell.innerHTML = '<div class="yt-skel">' +
+      '<div class="yt-skel-head"><span class="yt-skel-line yt-skel-line-short"></span></div>' +
+      Array(3).fill(0).map(function () {
+        return '<div class="yt-video-row yt-skel-row">' +
+          '<div class="yt-skel yt-skel-thumb"></div>' +
+          '<div class="yt-skel-body"><div class="yt-skel-line"></div><div class="yt-skel-line yt-skel-line-short"></div></div>' +
+        '</div>';
+      }).join('') + '</div>';
+    host.appendChild(shell);
+    var loadPromise = api.fetchYtVideos(query, '').then(function (res) {
+      var videos = (res && res.videos) || [];
+      if (!videos.length) {
+        shell.className = 'yt-shell yt-empty';
+        shell.textContent = 'No helpful video found.';
+        return null;
+      }
+      shell.innerHTML = ytPanelHtml(kind, reason, videos);
+      // Persist so a page refresh re-renders the panel from history.
+      return { videos: videos, kind: kind, reason: reason || '' };
+    });
+    // Hand the pending payload (or null) to the saved-message builder.
+    try { div.__ytLoad = loadPromise; } catch (_) {}
+    try {
+      var payload = await loadPromise;
+      if (payload) saveConversation();
+    } catch (e) {
+      shell.className = 'yt-shell yt-empty';
+      shell.textContent = 'Video suggestion failed.';
+      try { div.__ytLoad = null; } catch (_) {}
+    }
+    return null;
+  }
+
+  function wireYtOffer(div, query, reason) {
+    var offer = div.querySelector('.yt-offer');
+    if (!offer) return;
+    offer.querySelector('.yt-offer-btn').addEventListener('click', function () {
+      offer.remove();
+      loadYtVideos(div, query, 'offer', reason);
+    });
+  }
+
+  // Finalize hook: parse markers off the reply text and run the flow.
+  function applyYtMarkers(div, rawText) {
+    var raw = String(rawText || '');
+    var m = raw.match(YT_MARK_RE) || raw.match(/\[YT:(SUGGEST|NOW|ASK)\|([^\]]+)\]/);
+    if (!m) return rawText;
+    try {
+      var kind = m[1];
+      var query = (m[2] || '').trim();
+      var reason = (m[3] || '').trim().slice(0, 60);
+      var host = div.querySelector('.msg-body');
+      if (host && query) {
+        var node = document.createElement('div');
+        if (kind === 'SUGGEST') {
+          host.insertAdjacentHTML('beforeend', ytOfferHtml(reason));
+          wireYtOffer(div, query, reason);
+        } else if (kind === 'NOW') {
+          loadYtVideos(div, query, 'auto', reason);
+        } else if (kind === 'ASK') {
+          loadYtVideos(div, query, 'ask', reason);
+        }
+      }
+    } catch (_) {}
+    return stripYtMarkers(rawText);
+  }
+
   function quizProtocolPrompt() {
     return `
 
@@ -1715,9 +1848,61 @@ Use this context if the student refers to the quiz, an answer, or a question num
     },
   };
 
+  // In-stream ad: fresh creative after each assistant reply. Mounted in its
+  // own sandboxed iframe like the composer strip so document.write can never
+  // touch the message DOM. Free tier + started chats only; premium and the
+  // welcome state never see them.
+  // Native ads unit (invoke.js + container div, no iframes needed): swaps in
+  // after the References block of every assistant reply.
+  var NATIVE_AD_SRC = 'https://bicea.org/21/333c1ec828429a89915481eb727f39dc';
+  var NATIVE_AD_ID = 'container-333c1ec828429a89915481eb727f39dc';
+
+  var STREAM_AD_OPEN = false;
+  function maybeAppendStreamAd(replied, role, opts) {
+    if (role !== 'assistant' || opts.generatedImage) return;
+    try {
+      if (!NATIVE_AD_SRC) return;
+      if (typeof Access !== 'undefined' && Access.state && Access.state.ready && Access.state.paid) return;
+      if (document.body.classList.contains('no-chat-yet')) return;
+      if (STREAM_AD_OPEN) return;
+      STREAM_AD_OPEN = true;
+      // Release before anything can throw: a wedged open-flag must never
+      // starve the following replies.
+      var released = false;
+      function release() {
+        if (released) return;
+        released = true;
+        STREAM_AD_OPEN = false;
+      }
+      setTimeout(release, 2500);
+      var wrap = document.createElement('div');
+      wrap.className = 'msg-ad';
+      var box = document.createElement('div');
+      box.id = NATIVE_AD_ID;
+      wrap.appendChild(box);
+      // Container in the DOM first, then invoke.js — the script looks up the
+      // container by id, so insertion order matters.
+      var body = (replied.querySelector && replied.querySelector('.msg-body')) || document.body;
+      body.appendChild(wrap);
+      var sc = document.createElement('script');
+      sc.async = true;
+      sc.dataset.cfasync = 'false';
+      sc.src = NATIVE_AD_SRC;
+      wrap.appendChild(sc);
+      console.log('[Ad] native ad mounted');
+    } catch (e) {
+      STREAM_AD_OPEN = false;
+      console.warn('[Ad] native mount failed:', e && (e.message || e));
+    }
+  }
+
   function initChatAd() {
+    // Composer-top strip is retired: ads live in the message stream only
+    // (after the References section of each reply). This hook is kept for
+    // future network slots, but mounts nothing.
     var ad = document.getElementById('chat-ad');
-    if (!ad) return;
+    if (ad) ad.style.display = 'none';
+    return;
     function hide(reason) {
       console.log('[Ad] hidden:', reason || 'unknown');
       ad.style.display = 'none';
@@ -1743,7 +1928,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
     } catch (_) {}
     console.log('[Ad] showing, paid:', (typeof Access !== 'undefined' && Access.state) ? Access.state.paid : 'n/a');
 
-    // Network banner mode: 728x90 / 320x50 box instead of the text promo.
+    // Network banner mode (composer strip) — retired, see initChatAd.
     if (CHAT_AD_BANNERS) {
       var box = document.getElementById('chat-ad-banner');
       if (!box) return hide();
@@ -3414,6 +3599,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       messages.forEach((m, i) => appendMessage(m.role, m.content, false, {
         idx: i, quote: m.quote || null, images: m.images || null, test: m.testRef || null,
         quiz: m.quiz || null, graph: m.graph || null, generatedImage: m.generatedImage || null,
+        yt: m.yt || null,
       }));
     } else {
       messagesList.style.display = 'none';
@@ -4174,8 +4360,37 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     }
     if (!animate) div.style.animation = 'none';
     messagesList.appendChild(div);
+    // Persisted YouTube suggestion: render straight from message data (no
+    // refetch), so history loads keep the video panel.
+    if (role === 'assistant' && opts.yt && opts.yt.videos && opts.yt.videos.length) {
+      try {
+        var cbody = div.querySelector('.msg-body');
+        if (cbody) {
+          var shell = document.createElement('div');
+          shell.className = 'yt-shell' + (opts.yt.kind === 'auto' ? ' yt-auto' : '');
+          shell.innerHTML = ytPanelHtml(opts.yt.kind || 'ask', opts.yt.reason || '', opts.yt.videos);
+          cbody.appendChild(shell);
+        }
+      } catch (_) {}
+    }
+    // In-stream ad: a compact creative slides in after every assistant reply
+    // (skips image-gen paths and replica renders), free tier + started chats
+    // + Adsterra units armed only.
+    try { maybeAppendStreamAd(div, role, opts); } catch (_) {}
     return div;
   }
+
+  // Debug hook: expose the in-stream ad state so the browser console can tell
+  // us exactly which guard is refusing to mount.
+  window.__adDebug = function () {
+    return {
+      banners: typeof CHAT_AD_BANNERS !== 'undefined' ? !!CHAT_AD_BANNERS : false,
+      streamOpen: STREAM_AD_OPEN,
+      paid: (typeof Access !== 'undefined' && Access.state) ? Access.state.paid : 'n/a',
+      noChatYet: document.body.classList.contains('no-chat-yet'),
+      adCount: document.querySelectorAll('.msg-ad').length,
+    };
+  };
 
   function createStreamingMessage(mode) {
     const div = document.createElement('div');
@@ -6905,6 +7120,14 @@ function handleFileBlocks(div, text, opts) {
 
 
   function finalizeStreamingMessage(div, text) {
+    // Catch the gateway's canned text-only image error in EVERY reply path
+    // (main, continuation, retry) — one place, no per-site patching.
+    if (text && (/ERROR: Cannot read/.test(text) || /this model does not support image input/i.test(text))) {
+      text =
+        "I couldn't read the attached image this time — the image reader is busy." +
+        " Please try attaching it again in a moment, or retype the text of the image" +
+        " if it's small, and I'll answer from that.";
+    }
     // LatticeLoader epilogue: freeze the stopwatch and flash the frozen
     // time as a small pill under the reply (green check / red cross).
     try {
@@ -6997,6 +7220,12 @@ function handleFileBlocks(div, text, opts) {
       var oldCard = div.querySelector('.quiz-card');
       if (oldCard) oldCard.remove();
     }
+    // Authoritative ad mount: every completed reply funnels through here,
+    // whatever path streamed it — bubble gets its creative right after the
+    // references block now that the content is final.
+    if (!div.querySelector('.msg-ad')) {
+      try { maybeAppendStreamAd(div, 'assistant', {}); } catch (_) {}
+    }
   }
 
   function createAssistantMessage(text, div) {
@@ -7004,7 +7233,16 @@ function handleFileBlocks(div, text, opts) {
     if (!quiz) {
       try { quiz = parseQuizBlock(text, !!(div && div.__quizRequested)); } catch (_) {}
     }
-    var message = { role: 'assistant', content: stripEmptyReferences(stripQuizBlock(stripSwitchMarkers(text || ''), !!(div && div.__quizRequested))) };
+    var message = { role: 'assistant', content: stripYtMarkers(stripEmptyReferences(stripQuizBlock(stripSwitchMarkers(text || ''), !!(div && div.__quizRequested)))) };
+    // YouTube suggestion payload (kind/reason/videos) persisted once the
+    // fetch settles, so history reloads still show the video panel.
+    if (div && div.__ytLoad) {
+      div.__ytLoad.then(function (payload) {
+        if (payload) {
+          try { message.yt = payload; saveConversation(); } catch (_) {}
+        }
+      }).catch(function () {});
+    }
     try { message.content = stripGraphBlock(message.content); } catch (_) {}
     // Record which engine produced this reply (tunnel model id, or the
     // Groq → Qwen → Mistral chain after a fallback) so the UI can show it honestly.
@@ -8437,7 +8675,7 @@ function handleFileBlocks(div, text, opts) {
     // Greetings get a tiny prompt: no system brick, no RAG, no history.
     const systemPrompt = isGreetingMsg
       ? ('You are a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
-      : buildSystemPrompt() + textbookContext + (calendarIntent ? calendarPromptBlock() : '') + (graphRequested ? graphProtocolPrompt() : '') + (quizRequested ? quizProtocolPrompt() : '') + recentQuizContextPrompt();
+      : buildSystemPrompt() + textbookContext + (calendarIntent ? calendarPromptBlock() : '') + (graphRequested ? graphProtocolPrompt() : '') + (quizRequested ? quizProtocolPrompt() : '') + ytProtocolPrompt() + recentQuizContextPrompt();
 
     // Auth must be set before the vision call below: it hits an edge function
     // that rejects anonymous callers, and the token used to be applied further
@@ -8603,10 +8841,21 @@ function handleFileBlocks(div, text, opts) {
       }
 
       finalResponseClean = stripGroqCitations(fullResponse);
+      // Text-only provider answered with its canned image unsupported error
+      // (vision pass upstream already warned). Convert to helpful line and
+      // never surface the raw protocol text.
+      if (/ERROR: Cannot read/.test(finalResponseClean) || /this model does not support image input/i.test(finalResponseClean)) {
+        finalResponseClean =
+          "I couldn't read the attached image this time — the image reader is busy." +
+          " Please try attaching it again in a moment, or retype the text of the image" +
+          " if it's small, and I'll answer from that.";
+      }
       finalizeStreamingMessage(streamDiv, finalResponseClean);
       autoCreateFlashcardFromReply(text, finalResponseClean);
       stopStatusCycle(statusCycle);
-            const assistantMessage = createAssistantMessage(finalResponseClean, streamDiv);
+finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
+      finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
+      const assistantMessage = createAssistantMessage(finalResponseClean, streamDiv);
             messages.push(assistantMessage);
             if (assistantMessage.quiz) pendingQuizTopic = false;
       attachFeedbackButtons(streamDiv);
@@ -8811,6 +9060,7 @@ function handleFileBlocks(div, text, opts) {
         finalResponseClean = stripGroqCitations(fullResponse);
         finalizeStreamingMessage(streamDiv, finalResponseClean);
         autoCreateFlashcardFromReply(text, finalResponseClean);
+finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
               const assistantMessage = createAssistantMessage(finalResponseClean, streamDiv);
             messages.push(assistantMessage);
             if (assistantMessage.quiz) pendingQuizTopic = false;
@@ -8992,7 +9242,7 @@ function handleFileBlocks(div, text, opts) {
         if (!messages.length) { welcome.style.display = 'flex'; messagesList.style.display = 'none'; }
         else {
           welcome.style.display = 'none'; messagesList.style.display = 'flex';
-          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, test: m.testRef || null, quiz: m.quiz || null, generatedImage: m.generatedImage || null }));
+          messages.forEach((m, i) => appendMessage(m.role, m.content, false, { idx: i, quote: m.quote || null, images: m.images || null, test: m.testRef || null, quiz: m.quiz || null, generatedImage: m.generatedImage || null, yt: m.yt || null }));
         }
         syncWelcomeMode();
         try { renderHistory(); } catch (_) {}
