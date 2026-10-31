@@ -152,6 +152,36 @@
       .cc-rank { font-size: 1rem; min-width: 30px; }
     }
   </style>
+  <style>
+    /* ---------- Your place banner ---------- */
+    .cc-you { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+    .cc-you-bar {
+      display: none;
+      align-items: center; gap: 16px;
+      padding: 18px 24px; margin-top: 24px;
+      background: var(--sj-yellow);
+      border: 1.5px solid var(--sj-ink);
+      border-radius: 16px;
+      box-shadow: 4px 4px 0 var(--sj-ink);
+      font-size: 1rem;
+      color: var(--sj-ink);
+    }
+    .cc-you-bar.is-on { display: flex; animation: ccSlide .5s ease both; }
+    @keyframes ccSlide { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .cc-you-bar b { font-weight: 700; }
+    .cc-you-bar span { opacity: 0.8; }
+
+    /* Empty / error states */
+    .cc-state { text-align: center; padding: 60px 24px; }
+    .cc-state-icon { width: 52px; height: 52px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--sj-cream-deep); border: 1.5px solid var(--sj-ink); }
+    .cc-state h3 { font-size: 1.3rem; font-weight: 700; color: var(--sj-ink); margin-bottom: 8px; }
+    .cc-state p { color: var(--sj-ink-soft); max-width: 40ch; margin: 0 auto 20px; }
+    .cc-state .cc-btn { justify-content: center; }
+
+    /* Skeletons */
+    .cc-skel { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .cc-skel-item { height: 74px; border-radius: 20px; background: #fff; border: 1.5px solid var(--sj-ink); box-shadow: 3px 3px 0 var(--sj-ink); }
+  </style>
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
@@ -222,7 +252,7 @@
         </div>
         <div class="cc-search" id="cc-search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input id="cc-search" type="search" placeholder="Find a member�" autocomplete="off" aria-label="Search club members">
+          <input id="cc-search" type="search" placeholder="Find a member..." autocomplete="off" aria-label="Search club members">
           <button class="cc-search-x" type="button" id="cc-search-x" aria-label="Clear search">&times;</button>
           <span class="cc-search-count" id="cc-search-count">100</span>
         </div>
