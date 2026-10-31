@@ -1826,162 +1826,6 @@ Use this context if the student refers to the quiz, an answer, or a question num
 
   document.addEventListener('DOMContentLoaded', init);
 
-  // ── Chat ad: slim sponsored strip above the composer ──
-  // Edit CHAT_ADS to change what runs. Free-tier students only; a dismissed ad
-  // stays hidden for the browser (localStorage) and premium never sees one.
-  var CHAT_ADS = [
-    { title: 'Upgrade to Premium', text: 'Unlimited chats & images — opens in Settings', url: '#premium' },
-  ];
-  // Adsterra banner units (atOptions style from the dashboard). Each unit is
-  // sandboxed in its own iframe document because the delivery script uses
-  // document.write at load; runs 728x90 on desktop, 320x50 below 768px.
-  var CHAT_AD_BANNERS = {
-    desktop: {
-      key: '05697105d3a6c1a120590b0789958b49',
-      src: 'https://bicea.org/22/05697105d3a6c1a120590b0789958b49',
-      w: 728, h: 90,
-    },
-    mobile: {
-      key: '4d6394dfe5c1d636666736451f97f1c5',
-      src: 'https://bicea.org/22/4d6394dfe5c1d636666736451f97f1c5',
-      w: 320, h: 50,
-    },
-  };
-
-  // In-stream ad: fresh creative after each assistant reply. Mounted in its
-  // own sandboxed iframe like the composer strip so document.write can never
-  // touch the message DOM. Free tier + started chats only; premium and the
-  // welcome state never see them.
-  // Native ads unit (invoke.js + container div, no iframes needed): swaps in
-  // after the References block of every assistant reply.
-  var NATIVE_AD_SRC = 'https://bicea.org/21/333c1ec828429a89915481eb727f39dc';
-  var NATIVE_AD_ID = 'container-333c1ec828429a89915481eb727f39dc';
-
-  var STREAM_AD_OPEN = false;
-  function maybeAppendStreamAd(replied, role, opts) {
-    if (role !== 'assistant' || opts.generatedImage) return;
-    try {
-      if (!NATIVE_AD_SRC) return;
-      if (typeof Access !== 'undefined' && Access.state && Access.state.ready && Access.state.paid) return;
-      if (document.body.classList.contains('no-chat-yet')) return;
-      if (STREAM_AD_OPEN) return;
-      STREAM_AD_OPEN = true;
-      // Release before anything can throw: a wedged open-flag must never
-      // starve the following replies.
-      var released = false;
-      function release() {
-        if (released) return;
-        released = true;
-        STREAM_AD_OPEN = false;
-      }
-      setTimeout(release, 2500);
-      var wrap = document.createElement('div');
-      wrap.className = 'msg-ad';
-      var box = document.createElement('div');
-      box.id = NATIVE_AD_ID;
-      wrap.appendChild(box);
-      // Container in the DOM first, then invoke.js — the script looks up the
-      // container by id, so insertion order matters.
-      var body = (replied.querySelector && replied.querySelector('.msg-body')) || document.body;
-      body.appendChild(wrap);
-      var sc = document.createElement('script');
-      sc.async = true;
-      sc.dataset.cfasync = 'false';
-      sc.src = NATIVE_AD_SRC;
-      wrap.appendChild(sc);
-      console.log('[Ad] native ad mounted');
-    } catch (e) {
-      STREAM_AD_OPEN = false;
-      console.warn('[Ad] native mount failed:', e && (e.message || e));
-    }
-  }
-
-  function initChatAd() {
-    // Composer-top strip is retired: ads live in the message stream only
-    // (after the References section of each reply). This hook is kept for
-    // future network slots, but mounts nothing.
-    var ad = document.getElementById('chat-ad');
-    if (ad) ad.style.display = 'none';
-    return;
-    function hide(reason) {
-      console.log('[Ad] hidden:', reason || 'unknown');
-      ad.style.display = 'none';
-    }
-    // Dismissal is time-boxed (24h) so an accidental close can never hide the
-    // slot forever, and old permanent ('1') flags self-heal into an expiry.
-    try {
-      var d = localStorage.getItem('chat_ad_dismissed');
-      if (d) {
-        var until = 0;
-        if (d.length < 13 && d === '1') {
-          // Legacy permanent flag: treat as just-expired so the ad returns.
-          until = 0;
-        } else {
-          until = Number(d) || 0;
-        }
-        if (until > Date.now()) return hide('dismissed until ' + new Date(until).toTimeString());
-        try { localStorage.removeItem('chat_ad_dismissed'); } catch (_) {}
-      }
-    } catch (_) {}
-    try {
-      if (typeof Access !== 'undefined' && Access.state && Access.state.ready && Access.state.paid) return hide('paid user');
-    } catch (_) {}
-    console.log('[Ad] showing, paid:', (typeof Access !== 'undefined' && Access.state) ? Access.state.paid : 'n/a');
-
-    // Network banner mode (composer strip) — retired, see initChatAd.
-    if (CHAT_AD_BANNERS) {
-      var box = document.getElementById('chat-ad-banner');
-      if (!box) return hide();
-      ad.classList.add('chat-ad-banner-live');
-      var unit = CHAT_AD_BANNERS.mobile; // 320x50 everywhere per request
-      try {
-        // Isolated loader iframe: atOptions/scripts write into their own
-        // document, so they can never break the chat DOM.
-        var ifr = document.createElement('iframe');
-        ifr.width = unit.w;
-        ifr.height = unit.h;
-        ifr.scrolling = 'no';
-        ifr.frameBorder = '0';
-        ifr.style.cssText = 'border:0;margin:0 auto;display:block;background:transparent;';
-        box.appendChild(ifr);
-        var idoc = ifr.contentWindow.document;
-        idoc.open();
-        idoc.write(
-          '<body style="margin:0">' +
-          '<scr' + 'ipt>atOptions = {"key":' + JSON.stringify(unit.key) +
-          ',"format":"iframe","height":' + unit.h + ',"width":' + unit.w + ',"params":{}};</scr' + 'ipt>' +
-          '<scr' + 'ipt src="' + unit.src.replace(/"/g, '&quot;') + '"></scr' + 'ipt>' +
-          '</body>'
-        );
-        idoc.close();
-      } catch (e) {
-        console.warn('[Ad] banner mount failed:', e && (e.message || e));
-      }
-      ad.style.display = 'flex';
-      return;
-    }
-
-    var pick = CHAT_ADS[Math.floor(Math.random() * CHAT_ADS.length)];
-    if (!pick) return hide();
-    var link = document.getElementById('chat-ad-link');
-    document.getElementById('chat-ad-title').textContent = pick.title || '';
-    document.getElementById('chat-ad-text').textContent = pick.text || '';
-    if (link) {
-      link.href = pick.url || '#';
-      link.onclick = function (ev) {
-        try { localStorage.setItem('chat_ad_dismissed', String(Date.now() + 24*60*60*1000)); } catch (_) {}
-        if (pick.url === '#premium') {
-          ev.preventDefault();
-          var btn = document.getElementById('upgrade-btn') || document.querySelector('[data-upgrade-open]');
-          if (btn && btn.click) btn.click();
-        }
-        hide();
-      };
-    }
-    // No close button by design: the strip stays minimal (Ad tag + creative).
-    ad.style.display = 'flex';
-  }
-
   async function init() {
     if (typeof currentUser === 'undefined' || !currentUser) {
       try {
@@ -2100,7 +1944,6 @@ if (idx >= 0 && idx < PERSONAS.length) {
     // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
     // Free & unlimited: just sync access state in the background.
     try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
-    try { initChatAd(); } catch (_) {}
     const token = getAccessToken();
     if (!token) {
       if (!cached) showSessionError('Log in to start using AI chat.');
@@ -3615,8 +3458,6 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     try {
       var active = welcome.style.display !== 'none';
       document.body.classList.toggle('welcome-center', active);
-      // The ad slot only exists once an actual chat has started, so it never
-      // clutters the greeting screen that new visitors see.
       document.body.classList.toggle('no-chat-yet', active);
       if (active) try { scrollToBottom(); } catch (_) {}
     } catch (_) {}
@@ -4376,21 +4217,8 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     // In-stream ad: a compact creative slides in after every assistant reply
     // (skips image-gen paths and replica renders), free tier + started chats
     // + Adsterra units armed only.
-    try { maybeAppendStreamAd(div, role, opts); } catch (_) {}
     return div;
   }
-
-  // Debug hook: expose the in-stream ad state so the browser console can tell
-  // us exactly which guard is refusing to mount.
-  window.__adDebug = function () {
-    return {
-      banners: typeof CHAT_AD_BANNERS !== 'undefined' ? !!CHAT_AD_BANNERS : false,
-      streamOpen: STREAM_AD_OPEN,
-      paid: (typeof Access !== 'undefined' && Access.state) ? Access.state.paid : 'n/a',
-      noChatYet: document.body.classList.contains('no-chat-yet'),
-      adCount: document.querySelectorAll('.msg-ad').length,
-    };
-  };
 
   function createStreamingMessage(mode) {
     const div = document.createElement('div');
@@ -7219,12 +7047,6 @@ function handleFileBlocks(div, text, opts) {
       div.__quiz = null;
       var oldCard = div.querySelector('.quiz-card');
       if (oldCard) oldCard.remove();
-    }
-    // Authoritative ad mount: every completed reply funnels through here,
-    // whatever path streamed it — bubble gets its creative right after the
-    // references block now that the content is final.
-    if (!div.querySelector('.msg-ad')) {
-      try { maybeAppendStreamAd(div, 'assistant', {}); } catch (_) {}
     }
   }
 

@@ -373,11 +373,19 @@
     });
 
     document.addEventListener('pointerdown', function onDown(e) {
-      if (phase === 'open' && !root.contains(e.target)) close('pop');
+      // The menu is portalled to <body>, so it is NOT inside root. A press on
+      // an option row must not count as an "outside" press, otherwise touch
+      // closes the sheet mid-tap and the row's pointerup can never pick.
+      if (phase === 'open' && !root.contains(e.target) && !(menu && menu.contains(e.target))) close('pop');
     }, true);
 
     window.addEventListener('resize', function () { if (phase === 'open') positionMenu(); }, { passive: true });
     window.addEventListener('scroll', function () { if (phase === 'open') positionMenu(); }, { passive: true, capture: true });
+    // Mobile keyboards shift the interactive viewport; keep the sheet anchored.
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function () { if (phase === 'open') positionMenu(); }, { passive: true });
+      window.visualViewport.addEventListener('scroll', function () { if (phase === 'open') positionMenu(); }, { passive: true });
+    }
 
     return {
       el: root,

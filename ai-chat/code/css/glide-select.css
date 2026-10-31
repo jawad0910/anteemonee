@@ -143,7 +143,7 @@ span.gs-dot {
 /* ── Menu — portalled, frosted, floating highlight ─────────────── */
 .glide-select__menu {
   position: fixed;
-  z-index: 1200;
+  z-index: 2600;
   width: var(--gs-menu-w);
   min-width: 100%;
   padding: 5px;
@@ -290,4 +290,18 @@ span.gs-dot {
   .glide-select[data-swap] .glide-select__label {
     animation: none;
   }
+}
+
+/* Phones: the sheet spans the viewport edge to edge (positionMenu's inline
+   left/top still flips it above or below the trigger). */
+@media (max-width: 430px) {
+  .glide-select__menu {
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    border-radius: 16px;
+  }
+  .glide-select__list { gap: 2px; }
+  .glide-select__option { height: 42px; border-radius: 12px; }
 }

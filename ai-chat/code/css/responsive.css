@@ -188,3 +188,279 @@
     max-height: min(280px, 42vh);
   }
 }
+
+/* ==========================================================
+   Academy pass — sidebar, mobile drawer, welcome screen
+   Same design language as the rest of the site (cream canvas,
+   ink rules, white paper, orange primary, yellow highlight).
+   Appended last so these wins the cascade fair and square.
+   ========================================================== */
+:root {
+  --sb-ink: var(--sj-ink, #151515);
+  --sb-ink-soft: rgba(21, 21, 21, .62);
+  --sb-ink-mute: rgba(21, 21, 21, .45);
+  --sb-rule: rgba(21, 21, 21, .16);
+  --sb-rule-strong: rgba(21, 21, 21, .34);
+  --sb-orange: var(--sj-cta, #FE6100);
+  --sb-orange-deep: var(--sj-cta-deep, #E15100);
+  --sb-yellow: var(--sj-yellow, #FCE004);
+  --sb-yellow-soft: var(--sj-yellow-soft, #FEF9C8);
+  --sb-paper: #FFFFFF;
+  --sb-cream-soft: #FBF8EC;
+}
+
+/* ── Desktop rail: white paper with an ink rule ──────────────── */
+.sidebar {
+  background: var(--sb-paper) !important;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  border-right: 1.5px solid var(--sb-ink);
+  box-shadow: none !important;
+  padding: 16px 14px 14px;
+}
+.sidebar-brand {
+  gap: 10px;
+  padding: 2px 4px 14px;
+  border-bottom: 1.5px solid var(--sb-rule);
+  margin-bottom: 6px;
+}
+.brand-icon {
+  width: 32px; height: 32px;
+  background: var(--sb-yellow) !important;
+  color: var(--sb-ink) !important;
+  border: 1.5px solid var(--sb-ink);
+  border-radius: 9px;
+}
+.sidebar-brand .brand-name {
+  color: var(--sb-ink);
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.sidebar-collapse {
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--sb-rule-strong);
+  border-radius: 9px;
+  background: var(--sb-paper);
+  color: var(--sb-ink-mute);
+  transition: border-color .14s ease-out, background-color .14s ease-out, color .14s ease-out;
+}
+.sidebar-collapse:hover {
+  border-color: var(--sb-ink);
+  background: var(--sb-yellow-soft);
+  color: var(--sb-ink);
+}
+#sidebar-reopen {
+  background: var(--sb-paper);
+  border: 1.5px solid var(--sb-ink);
+  color: var(--sb-ink);
+  border-radius: 10px;
+  box-shadow: 2px 2px 0 rgba(21, 21, 21, .14) !important;
+}
+#sidebar-reopen:hover { background: var(--sb-yellow-soft); }
+
+/* New chat — the orange primary action */
+.btn-new-chat {
+  height: 42px;
+  border: 1.5px solid var(--sb-ink) !important;
+  border-radius: 11px !important;
+  background: var(--sb-orange) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: 2px 2px 0 rgba(21, 21, 21, .16) !important;
+  transition: transform .14s ease-out, box-shadow .14s ease-out, background-color .14s ease-out;
+}
+.btn-new-chat:hover {
+  background: var(--sb-orange-deep) !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--sb-ink) !important;
+}
+.btn-new-chat:active { transform: translate(2px, 2px); box-shadow: none !important; }
+.btn-new-chat-icon {
+  background: rgba(255, 255, 255, .18);
+  border-radius: 7px;
+}
+
+/* Search — quiet lined field */
+.chat-search {
+  height: 36px;
+  border: 1.5px solid var(--sb-rule-strong) !important;
+  border-radius: 10px !important;
+  background: var(--sb-cream-soft) !important;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.chat-search[data-active='true'] {
+  border-color: var(--sb-ink) !important;
+  background: var(--sb-paper) !important;
+  box-shadow: none !important;
+}
+.chat-search-input { color: var(--sb-ink); }
+.chat-search-input::placeholder { color: var(--sb-ink-mute); opacity: 1; }
+.chat-search-icon, .chat-search-clear { color: var(--sb-ink-mute); }
+
+/* History rows */
+.sidebar-history { padding: 6px 0; }
+.sidebar-label {
+  color: var(--sb-ink-mute) !important;
+  font-weight: 600 !important;
+  letter-spacing: .15em !important;
+  font-size: .64rem !important;
+}
+.history-section + .history-section { border-top: 1.5px solid var(--sb-rule); }
+.history-item {
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  color: var(--sb-ink);
+}
+.history-item:hover {
+  background: var(--sb-cream-soft) !important;
+  border-color: var(--sb-rule);
+}
+.history-item.active {
+  background: var(--sb-yellow-soft) !important;
+  border-color: var(--sb-ink) !important;
+  box-shadow: 2px 2px 0 rgba(21, 21, 21, .08) !important;
+  color: var(--sb-ink);
+}
+.history-item .history-title { color: var(--sb-ink); }
+.history-item .history-item-text { color: var(--sb-ink-soft); }
+.history-item.pinned {
+  background: var(--sb-paper);
+  border: 1.5px solid var(--sb-rule-strong) !important;
+  box-shadow: 2px 2px 0 rgba(21, 21, 21, .07) !important;
+}
+.history-item.pinned:hover { background: var(--sb-cream-soft); }
+.history-item.pinned .history-pin-mark { color: var(--sb-ink); opacity: .8; }
+.history-menu-btn { color: var(--sb-ink-mute); border-radius: 7px; }
+.history-menu-btn:hover { background: var(--sb-yellow-soft); color: var(--sb-ink); }
+.history-title-input {
+  border: 1.5px solid var(--sb-rule-strong);
+  border-radius: 7px;
+  background: var(--sb-paper);
+  color: var(--sb-ink);
+}
+/* Skeleton rows while chats load */
+.history-skeleton .hs-dot, .history-skeleton .hs-bar { background: rgba(21, 21, 21, .1); }
+.history-loading-label { color: var(--sb-ink-mute); }
+.hl-spinner { border-top-color: var(--sb-orange) !important; }
+
+/* ── Mobile drawer: partial-width paper sheet ────────────────── */  .mobile-sidebar-overlay {
+    /* Scrim also starts below the site header so it stays visible. */
+    top: 64px;
+    height: calc(100dvh - 64px);
+    background: rgba(21, 21, 21, .42) !important;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+@media (max-width: 768px) {
+  .mobile-sidebar {
+    /* Slide the sheet below the fixed site header (--hdr-height: 64px)
+       instead of covering it. */
+    top: 64px !important;
+    height: calc(100dvh - 64px) !important;
+    width: min(80vw, 316px) !important;
+    max-width: 80vw !important;
+    background: var(--sb-paper) !important;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    border-right: 1.5px solid var(--sb-ink);
+    padding: 16px 14px calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+  .mobile-sidebar.open + .mobile-sidebar-overlay,
+  .mobile-sidebar.active { box-shadow: 8px 0 0 rgba(21, 21, 21, .1); }
+  .mobile-sidebar-header {
+    gap: 10px;
+    padding: 2px 2px 14px !important;
+    border-bottom: 1.5px solid var(--sb-rule) !important;
+    margin-bottom: 6px;
+  }
+  .mobile-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; height: 34px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--sb-ink);
+    border-radius: 9px;
+    background: var(--sb-yellow);
+    color: var(--sb-ink);
+  }
+  .mobile-brand-text {
+    font-family: var(--font-ui, inherit);
+    font-size: .98rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--sb-ink);
+  }
+  .btn-close-sidebar {
+    background: var(--sb-paper) !important;
+    border: 1.5px solid var(--sb-rule-strong) !important;
+    border-radius: 10px !important;
+    color: var(--sb-ink) !important;
+    box-shadow: none !important;
+  }
+  .btn-close-sidebar:hover { background: var(--sb-yellow-soft) !important; border-color: var(--sb-ink) !important; }
+}
+
+/* ── Welcome screen on phones ────────────────────────────────── */
+/* The greeting must be vertically centered with the composer, not pinned
+   to the very top — the older welcome-center rules (higher specificity)
+   were overriding the mobile layout. */
+@media (max-width: 768px) {
+  body.welcome-center .chat-main { justify-content: center !important; }
+  body.welcome-center .chat-content { justify-content: center; }
+  body.welcome-center .chat-welcome {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    align-items: center;
+    padding: 16px 18px !important;
+  }
+  body.welcome-center .welcome-title {
+    font-size: clamp(1.28rem, 6vw, 1.75rem) !important;
+    line-height: 1.2;
+    color: var(--text, #151515);
+  }
+  .welcome-title {
+    color: var(--text, #151515);
+  }
+  /* No skeleton shimmer band behind the greeting on phones — paint the
+     real text immediately instead. */
+  .welcome-title.skel-text {
+    background: none !important;
+    color: var(--text, #151515) !important;
+    animation: none !important;
+    user-select: auto;
+  }
+  .welcome-subtitle.skel-text {
+    background: none !important;
+    color: var(--chat-text-meta, rgba(21,21,21,.5)) !important;
+    animation: none !important;
+  }
+}
+@media (max-width: 380px) {
+  body.welcome-center .welcome-title { font-size: 1.25rem !important; }
+}
+
+/* ── Side-menu button (topbar hamburger) ────────────────────────────── */
+/* It rendered as a separate white capsule on the white topbar. It now sits
+   directly on the panel like every other quiet control and only gains a
+   yellow wash on hover/press. */
+.chat-history-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #151515;
+  transition: background-color .14s ease-out, color .14s ease-out;
+}
+.chat-history-btn:hover,
+.chat-history-btn:focus-visible {
+  background: #FEF9C8 !important;
+  color: #151515;
+}
+.chat-history-btn:active { transform: scale(.96); }
+
+/* The whole topbar strip was a separate white bar across the page — it now
+   shares the chat wallpaper background, with only the hamburger floating on it. */
+.chat-topbar {
+  background: transparent !important;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
