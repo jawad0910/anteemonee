@@ -60,6 +60,7 @@ async function initApp() {
   setupTheme();
   setupNav();
   setupMobileMenu();
+  attachMobileMenuAccountObserver();
   if (!db) {
     // CDN failed: still render the logged-out UI instead of hanging.
     updateAuthUI();
@@ -608,7 +609,17 @@ function renderHamburgerAccount() {
     if (!block) {
       block = document.createElement('div');
       block.className = 'hamburger-account';
-      panel.prepend(block);
+      // Insert into the visible sheet, not the outer panel (the veil
+      // sits between them, so prepend/parent-level insertion hides the
+      // block behind the backdrop). Site chrome injects .mobile-menu
+      // asynchronously, so the sheet may not exist yet — fall back to
+      // prepend once, then re-render via MutationObserver when it does.
+      const sheet = panel.querySelector('.mobile-menu-sheet') || panel.querySelector('.site-mobile-menu-sheet');
+      if (sheet) {
+        sheet.prepend(block);
+      } else {
+        panel.prepend(block);
+      }
     }
     const linkCls = panel.classList.contains('site-mobile-menu') ? 'site-mobile-link' : 'mobile-nav-link';
     const { fullName: _fn, username: _un, imgUrl: _img } = getDisplayUser();
@@ -758,6 +769,23 @@ function setupNav() {
       document.querySelectorAll('.nav-drop.open').forEach(d => d.classList.remove('open'));
     });
   });
+}
+
+function attachMobileMenuAccountObserver() {
+  // Site chrome injects .mobile-menu asynchronously (MutationObserver on
+  // [data-site-header]); .mobile-menu-sheet appears after the panel. If
+  // renderHamburgerAccount() ran before the sheet existed, the block is
+  // stuck behind the veil. Re-render once the sheet shows up.
+  var mo = new MutationObserver(function () {
+    var sheet = document.querySelector('.mobile-menu-sheet, .site-mobile-menu-sheet');
+    if (sheet && currentUser) {
+      var blocks = sheet.querySelectorAll('.hamburger-account');
+      if (blocks.length) return; // already in the sheet
+      renderHamburgerAccount();
+      try { mo.disconnect(); } catch (_) {}
+    }
+  });
+  try { mo.observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
 }
 
 function setupMobileMenu() {

@@ -587,7 +587,7 @@ a.mobile-nav-link > svg, a.site-mobile-link > svg { flex-shrink: 0; opacity: 0.7
 
 /* Hamburger account dropdown: pfp / name / email card toggles
    Account / Settings / Logout (uses .mobile-acc-* accordion behavior) */
-.hamburger-account { width: 100%; }
+.hamburger-account { width: 100%; margin-top: 6px; }
 .hamburger-account .ha-dropdown { width: 100%; }
 .mobile-menu .ha-toggle, .site-mobile-menu .ha-toggle {
   display: flex; align-items: center; justify-content: space-between;

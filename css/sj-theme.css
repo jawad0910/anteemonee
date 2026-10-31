@@ -205,6 +205,11 @@ h1, h2, h3, h4, .logo-text, .hero h1, .section-title, .card-title {
 /* Signed-in visitors don't get the "Start learning free" upsell strip.
    Hidden via .is-signed-in on <html> (see app.js / site-chrome.js). */
 .is-signed-in .sj-strip { display: none !important; }
+
+/* Hide the yellow top strip on mobile. */
+@media (max-width: 767px) {
+  .sj-strip { display: none !important; }
+}
 header.site-header, header.header { border-top: none; }
 
 /* ---------- header bar ---------- */
