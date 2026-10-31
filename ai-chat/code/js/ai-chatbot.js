@@ -7,7 +7,7 @@
 
   try { console.info('[Anteemonee AI] js build v102 (slash commands + tests)'); } catch (_) {}
 
-  // â”€â”€ State â”€â”€
+  // ── State ──
   const api = new AiApiService();
   let conversations = [];
   let activeConversationId = null;
@@ -23,13 +23,13 @@
   const pendingImages = []; // Array of base64 data URLs, max 3
   let pendingQuizTopic = false;
 
-  // â”€â”€ Per-user localStorage keys â”€â”€
+  // ── Per-user localStorage keys ──
   function chatStorageKey() {
     var base = (typeof currentUser !== 'undefined' && currentUser?.id) ? 'Anteemonee_ai_conversations_' + currentUser.id : 'Anteemonee_ai_conversations_anon';
     return base + '_' + subjectSlug(selectedSubject);
   }
 
-  // ── Per-chat share code: only the owner can open the chat by this code ──
+  // -- Per-chat share code: only the owner can open the chat by this code --
   function makeShareCode() {
     var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     var out = '';
@@ -107,7 +107,7 @@
     if (typeof currentUser !== 'undefined' && currentUser?.id) return 'Anteemonee_ai_session_' + currentUser.id;
     return 'Anteemonee_ai_session_anon';
   }
-  // ── Chat store: every signed-in student syncs across devices ──
+  // -- Chat store: every signed-in student syncs across devices --
   let isPremiumTier = false;
 
   async function refreshTier() {
@@ -153,7 +153,7 @@
     }
   }
 
-  // ── Pinned chats helpers (per-user, localStorage + optional DB column) ──
+  // -- Pinned chats helpers (per-user, localStorage + optional DB column) --
   function pinnedStorageKey() {
     var uid = currentUserId();
     var base = uid ? 'Anteemonee_pinned_' + uid : 'Anteemonee_pinned_anon';
@@ -234,7 +234,7 @@
         updated_at: new Date().toISOString(),
         subject: subj,
       };
-      // pinned column is optional — try to include it if present in conv
+      // pinned column is optional � try to include it if present in conv
       if (typeof conv.pinned === 'boolean') row.pinned = !!conv.pinned;
       if (conv.shareCode) row.share_code = conv.shareCode;
       const { error } = await db.from('chat_conversations').upsert(row, { onConflict: 'id' });
@@ -398,7 +398,7 @@
   }
   window.__anteemoneeGraphEdited = __graphEdited;
 
-  // ── 10-day chat TTL: chats older than 10 days are deleted automatically ──
+  // -- 10-day chat TTL: chats older than 10 days are deleted automatically --
   var CHAT_TTL_MS = 10 * 24 * 60 * 60 * 1000;
 
   function convTimestamp(c) {
@@ -522,7 +522,7 @@
           // One-time upgrade migration: push this browser's chats to the DB.
           conversations = local.slice(0, 50);
           for (const c of conversations) { c.subject = c.subject || selectedSubject; await saveConversationToDb(c); }
-          // keep local per-subject key, do not remove — it is the free-tier store
+          // keep local per-subject key, do not remove � it is the free-tier store
         } else {
           mergeLocalChats(filtered, queued);
           conversations = filtered.slice(0, 50);
@@ -565,7 +565,7 @@
     flushPendingDbUploads(queued);
   }
 
-  // â”€â”€ Persist session state to localStorage (no tokens â€” always from DB) â”€â”€
+  // ── Persist session state to localStorage (no tokens — always from DB) ──
   function saveSessionState() {
     try {
       const state = {
@@ -596,7 +596,7 @@
     } catch (_) {}
   }
 
-  // â”€â”€ AI Session State â”€â”€
+  // ── AI Session State ──
   let activeSession = null; // { id, started_at, expires_at, messages_count, tokens_used }
   let sessionUsage = null;  // { ai_limit, ai_used, period_end }
   let sessionTimerInterval = null;
@@ -604,11 +604,11 @@
   let lastPromptTokens = 0; // full billed prompt of the latest request (system + RAG + history)
   let lastApiMessages = null; // frozen base payload of the latest request (for continuations)
 
-  // â”€â”€ Streak State â”€â”€
+  // ── Streak State ──
   let streakCount = 0;
   let longestStreak = 0;
 
-  // â”€â”€ Study Timer State â”€â”€
+  // ── Study Timer State ──
   let studyTimerInterval = null;   // setInterval ID
   let studyTimerAccumulated = 0;   // seconds accumulated, not yet saved
   const STUDY_SAVE_INTERVAL = 5;   // save to DB every 5s (was 30, too much lost on nav)
@@ -645,21 +645,21 @@
     } catch (e) { console.warn('[StudyTimer] save failed:', e); }
   }
 
-  // â”€â”€ Model / Persona State â”€â”€
+  // ── Model / Persona State ──
   const PERSONAS = [
     {
       name: 'AI', providerIndex: 0,
-      background: 'Your name is Chipa Sahab. You run a welfare organization in Karachi, Pakistan, helping people in need. If a student asks about your welfare work, answer warmly and factually — mention that you are dedicated to helping the community in Karachi. If asked about politics or politicians, redirect gently back to studies. Keep it brief and offer to return to academics.',
+      background: 'Your name is Chipa Sahab. You run a welfare organization in Karachi, Pakistan, helping people in need. If a student asks about your welfare work, answer warmly and factually � mention that you are dedicated to helping the community in Karachi. If asked about politics or politicians, redirect gently back to studies. Keep it brief and offer to return to academics.',
     },
     {
       name: 'AI', providerIndex: 1,
-      background: 'Your name is Coder. You are the founder of Anteemonee. If a student asks about you, share only what is relevant: you are 18 years old, your birthday is August 26, 2008, you are based in Rahim Yar Khan, you are Punjabi, and you are currently in A Levels. Do not volunteer all of this at once — only share details when the student asks specific questions about you. Keep answers brief and redirect back to the task.',
+      background: 'Your name is Coder. You are the founder of Anteemonee. If a student asks about you, share only what is relevant: you are 18 years old, your birthday is August 26, 2008, you are based in Rahim Yar Khan, you are Punjabi, and you are currently in A Levels. Do not volunteer all of this at once � only share details when the student asks specific questions about you. Keep answers brief and redirect back to the task.',
       codingOnly: true,
     },
   ];
   let activePersonaIndex = 0;
 
-  // ── Subject State ──
+  // -- Subject State --
   const CHAT_SUBJECTS = [
     { name: 'Physics', code: '9702', color: 'var(--sub-physics)', bg: 'color-mix(in srgb, var(--sub-physics) 15%, transparent)' },
     { name: 'Chemistry', code: '9701', color: 'var(--sub-chemistry)', bg: 'color-mix(in srgb, var(--sub-chemistry) 15%, transparent)' },
@@ -965,7 +965,7 @@
   function closeSubjectDropdown() { if (typeof subjectGlide !== 'undefined' && subjectGlide) subjectGlide.close(); }
   function portalSubjectDropdown() {}
 
-  // Subject selector is for signed-in users only — guests keep the default
+  // Subject selector is for signed-in users only � guests keep the default
   // subject. Default markup stays visible; hide only once logged-out state
   // is confirmed so signed-in users never see a flicker.
   function updateSubjectVisibility() {
@@ -982,7 +982,7 @@
     } catch (_) { return true; }
   }
 
-  // ── Chats loading screen ──
+  // -- Chats loading screen --
   var _chatsLoadingFallback = null;
   // Auto model routing: coding tasks use the coding persona, everything else the tutor persona
   function isCodingTask(text) {
@@ -1043,7 +1043,7 @@
     return !!(pendingQuizTopic && text && !isInstantGreeting(text));
   }
 
-  // ── Graph intent (text -> interactive chart) ──────────────────
+  // -- Graph intent (text -> interactive chart) ------------------
   // Trigger on "graph / chart / plot / bar chart / line chart / pie chart"
   // phrases. "draw a graph" is already a false friend for image generation,
   // so there is no overlap with the image pipeline.
@@ -1100,7 +1100,7 @@ Rules:
 - Explain briefly below the chart what the graph shows.`;
   }
 
-  // ── Image generation intent (text -> image, Qwen primary + Mistral fallback) ──
+  // -- Image generation intent (text -> image, Qwen primary + Mistral fallback) --
   // Explicit only: avoids hijacking "what is an image..." study questions.
   // Pure text trigger: no buttons or modes. Anything that reads like an
   // image request routes to image generation.
@@ -1230,7 +1230,7 @@ Rules:
     return out;
   }
 
-  // ── User-side image generation ──
+  // -- User-side image generation --
   // Pollinations and our edge share infra IPs, so their anonymous per-IP
   // bucket drains fast. Calling pollinations straight from the browser keys
   // the rate limit on the STUDENT's IP (one student = one bucket, rarely
@@ -1317,7 +1317,7 @@ Rules:
     }
   }
 
-  // ── Table image (client-side, exact) ──
+  // -- Table image (client-side, exact) --
   // When the student asks for an image of a table/data they just discussed,
   // a diffusion model invents numbers and mangles text. So we render the
   // REAL table from the conversation into a canvas and use that as the
@@ -1358,7 +1358,7 @@ Rules:
           title = String(pm.content || '').split('\n').filter(function (l) {
             return l.trim() && l.trim().charAt(0) !== '|' && !/^[-:\s|]+$/.test(l.trim());
           }).pop() || '';
-          if (title.length > 90) title = title.slice(0, 87) + '…';
+          if (title.length > 90) title = title.slice(0, 87) + '�';
           break;
         }
       }
@@ -1457,7 +1457,7 @@ Rules:
     });
   }
 
-  // ── YouTube suggestion policy ──
+  // -- YouTube suggestion policy --
   // The model decides WHEN a video helps (amber offer / red auto / explicit
   // ask), and writes the exact search query for the Punjab Board context.
   // ai-video-search does the actual finding, oEmbed verification and ranking.
@@ -1473,7 +1473,7 @@ Rules:
       'Never use the markers in any other context. Only substantively-study-related replies.\n';
   }
 
-  // ── YouTube suggestion UI (amber offer / red auto / direct) ──
+  // -- YouTube suggestion UI (amber offer / red auto / direct) --
   var YT_MARK_RE = /\[YT:(SUGGEST|NOW|ASK)\|([^\]|]+?)\s*(?:\||])\s*([^\]]*)\]/;
 
   function stripYtMarkers(text) {
@@ -1521,7 +1521,7 @@ Rules:
     if (existing) existing.remove();
     var shell = document.createElement('div');
     shell.className = 'yt-shell' + (kind === 'auto' ? ' yt-auto' : '');
-    // Instant skeleton while the search runs — the reply text is already
+    // Instant skeleton while the search runs � the reply text is already
     // readable; this only fills the video slot when it lands.
     shell.innerHTML = '<div class="yt-skel">' +
       '<div class="yt-skel-head"><span class="yt-skel-line yt-skel-line-short"></span></div>' +
@@ -1655,7 +1655,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
     return '';
   }
 
-  // â”€â”€ DOM â”€â”€
+  // ── DOM ──
   const chatContent = document.getElementById('chat-content');
   const welcome = document.getElementById('chat-welcome');
   const messagesList = document.getElementById('messages-list');
@@ -1676,7 +1676,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
   // auto-scrolls in that case, so it never yanks the user away mid-read.
   let userNearBottom = true;
 
-  // â”€â”€ AI Preferences (from Settings â†’ AI Preferences, stored in user_preferences) â”€â”€
+  // ── AI Preferences (from Settings → AI Preferences, stored in user_preferences) ──
   let aiPrefs = {
     responseStyle: 'balanced',
     explanationLevel: 'standard',
@@ -1694,10 +1694,10 @@ Use this context if the student refers to the quiz, an answer, or a question num
     return 'Anteemonee_ai_references_anon';
   }
 
-  // â”€â”€ AI Memory (durable facts remembered from past chats) â”€â”€
+  // ── AI Memory (durable facts remembered from past chats) ──
   let aiMemories = [];
 
-  // ── AI Memory extraction ──
+  // -- AI Memory extraction --
   // Whenever this runs, that many chat replies have been finished since the last
   // time we asked the tutor to remember anything. A burst of a few turns is sent
   // as one request: it costs one cheap call instead of one per message, the
@@ -1728,7 +1728,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
   /**
    * Ask the tutor to remember what just happened, without ever getting in the
    * student's way: runs in the background after the reply has been painted, and
-   * every failure is swallowed. The whole feature is a nicety — a failed
+   * every failure is swallowed. The whole feature is a nicety � a failed
    * extraction must never surface as an error or delay the next message.
    */
   async function extractMemoriesFromChat() {
@@ -1807,7 +1807,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
     }
   }
 
-  // â”€â”€ Init â”€â”€
+  // ── Init ──
   // Send wedge safety net: if ANY uncaught error or unhandled rejection fires
   // mid-send, the locked composer must never stay dead. Unlock + log it.
   function __recoverSendWedge(kind) {
@@ -1835,7 +1835,7 @@ Use this context if the student refers to the quiz, an answer, or a question num
         }
       } catch (_) {}
     }
-    // Session check above is authoritative for this page — guests lose the
+    // Session check above is authoritative for this page � guests lose the
     // subject selector, signed-in users keep it.
     try { window.__aiAuthResolved = true; } catch (_) {}
     try { updateSubjectVisibility(); } catch (_) {}
@@ -1922,14 +1922,14 @@ if (idx >= 0 && idx < PERSONAS.length) {
     await loadAiPrefs();
     await loadAiMemories();
 
-    // â”€â”€ 1. Load from localStorage FIRST (instant, no flicker) â”€â”€
+    // ── 1. Load from localStorage FIRST (instant, no flicker) ──
     const cached = loadSessionState();
     if (cached) {
       activeSession = cached.activeSession;
       sessionUsage = cached.sessionUsage;
       streakCount = cached.streakCount || 0;
       longestStreak = cached.longestStreak || 0;
-      // Tokens always come from DB â€” not cached in localStorage
+      // Tokens always come from DB — not cached in localStorage
       // If cached session is expired, clear it
       if (activeSession && new Date(activeSession.expires_at).getTime() <= Date.now()) {
         activeSession = null;
@@ -1941,7 +1941,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       }
     }
 
-    // â”€â”€ 2. Sync with DB in background (only if no cached data or cache is stale) â”€â”€
+    // ── 2. Sync with DB in background (only if no cached data or cache is stale) ──
     // Free & unlimited: just sync access state in the background.
     try { if (typeof Access !== 'undefined') await Access.init(); } catch (_) {}
     const token = getAccessToken();
@@ -1981,7 +1981,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     // Periodic streak check (every 5 min)
     setInterval(() => { refreshStreak(); saveSessionState(); }, 5 * 60 * 1000);
 
-    // â”€â”€ Study timer: pause/resume on tab visibility â”€â”€
+    // ── Study timer: pause/resume on tab visibility ──
     document.addEventListener('visibilitychange', () => {
       if (!activeSession) return;
       if (document.visibilityState === 'visible') {
@@ -2021,7 +2021,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     } catch (_) {}
   }
 
-  // â”€â”€ Image helpers (IIFE-level so handleSend can access them) â”€â”€
+  // ── Image helpers (IIFE-level so handleSend can access them) ──
   function renderImagePreview() {
     imagePreviewBar.innerHTML = '';
     if (pendingImages.length === 0) {
@@ -2105,7 +2105,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       }
     });
 
-    // â”€â”€ Image attachment â”€â”€
+    // ── Image attachment ──
     // Plus opens the photo picker directly \u2014 no menu.
     btnPlus.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2158,7 +2158,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       });
     }
 
-    // â”€â”€ Image lightbox â”€â”€
+    // ── Image lightbox ──
     const lightbox = document.getElementById('image-lightbox');
     const lbImg = document.getElementById('lb-img');
     const lbClose = document.getElementById('lb-close');
@@ -2206,11 +2206,11 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
     setupKeyboardAwareLayout();
 
-    // Model selector removed — auto routing handles persona per message.
+    // Model selector removed � auto routing handles persona per message.
 
   }
 
-  // ── Modes UI ──
+  // -- Modes UI --
   // The modes bar still hosts the GitHub repo chip, so this stays.
   function renderModeChips() {
     modesBar.innerHTML = '';
@@ -2219,7 +2219,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     }
   }
 
-  // â”€â”€ Model / Persona â”€â”€
+  // ── Model / Persona ──
   function updatePersonaUI() {
     // Auto mode: selector hidden, keep UI generic. No per-persona subtitle or filtering.
     try {
@@ -2240,7 +2240,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     return PERSONAS[activePersonaIndex];
   }
 
-  // â”€â”€ Student Context â”€â”€
+  // ── Student Context ──
   async function loadStudentContext() {
     if (typeof currentUser === 'undefined' || !currentUser) return;
     try {
@@ -2266,7 +2266,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
     }
   }
 
-  // â”€â”€ Textbook Search â”€â”€
+  // ── Textbook Search ──
   async function searchTextbooks(query) {
     if (!query || query.trim().length < 3) return [];
 
@@ -2358,7 +2358,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
         });
       });
       if (!lines.length) return '';
-      // Book overview: total pages, page range, publisher, chapter count —
+      // Book overview: total pages, page range, publisher, chapter count �
       // answers "how many pages", "which edition" without any search.
       var overviewBlock = '';
       try {
@@ -2386,7 +2386,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
         }
       } catch (e) { console.warn('[AI] Book overview failed:', e && e.message); }
       // "What is on the first page" style questions need the REAL opening
-      // page text, not chapter names alone — fetch printed page 1 of the
+      // page text, not chapter names alone � fetch printed page 1 of the
       // subject book so the model quotes the stored content.
       var page1Block = '';
       if (/\b(first|opening|starting|beginning)\s+pages?\b|\bpages?\s+(one|1)\b|\bpage\b\s*\d*\s*\bof\s+(the\s+)?book\b/i.test(text)) {
@@ -2398,7 +2398,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
           });
           if (!resPage1.error && resPage1.data && resPage1.data.length) {
             var p1 = resPage1.data[0];
-            page1Block = '\n\nThe stored textbook REALLY begins like this — trust it, never describe a generic book:\n' +
+            page1Block = '\n\nThe stored textbook REALLY begins like this � trust it, never describe a generic book:\n' +
               '[BOOK: "' + (p1.book_title || subj + ' textbook') + ', PRINTED PAGE 1' +
               (p1.chapter_number !== null && p1.chapter_number !== undefined ? ', Chapter ' + p1.chapter_number + (p1.chapter_name ? ': ' + p1.chapter_name : '') : '') + ']\n' +
               String(p1.full_text || '').slice(0, 700) + '\n';
@@ -2475,8 +2475,8 @@ if (idx >= 0 && idx < PERSONAS.length) {
   }
 
   // How much of the ingested book reaches the model, and how hard the model is
-  // pushed to teach from it. With one thin snippet the models — Astra in
-  // particular, being a large general model — blend towards general knowledge,
+  // pushed to teach from it. With one thin snippet the models � Astra in
+  // particular, being a large general model � blend towards general knowledge,
   // so answers stop reading like they came from the Punjab board textbook.
   // These are the knobs for that: more pages, more text per page, and an
   // explicit book/general ratio with page citations in the instructions.
@@ -2527,7 +2527,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
       : ' Do NOT name the book or any page number in the answer body (the References section is switched off).';
 
     var refBlock = aiPrefs.references
-      ? `5. REFERENCES ON — MANDATORY: At the VERY END of your response (after everything else), you MUST include a References section in this EXACT format:
+      ? `5. REFERENCES ON � MANDATORY: At the VERY END of your response (after everything else), you MUST include a References section in this EXACT format:
 
 ---
 **References:**
@@ -2536,7 +2536,7 @@ if (idx >= 0 && idx < PERSONAS.length) {
 
 Use the chapter number and name exactly as shown in the source block. If a source has no chapter metadata, cite it as Book, p. [page]. List ALL books, chapters, and pages you actually used. Do NOT invent references. If no usable book, page, or website source is available, omit the References heading and both separator lines entirely.`
       : `5. REFERENCES OFF: Do NOT include any References section, and do not name books or page numbers anywhere in the answer. Just end your answer normally.`;
-    return `\n\n===== TEXTBOOK REFERENCE — READ FIRST =====
+    return `\n\n===== TEXTBOOK REFERENCE � READ FIRST =====
 You were given the student's EXACT Punjab board textbook excerpts below (from 11th/12th Biology, Chemistry, Physics, Computer Science, English 2025 editions now ingested). You MUST read and comprehend these excerpts BEFORE writing your answer. Do NOT answer from general memory alone. Teach from these excerpts first, and let general knowledge fill only the gaps.
 
 ${sections.join('\n\n---\n\n')}
@@ -2549,7 +2549,7 @@ ${sections.join('\n\n---\n\n')}
 ${refBlock}`;
   }
 
-  // â”€â”€ AI preference rules injected into the system prompt â”€â”€
+  // ── AI preference rules injected into the system prompt ──
   function aiPrefsPrompt() {
     // Every response, at every style, must actually DEFINE what it is talking
     // about before explaining it. This is the rule that was missing, which is
@@ -2580,34 +2580,34 @@ ${refBlock}`;
     }[aiPrefs.explanationLevel] || 'EXPLANATION LEVEL is STANDARD: explain at FSc board-exam level, completely and self-contained.';
 
     const langRule = {
-      english: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in English. Every single word, sentence, heading, bullet point, explanation â€” everything must be in English. Do NOT use any Urdu words, Urdu script, or Roman Urdu. Write as if you are an English-speaking tutor.',
-      urdu: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in Urdu script (Ø§Ø±Ø¯Ùˆ). Every single word, sentence, heading, bullet point, explanation â€” everything must be in Urdu script. Do NOT use any English words or Roman Urdu. Write as if you are an Ø§Ø±Ø¯Ùˆ-speaking tutor.',
-      roman_urdu: 'LANGUAGE RULE â€” CRITICAL: You MUST write your ENTIRE response in Roman Urdu (English letters used to write Urdu words). Every single word, sentence, heading, bullet point, explanation â€” everything must be in Roman Urdu. Do NOT use Urdu script. Do NOT use formal English. Write as if you are talking to a friend in Lahore.',
+      english: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in English. Every single word, sentence, heading, bullet point, explanation — everything must be in English. Do NOT use any Urdu words, Urdu script, or Roman Urdu. Write as if you are an English-speaking tutor.',
+      urdu: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in Urdu script (اردو). Every single word, sentence, heading, bullet point, explanation — everything must be in Urdu script. Do NOT use any English words or Roman Urdu. Write as if you are an اردو-speaking tutor.',
+      roman_urdu: 'LANGUAGE RULE — CRITICAL: You MUST write your ENTIRE response in Roman Urdu (English letters used to write Urdu words). Every single word, sentence, heading, bullet point, explanation — everything must be in Roman Urdu. Do NOT use Urdu script. Do NOT use formal English. Write as if you are talking to a friend in Lahore.',
       mixed: 'LANGUAGE RULE: Match the student exact script. If they write in English, reply in English. If they write in Roman Urdu, reply in Roman Urdu (never Urdu script). If they write in Urdu script, reply in Urdu script. Never switch mid-response.',
     }[aiPrefs.language] || 'LANGUAGE RULE: Match the student exact script.';
 
     const suggestRule = aiPrefs.studySuggestions
-      ? 'STUDY SUGGESTIONS: After finishing your main answer, add 1-2 short follow-up sentences like "Want me to quiz you on this?" or "Should I explain [related topic]?". Do NOT create a separate section header for this â€” just add them as natural closing sentences at the very end of your response.'
+      ? 'STUDY SUGGESTIONS: After finishing your main answer, add 1-2 short follow-up sentences like "Want me to quiz you on this?" or "Should I explain [related topic]?". Do NOT create a separate section header for this — just add them as natural closing sentences at the very end of your response.'
       : 'STUDY SUGGESTIONS: NEVER add follow-up suggestions, recommendations, or closing lines. Just answer the question and stop. No "want more?" or "what to study next" lines.';
 
     const personalRule = aiPrefs.personalization
-      ? `STUDENT'S PERSONAL INSTRUCTIONS â€” CRITICAL: The student has given you the following personalization instructions. You MUST follow these at all times:\n"${aiPrefs.personalization}"\nThese instructions override default behavior. Adapt your tone, style, language, explanation depth, and teaching approach according to what the student described above.`
+      ? `STUDENT'S PERSONAL INSTRUCTIONS — CRITICAL: The student has given you the following personalization instructions. You MUST follow these at all times:\n"${aiPrefs.personalization}"\nThese instructions override default behavior. Adapt your tone, style, language, explanation depth, and teaching approach according to what the student described above.`
       : '';
 
     const emojiRule = aiPrefs.emojis
-      ? 'EMOJIS â€” CRITICAL: The student ENABLED emojis. You MUST use relevant emojis naturally throughout every response (headings, key points, encouragement). Be generous but tasteful.'
-      : 'EMOJIS â€” CRITICAL: The student DISABLED emojis. You MUST NEVER use any emojis or emoticons anywhere in your responses. Plain text only, no exceptions.';
+      ? 'EMOJIS — CRITICAL: The student ENABLED emojis. You MUST use relevant emojis naturally throughout every response (headings, key points, encouragement). Be generous but tasteful.'
+      : 'EMOJIS — CRITICAL: The student DISABLED emojis. You MUST NEVER use any emojis or emoticons anywhere in your responses. Plain text only, no exceptions.';
 
     const referencesRule = aiPrefs.references
-      ? `REFERENCES — ON — MANDATORY, MUST MEANS MUST: After EVERY substantive response (anything except a plain greeting), you MUST end with a References section as the ABSOLUTE LAST thing in your response (after the answer, after any study-suggestion closing lines, after everything). Exact format:
+      ? `REFERENCES � ON � MANDATORY, MUST MEANS MUST: After EVERY substantive response (anything except a plain greeting), you MUST end with a References section as the ABSOLUTE LAST thing in your response (after the answer, after any study-suggestion closing lines, after everything). Exact format:
 
 ---
 **References:**
-- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])  (for every textbook excerpt above that you used — list ALL of them, never invent a book, chapter, or page)
-- [Website URL]  (for every website/online source you relied on — if you searched the internet or used web knowledge beyond the textbooks, list each site/URL; if you used no websites, omit website lines)
+- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])  (for every textbook excerpt above that you used � list ALL of them, never invent a book, chapter, or page)
+- [Website URL]  (for every website/online source you relied on � if you searched the internet or used web knowledge beyond the textbooks, list each site/URL; if you used no websites, omit website lines)
 
 Rules: cite the exact book, chapter number/name, and page values from the excerpts block. If a source has no chapter metadata, cite the book and page without a chapter. If no usable source is available, omit the References heading and both separator lines entirely. NEVER place anything after a real References section.`
-      : 'REFERENCES — OFF: NEVER include a References section in any response. Just answer and stop (plus study-suggestion closing lines only if those are enabled). Do not cite books, pages, or websites.';
+      : 'REFERENCES � OFF: NEVER include a References section in any response. Just answer and stop (plus study-suggestion closing lines only if those are enabled). Do not cite books, pages, or websites.';
 
     // Response style and explanation level combine: the two deepest settings
     // together mean a textbook-chapter answer, and that has to be spelled out
@@ -2628,11 +2628,11 @@ Rules: cite the exact book, chapter number/name, and page values from the excerp
     return [foundationRule, styleRule, levelRule, depthRule, langRule, suggestRule, emojiRule, referencesRule, highlightRule, personalRule].filter(Boolean).join('\n\n');
   }
 
-  // â”€â”€ System Prompt â”€â”€
+  // ── System Prompt ──
   function buildSystemPrompt() {
     const persona = getActivePersona();
 
-    // Coder handles code plus Computer Science theory â€” different system prompt
+    // Coder handles code plus Computer Science theory — different system prompt
     if (persona.codingOnly) {
       var coderSubjMeta = getSubjectMeta(selectedSubject);
       var coderSubjName = coderSubjMeta ? coderSubjMeta.name : (selectedSubject || 'Physics');
@@ -2642,7 +2642,7 @@ IDENTITY: Your name is "Coder". ONLY mention it when directly asked "what is you
 
 SELECTED SUBJECT: The student has "${coderSubjName}" selected. When that subject is Computer Science, you are also that student's Computer Science tutor and every answer must stay within Computer Science. If the subject is anything else, answer the question directly and accurately.
 
-STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler â€” go straight to the content.
+STYLE: No em dashes or en dashes. Use commas/periods. Varied natural endings. No repetitive closing lines. Start your response immediately with the answer, code, or explanation. Do NOT say "Sure", "Of course", "Great question", "Let me help" or similar filler — go straight to the content.
 
 CORE EXPERTISE:
 - Languages: Python, JavaScript, TypeScript, C, C++, Java, Dart, Kotlin, Swift, HTML, CSS, SQL, Bash, Go, Rust, PHP, Ruby
@@ -2652,10 +2652,10 @@ CORE EXPERTISE:
 - Concepts: Data structures, algorithms, OOP, functional programming, system design, APIs, REST, GraphQL, web sockets, authentication, security
 
 WHAT YOU DO:
-- Generate complete, working, production-ready code â€” not snippets, real code
+- Generate complete, working, production-ready code — not snippets, real code
 - Build projects from scratch: websites, apps, games, tools, CLI programs, APIs
-- Debug code â€” find and fix errors, explain why they happened
-- Review code â€” suggest improvements, performance fixes, security issues
+- Debug code — find and fix errors, explain why they happened
+- Review code — suggest improvements, performance fixes, security issues
 - Explain programming concepts step-by-step with examples
 - Help students with assignments, projects, and homework involving code
 - Create file structures, database schemas, and architecture diagrams (text-based)
@@ -2663,7 +2663,7 @@ WHAT YOU DO:
 - Convert designs/mockups to code
 - Optimize code for speed and efficiency
 
-ACADEMIC SUBJECTS — CRITICAL: You handle Computer Science theory as well as code. Never refuse a question and never tell the student to switch to another model, tutor, or persona. There is only one assistant.
+ACADEMIC SUBJECTS � CRITICAL: You handle Computer Science theory as well as code. Never refuse a question and never tell the student to switch to another model, tutor, or persona. There is only one assistant.
 - If the selected subject is Computer Science, answer BOTH the theory and the coding parts fully: programming language fundamentals, algorithms, data structures, OOP, databases, networks, software engineering, operating systems, and computer organisation.
 - For Physics, Chemistry, Biology, Mathematics, or English, answer any theory question directly and correctly. If it is not a coding question, just answer it well. NEVER reply with a "switch to" message.
 - NEVER output a refusal, and NEVER emit any switch marker or instruction telling the student to use a different model or assistant.
@@ -2697,15 +2697,15 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
           if (ghCtx) ctx += ghCtx;
         } catch (_) {}
       }
-      // Voice mode — short spoken responses, no filler words
+      // Voice mode � short spoken responses, no filler words
       if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.voiceMode) {
-        ctx += `\n\nVOICE MODE ACTIVE — CRITICAL RULES:
+        ctx += `\n\nVOICE MODE ACTIVE � CRITICAL RULES:
 - Give SHORT, direct answers. 1-3 sentences max unless the user explicitly asks for detail.
 - Get straight to the point. No preamble, no summaries.
 - NEVER use filler words: hmm, ohh, yess, um, uh, well, so, basically, actually, right, okay so. Just answer.
 - Speak naturally like a helpful tutor, not like you're reading an essay.
 - For simple questions: answer in ONE sentence.
-- Never say "Sure!", "Of course!", "Great question!" — just answer.
+- Never say "Sure!", "Of course!", "Great question!" � just answer.
 - NEVER use ==highlight== markers: your words are spoken aloud, not rendered.`;
       }
       // The coding persona used to skip the student's response style and
@@ -2717,15 +2717,15 @@ FILE GENERATION: When the user asks to generate/create/make/download a file (any
     var subjMeta = getSubjectMeta(selectedSubject);
     var subjName = subjMeta ? subjMeta.name : (selectedSubject || 'Physics');
     var subjCode = subjMeta ? subjMeta.code : '';
-    let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (xâ‚€, vÂ², âˆš2), no LaTeX, no HTML.
+    let ctx = `You are ${persona.name}, an FSc Intermediate tutor (Pakistan). Teach step-by-step, use Unicode math (x₀, v², √2), no LaTeX, no HTML.
 
-SELECTED SUBJECT — CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are a dedicated ${subjName} tutor for questions that belong to ${subjName}.
-- Answer ONLY within ${subjName}: all explanations, examples, formulas, and diagrams (text) must be for ${subjName} — but ONLY when the question itself is a ${subjName} question (see SCOPE JUDGMENT below).
+SELECTED SUBJECT � CRITICAL: The student selected "${subjName}"${subjCode ? ' ('+subjCode+')' : ''} in the composer dropdown. You are a dedicated ${subjName} tutor for questions that belong to ${subjName}.
+- Answer ONLY within ${subjName}: all explanations, examples, formulas, and diagrams (text) must be for ${subjName} � but ONLY when the question itself is a ${subjName} question (see SCOPE JUDGMENT below).
 - If the question is from another subject, general knowledge, current affairs, websites, or casual chat, do NOT force a ${subjName} connection, do NOT apologize for scope, and do NOT steer back to ${subjName}. Follow the SCOPE JUDGMENT rule instead.
 - Prefer ${subjName} textbook excerpts provided below over general knowledge. Cite the exact ${subjName} book, chapter number/name, and page in References when references are enabled.
 - Use ${subjName} terminology, syllabus order, and board-exam style (Pakistan FSc/Matric).
 
-SCOPE JUDGMENT — FIRST THING EVERY REPLY, BEFORE ANY OTHER RULE: silently decide whether the student's question belongs to ${subjName}.
+SCOPE JUDGMENT � FIRST THING EVERY REPLY, BEFORE ANY OTHER RULE: silently decide whether the student's question belongs to ${subjName}.
 - If YES (a ${subjName} topic, problem, definition, or exam question): teach as the dedicated ${subjName} tutor. All rules below apply in full.
 - If NO (general knowledge, current affairs, websites, institutions, other subjects, casual asks): drop the tutor template ENTIRELY for this reply. Answer directly and briefly, at most ~150 words. Do NOT define general terms the student already used. Do NOT work anything through step by step. Do NOT add worked examples. Do NOT list common mistakes. Do NOT close with a key idea or takeaway. Do NOT offer quizzes, follow-ups, or study suggestions. Do NOT frame yourself as a ${subjName} teacher and do NOT mention the syllabus. Just answer the question like a knowledgeable assistant and stop. This rule overrides the ANSWER FOUNDATION, RESPONSE STYLE, STUDY SUGGESTIONS, and SELECTED SUBJECT rules for off-topic questions.
 
@@ -2757,7 +2757,7 @@ BEHAVIOR:
   - The extension determines the file type: .txt for plain text, .md for markdown, .pdf for PDF, .docx for Word, .html for HTML, .csv for CSV, .json for JSON
   - After the block, add a short line: "Your beautifully designed file is ready! Click Download below."
   - The app will automatically convert the markdown inside the block to a beautifully designed downloadable file with colors, headers, footers, and styling. NEVER mention manual steps.
-- REFERENCES TOGGLE (student setting, default ON): ${aiPrefs.references ? 'ON — You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])\n- [Website URL]\n---\n\nUse the exact book, chapter number/name, and page values shown in the retrieved source excerpts. If a source has no chapter metadata, cite the book and page without a chapter. List ALL sources you actually used, never invent citations, and place the section at the very end. If no usable source exists, omit the heading and separators.' : 'OFF — NEVER include a References section in any response. Just answer and stop.'}
+- REFERENCES TOGGLE (student setting, default ON): ${aiPrefs.references ? 'ON � You MUST end EVERY substantive response with a "References" section in this exact format:\n\n---\n**References:**\n- [Book Name], Chapter [number]: [chapter name], printed p. [printed page] (PDF p. [PDF page])\n- [Website URL]\n---\n\nUse the exact book, chapter number/name, and page values shown in the retrieved source excerpts. If a source has no chapter metadata, cite the book and page without a chapter. List ALL sources you actually used, never invent citations, and place the section at the very end. If no usable source exists, omit the heading and separators.' : 'OFF � NEVER include a References section in any response. Just answer and stop.'}
 - For casual/conversation questions (greetings, opinions, general chat): Answer naturally and warmly.${aiPrefs.references ? ' Do NOT include references for plain greetings/small talk (no source to cite).' : ' Do NOT include references for casual chat.'}
 - NEVER fabricate book references. Only cite books that are actually provided in the textbook content block. NEVER fabricate website URLs; only list sites you actually used.`;
 
@@ -2780,7 +2780,7 @@ ${aiMemories.map(m => `- ${m}`).join('\n')}`;
 
 
 
-    ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches, and full topic explanations of any word count). Always write the maximum you can in this response with full quality. NEVER cut a real explanation short just to be brief, and NEVER pad it with filler words to make it longer. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note — the app will automatically ask you to continue and you will pick up exactly where you stopped.
+    ctx += `\n\nLONG-FORM RULE: NEVER refuse a request because it is long (essays, stories, speeches, and full topic explanations of any word count). Always write the maximum you can in this response with full quality. NEVER cut a real explanation short just to be brief, and NEVER pad it with filler words to make it longer. If you cannot finish, simply stop mid-way WITHOUT any closing line, apology, summary, or "let me know" note � the app will automatically ask you to continue and you will pick up exactly where you stopped.
 
 SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the student selects, including Computer Science theory.
 - NEVER refuse a question and NEVER tell the student to switch to another model, tutor, or persona. There is only one assistant. If a question needs code, just answer it.
@@ -2798,16 +2798,16 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 - ONE ASSISTANT: there is no second bot, no "image mode", no switching. If the student asks what you can do, tell them plainly that you can answer questions, read their photos and diagrams, and create images for them. If they ask which company or model you are, answer as Anteemonee and move on.
 - NEVER SAY: "I can't generate images", "I can't see images", "as a text model", "I don't have vision", "please use the image tool", or anything that implies the student has to do it themselves or pick a different assistant.`;
 
-    // Voice mode — short spoken responses, no filler words
+    // Voice mode � short spoken responses, no filler words
     if (typeof window.AnteemoneeVoice !== 'undefined' && window.AnteemoneeVoice.voiceMode) {
-      ctx += `\n\nVOICE MODE ACTIVE — CRITICAL RULES:
+      ctx += `\n\nVOICE MODE ACTIVE � CRITICAL RULES:
 - Give SHORT, direct answers. 1-3 sentences max unless the user explicitly asks for detail.
 - Get straight to the point. No preamble, no summaries, no "in conclusion".
 - NEVER use filler words: hmm, ohh, yess, um, uh, well, so, basically, actually, right, okay so, let me see, good question. Just answer.
 - Speak naturally like a helpful tutor, not like you're reading an essay.
 - For simple questions (definitions, formulas, yes/no): answer in ONE sentence.
 - For explanations: give the key idea first, then only add detail if needed.
-- Never say "Sure!", "Of course!", "Great question!" or similar — just answer.
+- Never say "Sure!", "Of course!", "Great question!" or similar � just answer.
 - NEVER use ==highlight== markers: your words are spoken aloud, not rendered.`;
     }
 
@@ -2881,7 +2881,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     return lines.slice(0, start).join('\n').replace(/\s+$/g, '');
   }
 
-  // â”€â”€ Markdown + LaTeX Renderer â”€â”€
+  // ── Markdown + LaTeX Renderer ──
   function renderMarkdown(text) {
     if (!text) return '';
 
@@ -2926,7 +2926,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
-  // ==key line== → <mark class="msg-hl msg-hl-N">. Colours rotate per
+  // ==key line== ? <mark class="msg-hl msg-hl-N">. Colours rotate per
   // occurrence so consecutive key lines read like coloured notes marks.
   // Text nodes only (pre/code depth tracked) so an equation like a == b
   // inside a code span is never wrapped. Inner = signs stay legal
@@ -3045,13 +3045,13 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       }
     }
 
-    // ── Book references become clickable deep links into the eBooks viewer ──
+    // -- Book references become clickable deep links into the eBooks viewer --
     // Two passes, cheapest first:
-    // 1. REFERENCE BLOCK pass — everything after a "References" heading is a
+    // 1. REFERENCE BLOCK pass � everything after a "References" heading is a
     //    citation list, so EVERY non-URL line becomes one chip that opens the
     //    book in /ebooks, however the model words the line: bold names,
     //    numbered lists, "printed page 12", "p101", ranges, missing pages.
-    // 2. INLINE pass — strict case for citations woven into the answer body,
+    // 2. INLINE pass � strict case for citations woven into the answer body,
     //    like "(Physics Class 11, p. 35)".
     // Both run before the favicon autolinker, which never touches text inside
     // an existing anchor, so nothing is ever double-processed.
@@ -3101,7 +3101,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       return '<a class="ai-book-ref ai-book-ref-row" href="' + href + '" target="_blank" rel="noopener">' + line + '</a>';
     }
 
-    // Pass 1 — the References section: every citation line becomes a chip.
+    // Pass 1 � the References section: every citation line becomes a chip.
     (function linkifyReferenceBlock() {
       var MARK_RE = new RegExp(
         '<strong>\\s*(?:references?|sources?|bibliography|works\\s+cited)\\s*:?\\s*<\\/strong>' +
@@ -3115,10 +3115,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (at < 0) return;
       var head = html.slice(0, at + marker.length);
       var body = html.slice(at + marker.length);
-      // A divider under the heading is decoration — drop it.
+      // A divider under the heading is decoration � drop it.
       body = body.replace(/^\s*(?:<hr>\s*)+/, '');
       // Inline formatting inside a citation (e.g. "**Chemistry Class 11**,
-      // Chapter 5: …") would split the text across tags and break matching —
+      // Chapter 5: �") would split the text across tags and break matching �
       // flatten those tags; the chip styling replaces them.
       body = body.replace(/<\/?(?:strong|b|em|i|u)\b[^>]*>/g, '');
 
@@ -3134,10 +3134,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       html = head + tail.replace(/^\s+/, '');
     })();
 
-    // Pass 2 — inline citations in the answer body ("(Physics Class 11, p. 35)").
+    // Pass 2 � inline citations in the answer body ("(Physics Class 11, p. 35)").
     // Stricter than the block pass since these sit in flowing prose.
     (function linkifyInlineBookRefs() {
-      var REF_RE = /([A-Z][A-Za-z0-9 .+&;'’\-]{1,60}?)(?:,\s*Chapter\s*(\d{1,2}))?\s*,?\s*(?:printed\s+)?(?:p\.|page|pg)\s*(\d{1,4})(?:\s*\(\s*PDF\s*p\.?\s*(\d{1,4})\s*\))?/i;
+      var REF_RE = /([A-Z][A-Za-z0-9 .+&;'�\-]{1,60}?)(?:,\s*Chapter\s*(\d{1,2}))?\s*,?\s*(?:printed\s+)?(?:p\.|page|pg)\s*(\d{1,4})(?:\s*\(\s*PDF\s*p\.?\s*(\d{1,4})\s*\))?/i;
       var segs = html.split(/(<[^>]+>)/g);
       var depth = 0;
       for (var i = 0; i < segs.length; i++) {
@@ -3160,7 +3160,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
           function (m0, book, chapter, printed, pdf) {
             if (!book || !printed) return m0;
             var name = book.replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
-            var looksLikeBook = /(class\s*[-–—]?\s*(\d{1,3}|xi{0,2}|iv|v[xi]{0,2}|ix|x)\b)/i.test(name) ||
+            var looksLikeBook = /(class\s*[-��]?\s*(\d{1,3}|xi{0,2}|iv|v[xi]{0,2}|ix|x)\b)/i.test(name) ||
               /^(?:[a-z]+\s+)?(?:new\s+|punjab\s+|fsc\s+)*(chemistry|physics|biology|mathematics|maths|math|computer|english|urdu|islamiat|history|geography|economics|statistics)/i.test(name);
             if (!looksLikeBook) return m0;
             var href = '../ebooks/index.html#book=' + encodeURIComponent(name);
@@ -3207,7 +3207,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
             if (pm) { trail = pm[0]; path = path.slice(0, -trail.length); }
             var url = (scheme || 'https://') + host + (port || '') + path;
             var label = host + (port || '') + path;
-            if (label.length > 60) label = label.slice(0, 57) + '…';
+            if (label.length > 60) label = label.slice(0, 57) + '�';
             return pre + '<a class="md-autolink" href="' + url + '" target="_blank" rel="noopener">' +
               '<img class="md-autolink-fav" alt="" loading="lazy" src="https://www.google.com/s2/favicons?domain=' +
               encodeURIComponent(host) + '&sz=64" onerror="this.remove()">' +
@@ -3220,7 +3220,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     return html;
   }
 
-  // â”€â”€ Conversation Management â”€â”€
+  // ── Conversation Management ──
   // Bring the chat column back when the user picks a conversation or
   // starts a new one from the sidebar (e.g. while Flashcards is open).
   function revealChatView() {
@@ -3229,7 +3229,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     } catch (_) {}
   }
 
-  // ── Chat history search ────────────────────────────────────────────────────
+  // -- Chat history search ----------------------------------------------------
   // The desktop and mobile sidebars each own an input, but one shared query so
   // typing in either filters both lists at once.
   let chatSearchQuery = '';
@@ -3413,7 +3413,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         title += chunk;
         if (title.length > 80) break;
       }
-      title = title.replace(/^["'â€œâ€â€˜â€™\s]+|["'â€œâ€â€˜â€™\s]+$/g, '').replace(/[.!?:;â€¦]+$/g, '').trim();
+      title = title.replace(/^["'“”‘’\s]+|["'“”‘’\s]+$/g, '').replace(/[.!?:;…]+$/g, '').trim();
       title = title.replace(/\{.*$/g, '').trim();
       title = title.split(/\s+/).filter(Boolean).slice(0, 5).join(' ');
       if (title.length > 40) title = title.slice(0, 40).trim();
@@ -3730,7 +3730,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     try { updateChatLinkBar(); } catch (_) {}
     messages = conv.messages.map(function(message) {
       // Older/failed saves may carry the raw ```graph fence in content but no
-      // .graph field yet — extract it here so graphs always re-render.
+      // .graph field yet � extract it here so graphs always re-render.
       if (!message.graph && message && message.role === 'assistant' && typeof message.content === 'string') {
         try { message.graph = parseGraphBlock(message.content); } catch (_) {}
         // Older conversations: the model described the points in prose without
@@ -3792,7 +3792,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       if (!a.pinned && b.pinned) return 1;
       return (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0);
     }).slice(0, query ? 50 : 30);
-    // Rebuilt row: one "⋮" control per chat; actions live in a popup.
+    // Rebuilt row: one "?" control per chat; actions live in a popup.
     const pinMarkSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>';
     const itemHtml = (c) =>
       `<div class="history-item ${c.pinned ? 'pinned' : ''} ${c.id === activeConversationId ? 'active' : ''}" data-id="${c.id}">${c.pinned ? '<span class="history-pin-mark">' + pinMarkSvg + '</span>' : ''}<span class="history-item-text"><span class="history-title">${query ? highlightMatch(c.title, query) : escapeHtml(c.title)}</span>${query ? matchSnippet(c, query) : ''}</span><button class="history-menu-btn" data-id="${c.id}" aria-label="Chat options" aria-haspopup="true" title="Chat options">${HISTORY_MENU_SVG.dots}</button></div>`;
@@ -3802,7 +3802,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     const normalList = sorted.filter(c => !c.pinned);
     let html = '';
     if (query) {
-      // While searching, relevance leads — keep one flat list.
+      // While searching, relevance leads � keep one flat list.
       html = sorted.map(itemHtml).join('');
     } else {
       if (pinnedList.length) {
@@ -3859,7 +3859,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     });
   }
 
-  // ── SwipeToast undo (React Bits port) → chat delete epilogue ──
+  // -- SwipeToast undo (React Bits port) ? chat delete epilogue --
   // The deleted conversation object is snapshotted BEFORE removal so Undo
   // can put it back: client-side instantly + DB upsert for signed-in users.
   // Generated images that the edge function already purged stay gone (the
@@ -3938,7 +3938,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     if (wasActive) try { window.__lastDeletedActiveId = id; } catch (_) {}
   }
 
-  // ── Delete confirmation dialog ────────────────────────────────
+  // -- Delete confirmation dialog --------------------------------
   // Deleting is permanent (no trash), so always ask first and surface the
   // chat title to make it unambiguous which conversation is going away.
   function confirmDeleteChat(id) {
@@ -3988,7 +3988,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     overlay.querySelector('.delete-confirm-cancel').focus();
   }
 
-  // ── Chat row "⋮" menu · rename / pin / delete in one popup ──
+  // -- Chat row "?" menu � rename / pin / delete in one popup --
   const HISTORY_MENU_SVG = {
     dots: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>',
     rename: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
@@ -4029,7 +4029,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       else if (act === 'delete') confirmDeleteChat(id);
     });
 
-    // Position next to the ⋮ button, kept inside the viewport.
+    // Position next to the ? button, kept inside the viewport.
     const r = btn.getBoundingClientRect();
     const mw = menu.offsetWidth || 190;
     const mh = menu.offsetHeight || 150;
@@ -4092,7 +4092,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     input.addEventListener('click', (e) => e.stopPropagation());
   }
 
-  // â”€â”€ Message Rendering â”€â”€
+  // ── Message Rendering ──
   function getUserAvatarUrl() {
     var profileImageUrl = typeof currentProfile !== 'undefined' ? currentProfile?.profile_image_url : undefined;
     if (profileImageUrl !== null && profileImageUrl !== undefined) return profileImageUrl;
@@ -4255,7 +4255,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   function updateStreamingStatus(div, text, statusClass) {
-    // The lattice shows the verb itself — keep the muted styling class on the
+    // The lattice shows the verb itself � keep the muted styling class on the
     // (hidden) status span for CSS colour hooks, keep latter flow intact.
     const status = div ? div.querySelector('.thinking-status') : null;
     if (status) {
@@ -4272,7 +4272,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   /**
    * Client mirror of the gateway's shouldWebSearch(). When it matches we
    * flag the request (api.setWantsWeb) and show the OpenCode-style tool
-   * line immediately ("Websearch <query> ↗") so the wait for search +
+   * line immediately ("Websearch <query> ?") so the wait for search +
    * answer has visible feedback instead of a bare spinner. The gateway is
    * authoritative: on finalize the line is always removed and only the
    * X-Web-Searched header decides whether the permanent chip stays.
@@ -4293,7 +4293,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 
   /**
    * Groq's browser_search prints internal citation markers like
-   * 【1†L12-L16】 after "source". They are index artifacts, not links —
+   * ?1�L12-L16? after "source". They are index artifacts, not links �
    * the chat UI strips them everywhere content is shown or saved.
    */
   function stripGroqCitations(text) {
@@ -4303,7 +4303,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
-   * Opencode-style tool row: bold tool name + muted detail. Appends a row —
+   * Opencode-style tool row: bold tool name + muted detail. Appends a row �
    * the gateway can report a search plus up to 3 fetches for one reply.
    */
   function showToolCallRow(div, wt) {
@@ -4364,7 +4364,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       line.className = 'msg-toolcall';
       line.innerHTML = '<span class="msg-toolcall-name">Websearch</span>' +
         '<span class="msg-toolcall-query">' + escToolText(q) + '</span>' +
-        '<span class="msg-toolcall-arrow">↗</span>';
+        '<span class="msg-toolcall-arrow">?</span>';
       var content = body.querySelector('.msg-content');
       if (content) body.insertBefore(line, content);
       else body.appendChild(line);
@@ -4382,17 +4382,17 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   /**
    * Friendly name for the model id the tunnel actually served. The router
    * sometimes answers via an internal fallback model, so the pill must read
-   * the real id — never a hardcoded name.
+   * the real id � never a hardcoded name.
    */
   /**
    * Friendly, truthful name for the model that actually answered.
    *
-   * The id the router sends back is authoritative — `oc/nemotron-3-ultra-free`
+   * The id the router sends back is authoritative � `oc/nemotron-3-ultra-free`
    * really is Nemotron 3 Ultra, so that is what the student should read. Any
    * id we have no pretty name for is tidied and shown verbatim (prefix dropped,
    * `-free` stripped) rather than collapsing to a generic provider word like
    * "Flagship", which told the student nothing about who replied. A fallback
-   * route (Groq, Qwen, …) resolves the same way, so the label always names the
+   * route (Groq, Qwen, �) resolves the same way, so the label always names the
    * real model instead of the fallback engine.
    */
   function tunnelModelLabel(model, provider) {
@@ -4425,7 +4425,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     } catch (_) { return null; }
   }
 
-  // Wait label — the lattice already shows the verb; keep it at "Thinking".
+  // Wait label � the lattice already shows the verb; keep it at "Thinking".
   // The old dot cycle (., .., ...) replaced the verb and read as bare dots.
   function startStatusCycle(div, mode) {
     updateStreamingStatus(div, 'Thinking', mode === 'think' ? 'thinking' : 'analyzing');
@@ -4448,7 +4448,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // ==key line== → rotating notes-style highlight (colour order matches
+    // ==key line== ? rotating notes-style highlight (colour order matches
     // the final render: Nth occurrence gets the Nth ink). Inner = signs
     // stay legal, only a literal == closes, so formulas keep highlighting.
     var hlN = 0;
@@ -4468,11 +4468,11 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     var displayText = stripGroqCitations(stripQuizStreamBlock(text));
     var graphExpected = !!(div && div.__graphRequested) || /```\s*graph\s*\n/i.test(text);
     if (graphExpected) displayText = '';
-    displayText = displayText.replace(/```\s*graph\s*\n[\s\S]*?```/gi, '<span class="graph-stream-placeholder">📊 Building your chart…</span>');
+    displayText = displayText.replace(/```\s*graph\s*\n[\s\S]*?```/gi, '<span class="graph-stream-placeholder">?? Building your chart�</span>');
     var renderedText;
     if (displayText) renderedText = renderStreamingMarkdown(displayText);
-    else if (graphExpected) renderedText = '<span class="graph-stream-placeholder">📊 Building your chart…</span>';
-    else renderedText = '<span class="quiz-stream-placeholder">Preparing your interactive quiz…</span>';
+    else if (graphExpected) renderedText = '<span class="graph-stream-placeholder">?? Building your chart�</span>';
+    else renderedText = '<span class="quiz-stream-placeholder">Preparing your interactive quiz�</span>';
     content.innerHTML = '<div class="streaming-text">' + renderedText + '<span class="streaming-caret"></span></div>';
   }
 
@@ -4560,7 +4560,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     t = t.replace(/(^|[\s(>])\*([^*\n]+)\*/g, '$1$2');
     t = t.replace(/(^|[\s(>])_([^_\n]+)_/g, '$1$2');
     t = t.replace(/`([^`\n]+)`/g, '$1');
-    t = t.replace(/^\s*[-*+]\s+/gm, '• ');
+    t = t.replace(/^\s*[-*+]\s+/gm, '� ');
     t = t.replace(/\n{3,}/g, '\n\n');
     return t.trim();
   }
@@ -4585,7 +4585,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     html = html.replace(/(\*\*|__)(.+?)\1/g, '<strong>$2</strong>');
     html = html.replace(/(^|[\s(>])\*([^*\n]+)\*/g, '$1<em>$2</em>');
     html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-    html = html.replace(/^\s*[-*+]\s+/gm, '• ');
+    html = html.replace(/^\s*[-*+]\s+/gm, '� ');
     html = html.split('\n').join('<br>');
     html = html.replace(/COPYBLOCK(\d+)/g, function (_, n) { return secret[+n] || ''; });
     return '<div>' + html + '</div>';
@@ -4704,7 +4704,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   /**
    * Small "which model answered this" label inside the feedback row, right
    * after the sound button. It is rendered from the engine recorded on the
-   * message, which the API service took from the real streamed response — so
+   * message, which the API service took from the real streamed response � so
    * the label can never claim Astra when Astra was not the one that answered.
    * That makes a silent fallback visible. Shown for every account.
    */
@@ -4726,7 +4726,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         // A fallback route still names its real model, not just the engine.
         var fLabel = tunnelModelLabel(engine.model, engine.provider);
         label.textContent = fLabel;
-        label.title = 'Fallback route — answered by ' + fLabel + (engine.model ? ' (' + engine.model + ')' : '');
+        label.title = 'Fallback route � answered by ' + fLabel + (engine.model ? ' (' + engine.model + ')' : '');
       }
       if (tts.insertAdjacentElement) tts.insertAdjacentElement('afterend', label);
       else wrap.appendChild(label);
@@ -4784,7 +4784,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     if (ov) ov.remove();
   }
 
-// ── File Generation (Beautiful Design) ──
+// -- File Generation (Beautiful Design) --
 function parseFileBlocks(text) {
   var out = [];
   if (!text) return out;
@@ -4805,7 +4805,7 @@ function stripFileBlocks(text) {
   return text.replace(/```\s*file-create\s*:[^\n]*\n[\s\S]*?```/g, "").trim();
 }
 
-// ── Slame: Google Drive for the AI Tutor ─────────────────────────────
+// -- Slame: Google Drive for the AI Tutor -----------------------------
 // The tutor can create and edit study files in the student's connected
 // Drive. There is deliberately NO delete path anywhere in the app, and
 // drivePromptBlock() tells the tutor that so it answers correctly when
@@ -4877,7 +4877,7 @@ function drivePromptBlock() {
 }
 function driveNoteText(text) {
   var m = String(text || '').match(/^\[\[DRIVE_FILE:(.+?)\]\]/);
-  return '📄  ' + (m ? m[1] : 'file') + ' — loaded from Google Drive';
+  return '??  ' + (m ? m[1] : 'file') + ' � loaded from Google Drive';
 }
 function parseDriveReadName(text) {
   var m = String(text || '').match(DRIVE_READ_RE);
@@ -4922,7 +4922,7 @@ function maybeSaveBlocksToDrive(div, blocks) {
         DriveCtx.fetchedAt = 0; // force the file list refresh on the next send
       } else {
         card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
-          '<span class="drive-card-tx"><b>Could not save to Google Drive</b><span>' + escapeHtml(f.filename) + ' · check the connection in Slame.</span></span>' +
+          '<span class="drive-card-tx"><b>Could not save to Google Drive</b><span>' + escapeHtml(f.filename) + ' � check the connection in Slame.</span></span>' +
           '<a class="drive-card-open" href="/slame/">Slame</a>';
       }
     }).catch(function () {});
@@ -4961,8 +4961,8 @@ function handleDriveBlocks(div, text, isLive) {
   driveApi('read', { name: name }).then(function (res) {
     if (!res || !res.ok || !res.found) {
       var missText = DriveCtx.canReadAll === false
-        ? ' · your connection can only read files the tutor created. Disconnect and reconnect Google Drive on Slame to read any file.'
-        : ' · check the name and try again.';
+        ? ' � your connection can only read files the tutor created. Disconnect and reconnect Google Drive on Slame to read any file.'
+        : ' � check the name and try again.';
       card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
         '<span class="drive-card-tx"><b>File not found in your Drive</b><span>' + escapeHtml(name) + missText + '</span></span>';
       return;
@@ -4974,7 +4974,7 @@ function handleDriveBlocks(div, text, isLive) {
     }
     var kb = Math.max(1, Math.round(String(res.content || '').length / 1024));
     card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
-      '<span class="drive-card-tx"><b>Loaded from Google Drive</b><span>' + escapeHtml(res.name || name) + ' · ' + kb + ' KB' + (res.truncated ? ' · shortened' : '') + '</span></span>' +
+      '<span class="drive-card-tx"><b>Loaded from Google Drive</b><span>' + escapeHtml(res.name || name) + ' � ' + kb + ' KB' + (res.truncated ? ' � shortened' : '') + '</span></span>' +
       (res.webViewLink ? '<a class="drive-card-open" href="' + escapeHtml(res.webViewLink) + '" target="_blank" rel="noopener">Open</a>' : '');
     continueWithDriveFile(res);
   }).catch(function () {});
@@ -4999,8 +4999,8 @@ function handleDriveListBlock(div, folderName, isLive) {
   driveApi('folder', { name: folderName }).then(function (res) {
     if (!res || !res.ok || !res.found) {
       var miss = DriveCtx.canReadAll === false
-        ? ' · your connection can only read files the tutor created. Disconnect and reconnect Google Drive on Slame for full access.'
-        : ' · check the name and try again.';
+        ? ' � your connection can only read files the tutor created. Disconnect and reconnect Google Drive on Slame for full access.'
+        : ' � check the name and try again.';
       card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
         '<span class="drive-card-tx"><b>Folder not found in your Drive</b><span>' + escapeHtml(folderName) + miss + '</span></span>';
       return;
@@ -5014,7 +5014,7 @@ function handleDriveListBlock(div, folderName, isLive) {
     continueWithDriveFolder(res.folder || folderName, items, res.truncated);
   }).catch(function () {
     card.innerHTML = '<span class="drive-card-ic">' + DRIVE_SVG_SMALL + '</span>' +
-      '<span class="drive-card-tx"><b>Could not list the folder</b><span>' + escapeHtml(folderName) + ' · try again.</span></span>';
+      '<span class="drive-card-tx"><b>Could not list the folder</b><span>' + escapeHtml(folderName) + ' � try again.</span></span>';
   });
 }
 
@@ -5065,7 +5065,7 @@ function continueWithDriveFile(file) {
   })();
 }
 
-// ── Slame: Google Calendar for the AI Tutor ─────────────────────────
+// -- Slame: Google Calendar for the AI Tutor -------------------------
 // The tutor schedules, reschedules and clears events on the student's
 // primary calendar. The model answers with one ```calendar {json}```
 // block; the app executes it after the reply finalizes (delete first
@@ -5132,18 +5132,18 @@ function calendarPromptBlock() {
     return '\n\nSLAME / GOOGLE CALENDAR: The student connected Google Drive before the calendar permission existed. If they ask for anything calendar-related, tell them in one short line to reopen Slame (anteemonee.com/slame) and press "Grant access" on the Google Calendar card, then ask again.';
   }
   var lines = CalCtx.events.slice(0, 12).map(function (e) {
-    return '- id ' + e.id + ' — "' + e.title + '"' + (e.start ? ' starting ' + e.start : '');
+    return '- id ' + e.id + ' � "' + e.title + '"' + (e.start ? ' starting ' + e.start : '');
   });
   return '\n\nSLAME / GOOGLE CALENDAR - CONNECTED: The student connected Google Calendar' +
     (CalCtx.email ? ' (' + CalCtx.email + ')' : '') + '. Their time zone is ' + tz +
-    '. Right now it is ' + nowIso + ' (UTC) — always output times as exact Offset ISO strings like "2026-10-21T17:00:00+05:00" matching the student zone, never as vague phrases.\n' +
+    '. Right now it is ' + nowIso + ' (UTC) � always output times as exact Offset ISO strings like "2026-10-21T17:00:00+05:00" matching the student zone, never as vague phrases.\n' +
     'Your calendar abilities:\n' +
     '1) ADD: output exactly one block:\n```calendar\n{"action":"create","title":"...","start":"2026-10-21T17:00:00+05:00","end":"2026-10-21T18:00:00+05:00","description":"..."}\n```\nend is optional (defaults to start+1h); description is optional.\n' +
     '2) RESCHEDULE: only for events that appear in "Upcoming events" below (or that you just created in this conversation and therefore know the id of):\n```calendar\n{"action":"move","eventId":"<exact id>","start":"...","end":"..."}\n```\npicking the event by meeting title/time, never by guessing ids.\n' +
     '3) RENAME: {"action":"rename","eventId":"<id>","title":"New title"}\n' +
     '4) DELETE: only when the student clearly asks to remove/cancel an event:\n```calendar\n{"action":"delete","eventId":"<id>"}```\nThe app asks them to confirm before it is removed.\n' +
     '5) OUTPUT RULES: at most ONE calendar block per reply, only when the student asks for a schedule change; keep the block last in your reply. When they ask "what is on my calendar", answer directly from the list below instead of emitting a block.\n' +
-    (lines.length ? 'Upcoming events (id — title — start):\n' + lines.join('\n') : 'Their calendar has no upcoming events listed.');
+    (lines.length ? 'Upcoming events (id � title � start):\n' + lines.join('\n') : 'Their calendar has no upcoming events listed.');
 }
 
 function parseCalendarBlock(text) {
@@ -5257,7 +5257,7 @@ function maybeRunCalendarBlock(div, text) {
       var main = spec.action === 'create' ? 'Added to Google Calendar' : spec.action === 'move' ? 'Rescheduled' : 'Renamed';
       card.innerHTML = '<span class="drive-card-ic">' + CAL_SVG_SMALL + '</span>' +
         '<span class="drive-card-tx"><b>' + main + '</b><span>' + escapeHtml((res.event && (res.event.title || '')) || '') +
-        (res.event && res.event.start ? ' · ' + escapeHtml(fmtCalWhen({ start: res.event.start })) : '') + '</span></span>' +
+        (res.event && res.event.start ? ' � ' + escapeHtml(fmtCalWhen({ start: res.event.start })) : '') + '</span></span>' +
         (link ? '<a class="drive-card-open" href="' + link + '" target="_blank" rel="noopener">Open</a>' : '');
     }
     CalCtx.fetchedAt = 0; // force the list refresh on the next calendar prompt
@@ -5281,7 +5281,7 @@ function findLocalEvent(id) {
   return null;
 }
 
-// ── Graph block: ```graph\n{...json...}\n``` ───────────────────
+// -- Graph block: ```graph\n{...json...}\n``` -------------------
 function parseGraphBlock(text) {
   if (!text) return null;
   var m = text.match(/```\s*graph\s*\n([\s\S]*?)```/i);
@@ -5337,7 +5337,7 @@ function normalizeGraphData(graph) {
   // When a parser forgets the axis names, guess them from the title
   // ("Speed vs Time" -> X = Time, Y = Speed) and default to X/Y otherwise.
   var axisGuess = ['X', 'Y'];
-  var titleAxis = String(graph.title || '').match(/([A-Za-z][A-Za-z ]*?)\s*(?:vs\.?|versus|–|—|-)\s*([A-Za-z][A-Za-z ]*)/i);
+  var titleAxis = String(graph.title || '').match(/([A-Za-z][A-Za-z ]*?)\s*(?:vs\.?|versus|�|�|-)\s*([A-Za-z][A-Za-z ]*)/i);
   if (titleAxis) axisGuess = [titleAxis[2].trim(), titleAxis[1].trim()];
   return {
     title: String(graph.title || 'Chart'),
@@ -5350,7 +5350,7 @@ function normalizeGraphData(graph) {
 }
 
 // When a chart card is present the bubble text is collapsed to one short
-// caption line (e.g. "Speed vs Time · X: Time (s) · Y: Speed (m/s)"). Returns
+// caption line (e.g. "Speed vs Time � X: Time (s) � Y: Speed (m/s)"). Returns
 // '' when there is nothing worth showing, so the bubble can hide entirely.
 function shortGraphCaption(graph) {
   try {
@@ -5391,7 +5391,7 @@ function synthesizeGraphFromPrompt(promptText) {
         data.push(Math.round((y0 + (y1 - y0) * frac) * 100) / 100);
       }
       var yName = yMatch ? t.slice(0, Math.max(0, t.indexOf(yMatch[0]))) : 'Value';
-      var unit = t.match(/(m\/s|m s-1|m s⁻¹|km\/h|kmh|m|s|days|years?|months?|newton|n|kg|m s|m\/s²)/i);
+      var unit = t.match(/(m\/s|m s-1|m s?�|km\/h|kmh|m|s|days|years?|months?|newton|n|kg|m s|m\/s�)/i);
       var xLabel = 'Time' + (x0 === 0 ? '' : ' (start ' + x0 + ')');
       return {
         title: (yName ? yName.trim() : 'Value') + ' over ' + 'time',
@@ -5408,18 +5408,18 @@ function synthesizeGraphFromPrompt(promptText) {
 
 // Second safety net: the model often describes the exact points in prose
 // without emitting a fence, e.g.
-//   "d = 0 m ⇒ W = 0 J" ... "d = 5 m ⇒ W = 50 J"
+//   "d = 0 m ? W = 0 J" ... "d = 5 m ? W = 50 J"
 // or "F = 10 N" + "d = 0,1,2,3,4,5 m". Extract those (x, y) pairs and build
 // the chart from them so the card always appears.
 function extractGraphFromProse(text) {
   try {
     if (!text) return null;
-    var t = String(text).replace(/\u2013|\u2014|–|—/g, '\u2192').replace(/\u2011|\u207b/g, '-');
+    var t = String(text).replace(/\u2013|\u2014|�|�/g, '\u2192').replace(/\u2011|\u207b/g, '-');
     var labels = [], data = [];
 
     // Explicit point pairs for any physics pair, e.g.
-    //   "t = 0 s → v = 0 m/s"   "d = 1 m ⇒ W = 10 J"
-    //   "(0, 0) (2, 4)"          "x: 1, 2, 3 → y: 4, 5, 6"
+    //   "t = 0 s ? v = 0 m/s"   "d = 1 m ? W = 10 J"
+    //   "(0, 0) (2, 4)"          "x: 1, 2, 3 ? y: 4, 5, 6"
     var X_VARS = '(?:t|d|v|x|h|m|time|displacement|distance|speed|velocity|position|force|temperature|height|mass|volume|year|day|month|week)';
     var Y_VARS = '(?:v|W|work|y|speed|velocity|force|temperature|distance|displacement|area|energy|height|reading|value|count|price|population)';
     var pairRe = new RegExp(
@@ -5448,9 +5448,9 @@ function extractGraphFromProse(text) {
     }
 
     // "v = 2t" / "a = 2" style formula with explicit time values:
-    //   "a = 2 m/s², t = 0,2,4,6,8,10 s"  ->  speed = a*t
+    //   "a = 2 m/s�, t = 0,2,4,6,8,10 s"  ->  speed = a*t
     if (!labels.length) {
-      var formulaM = t.match(/(?:v|speed|y|W|work|distance|force)\s*[=:]\s*(?:u\s*\+?)?(\d+(?:\.\d+)?)[\s·×x*](?:t|d|time|displacement|x)/gi);
+      var formulaM = t.match(/(?:v|speed|y|W|work|distance|force)\s*[=:]\s*(?:u\s*\+?)?(\d+(?:\.\d+)?)[\s��x*](?:t|d|time|displacement|x)/gi);
       var accM = t.match(/(?:a|acceleration|constant)\s*[=:]\s*(\d+(?:\.\d+)?)\s*m\/s2|m s-2|m\/s\u00b2|m s\u207b\u00b2/i) ||
         t.match(/(?:a|acceleration)\s*[=:]\s*(\d+(?:\.\d+)?)/i);
       var xValsM = t.match(/(?:t|time)\s*[=:]\s*([\d,\s.]+?)\s*s/i) ||
@@ -5473,7 +5473,7 @@ function extractGraphFromProse(text) {
     }
 
     // Constant-force style: "F = 15 N" with an x list "d = 0,1,2,3 m".
-    if (/(?:work|W)\s*[=:]\s*(?:F|force|constant)\s*[·×xd]\s*(?:d|displacement)/i.test(t) ||
+    if (/(?:work|W)\s*[=:]\s*(?:F|force|constant)\s*[��xd]\s*(?:d|displacement)/i.test(t) ||
         /(?:F|force)\s*[=:]\s*(\d+(?:\.\d+)?)\s*N/i.test(t)) {
       var fM = t.match(/(?:F|force|constant force)\s*[=:]\s*(\d+(?:\.\d+)?)\s*N/i);
       var xList = t.match(/(?:d|displacement)\s*[=:]\s*([\d,\s.]+?)\s*m/i);
@@ -5526,15 +5526,15 @@ function randomDemoGraph(promptText) {
 }
 
 // Third safety net: the model describes the graph via time-segments, e.g.
-//   "From 0 s to 2 s the speed rises from 0 to 5 m s⁻¹"
-//   "Between 2 s and 4 s ... speed jumps to 12 m s⁻¹"
+//   "From 0 s to 2 s the speed rises from 0 to 5 m s?�"
+//   "Between 2 s and 4 s ... speed jumps to 12 m s?�"
 //   "From 8 s to 10 s the line is slightly descending (speed falls to 10)"
-// plus a worked example like "½ × (5+12) × 2" whose trapezium endpoints are
+// plus a worked example like "� � (5+12) � 2" whose trapezium endpoints are
 // the sequential (time, speed) points. Rebuild the point list from these.
 function extractGraphFromSegments(text) {
   try {
     if (!text) return null;
-    var t = String(text).replace(/\u00d7|x|×/g, ' x ').replace(/\u2013|\u2014|–|—/g, '\u2192');
+    var t = String(text).replace(/\u00d7|x|�/g, ' x ').replace(/\u2013|\u2014|�|�/g, '\u2192');
     var times = [];
     var st = {};
     function pushT(v) { if (Number.isFinite(v) && !(st['t' + v])) { st['t' + v] = 1; times.push(v); } }
@@ -5556,7 +5556,7 @@ function extractGraphFromSegments(text) {
     while ((m = dropRe.exec(t)) !== null) { pushS(parseFloat(m[1])); }
 
     // Worked example trapezium endpoints give the exact ordered speed points:
-    //   "½ × (5+12) × 2" -> speeds 5, 12  ...  sequence: 5,12,8,15,10
+    //   "� � (5+12) � 2" -> speeds 5, 12  ...  sequence: 5,12,8,15,10
     var trapEnds = [];
     var trapRe = /\(\s*(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)\s*\)/gi;
     while ((m = trapRe.exec(t)) !== null) {
@@ -6174,7 +6174,7 @@ function renderQuizCard(div, rawQuiz) {
   return card;
 }
 
-// ── Interactive graph card ───────────────────────────────────────
+// -- Interactive graph card ---------------------------------------
 // Renders a Chart.js chart from the model's ```graph``` block. The student
 // can edit titles, labels and values, switch the chart type, add/remove rows
 // and download the result as a PNG.
@@ -6227,7 +6227,7 @@ function buildGraphEditor(card, chartId, chart, onEdit) {
         remove.className = 'graph-ed-remove';
         remove.type = 'button';
         remove.setAttribute('aria-label', 'Remove row');
-        remove.innerHTML = '✕';
+        remove.innerHTML = '?';
         row.appendChild(labelInput);
         valueInputs.forEach(function (vi) { row.appendChild(vi); });
         row.appendChild(remove);
@@ -6556,7 +6556,7 @@ function generateBeautifulPdf(filename, markdown) {
       doc.setFontSize(7);
       doc.setFont("helvetica","normal");
       doc.setTextColor(224,231,255);
-      doc.text("AI Study Tutor  •  Beautiful Document", margin, 44);
+      doc.text("AI Study Tutor  �  Beautiful Document", margin, 44);
       doc.setFontSize(7);
       doc.setTextColor(255,255,255);
       doc.text(new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}), pageW - margin - 85, 30);
@@ -6568,7 +6568,7 @@ function generateBeautifulPdf(filename, markdown) {
       doc.setFontSize(7);
       doc.setTextColor(100,116,139);
       doc.setFont("helvetica","normal");
-      doc.text("Generated by Anteemonee • AI Study Tutor", margin, pageH - 28);
+      doc.text("Generated by Anteemonee � AI Study Tutor", margin, pageH - 28);
       doc.text("Page "+pageNum, pageW - margin - 40, pageH - 28);
       doc.setDrawColor(226,232,240);
       doc.setLineWidth(0.6);
@@ -6602,7 +6602,7 @@ function generateBeautifulPdf(filename, markdown) {
     doc.setFont("helvetica","normal");
     doc.setFontSize(8);
     doc.setTextColor(100,116,139);
-    doc.text(filename+"  •  "+new Date().toLocaleDateString(), margin+14, y+44);
+    doc.text(filename+"  �  "+new Date().toLocaleDateString(), margin+14, y+44);
     y += titleH + 22;
     var lines = markdown.split("\n");
     var inTable = false;
@@ -6688,9 +6688,9 @@ function generateBeautifulPdf(filename, markdown) {
         var w3 = doc.splitTextToSize(txt3, contentW);
         w3.forEach(function(l){ doc.text(l, margin, y); y+=13; });
         y+=2;
-      } else if (t.startsWith("- ") || t.startsWith("* ") || t.startsWith("• ")) {
+      } else if (t.startsWith("- ") || t.startsWith("* ") || t.startsWith("� ")) {
         ensureSpace(16);
-        var bullet = t.replace(/^[-*•]\s+/,"").trim().replace(/\*\*(.+?)\*\*/g,"$1");
+        var bullet = t.replace(/^[-*�]\s+/,"").trim().replace(/\*\*(.+?)\*\*/g,"$1");
         doc.setFillColor(13,148,136);
         doc.circle(margin+6, y-3, 2.2, "F");
         doc.setTextColor(30,41,59);
@@ -6798,7 +6798,7 @@ function generateBeautifulDocx(filename, markdown) {
         alignment: docx.AlignmentType.CENTER,
       }));
       children.push(new docx.Paragraph({
-        children: [new docx.TextRun({ text: "Anteemonee  •  "+new Date().toLocaleDateString()+"  •  "+filename, size: 16, color: "64748B", italics: true })],
+        children: [new docx.TextRun({ text: "Anteemonee  �  "+new Date().toLocaleDateString()+"  �  "+filename, size: 16, color: "64748B", italics: true })],
         alignment: docx.AlignmentType.CENTER,
         spacing: { after: 400 },
       }));
@@ -6840,7 +6840,7 @@ function generateBeautifulDocx(filename, markdown) {
           children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: txt3, bold: true, size: 22, color: "555555" })], heading: docx.HeadingLevel.HEADING_3, spacing: { before: 180, after: 80 } }));
         } else if (t.startsWith("- ") || t.startsWith("* ")) {
           var btxt = t.replace(/^[-*]\s+/,"").trim();
-          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "•  "+btxt, size: 20, color: "111111" })], bullet: { level: 0 }, spacing: { after: 80 } }));
+          children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "�  "+btxt, size: 20, color: "111111" })], bullet: { level: 0 }, spacing: { after: 80 } }));
         } else if (/^\d+\.\s/.test(t)) {
           var ntxt = t.replace(/^\d+\.\s+/,"").trim();
           children.push(new docx.Paragraph({ children: [new docx.TextRun({ text: ntxt, size: 20, color: "111111" })], numbering: { reference: "default-numbering", level: 0 }, spacing: { after: 80 } }));
@@ -6862,7 +6862,7 @@ function generateBeautifulDocx(filename, markdown) {
         }
       }
       children.push(new docx.Paragraph({
-        children: [new docx.TextRun({ text: "Generated by Anteemonee • AI Study Tutor • anteemonee.com", size: 14, color: "64748B", italics: true })],
+        children: [new docx.TextRun({ text: "Generated by Anteemonee � AI Study Tutor � anteemonee.com", size: 14, color: "64748B", italics: true })],
         alignment: docx.AlignmentType.CENTER,
         spacing: { before: 400 },
       }));
@@ -6892,10 +6892,10 @@ function handleFileBlocks(div, text, opts) {
     var ext = f.ext.toLowerCase();
     var icon = getFileIcon(ext);
     var preview = f.content.slice(0, 220).replace(/\n/g, " ").slice(0, 140);
-    if (preview.length >= 140) preview += "…";
+    if (preview.length >= 140) preview += "�";
     card.innerHTML = "<div class=\"file-card-head\">" +
       "<span class=\"file-icon\">" + icon + "</span>" +
-      "<span class=\"file-meta\"><span class=\"file-name\">" + escapeHtml(f.filename) + "</span><span class=\"file-sub\">" + ext.toUpperCase() + " • " + formatBytes(new Blob([f.content]).size) + " • Anteemonee Beautiful Design</span></span>" +
+      "<span class=\"file-meta\"><span class=\"file-name\">" + escapeHtml(f.filename) + "</span><span class=\"file-sub\">" + ext.toUpperCase() + " � " + formatBytes(new Blob([f.content]).size) + " � Anteemonee Beautiful Design</span></span>" +
       "<span class=\"file-badge\">" + ext.toUpperCase() + "</span></div>" +
       "<div class=\"file-preview\">" + escapeHtml(preview) + "</div>" +
       "<div class=\"file-actions\"><button class=\"file-download-btn\" type=\"button\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg> Download</button><button class=\"file-preview-btn\" type=\"button\">Preview</button></div>";
@@ -6910,13 +6910,13 @@ function handleFileBlocks(div, text, opts) {
         downloadBlob(blob, filename);
         showChatToast("PDF downloaded: " + filename);
       } else if (extLower === "docx" || extLower === "doc") {
-        showChatToast("Generating Word file…");
+        showChatToast("Generating Word file�");
         generateBeautifulDocx(filename, content).then(function(blob){
           downloadBlob(blob, filename);
           showChatToast("Word downloaded: " + filename);
         });
       } else if (extLower === "html") {
-        var htmlDoc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(filename)+"</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:800px;margin:40px auto;padding:32px;line-height:1.7;color:#111111;background:#f8f8f8}h1{color:var(--accent);border-bottom:3px solid var(--accent);padding-bottom:12px}h2{color:var(--accent);margin-top:28px}h3{color:#444444}blockquote{border-left:4px solid var(--accent);background:#f0f0f0;padding:12px 16px;border-radius:8px}code{background:#111111;color:#e2e2e2;padding:2px 6px;border-radius:4px}pre{background:#111111;color:#e2e2e2;padding:16px;border-radius:12px;overflow:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#111111;color:#fff;padding:10px;text-align:left}td{padding:10px;border:1px solid #e2e2e2}tr:nth-child(even) td{background:#f8f8f8}header{border-bottom:2px solid var(--accent);padding-bottom:16px;margin-bottom:24px}footer{text-align:center;color:#666666;font-size:12px;margin-top:40px;border-top:1px solid #e2e2e2;padding-top:16px}</style></head><body><header><h1>"+escapeHtml(filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "))+"</h1><p style=\"color:#666666\">Generated by Anteemonee • "+new Date().toLocaleDateString()+"</p></header><article>"+renderMarkdown(content).replace(/<p><\/p>/g,"")+"</article><footer>Generated by Anteemonee • AI Study Tutor</footer></body></html>";
+        var htmlDoc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(filename)+"</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:800px;margin:40px auto;padding:32px;line-height:1.7;color:#111111;background:#f8f8f8}h1{color:var(--accent);border-bottom:3px solid var(--accent);padding-bottom:12px}h2{color:var(--accent);margin-top:28px}h3{color:#444444}blockquote{border-left:4px solid var(--accent);background:#f0f0f0;padding:12px 16px;border-radius:8px}code{background:#111111;color:#e2e2e2;padding:2px 6px;border-radius:4px}pre{background:#111111;color:#e2e2e2;padding:16px;border-radius:12px;overflow:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#111111;color:#fff;padding:10px;text-align:left}td{padding:10px;border:1px solid #e2e2e2}tr:nth-child(even) td{background:#f8f8f8}header{border-bottom:2px solid var(--accent);padding-bottom:16px;margin-bottom:24px}footer{text-align:center;color:#666666;font-size:12px;margin-top:40px;border-top:1px solid #e2e2e2;padding-top:16px}</style></head><body><header><h1>"+escapeHtml(filename.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "))+"</h1><p style=\"color:#666666\">Generated by Anteemonee � "+new Date().toLocaleDateString()+"</p></header><article>"+renderMarkdown(content).replace(/<p><\/p>/g,"")+"</article><footer>Generated by Anteemonee � AI Study Tutor</footer></body></html>";
         var blob2 = new Blob([htmlDoc], {type:"text/html"});
         downloadBlob(blob2, filename);
         showChatToast("HTML downloaded");
@@ -6949,10 +6949,10 @@ function handleFileBlocks(div, text, opts) {
 
   function finalizeStreamingMessage(div, text) {
     // Catch the gateway's canned text-only image error in EVERY reply path
-    // (main, continuation, retry) — one place, no per-site patching.
+    // (main, continuation, retry) � one place, no per-site patching.
     if (text && (/ERROR: Cannot read/.test(text) || /this model does not support image input/i.test(text))) {
       text =
-        "I couldn't read the attached image this time — the image reader is busy." +
+        "I couldn't read the attached image this time � the image reader is busy." +
         " Please try attaching it again in a moment, or retype the text of the image" +
         " if it's small, and I'll answer from that.";
     }
@@ -7067,7 +7067,7 @@ function handleFileBlocks(div, text, opts) {
     }
     try { message.content = stripGraphBlock(message.content); } catch (_) {}
     // Record which engine produced this reply (tunnel model id, or the
-    // Groq → Qwen → Mistral chain after a fallback) so the UI can show it honestly.
+    // Groq ? Qwen ? Mistral chain after a fallback) so the UI can show it honestly.
     try {
       message.engine = (typeof api !== 'undefined' && api && api.lastServed)
         ? { engine: api.lastServed.engine || null, provider: api.lastServed.provider || null, model: api.lastServed.model || null }
@@ -7093,7 +7093,7 @@ function handleFileBlocks(div, text, opts) {
     return message;
   }
 
-  // â”€â”€ Text Selection: Reply + Flashcard â”€â”€
+  // ── Text Selection: Reply + Flashcard ──
   let pendingQuote = null; // { role: 'assistant'|'user', text }
   let pendingTestRef = null; // test attached via the /-menu
   // Edit-and-resend. `backup` keeps the discarded tail so Cancel can undo.
@@ -7105,21 +7105,11 @@ function handleFileBlocks(div, text, opts) {
     if (selToolbar) return selToolbar;
     selToolbar = document.createElement('div');
     selToolbar.id = 'sel-toolbar';
-    selToolbar.innerHTML = `
-      <button class="sel-tool-btn sel-reply" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
-        <span>Reply</span>
-      </button>
-      <button class="sel-tool-btn sel-flashcard" type="button" title="Save as flashcard">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
-        <span>Flashcard</span>
-      </button>`;
+    selToolbar.innerHTML = '<button class="sel-tool-btn sel-reply" type="button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg><span>Reply</span></button>';
     document.body.appendChild(selToolbar);
     selToolbar.querySelector('.sel-reply').addEventListener('click', onReplyFromToolbar);
-    selToolbar.querySelector('.sel-flashcard').addEventListener('click', onFlashcardFromToolbar);
     return selToolbar;
   }
-
   function showChatToast(msg) {
     try {
       var t = document.getElementById('chat-toast');
@@ -7141,7 +7131,7 @@ function handleFileBlocks(div, text, opts) {
   // the Flashcards page on that card so the user can add the question.
   // The selection goes into the BACK (answer) field. Nothing is kept in
   // localStorage - the row lives in the database.
-  // ── Auto flashcard: when the user asked for one and the reply holds a ──
+  // -- Auto flashcard: when the user asked for one and the reply holds a --
   // Front/Back pair, save it to the DB and open it in Flashcards (edit mode).
   function parseFlashcardFromText(reply) {
     try {
@@ -7167,8 +7157,8 @@ function handleFileBlocks(div, text, opts) {
 
   let lastAutoFlashcard = { front: '', at: 0 };
 
-  // Intent may live in an earlier message ("create a flashcard" → AI asks
-  // for the topic → user replies with just the topic), so scan recent turns.
+  // Intent may live in an earlier message ("create a flashcard" ? AI asks
+  // for the topic ? user replies with just the topic), so scan recent turns.
   function recentFlashcardIntent() {
     try {
       let seen = 0;
@@ -7277,6 +7267,8 @@ function handleFileBlocks(div, text, opts) {
     const idx = parseInt(msgEl.dataset.idx, 10);
     const msg = messages[idx];
     if (!msg) return null;
+    // Only show reply toolbar for AI (assistant) messages
+    if (msg.role !== 'assistant') return null;
     return { text, role: msg.role, rect: range.getBoundingClientRect() };
   }
 
@@ -7312,7 +7304,7 @@ function handleFileBlocks(div, text, opts) {
       chip.id = 'reply-chip';
       chip.innerHTML = `<div class="reply-chip-bar"></div>
         <div class="reply-chip-body"><div class="reply-chip-label"></div><div class="reply-chip-text"></div></div>
-        <button class="reply-chip-cancel" type="button" aria-label="Cancel reply">Ã—</button>`;
+        <button class="reply-chip-cancel" type="button" aria-label="Cancel reply">×</button>`;
       const area = document.querySelector('.chat-input-area');
       const wrapper = document.querySelector('.chat-input-wrapper');
       if (area && wrapper) area.insertBefore(chip, wrapper);
@@ -7331,7 +7323,7 @@ function handleFileBlocks(div, text, opts) {
     chip.querySelector('.reply-chip-text').textContent = pendingQuote.text;
   }
 
-  // ── Slash commands: type "/" in an empty composer to attach a built test ──
+  // -- Slash commands: type "/" in an empty composer to attach a built test --
   let slashOpen = false;
 
   function handleSlashTrigger() {
@@ -7349,7 +7341,7 @@ function handleFileBlocks(div, text, opts) {
     const body = document.getElementById('slash-menu-body');
     if (!body) return;
     if (view === 'tests') {
-      showSlashLoading('Loading your tests…');
+      showSlashLoading('Loading your tests�');
       loadTestsIntoSlash(body);
     } else {
       renderSlashCommands(body);
@@ -7364,7 +7356,7 @@ function handleFileBlocks(div, text, opts) {
 
   function showSlashLoading(msg) {
     const body = document.getElementById('slash-menu-body');
-    if (body) body.innerHTML = '<div class="slash-loading">' + escapeHtml(msg || 'Loading…') + '</div>';
+    if (body) body.innerHTML = '<div class="slash-loading">' + escapeHtml(msg || 'Loading�') + '</div>';
   }
 
   function renderSlashCommands(body) {
@@ -7526,10 +7518,10 @@ function handleFileBlocks(div, text, opts) {
         : '';
       const text = ref.pdfText || '';
       blocks.push(
-        'Previously attached to this chat — test "' + (ref.title || 'Test') +
+        'Previously attached to this chat � test "' + (ref.title || 'Test') +
         '" (subject: ' + (ref.subject || 'Subject') + (chLine ? ', chapters: ' + chLine : '') + '). ' +
         (text
-          ? 'The student may ask anything about it — answers, explanations, discussion, marking. Test content:\n[START OF TEST]\n' + text + '\n[END OF TEST]'
+          ? 'The student may ask anything about it � answers, explanations, discussion, marking. Test content:\n[START OF TEST]\n' + text + '\n[END OF TEST]'
           : '[No stored test text for this attachment. Ask what they need.]')
       );
     }
@@ -7597,7 +7589,7 @@ function handleFileBlocks(div, text, opts) {
       ov = document.createElement('div');
       ov.id = 'quote-modal-overlay';
       ov.innerHTML = `<div class="quote-modal" role="dialog" aria-modal="true">
-        <div class="quote-modal-head"><span class="quote-modal-title"></span><button class="quote-modal-close" type="button" aria-label="Close">Ã—</button></div>
+        <div class="quote-modal-head"><span class="quote-modal-title"></span><button class="quote-modal-close" type="button" aria-label="Close">×</button></div>
         <div class="quote-modal-body"></div></div>`;
       document.body.appendChild(ov);
       ov.addEventListener('click', (e) => {
@@ -7617,6 +7609,9 @@ function handleFileBlocks(div, text, opts) {
 
   document.addEventListener('mouseup', (e) => {
     if (e.target && e.target.closest && e.target.closest('#sel-toolbar')) return;
+    // Only refresh on mouseup if there is an active text selection
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) { hideSelToolbar(); return; }
     setTimeout(refreshSelToolbar, 10);
   });
   document.addEventListener('touchend', () => setTimeout(refreshSelToolbar, 350));
@@ -7637,7 +7632,7 @@ function handleFileBlocks(div, text, opts) {
     });
   }
 
-  // â”€â”€ Session Management â”€â”€
+  // ── Session Management ──
   function getAccessToken() {
     try {
       // Use Supabase client to get the current session (always the active account)
@@ -7666,13 +7661,13 @@ function handleFileBlocks(div, text, opts) {
             activeSession = ent.active_session;
             estimatedTokensUsed = dbTokens;
           } else {
-            // Same session â€” always trust DB for tokens
+            // Same session — always trust DB for tokens
             activeSession.messages_count = dbMsgs;
             activeSession.tokens_used = dbTokens;
             estimatedTokensUsed = dbTokens;
           }
         } else {
-          // No active session in DB â€” clear local if expired
+          // No active session in DB — clear local if expired
           if (activeSession && new Date(activeSession.expires_at).getTime() <= Date.now()) {
             activeSession = null;
             estimatedTokensUsed = 0;
@@ -7711,11 +7706,15 @@ function handleFileBlocks(div, text, opts) {
       if (!data?.ok) {
         const retrySecs = data?.retry_after_seconds || 0;
         const retryTxt = retrySecs > 0 ? ` Try again in ${formatRetryAfter(retrySecs)}.` : '';
-        const msg = data?.error === 'RATE_LIMITED'
-            ? `You're starting sessions a little too fast.${retryTxt}`
-            : data?.error === 'NOT_AUTHENTICATED'
-              ? 'Please log in to use AI chat.'
-              : 'Could not start session. Please try again.';
+        // Daily allowance exhausted (free plan): tell the student plainly instead
+        // of a vague failure - their chats resume when the allowance resets.
+        const msg = data?.error === 'LIMIT_REACHED'
+            ? `Daily free limit reached (${data?.used ?? '?'} of ${data?.limit ?? '?'} messages). Your chats unlock on ${data?.resets_at ?? 'tomorrow'}. Premium gives unlimited chats.`
+            : data?.error === 'RATE_LIMITED'
+              ? `You're starting sessions a little too fast.${retryTxt}`
+              : data?.error === 'NOT_AUTHENTICATED'
+                ? 'Please log in to use AI chat.'
+                : 'Could not start session. Please try again.';
         showSessionError(msg);
         return false;
       }
@@ -7751,8 +7750,8 @@ function handleFileBlocks(div, text, opts) {
     return `${months[d.getMonth()]} ${d.getDate()}`;
   }
 
-  // â”€â”€ Cost calculation â”€â”€
-  // 100,000 tokens = $0.018 â†’ $0.00000018 per token
+  // ── Cost calculation ──
+  // 100,000 tokens = $0.018 → $0.00000018 per token
   // PKR rate (update periodically)
   const USD_TO_PKR = 280;
   const COST_PER_TOKEN_USD = 0.018 / 100000;
@@ -7787,7 +7786,7 @@ function handleFileBlocks(div, text, opts) {
       for (var wi = 0; wi < wa.length; wi++) wa[wi].disabled = !authed || locked;
     } catch (_) {}
     if (authed) return true;
-    // model selector hidden permanently — auto routing handles models
+    // model selector hidden permanently � auto routing handles models
     try {
       chatInput.value = '';
       chatInput.disabled = true;
@@ -7845,9 +7844,9 @@ function handleFileBlocks(div, text, opts) {
 
   function startSessionTimer() {}
 
-  // ── Long-output continuation: when a response is cut off (model hit its ──
+  // -- Long-output continuation: when a response is cut off (model hit its --
   // output limit) or a requested word count is far from met, keep streaming
-  // more segments into the SAME message, rotating providers 0→1→2→0…
+  // more segments into the SAME message, rotating providers 0?1?2?0�
   // Stops on: natural finish, refusal, user Stop, session budget, seg cap.
   const MAX_CONTINUATIONS = 8;
 
@@ -7865,7 +7864,7 @@ function handleFileBlocks(div, text, opts) {
   }
 
   function looksRefusal(t) {
-    return /i['’]m sorry,?\s+but i can['’]t\s+(provide|generate|write|create|do)|i can['’]t\s+(provide|generate)\s+a\s+[\d,]+-?word/i.test(String(t || ''));
+    return /i['�]m sorry,?\s+but i can['�]t\s+(provide|generate|write|create|do)|i can['�]t\s+(provide|generate)\s+a\s+[\d,]+-?word/i.test(String(t || ''));
   }
 
   async function maybeAutoContinue(streamDiv, userText) {
@@ -7896,7 +7895,7 @@ function handleFileBlocks(div, text, opts) {
       for (let seg = 0; seg < MAX_CONTINUATIONS; seg++) {
         if (!streamDiv || !document.body.contains(streamDiv)) break;
         if (!activeSession) break;
-        try { updateStreamingStatus(streamDiv, 'Continuing… (part ' + (seg + 2) + ')', 'analyzing'); } catch (_) {}
+        try { updateStreamingStatus(streamDiv, 'Continuing� (part ' + (seg + 2) + ')', 'analyzing'); } catch (_) {}
         const contMsgs = [
           ...lastApiMessages,
           { role: 'assistant', content: asst.content },
@@ -8004,7 +8003,7 @@ function handleFileBlocks(div, text, opts) {
         try { await syncSessionFromDB(); } catch (_) {}
         if (!activeSession || activeSession.id !== sid) return;
         if (estimatedTokensUsed < prior && attempts < 4) {
-          // Server hasn't committed this response yet — keep the live number, retry.
+          // Server hasn't committed this response yet � keep the live number, retry.
           estimatedTokensUsed = prior;
           activeSession.tokens_used = prior;
           try { updateSessionPanel(); } catch (_) {}
@@ -8029,7 +8028,7 @@ function handleFileBlocks(div, text, opts) {
 
   function showSessionExpiredPopup() {}
 
-  // â"€â"€ Send / Stop â"€â"€
+  // �"��"� Send / Stop �"��"�
   // blocked/exhausted session leaves isStreaming=true forever and every
   // later send is silently ignored (looks "stuck").
   function unlockInputForRetry(placeholder) {
@@ -8074,7 +8073,7 @@ function handleFileBlocks(div, text, opts) {
     }
   }
 
-  // ── Text -> image ──
+  // -- Text -> image --
 
   // One message for every image failure: the student should never have to
   // read a provider error code.
@@ -8165,7 +8164,7 @@ function handleFileBlocks(div, text, opts) {
     btnSend.style.display = 'none';
     btnStop.style.display = 'flex';
 
-    // ── User-side generation first: the student's own IP drives the external
+    // -- User-side generation first: the student's own IP drives the external
     // rate limit, so a shared server bucket cannot block everyone at once.
     var serverFallback = true;
     // The gateway stream calls set this late; the image path runs earlier, so
@@ -8205,7 +8204,7 @@ function handleFileBlocks(div, text, opts) {
     }
 
     // Table/data requests are rendered locally from the real conversation
-    // data — exact numbers and readable labels, never diffusion guesses.
+    // data � exact numbers and readable labels, never diffusion guesses.
     var localTable = findRecentMarkdownTable();
     var tableIntent = /\b(table|data|readings|rows|columns|values|graph|chart|table\s+as|this|that|it)\b/i.test(text || '');
     window.__imgdbg = (window.__imgdbg || []).concat([{
@@ -8300,21 +8299,21 @@ function handleFileBlocks(div, text, opts) {
     if (!hasImages && isQuizRequest(text) && !hasQuizTopic(text)) pendingQuizTopic = true;
     if ((!text && !hasImages && !testRef) || isStreaming) return;
     if (!isAuthed()) {
-      showChatToast('Log in to send messages — use Log In in the header.');
+      showChatToast('Log in to send messages � use Log In in the header.');
       refreshAuthGate();
       return;
     }
     // Free students keep chatting until today's allowance is spent. The gateway
-    // is the real gate — this only avoids a pointless round trip.
+    // is the real gate � this only avoids a pointless round trip.
     try {
       if (typeof Access !== 'undefined' && Access.state.ready && Access.isOverQuota && Access.isOverQuota('chat')) {
-        showChatToast("You've hit today's chat limit — your allowance resets tomorrow.");
+        showChatToast("You've hit today's chat limit � your allowance resets tomorrow.");
         refreshAuthGate();
         return;
       }
     } catch (_) {}
 
-    // Lock immediately — prevent double-send during any async gap
+    // Lock immediately � prevent double-send during any async gap
     isStreaming = true;
     // Tracks whether an answer actually landed, so the memory scan below never
     // runs off the back of a failed or stopped turn.
@@ -8337,7 +8336,7 @@ function handleFileBlocks(div, text, opts) {
     // Slame / Drive: refresh the connection + file list so the tutor prompt is current.
     try { await refreshDriveCtx(); } catch (_) {}
 
-    // â”€â”€ Session gate: must have an active session â”€â”€
+    // ── Session gate: must have an active session ──
     if (!activeSession || new Date(activeSession.expires_at).getTime() <= Date.now()) {
       const started = await startSession();
       if (!started) { unlockInputForRetry(); return; } // blocked -- no sessions left
@@ -8348,7 +8347,7 @@ function handleFileBlocks(div, text, opts) {
       startStudyTimer();
     }
 
-    // â”€â”€ Token budget check â”€â”€
+    // ── Token budget check ──
     chatInput.value = '';
     autoResize();
     btnSend.disabled = true;
@@ -8402,14 +8401,14 @@ function handleFileBlocks(div, text, opts) {
     const isGreetingMsg = !hasImages && !pendingQuote && isInstantGreeting(text);
     // Instant search feedback: if this message will trigger the gateway's web
     // search, show the tool line now instead of a bare spinner. Reconciled on
-    // finalize — the line always comes off, the chip stays only if the server
+    // finalize � the line always comes off, the chip stays only if the server
     // confirms it searched. (Placed after isGreetingMsg: referencing it any
     // earlier throws a TDZ ReferenceError that strands the bubble spinning.)
     api.setWantsWeb(clientWillSearch(text));
     if (!isGreetingMsg && clientWillSearch(text)) showWebSearchToolLine(streamDiv, text);
     // Dead-send watchdog: every transport timeout in the stack is far shorter
     // than this (60s connect, 15s first byte), so a bubble with no text and no
-    // finalize this late is wedged — an exception escaped above, or a promise
+    // finalize this late is wedged � an exception escaped above, or a promise
     // never settled. Surface an error instead of spinning forever. Cleared by
     // finalizeStreamingMessage on every normal path, so it can only fire when
     // something actually went wrong.
@@ -8429,7 +8428,7 @@ function handleFileBlocks(div, text, opts) {
           } catch (_) { txt = ''; }
           if (isStreaming && streamDiv && streamDiv.isConnected && !txt && !streamDiv.dataset.done) {
             try { stopStatusCycle(statusCycle); } catch (_) {}
-            finalizeStreamingMessage(streamDiv, 'Sorry, something went wrong. The reply never started — please send your message again.');
+            finalizeStreamingMessage(streamDiv, 'Sorry, something went wrong. The reply never started � please send your message again.');
             isStreaming = false;
             try {
               btnStop.style.display = 'none';
@@ -8442,7 +8441,7 @@ function handleFileBlocks(div, text, opts) {
         } catch (_) {}
       }, 120000);
     } catch (_) {}
-    // Pure writing tasks are composed from knowledge — retrieval only burns tokens.
+    // Pure writing tasks are composed from knowledge � retrieval only burns tokens.
     const isGenerationTask = /\b(write|writes|writing|compose|draft|generate|create|make|prepare)\b[^.?!]{0,50}\b(essay|story|stories|poem|poems|poetry|speech|speeches|letter|letters|paragraph|paragraphs|precis|dialogue|dialogues|novel|autobiography)\b/i.test(text);
     var lightRag = !isCodingAgent && !isGreetingMsg && !isGenerationTask &&
       text.length < 150 && /^(what is|what are|what was|define|name|list|which|who|when|where|how many)\b/i.test(text.trim());
@@ -8493,7 +8492,7 @@ function handleFileBlocks(div, text, opts) {
       console.warn('[AI] Textbook search failed:', e);
     }
 
-    // Fresh memory reload â€” picks up extractions from OTHER chats too.
+    // Fresh memory reload — picks up extractions from OTHER chats too.
     // Greetings get a tiny prompt: no system brick, no RAG, no history.
     const systemPrompt = isGreetingMsg
       ? ('You are a friendly study companion. The user just greeted you. Reply with a brief warm greeting (one or two short sentences max) and offer help. No references section.')
@@ -8505,7 +8504,7 @@ function handleFileBlocks(div, text, opts) {
     api.setSessionId(activeSession?.id || null);
     api.setAccessToken(getAccessToken());
 
-    // ── Image reading pass, before any answer tokens are streamed ──
+    // -- Image reading pass, before any answer tokens are streamed --
     // The chat model is text-only, so a vision model describes the images and
     // that description is injected as context. A failed read is NOT fatal: we
     // answer without the image rather than showing an error, but we tell the
@@ -8571,10 +8570,10 @@ function handleFileBlocks(div, text, opts) {
       try { updateStreamingStatus(streamDiv, 'Answering without the image', 'analyzing'); } catch (_) {}
     }
 
-    // ── Test attachment context: pull the PDF text so the AI can discuss it ──
+    // -- Test attachment context: pull the PDF text so the AI can discuss it --
     let testContext = '';
     if (testRef) {
-      try { updateStreamingStatus(streamDiv, 'Reading your test…', 'analyzing'); } catch (_) {}
+      try { updateStreamingStatus(streamDiv, 'Reading your test�', 'analyzing'); } catch (_) {}
       let pdfText = '';
       if (testRef.pdfUrl) pdfText = await extractPdfText(testRef.pdfUrl);
       // Persist the text on the message so follow-up turns keep "memory" of it.
@@ -8627,7 +8626,7 @@ function handleFileBlocks(div, text, opts) {
     // the bytes would cost upload time and prompt tokens and be ignored. The
     // vision pass above already turned them into text context.
     for await (const chunk of api.streamChat(apiMessages, selectedProviderIndex, null)) {
-        // Gateway tool metadata ("Web Search: …" / "Web Fetch: …"): render an
+        // Gateway tool metadata ("Web Search: �" / "Web Fetch: �"): render an
         // opencode-style row live, never append it to the reply text.
         if (chunk && chunk.indexOf('\u0000WEBTOOL\u0001') === 0) {
           try {
@@ -8653,7 +8652,7 @@ function handleFileBlocks(div, text, opts) {
         if (firstChunk) {
           firstChunk = false;
           stopStatusCycle(statusCycle);
-          // Name the live engine while the reply streams — the fastest way to
+          // Name the live engine while the reply streams � the fastest way to
           // see whether Astra answered or the request fell back.
           var servingEngine = getServingEngineLabel();
           updateStreamingStatus(streamDiv, servingEngine ? servingEngine + ' is generating\u2026' : 'Generating response...', 'analyzing');
@@ -8668,7 +8667,7 @@ function handleFileBlocks(div, text, opts) {
       // never surface the raw protocol text.
       if (/ERROR: Cannot read/.test(finalResponseClean) || /this model does not support image input/i.test(finalResponseClean)) {
         finalResponseClean =
-          "I couldn't read the attached image this time — the image reader is busy." +
+          "I couldn't read the attached image this time � the image reader is busy." +
           " Please try attaching it again in a moment, or retype the text of the image" +
           " if it's small, and I'll answer from that.";
       }
@@ -8691,7 +8690,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         scrollDownBtn.classList.remove('show');
       }
     } catch (error) {
-      // â”€â”€ Auto-retry on NO_SESSION: session exists locally but not in DB â”€â”€
+      // ── Auto-retry on NO_SESSION: session exists locally but not in DB ──
       if (error && error.code === 'FREE_DAILY_LIMIT') {
         // Today's 30 messages are spent. The gateway spent them before
         // generating a single token, so nothing was wasted, and it told us
@@ -8736,7 +8735,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         handleSend();
         return;
       }
-      // â”€â”€ TOKEN_LIMIT: tokens exhausted but session still running â”€â”€
+      // ── TOKEN_LIMIT: tokens exhausted but session still running ──
       if (error.message && error.message.includes('TOKEN_LIMIT')) {
         console.warn('[AI] Token limit reached. Session still active.');
         // If we have a partial response, try to continue with other providers
@@ -8800,7 +8799,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         chatInput.disabled = false;
         return;
       }
-      // â”€â”€ RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only â”€â”€
+      // ── RATE_LIMITED / CONCURRENT_LIMIT: friendly, display-only ──
       if (error.message && (error.message.includes('RATE_LIMITED') || error.message.includes('CONCURRENT_LIMIT'))) {
         const secs = (error.retryAfter && Number(error.retryAfter)) || 30;
         const friendly = error.message.includes('CONCURRENT_LIMIT')
@@ -8816,7 +8815,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         chatInput.disabled = false;
         return;
       }
-      // ── IMAGE_LIMIT: attached-image reading cap (unchanged behaviour) ──
+      // -- IMAGE_LIMIT: attached-image reading cap (unchanged behaviour) --
       if (error.message && error.message.includes('IMAGE_LIMIT') && !error.message.includes('IMAGE_GEN_LIMIT')) {
         console.warn('[AI] Image limit reached');
         finalizeStreamingMessage(streamDiv, 'Daily image limit reached. Upgrade to Premium for more images per day.');
@@ -8828,7 +8827,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         chatInput.disabled = false;
         return;
       }
-      // ── IMAGE_GEN_LIMIT: generated-image cap (4/day, 400 with own key) ──
+      // -- IMAGE_GEN_LIMIT: generated-image cap (4/day, 400 with own key) --
       if (error.message && error.message.includes('IMAGE_GEN_LIMIT')) {
         console.warn('[AI] Generated-image limit reached');
         finalizeStreamingMessage(streamDiv, IMAGE_FAILURE_MESSAGE);
@@ -8840,7 +8839,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         chatInput.disabled = false;
         return;
       }
-      // If incomplete stream â€” auto-retry with fallback
+      // If incomplete stream — auto-retry with fallback
       if (error instanceof IncompleteStreamError && fullResponse.length > 0) {
         const fallbackIndex = selectedProviderIndex === 0 ? 1 : 0;
         console.warn(`[AI] Stream incomplete. Retrying with fallback provider ${fallbackIndex}...`);
@@ -8913,7 +8912,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
         // Only trust the explicit `session_expired` code, which the API service
         // sets solely when the gateway itself rejects our token. A loose match
         // on "401"/"403" anywhere in the message used to mislabel every
-        // upstream tunnel failure as a login problem — the gateway forwards the
+        // upstream tunnel failure as a login problem � the gateway forwards the
         // tunnel's own 401/403 text, so a bad Flagship key told the student to
         // sign in again when their session was perfectly fine.
         const expired = error && error.code === 'session_expired';
@@ -8971,7 +8970,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
     api.abort();
   }
 
-  // â”€â”€ Helpers â”€â”€
+  // ── Helpers ──
   function autoResize() {
     chatInput.style.height = 'auto';
     chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + 'px';
@@ -8983,7 +8982,7 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
     });
   }
 
-  // â”€â”€ Mobile keyboard: lift the fixed chat layout above the virtual keyboard â”€â”€
+  // ── Mobile keyboard: lift the fixed chat layout above the virtual keyboard ──
   // Chrome Android handles interactive-widget=resizes-content in the viewport meta.
   // iOS Safari ignores that entirely, so we read the visual viewport shrink and
   // mirror it into --kb-offset (consumed by .chatbot-layout bottom).
@@ -9044,16 +9043,20 @@ finalResponseClean = applyYtMarkers(streamDiv, finalResponseClean);
     document.getElementById('mobile-sidebar')?.classList.add('active');
     document.getElementById('mobile-sidebar-overlay')?.classList.add('active');
     document.body.style.overflow = 'hidden';
+    var hamburger = document.getElementById('chat-history-btn');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
   }
 
   function closeMobileSidebar() {
     document.getElementById('mobile-sidebar')?.classList.remove('active');
     document.getElementById('mobile-sidebar-overlay')?.classList.remove('active');
     document.body.style.overflow = '';
+    var hamburger = document.getElementById('chat-history-btn');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
   }
 
   // Voice-call scratch space: call turns live in `messages` while on call,
-  // then are rewound on hang-up — never saved, never in history.
+  // then are rewound on hang-up � never saved, never in history.
   window.AnteemoneeVoiceStore = {
     mark() { try { return messages.length; } catch (_) { return 0; } },
     rewind(n) {
@@ -9085,3 +9088,4 @@ function copyCodeBlock(btn) {
     setTimeout(() => { label.textContent = original; btn.classList.remove('copied'); }, 2000);
   }).catch(() => {});
 }
+

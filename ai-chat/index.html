@@ -36,7 +36,7 @@
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=42">
   <link rel="stylesheet" href="../css/xai.css?v=5">
-  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=90">
+  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=91">
   <link rel="stylesheet" href="../assets/js/vendor/katex/katex.min.css">
   <style>
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="code/css/quiz.css?v=1">
   <link rel="stylesheet" href="code/css/messages.css?v=109">
   <link rel="stylesheet" href="code/css/composer.css?v=117">
-  <link rel="stylesheet" href="code/css/responsive.css?v=106">
+  <link rel="stylesheet" href="code/css/responsive.css?v=108">
   <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
@@ -119,9 +119,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
 
-        <div class="topbar-actions">
-          <button class="mobile-menu-toggle" aria-label="Menu"><span></span></button>
-        </div>
+
       </div>
 
       <div class="app-view" id="view-chat">
@@ -312,7 +310,7 @@
   <script src="code/js/lattice-loader.js?v=1"></script>
   <script src="code/js/swipe-toast.js?v=1"></script>
   <script src="code/js/glide-select.js?v=2"></script>
-  <script src="code/js/ai-chatbot.js?v=185"></script>
+  <script src="code/js/ai-chatbot.js?v=188"></script>
   <script src="../assets/js/vendor/chart.umd.min.js"></script>
   <script src="code/js/voice-chat.js?v=46"></script>
   <script src="code/js/realtime-call.js?v=8"></script>
@@ -497,6 +495,15 @@
         var t = document.querySelector('.welcome-title');
         if (!t) return;
         t.classList.remove('skel-text');
+        // Signed-out state: only confirmed once app.js finished its auth check,
+        // so a signed-in user never sees "not signed in" during loading.
+        try {
+          var signedIn = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? true : false;
+          if (window.__authReady === true && !signedIn) {
+            t.innerHTML = 'Welcome to <em class="welcome-name">AI tutor</em>, you are currently not signed in, please <em class="welcome-name">sign in</em> to continue.';
+            return;
+          }
+        } catch (_) {}
         var full = '';
         try {
           var prof = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile : {};

@@ -464,3 +464,98 @@
   border-bottom: none !important;
   box-shadow: none !important;
 }
+
+/* Hamburger icon inside the mobile menu toggle */
+.mobile-menu-toggle .hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 16px;
+  pointer-events: none;
+}
+.mobile-menu-toggle .hamburger-icon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #151515;
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.mobile-menu-toggle:hover .hamburger-icon span {
+  background: #FE6100;
+}
+.mobile-menu-toggle[aria-expanded="true"] .hamburger-icon span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.mobile-menu-toggle[aria-expanded="true"] .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+}
+.mobile-menu-toggle[aria-expanded="true"] .hamburger-icon span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Selection toolbar (Reply) - hidden until user selects AI reply text */
+#sel-toolbar {
+  position: fixed;
+  display: none;
+  gap: 8px;
+  padding: 6px;
+  background: var(--m-bg-elev, var(--surface));
+  border: 1px solid var(--m-border, var(--border));
+  border-radius: 10px;
+  box-shadow: 0 16px 40px -16px rgba(0,0,0,.4);
+  z-index: 250;
+  pointer-events: auto;
+}
+#sel-toolbar.show { display: flex; }
+.sel-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--m-text, var(--text));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .15s ease;
+}
+.sel-tool-btn:hover {
+  background: var(--m-hover, var(--surface-hover));
+}
+.sel-tool-btn svg {
+  flex-shrink: 0;
+}
+
+/* Ensure hamburger button never shows text content */
+.chat-topbar .mobile-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.chat-topbar .mobile-menu-toggle .hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 16px;
+  pointer-events: none;
+}
+.chat-topbar .mobile-menu-toggle .hamburger-icon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #151515;
+  border-radius: 2px;
+}
