@@ -106,7 +106,6 @@
               '</div>' +
             '</div>' +
             '<a href="' + root + 'ai-test-builder/">AI Test Builder</a>' +
-            '<a href="' + root + 'slame/">Slame</a>' +
             '<a href="' + root + 'century-club/">Century Club</a>' +
             '<a href="' + root + 'premium/">Premium</a>' +
           '</nav>' +
@@ -136,7 +135,6 @@
         '<a href="' + root + 'ai-chat/" class="mobile-nav-link">' + NAV_ICON.spark + '<span>AI Tutor</span></a>' +
         '<a href="' + root + 'ai-examiner/" class="mobile-nav-link">' + NAV_ICON.checklist + '<span>AI Examiner</span></a>' +
         '<a href="' + root + 'ai-test-builder/" class="mobile-nav-link">AI Test Builder</a>' +
-        '<a href="' + root + 'slame/" class="mobile-nav-link">Slame</a>' +
         '<a href="' + root + 'century-club/" class="mobile-nav-link">Century Club</a>' +
         '<a href="' + root + 'premium/" class="mobile-nav-link">Premium</a>' +
         '<div class="mobile-cta">' +
