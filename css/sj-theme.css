@@ -46,6 +46,11 @@
   --accent-ink: var(--sj-cta);
   --success: var(--sj-wa);
 
+  /* override xAI skin's white ink token so is-current nav text is ink, not white */
+  --xai-ink: var(--sj-ink);
+  --xai-body: var(--sj-ink-soft);
+  --xai-mute: var(--sj-muted);
+
   --font-ui: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Poppins', system-ui, sans-serif;
   --sj-hand: 'Caveat', 'Segoe Script', cursive;
@@ -244,6 +249,22 @@ header.site-header, header.header { border-top: none; }
   border-bottom-color: var(--sj-yellow);
   background: transparent;
 }
+/* kill xAI's dark hover block on nav links — keep it Academy */
+.landing-nav > a:hover, .desktop-nav > a:hover, .landing-nav .nav-drop > a:hover, .desktop-nav .nav-drop > a:hover {
+  background: var(--sj-yellow-soft) !important;
+  color: var(--sj-ink) !important;
+  border-radius: 10px;
+}
+/* selected page nav link: ink + bold, so it stands out */
+.landing-nav > a.is-current, .desktop-nav > a.is-current, .landing-nav > a.active, .desktop-nav > a.active {
+  color: var(--sj-ink) !important;
+  font-weight: 700 !important;
+}
+.landing-nav > a.is-current:hover, .desktop-nav > a.is-current:hover,
+.landing-nav > a.active:hover, .desktop-nav > a.active:hover {
+  background: var(--sj-yellow-soft) !important;
+  color: var(--sj-ink) !important;
+}
 .landing-nav .nav-drop > a .caret { color: var(--sj-ink-soft); }
 .nav-menu {
   background: #fff !important;
@@ -388,10 +409,15 @@ header.site-header, header.header { border-top: none; }
 
 /* footer */
 footer, .site-footer, .footer {
-  background: var(--sj-ink) !important;
-  color: rgba(255,255,255,.8) !important;
+  background: var(--sj-cream) !important;
+  color: var(--sj-ink) !important;
+  border-top: 1.5px solid var(--sj-ink);
 }
-footer a, .site-footer a, .footer a { color: var(--sj-yellow) !important; }
+footer a, .site-footer a, .footer a { color: var(--sj-ink) !important; }
+  footer a:hover, .site-footer a:hover, .footer a:hover { color: var(--sj-ink-soft) !important; background: var(--sj-cream-deep) !important; }
+  footer .footer-col h4, .site-footer .footer-col h4, .footer .footer-col h4 { color: var(--sj-ink) !important; }
+  footer .footer-bottom p, .site-footer .footer-bottom p, .footer .footer-bottom p { color: var(--sj-ink-soft) !important; }
+  footer .footer-bottom, .site-footer .footer-bottom, .footer .footer-bottom { border-top-color: var(--sj-ink) !important; }
 
 /* keep the settings modal & misc surfaces light */
 [data-theme="dark"] {

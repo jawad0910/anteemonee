@@ -895,22 +895,25 @@ a.mobile-nav-link > svg, a.site-mobile-link > svg { flex-shrink: 0; opacity: 0.7
 }
 .feature-link:hover { gap: 10px; }
 
-/* ===== FOOTER — NEOMORPHIC ===== */
+/* ===== FOOTER — ACADEMY (cream + ink, NO yellow) ===== */
 .footer {
-  background: var(--bg) !important; border-top: 1px solid var(--border); padding: 52px 24px 24px;
+  background: var(--sj-cream) !important;
+  border-top: 1.5px solid var(--sj-ink);
+  padding: 48px 24px 24px;
+  color: var(--sj-ink);
 }
 .footer-inner { max-width: 1280px; margin: 0 auto; }
 .footer-top { display: grid; grid-template-columns: 1.5fr 2fr; gap: 48px; margin-bottom: 40px; }
-.footer-brand p { font-size: 14px; color: var(--text-muted); margin-top: 12px; max-width: 300px; }
+.footer-brand p { font-size: 14px; color: var(--sj-ink-soft); margin-top: 12px; max-width: 300px; }
 .footer-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
-.footer-col h4 { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.6px; }
+.footer-col h4 { font-size: 12px; font-weight: 700; color: var(--sj-ink); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.6px; }
 .footer-col a {
-  display: block; font-size: 14px; color: var(--text-muted); padding: 6px 10px;
-  border-radius: var(--radius-sm); transition: all var(--neo-duration);
+  display: block; font-size: 14px; color: var(--sj-ink-soft); padding: 6px 10px;
+  border-radius: var(--sj-radius); transition: all var(--neo-duration);
 }
-.footer-col a:hover { color: var(--text); background: var(--neo-highlight); }
-.footer-bottom { border-top: 1px solid var(--border); padding-top: 20px; text-align: center; }
-.footer-bottom p { font-size: 13px; color: var(--text-muted); }
+.footer-col a:hover { color: var(--sj-ink); background: var(--sj-cream-deep); }
+.footer-bottom { border-top: 1.5px solid var(--sj-ink); padding-top: 20px; text-align: center; }
+.footer-bottom p { font-size: 13px; color: var(--sj-ink-soft); }
 
 /* ===== RESPONSIVE — NEOMORPHIC ===== */
 @media (max-width: 1100px) {
