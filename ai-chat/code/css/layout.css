@@ -10,7 +10,7 @@ body {
 
 /* ── Window chrome ────────────────────────────────────────────── */
 .chatbot-layout {
-  top: 72px;
+  top: 0px;
   background: transparent;
 }
 
