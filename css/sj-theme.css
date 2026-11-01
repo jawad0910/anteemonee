@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    Anteemonee — "Academy" visual language (v1)
    Warm light-only skn: cream canvas, ink borders, hard offset
    shadows, dot-pattern textures, handwritten Caveat accents.
@@ -23,6 +23,11 @@
   --sj-shadow: 3px 3px 0 var(--sj-ink);
   --sj-shadow-lg: 7px 7px 0 var(--sj-yellow), 7px 7px 0 1.5px var(--sj-ink);
   --sj-dots: radial-gradient(rgba(21,21,21,.10) 1.1px, transparent 1.2px) 0 0 / 22px 22px;
+
+  /* header inner: cap width so the nav sits inside the cream canvas, not edge-to-edge */
+  /* header inner: edge-to-edge, no horizontal gaps */
+  --sj-header-max-width: 100%;
+  --sj-header-padding-x: 16px;
 
   /* re-skin the existing token system (light values everywhere) */
   --bg: var(--sj-cream);
@@ -224,8 +229,9 @@ header.site-header, header.header { border-top: none; }
   border-bottom: 1.5px solid var(--sj-ink) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  max-width: 1550px;
-  margin: 0 auto;
+  max-width: 100% !important;
+  padding: 0 16px !important;
+  margin: 0 !important;
 }
 .site-header.scrolled .site-header-inner, .header.scrolled .header-inner {
   background: var(--sj-cream) !important;
