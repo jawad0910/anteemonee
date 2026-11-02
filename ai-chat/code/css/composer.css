@@ -11,15 +11,17 @@
    Layer 4 · Composer · iOS Messages input bar
    ========================================================== */
 
-/* ── Dock — frosted strip that fades into the wallpaper ───────── */
-.chat-input-area {
+/* ── Dock — frosted strip that fades into the wallpaper ─────────
+   Only for welcome-center mode (centered composer). Normal chat uses
+   the sticky-bottom version from layout.css. */
+body.welcome-center .chat-input-area {
   background: linear-gradient(180deg, transparent, var(--chat-dock) 26%);
   -webkit-backdrop-filter: var(--m-blur-sm);
   backdrop-filter: var(--m-blur-sm);
   border-top: none;
   padding: 4px 18px 12px;
 }
-:root[data-theme="dark"] .chat-input-area {
+:root[data-theme="dark"] body.welcome-center .chat-input-area {
   background: linear-gradient(180deg, transparent, var(--chat-dock) 30%);
 }
 
