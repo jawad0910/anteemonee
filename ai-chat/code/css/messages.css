@@ -142,10 +142,10 @@
   font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
 }
 .msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 {
-  font-family: var(--font-display);
+  font-family: var(--font-reading);
   font-weight: 700;
-  line-height: 1.28;
-  letter-spacing: -0.021em;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
   color: var(--chat-bubble-text);
 }
 .msg-content strong { font-weight: 600; color: var(--chat-bubble-text); }
@@ -308,34 +308,71 @@
 .fb-btn.fb-like.active svg { fill: var(--chat-tint-soft); }
 .fb-btn.fb-copy.copied { color: var(--chat-tint); }
 
-/* ── Model label — which model actually answered, right after the sound button.
-   Same typeface as the response, quiet metadata color. ─────────────── */
-.msg-feedback .msg-model {
-  font-family: var(--font-reading);
-  font-size: 12.5px;
-  font-weight: 400;
-  color: var(--chat-text-meta);
-  margin-left: 6px;
-  white-space: nowrap;
-  user-select: none;
-  cursor: default;
-}
-.msg-feedback .msg-model::before {
-  content: '·';
-  margin-right: 6px;
-  font-weight: 700;
-}
-.msg-feedback .msg-web {
+/* ── 3-dot More Menu ───────────────────────────────────────────── */
+.fb-more-wrap {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
 }
-.msg-feedback .msg-web::before {
-  content: none;
+.fb-btn.fb-more {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--chat-text-meta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.msg-feedback .msg-web svg {
+.fb-btn.fb-more:hover {
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint);
+}
+.fb-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--chat-composer);
+  border: 1px solid var(--chat-composer-border);
+  box-shadow: var(--m-sh-2);
+  z-index: 100;
+  animation: moreMenuIn var(--m-base) var(--m-ease-out);
+}
+@keyframes moreMenuIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fb-more-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s var(--m-ease-out), color 0.12s var(--m-ease-out);
+}
+.fb-more-item:hover {
+  background: var(--chat-tint-soft);
+  color: var(--chat-tint);
+}
+.fb-more-item svg {
   flex-shrink: 0;
+  color: var(--chat-text-meta);
 }
+.fb-more-item:hover svg {
+  color: var(--chat-tint);
+}
+
 /* ── Autolinked bare URLs: favicon chip, theme-aware ─────────────── */
 .msg-content .md-autolink {
   display: inline-flex;
@@ -670,20 +707,20 @@
    in clear steps, tight enough that more of it stays on screen. With the
    panel gone the spacing IS the structure, so it is set in one place
    instead of being fought over across three files. */
-.msg-content p { margin: 0 0 10px; line-height: 1.68; }
+.msg-content p { margin: 0 0 8px; line-height: 1.68; }
 .msg-content > *:first-child { margin-top: 0; }
 .msg-content > *:last-child { margin-bottom: 0; }
-.msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 { margin: 20px 0 8px; }
-.msg-content ul, .msg-content ol { margin: 9px 0; padding-left: 24px; }
-.msg-content li { margin: 4px 0; line-height: 1.62; }
+.msg-content h1, .msg-content h2, .msg-content h3, .msg-content h4 { margin: 14px 0 6px; }
+.msg-content ul, .msg-content ol { margin: 7px 0; padding-left: 24px; }
+.msg-content li { margin: 3px 0; line-height: 1.62; }
 .msg-content li::marker { color: var(--chat-tint); }
-.msg-content pre { padding: 13px 14px; margin: 12px 0; }
-.msg-content .code-block { margin: 12px 0; }
+.msg-content pre { padding: 13px 14px; margin: 10px 0; }
+.msg-content .code-block { margin: 10px 0; }
 .msg-content .code-block pre { padding: 13px 14px; }
 .msg-content .code-block-header { padding: 8px 12px; }
-.msg-content blockquote { padding: 10px 14px; margin: 12px 0; }
-.msg-content table, .msg-content .table-wrap { margin: 12px 0; }
-.msg-content hr { margin: 16px 0; }
+.msg-content blockquote { padding: 10px 14px; margin: 10px 0; }
+.msg-content table, .msg-content .table-wrap { margin: 10px 0; }
+.msg-content hr { margin: 14px 0; }
 .msg-feedback, .msg-user-actions { margin-top: 2px; }
 .thinking-indicator { padding: 0; }
 .streaming-caret { height: 1.05em; }
