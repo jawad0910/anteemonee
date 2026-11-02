@@ -4937,9 +4937,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       messages.splice(assistantIdx);
       // Re-render
       renderMessagesFrom();
-      // Send the user message again
-      if (userMsg.content && typeof sendMessage === 'function') {
-        sendMessage(userMsg.content);
+      // Send the user message again via handleSend (the real send function)
+      if (userMsg.content && typeof handleSend === 'function') {
+        chatInput.value = userMsg.content;
+        handleSend();
       }
     } catch (e) { console.warn('[retryMessage]', e); }
   }
@@ -4959,9 +4960,10 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       // Add to messages array as user message
       messages.push({ role: 'user', content: summaryPrompt });
       renderMessagesFrom();
-      // Send the summary request
-      if (typeof sendMessage === 'function') {
-        sendMessage(summaryPrompt);
+      // Send the summary request via handleSend
+      if (typeof handleSend === 'function') {
+        chatInput.value = summaryPrompt;
+        handleSend();
       }
     } catch (e) { console.warn('[generateSummary]', e); }
   }

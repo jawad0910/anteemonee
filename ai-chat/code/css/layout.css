@@ -339,6 +339,54 @@ body.guest .history-section .sidebar-label { display: none; }
 /* ── Main column ──────────────────────────────────────────────── */
 .chat-main {
   background: transparent;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: calc(100vh - 72px);
+}
+
+.app-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#view-chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#chat-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Ensure the chat input area stays at bottom */
+.chat-input-area {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 2000;
+  background: var(--chat-composer);
+  padding: 12px 14px;
+  border-top: 1px solid var(--chat-composer-border);
 }
 
 /* ── Topbar (mobile) — frosted strip ──────────────────────────── */
