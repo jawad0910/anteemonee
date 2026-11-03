@@ -437,7 +437,7 @@
     .atb-select-wrap.open { z-index: 40; }
 
     /* ---------- subject picker ---------- */
-    .tb-subject-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .tb-subject-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; width: 100%; }
     @media (max-width: 470px) { .tb-subject-grid { grid-template-columns: 1fr; } }
     .tb-subject-item {
       position: relative;
@@ -478,7 +478,17 @@
     .tb-subject-item[data-value="Mathematics"] .tb-subject-icon { background: #F3ECFD; color: #6D28D9; }
     .tb-subject-item[data-value="Computer Science"] .tb-subject-icon { background: #ECF0F6; color: #334155; }
     .tb-subject-info { flex: 1; min-width: 0; }
-    .tb-subject-name { display: block; font-size: .84rem; font-weight: 600; line-height: 1.25; color: var(--tb-ink); }
+    .tb-subject-name {
+      display: block;
+      font-size: .84rem;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--tb-ink);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .tb-subject-code {
       display: block;
       margin-top: 2px;
