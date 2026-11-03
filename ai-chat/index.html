@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,7 +8,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = 'light'; /* Light mode only for now â€” dark is disabled sitewide. */
+        var t = 'light'; /* Light mode only for now — dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -36,7 +36,7 @@
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=42">
   <link rel="stylesheet" href="../css/xai.css?v=5">
-  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=90">
+  <link rel="stylesheet" href="code/css/ai-chatbot.css?v=105">
   <link rel="stylesheet" href="../assets/js/vendor/katex/katex.min.css">
   <style>
     [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
@@ -47,7 +47,7 @@
   </style>
   <!-- macOS / iOS Messages design system -->
   <link rel="stylesheet" href="code/css/tokens.css?v=4">
-  <link rel="stylesheet" href="code/css/layout.css?v=3">
+  <link rel="stylesheet" href="code/css/layout.css?v=6">
   <link rel="stylesheet" href="code/css/lattice-loader.css?v=2">
   <link rel="stylesheet" href="code/css/swipe-toast.css?v=1">
   <link rel="stylesheet" href="code/css/glide-select.css?v=3">
@@ -60,9 +60,9 @@
 </head>
 <body class="welcome-center">
 
-  <!-- â”€â”€ SITE HEADER â”€â”€ -->
+  <!-- -- SITE HEADER -- -->
   <div data-site-header></div>
-  <script src="../js/site-chrome.js?v=5"></script>
+  <script src="../js/site-chrome.js?v=17"></script>
 
 
   <div class="chatbot-layout">
@@ -233,7 +233,7 @@
     </div>
   </div>
 
-  <!-- VOICE MODE â€” compact card, tap the orb to talk / send -->
+  <!-- VOICE MODE — compact card, tap the orb to talk / send -->
   <div class="voice-overlay" id="voice-overlay" aria-hidden="true">
     <div class="voice-overlay-bg"></div>
     <button class="voice-close" id="voice-close" aria-label="Close voice mode"></button>
@@ -290,8 +290,8 @@
       <div class="logout-account">
         <span class="logout-avatar" id="logout-avatar"><span>?</span></span>
         <span class="logout-meta">
-          <span class="logout-name" id="logout-name">â€¦</span>
-          <span class="logout-email" id="logout-email">â€¦</span>
+          <span class="logout-name" id="logout-name">…</span>
+          <span class="logout-email" id="logout-email">…</span>
         </span>
       </div>
       <button class="logout-confirm" id="logout-confirm" type="button">Log out</button>
@@ -422,7 +422,7 @@
         } catch (_) { return 'system'; }
       }
       function applyDeviceTheme() {
-        // Light mode only for now â€” dark is disabled sitewide.
+        // Light mode only for now — dark is disabled sitewide.
       }
       document.addEventListener('DOMContentLoaded', applyDeviceTheme);
       try {
@@ -434,7 +434,7 @@
     })();
   </script>
   <script>
-    // Model selector removed â€” auto-switching handles persona. Just clear
+    // Model selector removed — auto-switching handles persona. Just clear
     // any skeleton states immediately so the welcome UI shows instantly.
     (function () {
       try {
@@ -720,7 +720,7 @@
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
 
-      /* Mobile menu is owned by app.js (setupMobileMenu) â€” it binds every
+      /* Mobile menu is owned by app.js (setupMobileMenu) — it binds every
          .mobile-menu-toggle on the page, including the chat topbar's
          id-less hamburger, and toggles the X icon state itself. The old
          inline binding here ran alongside app.js on the same tap, so the
