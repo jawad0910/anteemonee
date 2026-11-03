@@ -11,7 +11,7 @@ body {
 /* ── Window chrome ────────────────────────────────────────────── */
 .chatbot-layout {
   position: fixed;
-  top: 72px;
+  top: var(--site-header-actual-height, 126px);
   left: 0;
   right: 0;
   bottom: 0;
