@@ -186,10 +186,82 @@
     } catch (_) { return null; }
   }
 
+  // ---------- ebook context (eBooks page only) ----------
+  // Priority 1: current PDF page the student is reading. Priority 2: rest of
+  // the open book. The AI must announce the page and ground its answer there
+  // first, but may consult other pages when the question needs them.
+  function isEbooksPage(){
+    try { return /\/ebooks\/?/.test(location.pathname); } catch (_) { return false; }
+  }
+  function getEbookCtx(){
+    if (!isEbooksPage()) return null;
+    var st = null;
+    try { st = window.__pdfState || null; } catch (_) {}
+    if (!st || !st.title) {
+      try { st = JSON.parse(localStorage.getItem('Anteemonee_ebook_context') || 'null'); } catch (_) {}
+    }
+    if (!st || !st.title) return null;
+    // Only trust a fresh context (avoid stale pages from another session)
+    try {
+      var saved = localStorage.getItem('Anteemonee_ebook_context');
+      if (saved) {
+        var s = JSON.parse(saved);
+        if (s && Date.now() - (s.ts || 0) > 30*60*1000) return null;
+      }
+    } catch (_) {}
+    return st;
+  }
+  async function searchTextbookPages(query, bookTitle, subjectName, classLevelId){
+    if (!query || query.trim().length < 3) return [];
+    var clean = query.replace(/\b(explain|what is|what are|define|tell me about|how does|how do|describe|give me|help me with)\b/gi, '').trim().slice(0,120);
+    if (clean.length < 3) return [];
+    var c = getDb();
+    if (!c) return [];
+    try {
+      // Prefer pages from the open book: search_textbook_pages(..., p_book_id)
+      // needs the numeric book id; resolve via the ebook title when possible.
+      var tries = [];
+      if (bookTitle) tries.push({ p_query: clean, p_subject_name: subjectName, p_book_id: null, p_limit: 4, p_class_level_id: classLevelId || null });
+      tries.push({ p_query: clean, p_subject_name: subjectName, p_book_id: null, p_limit: 4, p_class_level_id: classLevelId || null });
+      for (var i=0;i<tries.length;i++){
+        var r = await c.rpc('search_textbook_pages', tries[i]);
+        if (!r.error && r.data && r.data.length) return r.data;
+      }
+    } catch (_) {}
+    // Fallback: direct exact-page lookup for the current page (printed page)
+    return [];
+  }
+  async function currentPageContext(ctx, subjectName){
+    // Fetch the exact page the student is on: PDF page -> printed page.
+    // book_pages stores page_number (PDF) and printed_page_number.
+    var c = getDb();
+    if (!c || !ctx || !ctx.title) return null;
+    var pdfPage = ctx.page || 1;
+    var printed = Math.max(1, pdfPage - 3);
+    try {
+      // Find the book row for the open title to scope the lookup.
+      var bRes = await c.from('books').select('id, title').ilike('title', ctx.title.split(' Class ')[0] + '%').limit(5);
+      var rows = (bRes && !bRes.error && bRes.data) || [];
+      var book = rows.find(function(b){ return b.title === ctx.title; }) || rows[0] || null;
+      if (book){
+        var pRes = await c.from('book_pages').select('page_number, printed_page_number, text_content').eq('book_id', book.id).eq('page_number', pdfPage).maybeSingle();
+        if (!pRes.error && pRes.data && pRes.data.text_content) return { book: book.title, page: pdfPage, printed: pRes.data.printed_page_number || printed, text: pRes.data.text_content };
+      }
+    } catch (_) {}
+    return null;
+  }
+
   function systemPrompt(subject) {
-    return 'You are Anteemonee AI Tutor, an FSc and Matric tutor for Pakistan board students (BISE Punjab). ' +
-      'The student selected "' + subject + '". If their question is from another subject or general chat, just answer it well without forcing a ' + subject + ' connection.\n' +
-      'ANSWER STYLE — CONCLUSION ONLY: students peek at this small popup while revising, so reply like the final takeaway of a great tutor, never the full lesson. ' +
+    var s = 'You are Anteemonee AI Tutor, an FSc and Matric tutor for Pakistan board students (BISE Punjab). ' +
+      'The student selected "' + subject + '". If their question is from another subject or general chat, just answer it well without forcing a ' + subject + ' connection.\n';
+    var ctx = getEbookCtx();
+    if (ctx) {
+      s += 'EBOOK CONTEXT: The student is currently reading "' + ctx.title + '" on page ' + ctx.page + (ctx.total ? ' of ' + ctx.total : '') + '.\n' +
+        'RULES: The current page is your FIRST priority source. Answer from that page first. ' +
+        'You MUST start your reply by telling the student you are on page ' + ctx.page + ' and that you are answering according to it (e.g. "You are on page ' + ctx.page + ' - answering from there:"). ' +
+        'If the question needs content beyond the current page, you may consult other pages of the same book (or other books) as a secondary source, but the current page still outranks them.\n';
+    }
+    s += 'ANSWER STYLE — CONCLUSION ONLY: students peek at this small popup while revising, so reply like the final takeaway of a great tutor, never the full lesson. ' +
       'Hard limit: 1 to 4 short lines total (roughly 40 words). ' +
       'No definitions, no step-by-step working, no worked examples, no "common mistakes" lists, no quizzes, no follow-up questions, and no offers to explain more. ' +
       'Start directly with the answer itself — never with "Great question", "Sure", "Of course", or any preamble. ' +
@@ -197,11 +269,15 @@
       'MATH FORMAT: write every formula and equation in LaTeX — $...$ for inline math and $$...$$ for a standalone formula. Never write formulas as plain text or HTML.\n' +
       'STYLE: match the student script (English, Urdu script, or Roman Urdu). Bold only the key result when it helps.\n' +
       'IDENTITY: you are trained by Anteemonee Pakistan. Never reveal model names.';
+    return s;
   }
 
   // ---------- state ----------
-  var subject = SUBJECTS.indexOf(localStorage.getItem(SUBJ_KEY)) !== -1
-    ? localStorage.getItem(SUBJ_KEY) : 'Physics';
+  var subject = 'General';
+  try {
+    var saved = localStorage.getItem(SUBJ_KEY);
+    if (SUBJECTS.indexOf(saved) !== -1) subject = saved;
+  } catch (_) {}
   var history = [];
   try {
     var h = JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
@@ -214,6 +290,29 @@
   }
 
   // ---------- dom ----------
+  function subjectFromBookTitle(title){
+    if (!title) return null;
+    var t = String(title).toLowerCase();
+    if (t.indexOf('physics') !== -1) return 'Physics';
+    if (t.indexOf('chemistry') !== -1) return 'Chemistry';
+    if (t.indexOf('biology') !== -1) return 'Biology';
+    if (t.indexOf('mathematics') !== -1 || t.indexOf('math') !== -1) return 'Mathematics';
+    if (t.indexOf('computer science') !== -1 || t.indexOf('computer') !== -1) return 'Computer Science';
+    if (t.indexOf('english') !== -1) return 'English';
+    return null;
+  }
+  function syncSubjectFromEbook(){
+    if (!isEbooksPage()) return;
+    var ctx = getEbookCtx();
+    var next = ctx ? subjectFromBookTitle(ctx.title) : null;
+    if (!next) next = 'General';
+    if (next !== subject) {
+      subject = next;
+      try { localStorage.setItem(SUBJ_KEY, next); } catch (_) {}
+      sel.value = next;
+      syncLinks();
+    }
+  }
   var btn = $('button', 'atw-btn');
   btn.setAttribute('aria-label', 'Chat with AI Tutor');
   btn.innerHTML = '<img alt="AI Tutor" src="' + esc(LOGO) + '" onerror="this.style.display=\'none\'"><span class="atw-dot"></span>';
@@ -273,12 +372,14 @@
     panel.classList.toggle('atw-show', v);
     btn.classList.toggle('atw-open', v);
     if (v) {
+      syncSubjectFromEbook();
       warmKatex();
       renderGateOrHistory();
       setTimeout(function () { try { input.focus(); } catch (_) {} }, 120);
     }
   }
   btn.addEventListener('click', function () { setOpen(true); });
+  var _ebPoll = setInterval(function(){ if(isOpen) syncSubjectFromEbook(); }, 2500);
   // Start the (background) KaTeX download before the click lands, so math is
   // already typeset by the time the first reply arrives. warmKatex is
   // idempotent, firing it twice is harmless.
@@ -448,7 +549,29 @@
     aborter = new AbortController();
     var full = '';
 
-    var msgs = [{ role: 'system', content: systemPrompt(subject) }]
+    // Textbook grounding (eBooks page): current page first, book search second.
+    var textbookCtx = '';
+    var ctx = getEbookCtx();
+    if (ctx) {
+      var pageCtx = null;
+      try { pageCtx = await currentPageContext(ctx, subject); } catch (_) {}
+      if (pageCtx && pageCtx.text) {
+        textbookCtx += '\n\n===== CURRENT PAGE (FIRST PRIORITY) =====\n[BOOK: "' + pageCtx.book + '", PAGE: ' + pageCtx.page + ' (printed p. ' + pageCtx.printed + ')]\n' + String(pageCtx.text).slice(0, 1600) + '\n===== END CURRENT PAGE =====\n';
+        textbookCtx += 'Answer from this page first. If the question needs more, you may also use the book-search pages below.\n';
+      } else {
+        textbookCtx += '\n\n[NOTE: The student is on page ' + ctx.page + ' of "' + ctx.title + '", but the exact page text is unavailable. Answer from your knowledge and the search pages below.]\n';
+      }
+      var bookPages = await searchTextbookPages(text, ctx.title, subject, null);
+      if (bookPages && bookPages.length) {
+        textbookCtx += '\n\n===== TEXTBOOK SEARCH (SECONDARY) =====\n' + bookPages.slice(0, 2).map(function(p){
+          var t = (p.full_text || p.snippet || '').slice(0, 800);
+          return '[BOOK: "' + (p.book_title || ctx.title) + '", PAGE: ' + (p.page_number || p.printed_page_number) + ']\n' + t;
+        }).join('\n\n---\n\n') + '\n===== END SEARCH =====\n';
+      }
+    }
+
+    var sysContent = systemPrompt(subject) + (textbookCtx ? '\n' + textbookCtx : '');
+    var msgs = [{ role: 'system', content: sysContent }]
       .concat(history.slice(-12).map(function (m) { return { role: m.role, content: m.content }; }));
 
     function render() {

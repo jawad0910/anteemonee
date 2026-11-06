@@ -56,6 +56,7 @@
     ebook: '<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
     cards: '<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="M8.5 4.5h9a2 2 0 0 1 2 2v9"/><path d="M19.5 3h1a1.5 1.5 0 0 1 1.5 1.5v11"/></svg>',
     papers: '<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>',
+    list: '<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11"/><path d="M9 12h11"/><path d="M9 19h11"/><path d="M4 5h.5"/><path d="M4 12h.5"/><path d="M4 19h.5"/></svg>',
     spark: '<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M18.5 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg>',
     checklist: '<svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg>'
   };
@@ -96,6 +97,7 @@
                 '<a href="' + root + 'ebooks/">' + NAV_ICON.ebook + '<span>eBooks</span></a>' +
                 '<a href="' + root + 'flashcards/">' + NAV_ICON.cards + '<span>Flashcards</span></a>' +
                 '<a href="' + root + 'past-papers/">' + NAV_ICON.papers + '<span>Past Papers</span></a>' +
+                '<a href="' + root + 'syllabus/">' + NAV_ICON.list + '<span>Syllabus</span></a>' +
               '</div>' +
             '</div>' +
             '<div class="nav-drop">' +
@@ -130,6 +132,7 @@
             '<a href="' + root + 'ebooks/" class="mobile-nav-link">' + NAV_ICON.ebook + '<span>eBooks</span></a>' +
             '<a href="' + root + 'flashcards/" class="mobile-nav-link">' + NAV_ICON.cards + '<span>Flashcards</span></a>' +
             '<a href="' + root + 'past-papers/" class="mobile-nav-link">' + NAV_ICON.papers + '<span>Past Papers</span></a>' +
+            '<a href="' + root + 'syllabus/" class="mobile-nav-link">' + NAV_ICON.list + '<span>Syllabus</span></a>' +
           '</div>' +
         '</div>' +
         '<a href="' + root + 'ai-chat/" class="mobile-nav-link">' + NAV_ICON.spark + '<span>AI Tutor</span></a>' +
@@ -254,6 +257,10 @@
     var custom = parseInt(document.body.getAttribute('data-header-gap'), 10);
     if (!isNaN(custom)) gap = custom;
     document.body.style.paddingTop = (h + gap) + 'px';
+    // App shells (ai-chat .chatbot-layout) attach to the header via this var.
+    // Keep it EXACTLY the header bottom so the sidebar never floats or overlaps
+    // (signing in hides the .sj-strip, making the header shorter).
+    document.documentElement.style.setProperty('--site-header-actual-height', h + 'px');
     if (!headerSpaceHooked) {
       headerSpaceHooked = true;
       if (window.ResizeObserver) {
