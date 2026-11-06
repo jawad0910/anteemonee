@@ -7,7 +7,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = 'light'; /* Light mode only for now � dark is disabled sitewide. */
+        var t = 'light'; /* Light mode only for now - dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -19,6 +19,8 @@
   <link rel="icon" href="../assets/anteemonee.png">
   <link rel="stylesheet" href="../css/style.css?v=42">
   <link rel="stylesheet" href="../css/xai.css?v=5">
+  <link rel="stylesheet" href="../css/sj-theme.css?v=10">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
   <style>
     html { scroll-behavior: smooth; background: var(--bg); }
     body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
@@ -29,67 +31,67 @@
   <link rel="stylesheet" href="../css/header.css?v=12">
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
-<body>
+<body data-header-gap="0">
   <div data-site-header></div>
   <script src="../js/site-chrome.js?v=9"></script>
 
 
   <style>
-    .eb-empty{padding:56px 20px;text-align:center;color:var(--text-secondary);border:1px dashed var(--border);border-radius:20px;background:rgba(255,255,255,.03)}
-    .eb-empty b{color:var(--text);font-size:16px}
-    .eb-gate{padding:56px 20px;text-align:center;color:var(--text-secondary);border:1px dashed var(--border);border-radius:20px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;gap:10px}
-    .eb-gate-icon{display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
-    .eb-gate b{color:var(--text);font-size:16px}
+    .eb-empty{padding:56px 20px;text-align:center;color:var(--sj-ink-soft);border:1px solid var(--sj-line);border-radius:20px;background:#FFFFFF}
+    .eb-empty b{color:var(--sj-ink);font-size:16px}
+    .eb-gate{padding:56px 20px;text-align:center;color:var(--sj-ink-soft);border:1px solid var(--sj-line);border-radius:20px;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;gap:10px}
+    .eb-gate-icon{display:flex;align-items:center;justify-content:center;color:var(--sj-ink-soft)}
+    .eb-gate b{color:var(--sj-ink);font-size:16px}
     .eb-gate p{font-size:13.5px;max-width:420px;margin:0;line-height:1.6}
     .eb-gate-actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center}
-    .eb-skel{height:168px;border-radius:20px;background:linear-gradient(90deg,var(--surface)25%,var(--bg-card)50%,var(--surface)75%);background-size:200% 100%;animation:sk 1.2s infinite}
+    .eb-skel{height:168px;border-radius:20px;background:linear-gradient(90deg,var(--sj-cream)25%,#FFFFFF 50%,var(--sj-cream)75%);background-size:200% 100%;animation:sk 1.2s infinite}
     @keyframes sk{to{background-position:-200% 0}}
     /* -- App shell (mirrors AI chat layout) -- */
-    .eb-layout{display:flex;height:100dvh;padding-top:72px;box-sizing:border-box}
-    .eb-sidebar{width:288px;min-width:288px;display:flex;flex-direction:column;gap:10px;padding:14px 12px;border-right:1px solid var(--border);background:var(--bg-card);min-height:0}
+    .eb-layout{display:flex;height:calc(100dvh - var(--site-header-actual-height, 0px));box-sizing:border-box;overflow:hidden}
+    .eb-sidebar{position:sticky;top:0;height:calc(100dvh - var(--site-header-actual-height, 0px));width:288px;min-width:288px;display:flex;flex-direction:column;gap:10px;padding:14px 12px;border-right:1px solid var(--border);background:#FFFFFF;min-height:0;overflow:hidden}
     .eb-side-head{display:flex;align-items:center;gap:10px;padding:2px 4px 4px}
-    .eb-side-brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:700;flex:1;min-width:0}
-    .eb-side-brand svg{color:var(--accent);flex-shrink:0}
-    .eb-search{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted)}
+    .eb-side-brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:700;flex:1;min-width:0;color:var(--sj-ink)}
+    .eb-side-brand svg{color:var(--sj-cta);flex-shrink:0}
+    .eb-search{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;border:1px solid var(--sj-line);background:var(--sj-cream);color:var(--sj-ink-soft)}
     .eb-search svg{flex-shrink:0}
-    .eb-search input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font:inherit;font-size:13px;padding:0}
-    .eb-search input::placeholder{color:var(--text-muted)}
+    .eb-search input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--sj-ink);font:inherit;font-size:13px;padding:0}
+    .eb-search input::placeholder{color:var(--sj-ink-soft)}
     #eb-side-filters{padding:0 2px}
     .eb-filter-row{display:flex;align-items:center;gap:6px}
-    .eb-class-seg{display:inline-flex;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:2px;gap:2px}
-    .eb-seg-btn{padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.5;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-family:inherit}
-    .eb-seg-btn:hover{color:var(--text)}
-    .eb-seg-btn.active{background:var(--accent);color:var(--on-accent)}
-    .eb-select{flex:1;min-width:0;padding:3px 4px;border-radius:9px;font-size:11px;font-weight:600;line-height:1.5;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;outline:none;cursor:pointer}
-    .eb-select:focus{border-color:var(--accent)}
+    .eb-class-seg{display:inline-flex;flex-shrink:0;background:var(--sj-cream);border:1px solid var(--sj-line);border-radius:999px;padding:2px;gap:2px}
+    .eb-seg-btn{padding:2px 9px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.5;border:none;background:transparent;color:var(--sj-ink-soft);cursor:pointer;font-family:inherit}
+    .eb-seg-btn:hover{color:var(--sj-ink)}
+    .eb-seg-btn.active{background:var(--sj-cta);color:#FFFFFF}
+    .eb-select{flex:1;min-width:0;padding:3px 4px;border-radius:9px;font-size:11px;font-weight:600;line-height:1.5;border:1px solid var(--sj-line);background:#FFFFFF;color:var(--sj-ink);font-family:inherit;outline:none;cursor:pointer}
+    .eb-select:focus{border-color:var(--sj-cta)}
     .eb-count{font-size:12px;color:var(--text-secondary);padding:0 4px}
     #eb-loading{display:flex;flex-direction:column;gap:8px}
     #eb-loading .eb-skel{height:62px}
     .eb-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px;scrollbar-width:thin}
-    .eb-row{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;text-align:left;padding:10px 12px;border-radius:14px;border:1px solid transparent;background:transparent;color:var(--text);font:inherit;cursor:pointer;flex-shrink:0}
-    .eb-row:hover{background:var(--surface)}
-    .eb-row.active{background:var(--accent-soft);border-color:var(--border)}
-    .eb-row-icon{width:38px;height:38px;border-radius:12px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+    .eb-row{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;text-align:left;padding:10px 12px;border-radius:14px;border:1px solid transparent;background:transparent;color:var(--sj-ink);font:inherit;cursor:pointer;flex-shrink:0}
+    .eb-row:hover{background:var(--sj-cream)}
+    .eb-row.active{background:var(--sj-yellow-soft);border-color:var(--sj-line)}
+    .eb-row-icon{width:38px;height:38px;border-radius:12px;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;background:var(--sj-cta)}
     .eb-row-text{flex:1;min-width:0}
     .eb-row-text b{display:block;font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .eb-row-text small{font-size:11.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-    .eb-row-go{color:var(--text-muted);font-size:17px;flex-shrink:0}
-    .eb-row.active .eb-row-go{color:var(--accent)}
+    .eb-row-text small{font-size:11.5px;color:var(--sj-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+    .eb-row-go{color:var(--sj-ink-soft);font-size:15px;flex-shrink:0}
+    .eb-row.active .eb-row-go{color:var(--sj-cta)}
     .eb-overlay{display:none}
     #eb-reopen{display:none;position:fixed;left:12px;top:84px;z-index:60}
     body.eb-side-collapsed .eb-sidebar{display:none}
     body.eb-side-collapsed #eb-reopen{display:inline-flex}
     .eb-main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
-    .eb-topbar{display:none;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border)}
+    .eb-topbar{display:none;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--sj-line)}
     #eb-history-btn{display:none}
     .eb-reader{flex:1;min-height:0;overflow-y:auto;position:relative;display:flex;flex-direction:column}
-    .eb-welcome{margin:auto;text-align:center;padding:48px 24px;color:var(--text-secondary);max-width:420px}
-    .eb-welcome-icon{display:flex;align-items:center;justify-content:center;width:64px;height:64px;margin:0 auto 14px;border-radius:20px;background:var(--accent-soft);color:var(--accent)}
-    .eb-welcome b{color:var(--text);font-size:16px}
+    .eb-welcome{margin:auto;text-align:center;padding:48px 24px;color:var(--sj-ink-soft);max-width:420px}
+    .eb-welcome-icon{display:flex;align-items:center;justify-content:center;width:64px;height:64px;margin:0 auto 14px;border-radius:20px;background:var(--sj-yellow-soft);color:var(--sj-cta)}
+    .eb-welcome b{color:var(--sj-ink);font-size:16px}
     .eb-welcome p{font-size:13.5px;margin:8px 0 0;line-height:1.6}
     #eb-gate{align-self:center;margin:auto;width:min(440px,92%)}
     @media(max-width:900px){
-      .eb-sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;width:min(300px,84vw);min-width:0;transform:translateX(-105%);transition:transform .25s ease;background:var(--bg-card)}
+      .eb-sidebar{position:fixed;left:0;top:var(--site-header-actual-height, 0px);bottom:0;z-index:200;width:min(300px,84vw);min-width:0;height:calc(100dvh - var(--site-header-actual-height, 0px));transform:translateX(-105%);transition:transform .25s ease;background:#FFFFFF}
       .eb-sidebar.open{transform:none}
       .eb-overlay.on{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190}
       #eb-history-btn{display:inline-flex}
@@ -100,7 +102,9 @@
     }
     /* PDF shower */
     #pdf-modal{display:none;flex:1;min-height:0;flex-direction:column;min-width:0}
-    #pdf-modal .pdf-shell{width:100%;height:100%;max-width:none;max-height:none;border-radius:0;border:none}
+    #pdf-modal .pdf-shell{width:100%;height:100%;max-width:none;max-height:none;border-radius:0;border:none;position:sticky;top:0}
+    .eb-main{min-height:0;overflow:hidden}
+    .eb-reader{min-height:0}
     .pdf-shell{position:relative;width:min(1100px,100%);height:min(88vh,900px);background:var(--bg-elevated);border:1px solid rgba(255,255,255,.12);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.55)}
     .pdf-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.06), transparent)}
     .pdf-bar-left{display:flex;align-items:center;gap:10px;min-width:0}
@@ -113,7 +117,15 @@
     .pdf-icon-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
     .pdf-stage{flex:1;display:flex;position:relative;background:#000000;overflow:hidden;justify-content:center}
     .pdf-canvas-wrap{position:relative;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;padding:18px;background:radial-gradient(900px 500px at 50% 0%, var(--accent-soft), transparent 60%), #000000;overscroll-behavior:contain}
+    .pdf-canvas-wrap.pdf-two #pdf-pages{align-items:flex-start}
+    .pdf-spread{display:flex;gap:12px;width:100%;justify-content:center;align-items:flex-start}
+    .pdf-spread .pdf-page{flex:1 1 0;min-width:0}
     #pdf-pages{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;padding:4px 0 10px}
+    .pdf-layout-seg{display:inline-flex;flex-shrink:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:2px;gap:2px}
+    .pdf-layout-btn{padding:2px 10px;border-radius:999px;font-size:11px;font-weight:650;line-height:1.5;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-family:inherit}
+    .pdf-layout-btn.active{background:var(--sj-cta);color:#FFFFFF}
+    /* Two-page layout only applies on desktop; mobile stays single column. */
+
     .pdf-page{position:relative;background:#fff;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.45);overflow:hidden;max-width:100%;flex-shrink:0}
     .pdf-page canvas{display:block;width:100%;height:100%}
     .pdf-page-num{position:absolute;right:8px;bottom:6px;font-size:11px;font-weight:700;color:rgba(0,0,0,.5);background:rgba(255,255,255,.8);border-radius:6px;padding:1px 7px;pointer-events:none}
@@ -130,7 +142,7 @@
     <aside class="eb-sidebar" id="eb-sidebar">
       <div class="eb-side-head">
         <span class="eb-side-brand"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> eBooks</span>
-        <button class="pdf-icon-btn" id="eb-collapse" aria-label="Close sidebar" title="Close sidebar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
+        <button class="pdf-icon-btn" id="eb-collapse" aria-label="Close sidebar" title="Close sidebar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="eb-search" id="eb-search-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="20.5" y1="20.5" x2="16.2" y2="16.2"/></svg>
@@ -138,10 +150,6 @@
       </div>
       <div id="eb-side-filters">
         <div class="eb-filter-row">
-          <div id="eb-class-seg" class="eb-class-seg">
-            <button class="eb-seg-btn active" data-v="11">11th</button>
-            <button class="eb-seg-btn" data-v="12">12th</button>
-          </div>
           <select id="eb-board-select" class="eb-select" aria-label="Select board"></select>
         </div>
       </div>
@@ -151,7 +159,7 @@
       <div id="eb-empty" class="eb-empty" style="display:none"><b>No eBooks yet</b><div style="margin-top:8px">We&apos;re working hard to add eBooks for you, sorry for the wait! Please check back soon.</div></div>
     </aside>
     <div class="eb-overlay" id="eb-overlay"></div>
-    <button class="pdf-icon-btn" id="eb-reopen" aria-label="Open sidebar" title="Open sidebar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
+    <button class="pdf-icon-btn" id="eb-reopen" aria-label="Open sidebar" title="Open sidebar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <main class="eb-main">
       <div class="eb-topbar">
         <button class="pdf-icon-btn" id="eb-history-btn" aria-label="Open library"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -166,29 +174,33 @@
             <div class="pdf-shell" role="dialog" aria-modal="true" aria-label="PDF viewer">
               <div class="pdf-bar">
                 <div class="pdf-bar-left" style="min-width:0">
-                  <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000000,#333333);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">?</div>
+                  <div style="width:34px;height:34px;border-radius:10px;background:var(--sj-cta);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">B</div>
                   <div style="min-width:0;flex:1">
                     <div id="pdf-title" class="pdf-bar-title">eBook</div>
                   </div>
                 </div>
                 <div class="pdf-bar-actions">
+                  <div class="pdf-layout-seg" role="group" aria-label="Page layout">
+                    <button type="button" class="pdf-layout-btn" id="pdf-layout-1" title="One page at a time">1</button>
+                    <button type="button" class="pdf-layout-btn" id="pdf-layout-2" title="Two pages side by side">2</button>
+                  </div>
                   <button class="pdf-icon-btn" id="pdf-zoom-out" title="Zoom out">-</button>
-                  <span id="pdf-zoom-label" style="font-size:12px;color:var(--text-secondary);min-width:44px;text-align:center">100%</span>
+                  <span id="pdf-zoom-label" style="font-size:12px;color:var(--sj-ink-soft);min-width:44px;text-align:center">100%</span>
                   <button class="pdf-icon-btn" id="pdf-zoom-in" title="Zoom in">+</button>
                   <button class="pdf-icon-btn" id="pdf-fs" title="Fullscreen" aria-label="Fullscreen">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
                   </button>
-                  <button class="pdf-icon-btn" onclick="closePdf()" title="Close">?</button>
+                  <button class="pdf-icon-btn" onclick="closePdf()" title="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
               </div>
               <div id="pdf-stage" class="pdf-stage">
                 <div class="pdf-canvas-wrap" id="pdf-scroll">
-                  <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--text-secondary)">Rendering PDF�</div></div>
+                  <div id="pdf-loader" class="pdf-loader"><div class="pdf-spinner"></div><div style="font-size:12px;color:var(--sj-ink-soft)">Loading pages...</div></div>
                   <div id="pdf-pages"></div>
                 </div>
               </div>
               <div class="pdf-pagebar">
-                <span class="pdf-pos-wrap">Page&nbsp;<input id="pdf-pos-input" type="number" min="1" step="1" value="1" aria-label="Current page � type a page number and press Enter">&nbsp;<span id="pdf-page-count">/ �</span></span>
+                <span class="pdf-pos-wrap">Page&nbsp;<input id="pdf-pos-input" type="number" min="1" step="1" value="1" aria-label="Current page, type a page number and press Enter">&nbsp;<span id="pdf-page-count">/ -</span></span>
               </div>
             </div>
           </div>
@@ -302,13 +314,13 @@
     function getDb(){ if(window.db) return window.db; if(sdb) return sdb; try{ sdb=supabase.createClient(SUPA_URL,SUPA_ANON); return sdb; }catch(e){ return null; } }
     let all=[], boards=[], subjects=[], classes=[];
     function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function boardName(id){ let b=boards.find(x=>String(x.id)===String(id)); return b?b.name:'�'; }
-    function subjectName(id){ let s=subjects.find(x=>String(x.id)===String(id)); return s?s.name:'�'; }
-    function className(id){ let c=classes.find(x=>String(x.id)===String(id)); if(!c) return '�'; if(c.value===11) return '11th'; if(c.value===12) return '12th'; return c.label||'�'; }
+    function boardName(id){ let b=boards.find(x=>String(x.id)===String(id)); return b?b.name:'-'; }
+    function subjectName(id){ let s=subjects.find(x=>String(x.id)===String(id)); return s?s.name:'-'; }
+    function className(id){ let c=classes.find(x=>String(x.id)===String(id)); if(!c) return '-'; if(c.value===11) return '11th'; if(c.value===12) return '12th'; return c.label||'-'; }
     function isPdfLink(url){ return /^https?:\/\/\S+$/i.test(String(url||'').trim()); }
     // Several rows can describe the same book (one per upload batch, plus the
     // odd duplicate subject/class pair). Same subject + class + board = the same
-    // book, so keep a single card � the newest row that actually has a link.
+    // book, so keep a single card - the newest row that actually has a link.
     function dedupeBooks(rows){
       let rank=b=>(Date.parse(b.created_at||'')||0);
       let keep=new Map();
@@ -353,7 +365,7 @@
         if(clNamed && b.class_level_id && String(b.class_level_id)!==String(clNamed)){
           // fall back to the title holding the class to not lose copies whose FK is unset
           let clT=t.match(/\bclass\s*(1[12])\b/);
-          if(clT && clT[1]!==String(clWant)) return;   // wrong class � never open this one
+          if(clT && clT[1]!==String(clWant)) return;   // wrong class - never open this one
           if(!clT) return;
         }
         let s=normBookName(subjectName(b.subject_id));
@@ -401,11 +413,11 @@
       if(initStarted) return; initStarted=true;
       let db=getDb(); if(!db){ document.getElementById('eb-count').textContent='Database not ready'; document.getElementById('eb-loading').style.display='none'; return; }
       for(let i=0;i<10 && !db;i++){ await new Promise(r=>setTimeout(r,200)); db=getDb(); }
-      // eBooks are for signed-in users only � guests get a sign-in gate.
+      // eBooks are for signed-in users only - guests get a sign-in gate.
       try{
         let { data: { user } } = await db.auth.getUser();
         if(!user){ showGate(); return; }
-      }catch(_){ /* auth check failed � fall through to normal load */ }
+      }catch(_){ /* auth check failed - fall through to normal load */ }
       try{
         let [bR,sR,cR,bkR,stR]=await Promise.all([
           db.from('boards').select('id,name,region').order('name'),
@@ -435,8 +447,7 @@
             return {id:'file-'+f.name, title:f.name.replace(/\.pdf$/i,'').replace(/[-_]+/g,' '), subject_id:null, board_id:null, class_level_id:null, edition:'', total_pages:null, source_url:url, is_verified:true};
           });
         }
-        // random order, not newest first
-        for(let i=all.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+        // Sort books by subject name for a stable library order
         fillFilters();
         await applyUserPrefs();
         // Deep-link handling wins over the student's saved filters: the hash
@@ -446,18 +457,14 @@
         let refBook=refHash?findBookByRef(refHash.book):null;
         if(refHash&&!refBook) console.warn('[ebooks] deep link: book not found:', refHash.book);
         if(refBook){
-          let clR=classes.find(c=>String(c.id)===String(refBook.class_level_id));
-          if(clR&&clR.value===12) activeClass='12';
-          else if(clR&&clR.label==='12th') activeClass='12';
-          else if(clR) activeClass='11';
           activeBoard=refBook.board_id?String(refBook.board_id):'';
-          openedOnce=true;
+          // Keep activeClass from user's academic profile; deep-link
+          // still opens the exact book even if its class differs.
         }
         // reflect prefs in UI
         let bSel=document.getElementById('eb-board-select');
         if(bSel){ bSel.value=activeBoard||''; }
-        let seg=document.getElementById('eb-class-seg');
-        if(seg){ seg.querySelectorAll('.eb-seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.v===activeClass)); }
+        // Class filter is now always the user's class (no toggle UI)
         render();
         if(refBook){
           let startPg=await resolvePrintedPage(refBook, refHash);
@@ -521,7 +528,12 @@
         }catch(_){}
       }catch(_){}
     }
-    let activeBoard=null, activeClass='11', openedOnce=false, viewerOpen=false, loaded=false, initStarted=false;
+    let activeBoard=null, activeClass=null, openedOnce=false, viewerOpen=false, loaded=false, initStarted=false;
+    function saveEbookContext(){
+      try{
+        localStorage.setItem('Anteemonee_ebook_context', JSON.stringify({ title: pdfTitle || '', url: pdfUrl || '', page: pdfActive || 1, total: pdfPages.length || (pdfDoc ? pdfDoc.numPages : 0), ts: Date.now() }));
+      }catch(_){}
+    }
     function escA(s){ return esc(s).replace(/"/g,'&quot;'); }
     function findBoardIdByLabel(label){
       let l=label.toLowerCase();
@@ -536,7 +548,6 @@
     }
     function fillFilters(){
       let sel=document.getElementById('eb-board-select');
-      let seg=document.getElementById('eb-class-seg');
       let wantedBoards=['Punjab Board','Sindh Board','KPK Board','Balochistan Board','Kashmir Board','Gilgit Baltistan Board'];
       if(sel){
         sel.innerHTML='';
@@ -549,27 +560,12 @@
         wantedBoards.forEach(label=>{
           let id=findBoardIdByLabel(label);
           if(id) addOpt(label.replace(/ Board$/,''), id);
-          // skip boards missing from the database � no dead options
+          // skip boards missing from the database - no dead options
         });
         sel.onchange=()=>{ activeBoard=sel.value||null; render(); };
       }
-      if(seg){
-        // ensure only 11th/12th � remove All if present from older HTML
-        seg.querySelectorAll('.eb-seg-btn').forEach(btn=>{
-          if(btn.dataset.v==='') btn.remove();
-        });
-        seg.querySelectorAll('.eb-seg-btn').forEach(btn=>{
-          btn.classList.toggle('active', btn.dataset.v===activeClass);
-          btn.addEventListener('click',()=>{
-            seg.querySelectorAll('.eb-seg-btn').forEach(x=>x.classList.remove('active'));
-            btn.classList.add('active');
-            activeClass=btn.dataset.v||'11';
-            render();
-          });
-        });
-      }
     }
-    function subjectColor(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%360; return 'hsl('+h+' 72% 58%)'; }
+    function subjectColor(name){ return 'var(--sj-cta)'; }
     function render(){
       let cF=activeClass;
       let bF=activeBoard;
@@ -591,21 +587,20 @@
       let empty=document.getElementById('eb-empty');
       if(!filtered.length){ list.style.display='none'; empty.style.display='block'; return; }
       empty.style.display='none'; list.style.display='flex';
-      let current=filtered.find(x=>String(x.source_url)===String(pdfUrl))||filtered[0];
+      let current=filtered.find(x=>String(x.source_url)===String(pdfUrl))||null;
       list.innerHTML=filtered.map(x=>{
         let bN=boardName(x.board_id), sN=subjectName(x.subject_id), cN=className(x.class_level_id);
         let letter=esc((sN||'B').charAt(0));
-        let col=subjectColor(sN||'book');
-        let title=sN!=='�'?sN:(x.title||'eBook').replace(/\s*Class\s*\d+.*$/i,'');
-        let active=(viewerOpen && x===current)?' active':'';
+        let title=sN!=='-'?sN:(x.title||'eBook').replace(/\s*Class\s*\d+.*$/i,'');
+        let active=(viewerOpen && current && x===current)?' active':'';
         return '<button class="eb-row'+active+'" data-url="'+escA(x.source_url||'')+'" data-title="'+escA(x.title||'eBook')+'">'
-          +'<span class="eb-row-icon" style="background:'+col+'">'+letter+'</span>'
+          +'<span class="eb-row-icon">'+letter+'</span>'
           +'<span class="eb-row-text"><b>'+esc(title)+'</b>'
-          +'<small>'+esc(bN)+' � '+esc(cN)+(x.total_pages?' � '+esc(x.total_pages)+' pages':'')+'</small></span>'
-          +'<span class="eb-row-go">�</span></button>';
+          +'<small>'+esc(cN)+' · '+esc(bN)+'</small></span>'
+          +'<span class="eb-row-go">-&gt;</span></button>';
       }).join('');
       list.querySelectorAll('.eb-row').forEach(r=>{ r.addEventListener('click',()=>{ openPdf(r.getAttribute('data-url'), r.getAttribute('data-title')); if(window.innerWidth<=900){ document.getElementById('eb-sidebar').classList.remove('open'); document.getElementById('eb-overlay').classList.remove('on'); } }); });
-      if(!openedOnce && current){ openedOnce=true; openPdf(current.source_url, current.title); }
+      // No auto-open: only a deep link opens a book on load.
     }
     // sidebar search + collapse + mobile drawer
     (function(){
@@ -630,13 +625,48 @@
     let tries=0; let t=setInterval(()=>{ tries++; if(window.db){ clearInterval(t); init(); } if(tries>20) clearInterval(t); },500);
 
     // --- pdf.js continuous vertical reader (lazy page render) ---
-    let pdfDoc=null, pdfScale=1.0, pdfUrl='', pdfTitle='', pdfPages=[], pdfActive=1, pdfZoomT=null, pdfObs=null, pdfScrollLast=0;
+    // Desktop: two pages side by side by default (pdfTwo), toggleable to 1. Mobile stays 1.
+    let pdfDoc=null, pdfScale=1.0, pdfUrl='', pdfTitle='', pdfPages=[], pdfActive=1, pdfZoomT=null, pdfObs=null, pdfScrollLast=0, pdfTwo=false;
     const pdfScrollEl=document.getElementById('pdf-scroll');
     const pdfPagesEl=document.getElementById('pdf-pages');
     const loader=document.getElementById('pdf-loader');
     function showLoader(v){ if(loader) loader.classList.toggle('show', !!v); }
-    function pdfColW(){ return Math.max(280, (pdfScrollEl?pdfScrollEl.clientWidth:800)-36); }
-    function pdfSetPos(n){ let el=document.getElementById('pdf-pos-input'); if(el && document.activeElement!==el) el.value=n; }
+    function isMobile(){ return window.innerWidth<=900; }
+    function defaultTwo(){ return !isMobile(); }
+    function pdfColW(){
+      if(pdfTwo && !isMobile()){
+        var w = pdfScrollEl ? pdfScrollEl.clientWidth : 800;
+        return Math.max(140, (w - 48) / 2);
+      }
+      return Math.max(280, (pdfScrollEl?pdfScrollEl.clientWidth:800)-36);
+    }
+    function pdfSetPos(n){ let el=document.getElementById('pdf-pos-input'); if(el && document.activeElement!==el) el.value=n; window.__pdfState = { title: pdfTitle, page: pdfActive, total: pdfPages.length, numPages: pdfDoc ? pdfDoc.numPages : pdfPages.length }; }
+    function publishPdfState(){ window.__pdfState = { title: pdfTitle, page: pdfActive, total: pdfPages.length, numPages: pdfDoc ? pdfDoc.numPages : pdfPages.length }; }
+    function layoutSpread(){
+      // Group pages into spreads of 2 (or 1) and lay out each page element.
+      if(!pdfPagesEl || !pdfPages.length) return;
+      var pair = pdfTwo && !isMobile();
+      pdfPagesEl.innerHTML='';
+      var obs = pdfObs;
+      if(obs){ try{obs.disconnect();}catch(_){} }
+      if(!pdfTwo || isMobile()){
+        pdfPages.forEach(function(p){
+          pdfPagesEl.appendChild(p.el);
+          if(obs) obs.observe(p.el);
+        });
+        return;
+      }
+      for(var i=0; i<pdfPages.length; i+=2){
+        var spread=document.createElement('div');
+        spread.className='pdf-spread';
+        [pdfPages[i], pdfPages[i+1]].forEach(function(p){
+          if(!p) return;
+          spread.appendChild(p.el);
+          if(obs) obs.observe(p.el);
+        });
+        pdfPagesEl.appendChild(spread);
+      }
+    }
     function layoutPdfPages(){
       let cw=pdfColW();
       pdfPages.forEach(p=>{
@@ -644,6 +674,16 @@
         p.el.style.width=dw+'px';
         p.el.style.height=(dw*p.h/p.w)+'px';
       });
+      layoutSpread();
+    }
+    function setPdfTwo(v){
+      pdfTwo = !!v;
+      if(pdfScrollEl) pdfScrollEl.classList.toggle('pdf-two', pdfTwo && !isMobile());
+      var b1=document.getElementById('pdf-layout-1'), b2=document.getElementById('pdf-layout-2');
+      if(b1) b1.classList.toggle('active', !pdfTwo);
+      if(b2) b2.classList.toggle('active', pdfTwo);
+      layoutPdfPages();
+      pdfPages.forEach(function(p){ if(p.rendered && p.visible){ p.rendered=0; renderPdfPage(p); } });
     }
     async function renderPdfPage(p){
       if(!pdfDoc || !p || p.rendered===pdfScale) return;
@@ -678,8 +718,19 @@
     function pdfTrackPos(){
       if(!pdfPages.length || !pdfScrollEl) return;
       let st=pdfScrollEl.scrollTop+24, n=1;
-      for(let p of pdfPages){ if(p.el.offsetTop<=st) n=p.num; else break; }
-      if(n!==pdfActive){ pdfActive=n; pdfSetPos(n); }
+      if(pdfTwo && !isMobile()){
+        var spreads = pdfPagesEl ? pdfPagesEl.children : [];
+        for(var i=0;i<spreads.length;i++){
+          var sp = spreads[i].querySelector ? spreads[i].querySelector('.pdf-page') : null;
+          if(sp && sp.offsetTop<=st){
+            var first = pdfPages[i*2];
+            n = first ? first.num : n;
+          } else break;
+        }
+      } else {
+        for(let p of pdfPages){ if(p.el.offsetTop<=st) n=p.num; else break; }
+      }
+      if(n!==pdfActive){ pdfActive=n; pdfSetPos(n); publishPdfState(); }
     }
     if(pdfScrollEl) pdfScrollEl.addEventListener('scroll', ()=>{ let now=Date.now(); if(now-pdfScrollLast>120){ pdfScrollLast=now; pdfTrackPos(); } }, {passive:true});
     function scrollToPdfPage(n, instant){
@@ -696,9 +747,9 @@
     function resetPdfDoc(){
       if(pdfObs){ try{pdfObs.disconnect();}catch(_){} pdfObs=null; }
       if(pdfDoc){ try{pdfDoc.destroy();}catch(_){} }
-      pdfDoc=null; pdfPages=[]; pdfActive=1;
+      pdfDoc=null; pdfPages=[]; pdfActive=1; window.__pdfState={title:pdfTitle, page:1, total:0, numPages:0}; saveEbookContext();
       if(pdfPagesEl) pdfPagesEl.innerHTML='';
-      let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ �';
+      let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ -';
       pdfSetPos(1);
     }
     window.openPdf=async function(url,title,startPg){
@@ -730,19 +781,28 @@
           if(pdfObs) pdfObs.observe(d);
           else renderPdfPage(pg);
         }
-        layoutPdfPages();
+        // Default: mobile shows 2 pages side by side; desktop stays 1.
+        setPdfTwo(defaultTwo());
         if(pdfScrollEl) pdfScrollEl.scrollTop=0;
-        pdfPages.slice(0,3).forEach(renderPdfPage);
+        pdfPages.slice(0,4).forEach(renderPdfPage);
         let cnt=document.getElementById('pdf-page-count'); if(cnt) cnt.textContent='/ '+pdfDoc.numPages;
         pdfSetPos(1);
-        // Deep links (AI chat references) jump straight to the cited page �
+        // Deep links (AI chat references) jump straight to the cited page -
         // render it immediately so the jump never shows empty placeholders.
         startPg=parseInt(startPg,10)||0;
         if(startPg>1){
           startPg=Math.min(startPg, pdfPages.length);
-          if(pdfScrollEl){ pdfScrollEl.scrollTop=(pdfPages[startPg-1].el.offsetTop-12); }
+          var pair = pdfTwo && !isMobile() ? 2 : 1;
+          var spreadIdx = Math.floor((startPg-1)/pair);
+          var spreadEl = pdfPagesEl ? pdfPagesEl.children[spreadIdx] : null;
+          var target = spreadEl ? spreadEl.querySelector('.pdf-page') : null;
+          if(pdfScrollEl && target){
+            pdfScrollEl.scrollTop=Math.max(0, target.offsetTop-12);
+          } else if(pdfScrollEl && pdfPages[startPg-1]){
+            pdfScrollEl.scrollTop=Math.max(0, pdfPages[startPg-1].el.offsetTop-12);
+          }
           pdfSetPos(startPg);
-          pdfPages.slice(Math.max(0,startPg-2), startPg+2).forEach(renderPdfPage);
+          pdfPages.slice(Math.max(0,startPg-2), startPg+3).forEach(renderPdfPage);
         }
         viewerOpen=true;
         document.querySelectorAll('.eb-row').forEach(r=>r.classList.toggle('active', r.getAttribute('data-url')===String(pdfUrl)));
@@ -772,6 +832,21 @@
         pdfZoomT=setTimeout(()=>{ pdfPages.forEach(p=>{ if(p.rendered && p.visible){ p.rendered=0; renderPdfPage(p); } }); },350);
       });
     });
+    let lay1=document.getElementById('pdf-layout-1'), lay2=document.getElementById('pdf-layout-2');
+    if(lay1) lay1.addEventListener('click', ()=>{ setPdfTwo(false); });
+    if(lay2) lay2.addEventListener('click', ()=>{ setPdfTwo(true); });
+    setPdfTwo(defaultTwo());
+    (function(){
+      var rzT=null;
+      window.addEventListener('resize', ()=>{
+        clearTimeout(rzT);
+        rzT=setTimeout(()=>{
+          var want=defaultTwo();
+          if(want!==pdfTwo) setPdfTwo(want);
+          else layoutPdfPages();
+        }, 200);
+      }, {passive:true});
+    })();
     let posIn=document.getElementById('pdf-pos-input'); if(posIn) posIn.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); pdfGoTo(); } e.stopPropagation(); });
     let fsBtn=document.getElementById('pdf-fs'); if(fsBtn) fsBtn.addEventListener('click', ()=>{
       let shell=document.querySelector('.pdf-shell');

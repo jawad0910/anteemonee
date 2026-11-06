@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply saved theme mode (light/dark/device) before first paint.
+    (function () {
+      try {
+        var m = null;
+        try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
+        var t = 'light'; /* Light mode only for now. Dark is disabled sitewide. */
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+  <title>My Syllabus - Anteemonee</title>
+  <meta name="description" content="Your syllabus on Anteemonee. Pick a subject to see its units and topics, then open board notes, past papers or flashcards for any topic.">
+  <meta name="keywords" content="FSc syllabus, matric syllabus, BISE syllabus, Physics Chemistry Biology Maths Computer Science syllabus, Anteemonee">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://anteemonee.com/syllabus/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="My Syllabus - Anteemonee">
+  <meta property="og:description" content="Your syllabus, subject by subject, the way your board teaches it.">
+  <meta property="og:image" content="https://anteemonee.com/assets/anteemonee.png">
+  <meta property="og:url" content="https://anteemonee.com/syllabus/">
+  <meta property="og:locale" content="en_PK">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="My Syllabus - Anteemonee">
+  <meta name="twitter:description" content="Your syllabus, subject by subject, the way your board teaches it.">
+  <meta name="twitter:image" content="https://anteemonee.com/assets/anteemonee.png">
+  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="stylesheet" href="../css/style.css?v=42">
+  <link rel="stylesheet" href="../css/xai.css?v=5">
+  <link rel="stylesheet" href="../css/header.css?v=12">
+  <script src="../js/header-notifications.js?v=3" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/sj-theme.css?v=10">
+  <style>
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { overflow-x: hidden; overflow-y: auto; background: var(--bg) !important; }
+    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
+
+    .sy-wrap { max-width: 1080px; margin: 0 auto; padding: 130px 24px 90px; }
+    .sy-class { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--sj-ink); background: var(--sj-yellow); border: 1.5px solid var(--sj-ink); box-shadow: 2px 2px 0 var(--sj-ink); margin-bottom: 26px; }
+    .sy-class svg { width: 14px; height: 14px; flex: none; }
+    .sy-class .sy-class-name { font-weight: 700; }
+    .sy-class.is-guest { background: #FFFFFF; color: var(--sj-ink-soft); border-style: dashed; box-shadow: none; }
+    .sy-class.is-guest a { color: var(--sj-cta); text-decoration: none; font-weight: 600; }
+    .sy-class.is-guest a:hover { text-decoration: underline; }
+    .sy-hero h1 { font-family: var(--font-serif); font-size: clamp(2.6rem, 5vw, 3.9rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.015em; margin-bottom: 22px; color: var(--text); }
+    .sy-hero-desc { font-size: clamp(1rem, 1.4vw, 1.1rem); color: var(--text-secondary); line-height: 1.7; margin-bottom: 30px; max-width: 560px; }
+    .sy-hero-desc a { color: var(--accent); text-decoration: none; }
+
+    .sy-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0 22px; }
+    .sy-chip { padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--sj-ink-soft); background: #FFFFFF; border: 1px solid var(--sj-line); cursor: pointer; transition: background .15s ease, border-color .15s ease, color .15s ease; font-family: inherit; }
+    .sy-chip:hover { color: var(--sj-ink); background: var(--sj-cream); }
+    .sy-chip.active { color: #FFFFFF; background: var(--sj-cta); border-color: var(--sj-cta); }
+    .sy-search { margin-left: auto; }
+    .sy-search input { width: 230px; max-width: 100%; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--liquid-border-soft); background: var(--liquid-bg-soft); color: var(--text); font-size: 13.5px; font-family: inherit; outline: none; }
+    .sy-search input:focus { border-color: var(--liquid-border); }
+    .sy-count { font-size: 12.5px; color: var(--text-muted); margin: 0 0 16px; }
+
+    .sy-group { display: none; }
+    .sy-group.active { display: block; }
+    .sy-card { background: #FFFFFF; border-radius: var(--radius-xl); padding: 6px 6px 14px; border: 1.5px solid var(--sj-line); box-shadow: 3px 3px 0 var(--sj-ink); }
+    .sy-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 12px 4px; font-size: 12.5px; color: var(--text-secondary); }
+    .sy-book-title { font-weight: 700; color: var(--sj-ink); font-size: 13px; }
+    .sy-total { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--sj-ink-soft); }
+    .sy-chapters { display: flex; flex-direction: column; gap: 8px; padding: 12px 6px 6px; }
+    .sy-ch { display: flex; flex-direction: column; gap: 0; background: var(--sj-cream); border: 1px solid var(--sj-line); border-radius: 12px; padding: 0; overflow: hidden; }
+    .sy-ch:hover { background: var(--sj-yellow-soft); border-color: var(--sj-ink); }
+    .sy-ch-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+    .sy-ch-n { width: 30px; height: 30px; flex: 0 0 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--sj-ink); color: var(--sj-yellow); font-size: 12px; font-weight: 800; }
+    .sy-ch-main { flex: 1; min-width: 0; }
+    .sy-ch-name { display: block; font-size: 14px; font-weight: 700; color: var(--sj-ink); line-height: 1.35; }
+    .sy-chev { flex: none; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1.5px solid var(--sj-ink); background: #FFFFFF; color: var(--sj-ink); font-size: 14px; font-weight: 800; transition: transform .18s ease; }
+    .sy-ch.open .sy-chev { transform: rotate(180deg); }
+    .sy-ch-pages { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--sj-ink-soft); background: #FFFFFF; border: 1px solid var(--sj-line); }
+    .sy-topics { display: none; border-top: 1px dashed var(--sj-line); padding: 10px 14px 12px; }
+    .sy-ch.open .sy-topics { display: block; }
+    .sy-topic { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--sj-line); }
+    .sy-topic:last-child { border-bottom: none; }
+    .sy-topic-n { width: 22px; height: 22px; flex: 0 0 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #FFFFFF; border: 1px solid var(--sj-line); font-size: 11px; font-weight: 800; color: var(--sj-ink-soft); }
+    .sy-topic-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--sj-ink); line-height: 1.35; }
+    .sy-topic-pages { flex: none; font-size: 11.5px; font-weight: 600; color: var(--sj-ink-soft); white-space: nowrap; }
+    .sy-topic-cross { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--sj-yellow); border: 1px solid var(--sj-ink); font-size: 12px; font-weight: 800; color: var(--sj-ink); }
+    .sy-more { display: block; width: 100%; margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--sj-line); font-size: 12.5px; font-weight: 600; color: var(--sj-ink-soft); cursor: pointer; font-family: inherit; text-align: center; }
+    .sy-more:hover { background: var(--sj-cream); color: var(--sj-ink); }
+    .sy-topic-open { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--sj-ink); background: #FFFFFF; border: 1px solid var(--sj-line); text-decoration: none; white-space: nowrap; }
+    .sy-topic-open:hover { background: var(--sj-cream); }
+    .sy-no-topics { font-size: 12.5px; color: var(--sj-ink-soft); padding: 6px 0 2px; }
+    .sy-open { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--sj-ink); background: #FFFFFF; border: 1px solid var(--sj-line); text-decoration: none; white-space: nowrap; }
+    .sy-open:hover { background: var(--sj-cream); }
+    .sy-open:active { transform: none; }
+    .sy-open.is-off { color: var(--sj-muted); pointer-events: none; }
+    .sy-loading, .sy-guest, .sy-nodata { padding: 36px 24px; text-align: center; color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; }
+    .sy-guest a { color: var(--sj-cta); font-weight: 700; }
+    .sy-sub { background: var(--liquid-bg); border-radius: 16px; padding: 16px; box-shadow: var(--liquid-inset); }
+    .sy-sub h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .sy-sub h3 .sy-n { width: 20px; height: 20px; flex: 0 0 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--liquid-bg-soft); font-size: 11px; font-weight: 800; color: var(--accent-ink); }
+    .sy-sub ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .sy-sub li { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .sy-note { padding: 6px 6px 0; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .sy-note a { color: var(--accent); text-decoration: none; }
+    .sy-note a:hover { text-decoration: underline; }
+
+    .sy-empty { display: none; padding: 40px 24px; text-align: center; color: var(--text-secondary); border-radius: var(--radius-xl); background: var(--liquid-bg-soft); }
+    .sy-empty b { color: var(--text); }
+    @media (max-width: 640px) { .sy-search { margin-left: 0; width: 100%; } .sy-search input { width: 100%; } .sy-ch { flex-wrap: wrap; } .sy-open { width: 100%; justify-content: center; } }
+  </style>
+</head>
+<body data-header-gap="-28">
+  <div data-site-header></div>
+  <script src="../js/site-chrome.js?v=9"></script>
+
+  <main class="sy-wrap">
+    <section class="sy-hero">
+      <span class="sy-class is-guest" id="sy-class">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12.5V16c0 1.1 2.7 3 6 3s6-1.9 6-3v-3.5"/></svg>
+        <span class="sy-class-name" id="sy-class-name">Loading your class…</span>
+      </span>
+      <h1>My syllabus</h1>
+      <p class="sy-hero-desc">Actual textbook chapters with their start and end pages. Tap any chapter to open it in eBooks at the exact page.</p>
+    </section>
+
+    <div class="sy-toolbar" id="sy-toolbar">
+      <button type="button" class="sy-chip active" data-subject="physics">Physics</button>
+      <button type="button" class="sy-chip" data-subject="chemistry">Chemistry</button>
+      <button type="button" class="sy-chip" data-subject="biology">Biology</button>
+      <button type="button" class="sy-chip" data-subject="maths">Mathematics</button>
+      <button type="button" class="sy-chip" data-subject="cs">Computer Science</button>
+      <div class="sy-search">
+        <input type="search" id="sy-search" placeholder="Search a chapter…">
+      </div>
+    </div>
+    <p class="sy-count" id="sy-count"></p>
+
+    <div id="sy-groups">
+      <section class="sy-group active" data-subject="physics" id="sy-physics"><article class="sy-card"><div class="sy-loading">Loading Physics chapters…</div></article></section>
+      <section class="sy-group" data-subject="chemistry" id="sy-chemistry"><article class="sy-card"><div class="sy-loading">Loading Chemistry chapters…</div></article></section>
+      <section class="sy-group" data-subject="biology" id="sy-biology"><article class="sy-card"><div class="sy-loading">Loading Biology chapters…</div></article></section>
+      <section class="sy-group" data-subject="maths" id="sy-maths"><article class="sy-card"><div class="sy-loading">Loading Mathematics chapters…</div></article></section>
+      <section class="sy-group" data-subject="cs" id="sy-cs"><article class="sy-card"><div class="sy-loading">Loading Computer Science chapters…</div></article></section>
+    </div>
+
+    <div class="sy-empty" id="sy-empty"><b>No chapter matches your search.</b><br>Try a different term, or switch subjects above.</div>
+  </main>
+
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script src="../js/account-manager.js?v=11"></script>
+  <script src="../js/app.js?v=38"></script>
+  <script src="../js/login-modal.js?v=6"></script>
+  <script src="../js/forgot-modal.js?v=2"></script>
+  <script src="../js/signup-modal.js?v=4"></script>
+  <script>
+    (function () {
+      var chips = document.querySelectorAll('#sy-toolbar .sy-chip');
+      var groups = document.querySelectorAll('.sy-group');
+      var search = document.getElementById('sy-search');
+      var count = document.getElementById('sy-count');
+      var empty = document.getElementById('sy-empty');
+      var classEl = document.getElementById('sy-class');
+      var classNameEl = document.getElementById('sy-class-name');
+      var current = 'physics';
+      var userClassValue = null; // 11 | 12 | null (guest = null, but chapters RLS needs auth)
+
+      var SUBJECTS = [
+        { key: 'physics', name: 'Physics' },
+        { key: 'chemistry', name: 'Chemistry' },
+        { key: 'biology', name: 'Biology' },
+        { key: 'maths', name: 'Mathematics' },
+        { key: 'cs', name: 'Computer Science' },
+      ];
+
+      function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+      function renderClass(label, system, board) {
+        if (!classEl || !classNameEl) return;
+        if (label) {
+          classEl.classList.remove('is-guest');
+          var parts = [label];
+          if (system) parts.push(system);
+          if (board) parts.push(board);
+          classNameEl.textContent = parts.join(' · ');
+        } else {
+          classEl.classList.add('is-guest');
+          classNameEl.innerHTML = 'Sign in to see your class · <a href="../pages/login.html">Log in</a>';
+        }
+      }
+
+      function openChapter(bookTitle, subjectName, classVal, printedStart) {
+        // eBooks deep-link: #book=<title>&printed=<printed>&pdf=<pdf page>
+        // Chapters store printed page numbers; PDF page = printed + 3 (3 front-matter pages)
+        var pdfPage = printedStart ? (Number(printedStart) + 3) : 1;
+        var params = new URLSearchParams();
+        if (bookTitle) params.set('book', bookTitle);
+        if (printedStart) params.set('printed', String(printedStart));
+        params.set('pdf', String(pdfPage));
+        window.location.href = '../ebooks/#' + params.toString();
+      }
+
+      function pdfToPrinted(pdfPage) {
+        if (pdfPage == null || pdfPage === '') return null;
+        var n = parseInt(pdfPage, 10);
+        if (!Number.isFinite(n)) return null;
+        return Math.max(1, n - 3);
+      }
+
+      function topicPageRange(t) {
+        if (!t || !t.description) return { start: null, end: null };
+        var m = String(t.description).match(/(\d+)\D+(\d+)/);
+        if (m) return { start: parseInt(m[1], 10), end: parseInt(m[2], 10) };
+        var s = String(t.description).match(/(\d+)/);
+        if (s) return { start: parseInt(s[1], 10), end: null };
+        return { start: null, end: null };
+      }
+
+      function topicPageLabel(t) {
+        var r = topicPageRange(t);
+        if (r.start == null) return t.description || '';
+        var s = pdfToPrinted(r.start);
+        var e = r.end != null ? pdfToPrinted(r.end) : null;
+        if (e != null && e !== s) return 'p. ' + s + ' – ' + e;
+        return 'p. ' + s;
+      }
+
+      function topicRow(t, book, idx, hidden) {
+        var r = topicPageRange(t);
+        var printed = r.start != null ? pdfToPrinted(r.start) : t.printed_start;
+        var href = (book && book.title && printed != null) ? '../ebooks/#' + new URLSearchParams({ book: book.title, printed: String(printed), pdf: String(printed + 3) }).toString() : null;
+        var open = href
+          ? '<a class="sy-topic-open" href="' + esc(href) + '">Read <span aria-hidden="true">→</span></a>'
+          : '';
+        var cross = t.is_cross ? '<span class="sy-topic-cross" title="Short syllabus">✕</span>' : '';
+        return '<div class="sy-topic' + (hidden ? ' sy-topic-hidden' : '') + '" data-q="' + esc((t.name + ' ' + (t.description || '')).toLowerCase()) + '"' + (hidden ? ' style="display:none"' : '') + '>'
+          + '<span class="sy-topic-n">' + esc(idx) + '</span>'
+          + '<span class="sy-topic-name">' + esc(t.name) + '</span>'
+          + cross
+          + '<span class="sy-topic-pages">' + esc(topicPageLabel(t)) + '</span>'
+          + open + '</div>';
+      }
+
+      function chapterRow(c, book, topics) {
+        var hasBook = book && book.title;
+        // chapters.start_page is already the printed page (no PDF offset needed)
+        var href = hasBook ? '../ebooks/#' + new URLSearchParams({ book: book.title, printed: String(c.start_page || 1), pdf: String((c.start_page || 1) + 3) }).toString() : null;
+        var btn = href
+          ? '<a class="sy-open" href="' + esc(href) + '" onclick="event.stopPropagation()">Open <span aria-hidden="true">→</span></a>'
+          : '<span class="sy-open is-off">No eBook yet</span>';
+        var topicsHtml = '';
+        var hasTopics = topics && topics.length;
+        if (hasTopics) {
+          var SHOW = 4;
+          var rows = topics.map(function(t, i){ return topicRow(t, book, i + 1, i >= SHOW); }).join('');
+          var more = topics.length > SHOW ? '<button type="button" class="sy-more" data-more>Show all ' + esc(topics.length) + ' topics ▾</button>' : '';
+          topicsHtml = '<div class="sy-topics">' + rows + more + '</div>';
+        } else {
+          topicsHtml = '<div class="sy-topics"><div class="sy-no-topics">No topics added yet for this chapter.</div></div>';
+        }
+        return '<div class="sy-ch open" data-q="' + esc((c.name + ' chapter ' + c.number + ' pages ' + c.start_page + ' ' + c.end_page + ' ' + (topics || []).map(function(t){ return t.name; }).join(' ')).toLowerCase()) + '" data-chapter="' + esc(c.id) + '">'
+          + '<div class="sy-ch-head" role="button" tabindex="0" aria-expanded="true">'
+          + '<span class="sy-ch-n">' + esc(c.number) + '</span>'
+          + '<div class="sy-ch-main"><span class="sy-ch-name">' + esc(c.name) + '</span>'
+          + '<span class="sy-ch-pages">p. ' + esc(c.start_page) + ' – ' + esc(c.end_page) + (topics && topics.length ? ' · ' + esc(topics.length) + ' topics' : '') + '</span></div>'
+          + btn
+          + '<span class="sy-chev" aria-hidden="true">▾</span>'
+          + '</div>'
+          + topicsHtml + '</div>';
+      }
+
+      function renderSubject(key, book, chapters, topicsByChapter) {
+        var el = document.getElementById('sy-' + key);
+        if (!el) return;
+        if (!book) {
+          el.querySelector('article').innerHTML = '<div class="sy-nodata">No textbook found for this subject yet.</div>';
+          return;
+        }
+        if (!chapters || !chapters.length) {
+          el.querySelector('article').innerHTML = '<div class="sy-meta"><span class="sy-book-title">' + esc(book.title) + '</span><span class="sy-total">' + (book.total_pages ? esc(book.total_pages) + ' pages' : '') + '</span></div><div class="sy-nodata">Chapters for this book are not added yet.</div>';
+          return;
+        }
+        var totalTopics = 0;
+        chapters.forEach(function(c){ if (topicsByChapter && topicsByChapter[c.id]) totalTopics += topicsByChapter[c.id].length; });
+        var meta = '<div class="sy-meta"><span class="sy-book-title">' + esc(book.title) + '</span><span class="sy-total">' + esc(chapters.length) + ' chapters' + (totalTopics ? ' · ' + esc(totalTopics) + ' topics' : '') + (book.total_pages ? ' · ' + esc(book.total_pages) + ' pages' : '') + '</span></div>';
+        var rows = chapters.map(function(c){ return chapterRow(c, book, topicsByChapter && topicsByChapter[c.id]); }).join('');
+        el.querySelector('article').innerHTML = meta + '<div class="sy-chapters">' + rows + '</div>';
+        el.querySelectorAll('.sy-ch-head').forEach(function(h){
+          function toggle(){
+            var row = h.closest('.sy-ch');
+            row.classList.toggle('open');
+            h.setAttribute('aria-expanded', row.classList.contains('open') ? 'true' : 'false');
+          }
+          h.addEventListener('click', function(e){ if (e.target.closest('.sy-open')) return; toggle(); });
+          h.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+        });
+        el.querySelectorAll('.sy-more').forEach(function(b){
+          b.addEventListener('click', function(e){
+            e.stopPropagation();
+            var box = b.closest('.sy-topics');
+            var hidden = box.querySelectorAll('.sy-topic-hidden');
+            hidden.forEach(function(r){ r.classList.remove('sy-topic-hidden'); r.style.display = ''; });
+            b.remove();
+          });
+        });
+      }
+
+      function showGuestChapters() {
+        SUBJECTS.forEach(function(s){
+          var el = document.getElementById('sy-' + s.key);
+          if (!el) return;
+          el.querySelector('article').innerHTML = '<div class="sy-guest"><b>Sign in to view ' + esc(s.name) + ' chapters.</b><br>Chapters are visible to students only. <a href="../pages/login.html">Log in</a> to load your textbook chapters with page numbers.</div>';
+        });
+      }
+
+      async function loadChaptersForUser(userId) {
+        if (typeof db === 'undefined' || !db) { showGuestChapters(); return; }
+        try {
+          // user class
+          var acadRes = await db.from('student_academic_profiles')
+            .select('class_level_id, class_level:class_levels(label, value)')
+            .eq('user_id', userId).maybeSingle();
+          var classLevels = acadRes && acadRes.data && acadRes.data.class_level ? acadRes.data.class_level : null;
+          var classVal = null;
+          if (classLevels) {
+            if (typeof classLevels.value === 'number') classVal = classLevels.value;
+            else if (classLevels.value) classVal = Number(classLevels.value);
+            else if (String(classLevels.label || '').toLowerCase().includes('1st')) classVal = 11;
+            else if (String(classLevels.label || '').toLowerCase().includes('2nd')) classVal = 12;
+          }
+          userClassValue = classVal;
+
+          // fallback: if no class, show 11th + 12th? Default to 11th
+          if (!classVal) classVal = 11;
+
+          // Books for this class (no embed: books has 2 FKs to class_levels)
+          var booksRes = await db.from('books')
+            .select('id, title, subject_id, class_level_id, total_pages, source_url')
+            .eq('is_active', true)
+            .order('id')
+            .limit(100);
+          if (booksRes.error) throw booksRes.error;
+          var books = booksRes.data || [];
+
+          var classLevelsList = [];
+          var clRes = await db.from('class_levels').select('id, value');
+          if (!clRes.error && clRes.data) classLevelsList = clRes.data;
+          var classValueById = {};
+          classLevelsList.forEach(function(c){ classValueById[c.id] = c.value; });
+
+          // Filter by class value
+          var classBooks = books.filter(function(b){
+            var cv = classValueById[b.class_level_id];
+            if (cv == null) return false;
+            return Number(cv) === Number(classVal);
+          });
+
+          // Pick canonical book per subject: prefer one with chapters, newest id
+          // Load all chapters for these books
+          var bookIds = classBooks.map(function(b){ return b.id; });
+          var chaptersByBook = {};
+          if (bookIds.length) {
+            var chRes = await db.from('chapters')
+              .select('id, book_id, number, name, start_page, end_page')
+              .in('book_id', bookIds)
+              .order('book_id').order('number');
+            if (!chRes.error && chRes.data) {
+              chRes.data.forEach(function(c){
+                if (!chaptersByBook[c.book_id]) chaptersByBook[c.book_id] = [];
+                chaptersByBook[c.book_id].push(c);
+              });
+            }
+          }
+
+          var chapterIds = [];
+          Object.keys(chaptersByBook).forEach(function(k){ chaptersByBook[k].forEach(function(c){ chapterIds.push(c.id); }); });
+          var topicsByChapter = {};
+          if (chapterIds.length) {
+            var tpRes = await db.from('topics')
+              .select('id, chapter_id, name, description, sort_order, is_cross, printed_start, printed_end')
+              .in('chapter_id', chapterIds)
+              .order('chapter_id').order('sort_order');
+            if (!tpRes.error && tpRes.data) {
+              tpRes.data.forEach(function(t){
+                // Backfill printed page from PDF page in description (PDF - 3 = printed)
+                if (!t.description) return;
+                var m = String(t.description).match(/PDF page\s*(\d+)\s*[-–]\s*(\d+)/i);
+                if (m) {
+                  t.printed_start = Math.max(1, parseInt(m[1], 10) - 3);
+                  t.printed_end = Math.max(1, parseInt(m[2], 10) - 3);
+                } else {
+                  var m2 = String(t.description).match(/PDF page\s*(\d+)/i);
+                  if (m2) t.printed_start = Math.max(1, parseInt(m2[1], 10) - 3);
+                }
+                if (!topicsByChapter[t.chapter_id]) topicsByChapter[t.chapter_id] = [];
+                topicsByChapter[t.chapter_id].push(t);
+              });
+            }
+          }
+
+          // Subjects lookup to map ids -> name
+          var subjRes = await db.from('subjects').select('id, name').order('name');
+          var subjMap = {};
+          if (!subjRes.error && subjRes.data) {
+            subjRes.data.forEach(function(s){ subjMap[s.id] = s.name; });
+          }
+
+          // For each UI subject, find matching book
+          SUBJECTS.forEach(function(s){
+            var candidates = classBooks.filter(function(b){
+              var sn = (subjMap[b.subject_id] || b.title || '').toLowerCase();
+              if (s.key === 'maths') return sn.includes('math');
+              if (s.key === 'cs') return sn.includes('computer') || sn.includes('computer science');
+              return sn.includes(s.name.toLowerCase());
+            });
+            // Prefer book that has chapters
+            candidates.sort(function(a,b){
+              var ac = (chaptersByBook[a.id] || []).length;
+              var bc = (chaptersByBook[b.id] || []).length;
+              if (bc !== ac) return bc - ac;
+              // tie-break: prefer book with most topics
+              var at = 0, bt = 0;
+              (chaptersByBook[a.id] || []).forEach(function(c){ at += (topicsByChapter[c.id] || []).length; });
+              (chaptersByBook[b.id] || []).forEach(function(c){ bt += (topicsByChapter[c.id] || []).length; });
+              if (bt !== at) return bt - at;
+              return Number(b.id) - Number(a.id);
+            });
+            var book = candidates[0] || null;
+            var chapters = book ? (chaptersByBook[book.id] || []) : [];
+            renderSubject(s.key, book, chapters, topicsByChapter);
+          });
+
+          show();
+        } catch(e) {
+          console.warn('[syllabus] chapters load failed', e);
+          SUBJECTS.forEach(function(s){
+            var el = document.getElementById('sy-' + s.key);
+            if (el && el.querySelector('.sy-loading')) {
+              el.querySelector('article').innerHTML = '<div class="sy-nodata">Could not load chapters. Please refresh or check your connection.</div>';
+            }
+          });
+        }
+      }
+
+      function loadUserClass() {
+        if (!classEl || !classNameEl) return;
+        var tries = 0;
+        var done = false;
+        var timer = setInterval(function () {
+          tries++;
+          try {
+            var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+            var hasDb = (typeof db !== 'undefined' && db);
+            if (user && hasDb && !done) {
+              done = true;
+              clearInterval(timer);
+              db.from('student_academic_profiles')
+                .select('class_level:class_levels(label), board:boards(name), education_system:education_systems(name)')
+                .eq('user_id', user.id).maybeSingle()
+                .then(function (res) {
+                  var d = res && res.data;
+                  var label = d && d.class_level && d.class_level.label;
+                  var system = d && d.education_system && d.education_system.name;
+                  var board = d && d.board && d.board.name;
+                  renderClass(label, system, board);
+                  loadChaptersForUser(user.id);
+                })
+                .catch(function () { renderClass(null); showGuestChapters(); });
+            } else if (tries > 40 || window.__authReady === true) {
+              clearInterval(timer);
+              if (!user) { renderClass(null); showGuestChapters(); }
+              else if (!done) { renderClass(null); showGuestChapters(); }
+            }
+          } catch (_) {
+            if (tries > 10) { clearInterval(timer); renderClass(null); showGuestChapters(); }
+          }
+        }, 300);
+      }
+      loadUserClass();
+
+      function show() {
+        var q = (search && search.value || '').trim().toLowerCase();
+        var visible = 0;
+        groups.forEach(function (g) {
+          var on = g.getAttribute('data-subject') === current;
+          g.classList.toggle('active', on);
+          if (!on) return;
+          g.querySelectorAll('.sy-ch').forEach(function (u) {
+            var text = (u.getAttribute('data-q') || u.textContent).toLowerCase();
+            var hit = !q || text.indexOf(q) !== -1;
+            if (hit) {
+              u.style.display = '';
+              visible++;
+              if (q) {
+                u.classList.add('open');
+                u.querySelectorAll('.sy-topic').forEach(function(t){
+                  var tt = (t.getAttribute('data-q') || t.textContent).toLowerCase();
+                  t.style.display = (tt.indexOf(q) !== -1) ? '' : 'none';
+                });
+                var mb = u.querySelector('.sy-more');
+                if (mb) mb.style.display = 'none';
+              } else {
+                // No search: keep topics hidden by "Show more" untouched
+                // (don't reset display), so only first 4 stay visible.
+                u.querySelectorAll('.sy-topic').forEach(function(t){
+                  if (t.classList.contains('sy-topic-hidden')) t.style.display = 'none';
+                  else t.style.display = '';
+                });
+                var mb2 = u.querySelector('.sy-more');
+                if (mb2) mb2.style.display = '';
+              }
+            } else {
+              u.style.display = 'none';
+            }
+          });
+        });
+        count.textContent = q ? visible + (visible === 1 ? ' matching chapter' : ' matching chapters') : '';
+        if (empty) empty.style.display = (q && visible === 0) ? 'block' : 'none';
+      }
+
+      chips.forEach(function (c) {
+        c.addEventListener('click', function () {
+          current = c.getAttribute('data-subject');
+          chips.forEach(function (x) { x.classList.toggle('active', x === c); });
+          show();
+        });
+      });
+      if (search) search.addEventListener('input', show);
+      show();
+    })();
+  </script>
+</body>
+</html>

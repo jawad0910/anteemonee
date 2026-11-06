@@ -7,7 +7,7 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = 'light'; /* Light mode only for now — dark is disabled sitewide. */
+        var t = 'light'; /* Light mode only for now. Dark is disabled sitewide. */
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
@@ -50,7 +50,7 @@
     .atb-hist-view:active { transform: translateY(0) scale(.96); }
     .atb-wrap { max-width: 720px; margin: 0 auto; padding: 110px 24px 80px; }
     .atb-hero { text-align: center; margin-bottom: 28px; }
-    .atb-hero h1 { font-family: var(--font-ui); font-size: clamp(1.8rem, 3.5vw, 2.4rem); margin: 0 0 8px; letter-spacing: -.02em; }
+    .atb-hero h1 { font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif !important; font-weight: 600 !important; letter-spacing: -.02em !important; font-size: clamp(1.8rem, 3.5vw, 2.4rem); margin: 0 0 8px; letter-spacing: -.02em; }
     .atb-hero p { color: var(--text-secondary); font-size: 14px; max-width: 460px; margin: 0 auto; line-height: 1.5; }
     .atb-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 12px; border: 1px solid var(--accent-soft); }
     .atb-card { background: var(--liquid-bg); border: 1px solid var(--border); border-radius: 22px; padding: 28px 24px; -webkit-backdrop-filter: var(--liquid-blur); backdrop-filter: var(--liquid-blur); }
@@ -198,11 +198,11 @@
     }
 
     /* ============================================================
-       AI Test Builder — "Academy" sheet
+       AI Test Builder: "Academy" sheet
        Same language as the rest of the site: cream canvas, ink
        rules, white cards, orange primary action, yellow highlight.
        ============================================================ */
-    /* Tokens live at :root — the history modal and the auth gate sit
+    /* Tokens live at :root - the history modal and the auth gate sit
        outside #atb-page, and they need the same palette. */
     :root {
       --tb-ink: var(--sj-ink, #151515);
@@ -218,16 +218,16 @@
       --tb-cream: var(--sj-cream, #F4F1E8);
       --tb-radius: 16px;
       --tb-radius-sm: 11px;
-      --tb-shadow: 4px 4px 0 rgba(21, 21, 21, .10);
+      --tb-shadow: 0 12px 32px -16px rgba(21, 21, 21, .14), 0 2px 8px rgba(21, 21, 21, .05);
     }
-    #atb-page { padding-top: 92px; }
+    #atb-page { padding-top: calc(var(--site-header-actual-height, 0px) + 24px); }
     #atb-page .tb-root {
       box-sizing: border-box;
       max-width: 1100px;
       margin: 0 auto;
       padding: 4px 16px 72px;
       color: var(--tb-ink);
-      font-family: var(--font-ui);
+      font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
       -webkit-font-smoothing: antialiased;
     }
     #atb-page .tb-root * { box-sizing: border-box; }
@@ -239,7 +239,7 @@
       gap: 2px 18px;
       align-items: end;
       padding-bottom: 15px;
-      border-bottom: 1.5px solid var(--tb-ink);
+      border-bottom: 1px solid #EDE9DC;
       margin-bottom: 16px;
     }
     .tb-page-eyebrow {
@@ -293,7 +293,7 @@
       gap: 7px;
       min-height: 40px;
       padding: 0 16px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: var(--tb-radius-sm);
       background: var(--tb-paper);
       color: var(--tb-ink);
@@ -304,15 +304,15 @@
       text-decoration: none;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      box-shadow: 2px 2px 0 rgba(21, 21, 21, .14);
+      box-shadow: 0 8px 20px -12px rgba(21,21,21,.16);
       transition: transform .14s ease-out, box-shadow .14s ease-out, background-color .14s ease-out, color .14s ease-out, opacity .14s ease-out;
     }
-    .tb-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(21, 21, 21, .22); background: var(--tb-yellow-soft); }
-    .tb-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+    .tb-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 0 8px 20px -12px rgba(21,21,21,.16); background: var(--tb-yellow-soft); }
+    .tb-btn:active:not(:disabled) { transform: scale(.98); box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
     .tb-btn:focus-visible { outline: 2px solid var(--tb-orange); outline-offset: 2px; }
     .tb-btn:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; transform: none; background: var(--tb-paper); }
     .tb-btn-primary { background: var(--tb-orange); color: #fff; }
-    .tb-btn-primary:hover:not(:disabled) { background: var(--tb-orange-deep); color: #fff; box-shadow: 4px 4px 0 var(--tb-ink); }
+    .tb-btn-primary:hover:not(:disabled) { background: var(--tb-orange-deep); color: #fff; box-shadow: 0 10px 22px -12px rgba(254,97,0,.28); }
     .tb-btn-outline { background: var(--tb-paper); }
     .tb-btn-big { min-height: 52px; padding: 0 32px; font-size: .95rem; font-weight: 600; letter-spacing: -.01em; }
     .tb-btn-ghost { border-color: transparent; background: transparent; box-shadow: none; color: var(--tb-ink-soft); }
@@ -325,7 +325,7 @@
       gap: 6px;
       min-height: 30px;
       padding: 0 12px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 999px;
       background: var(--tb-yellow);
       color: var(--tb-ink);
@@ -349,7 +349,7 @@
       width: 26px;
       height: 26px;
       border-radius: 50%;
-      border: 1.5px solid var(--tb-rule-strong);
+      border: 1px solid #EDE9DC;
       background: var(--tb-paper);
       color: var(--tb-ink-mute);
       font-size: .74rem;
@@ -371,6 +371,12 @@
     .tb-pane.tb-pane-active { display: block; animation: tb-rise .26s ease-out both; }
     @keyframes tb-rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
     .tb-panes { position: relative; }
+    #atb-page .tb-pane-active > .tb-card + .tb-card { margin-top: 16px; }
+    #atb-page .tb-stack { gap: 18px; background: var(--tb-cream); }
+    #atb-page .tb-panes { background: var(--tb-cream); padding-bottom: 8px; }
+    #atb-page .tb-build-row { margin-top: 22px; }
+    #atb-page .tb-stack { display: flex; flex-direction: column; gap: 18px; }
+    #atb-page .tb-stack > .tb-card { margin-bottom: 0; }
     .atb-shell.tb-building .tb-header-row,
     .atb-shell.tb-building .tb-progress-wrap,
     .atb-shell.tb-building .tb-panes { display: none; }
@@ -378,6 +384,8 @@
     /* ---------- layout ---------- */
     .tb-two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
     .tb-config-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .tb-config-grid-50 { grid-template-columns: 1fr 1fr; }
+    .tb-config-grid-50 > .tb-card { min-width: 0; }
     .tb-two-col .tb-card { display: flex; flex-direction: column; }
     .tb-two-col .tb-card-body { flex: 1; display: flex; flex-direction: column; }
     .tb-two-col .tb-card-chapters .tb-card-body > .atb-select-wrap { margin-bottom: 4px; }
@@ -387,7 +395,7 @@
     /* ---------- cards ---------- */
     .tb-card {
       background: var(--tb-paper);
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: var(--tb-radius);
       box-shadow: var(--tb-shadow);
       /* No clipping: the chapter/board dropdowns are absolutely
@@ -399,11 +407,11 @@
       align-items: center;
       gap: 10px;
       padding: 12px 16px;
-      border-bottom: 1.5px solid var(--tb-ink);
+      border-bottom: 1px solid #EDE9DC;
       border-radius: 14.5px 14.5px 0 0;
       background: linear-gradient(180deg, #FFFDF4, #FFFFFF);
     }
-    .tb-card-chapters .tb-card-header { border-bottom: 1.5px solid var(--tb-ink); }
+    .tb-card-chapters .tb-card-header { border-bottom: 1px solid #EDE9DC; }
     .tb-card-header-icon {
       display: flex;
       align-items: center;
@@ -411,7 +419,7 @@
       width: 26px;
       height: 26px;
       flex-shrink: 0;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 7px;
       background: var(--tb-yellow);
       color: var(--tb-ink);
@@ -446,7 +454,7 @@
       gap: 10px;
       width: 100%;
       padding: 9px 10px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
       text-align: left;
@@ -458,7 +466,7 @@
     .tb-subject-item:hover { border-color: var(--tb-ink); background: #FFFDF4; }
     .tb-subject-item:active { transform: translateY(1px); }
     .tb-subject-item:focus-visible { outline: 2px solid var(--tb-orange); outline-offset: 2px; }
-    .tb-subject-item.tb-selected { border-color: var(--tb-ink); background: var(--tb-yellow-soft); box-shadow: 2px 2px 0 var(--tb-ink); }
+    .tb-subject-item.tb-selected { border-color: var(--tb-ink); background: var(--tb-yellow-soft); box-shadow: 0 10px 22px -12px rgba(254,97,0,.28); }
     .tb-subject-icon {
       display: flex;
       align-items: center;
@@ -466,7 +474,7 @@
       width: 32px;
       height: 32px;
       flex-shrink: 0;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 9px;
       background: #F6F3EA;
       color: var(--tb-ink);
@@ -506,7 +514,7 @@
       width: 18px;
       height: 18px;
       flex-shrink: 0;
-      border: 1.5px solid var(--tb-rule-strong);
+      border: 1px solid #EDE9DC;
       border-radius: 50%;
       background: #fff;
       transition: background-color .15s ease-out, border-color .15s ease-out;
@@ -524,7 +532,7 @@
       width: 100%;
       height: 46px;
       padding: 0 13px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
       color: var(--tb-ink);
@@ -543,10 +551,10 @@
     #atb-page .atb-select-wrap.open .atb-select-caret { transform: rotate(180deg); color: var(--tb-orange); }
     #atb-page .atb-select-menu {
       padding: 5px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
-      box-shadow: 4px 4px 0 rgba(21, 21, 21, .14);
+      box-shadow: 0 8px 20px -12px rgba(21,21,21,.16);
     }
     /* flipped above the trigger when there is no room below */
     #atb-page .atb-select-wrap.open > .atb-select-menu.up {
@@ -577,7 +585,7 @@
       gap: 6px;
       max-width: 100%;
       padding: 4px 5px 4px 10px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 999px;
       background: var(--tb-yellow-soft);
       color: var(--tb-ink);
@@ -614,14 +622,24 @@
       width: 100%;
       min-height: 46px;
       padding: 7px 9px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px dashed #D8D2C2;
       border-radius: 12px;
-      background: var(--tb-paper);
+      background: #FCFAF2;
       cursor: text;
-      transition: border-color .15s ease-out, box-shadow .15s ease-out;
+      transition: border-color .15s ease-out, box-shadow .15s ease-out, background-color .15s ease-out;
     }
-    #atb-page .atb-topics-box:hover { border-color: var(--tb-ink); }
-    #atb-page .atb-topics-box:focus-within { border-color: var(--tb-ink); box-shadow: 0 0 0 3px rgba(254, 97, 0, .16); }
+    #atb-page .atb-topics-box:hover { border-color: var(--tb-ink-mute); }
+    #atb-page .atb-topics-box:focus-within {
+      border-style: solid;
+      border-color: var(--tb-ink);
+      background: var(--tb-paper);
+      box-shadow: 0 0 0 3px rgba(254, 97, 0, .16);
+    }
+    #atb-page .atb-topics-box.tb-topics-filled {
+      border-style: solid;
+      border-color: #EDE9DC;
+      background: var(--tb-paper);
+    }
     #atb-page .atb-topics-input {
       flex: 1 1 130px;
       min-width: 110px;
@@ -642,7 +660,7 @@
       align-items: center;
       gap: 9px;
       padding: 7px 9px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 10px;
       background: var(--tb-paper);
     }
@@ -661,7 +679,7 @@
       height: 26px;
       flex-shrink: 0;
       padding: 0;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 7px;
       background: #fff;
       color: var(--tb-ink-mute);
@@ -692,19 +710,56 @@
       text-transform: uppercase;
     }
 
-    /* ---------- mode chips ---------- */
+    /* ---------- mode chips: Full chapter is the default, topics optional ---------- */
     .tb-mode-row { display: flex; gap: 8px; margin-bottom: 13px; flex-wrap: wrap; }
     .tb-radio-chip {
       padding: 7px 14px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 999px;
       background: var(--tb-paper);
       color: var(--tb-ink-soft);
       font-size: .78rem;
       font-weight: 500;
-      cursor: default;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color .15s ease-out, background-color .15s ease-out, color .15s ease-out;
     }
+    .tb-radio-chip:hover { border-color: var(--tb-ink); }
+    .tb-radio-chip:focus-visible { outline: 2px solid var(--tb-orange); outline-offset: 2px; }
     .tb-radio-chip-active { border-color: var(--tb-ink); background: var(--tb-ink); color: #fff; }
+    .tb-radio-chip-static { cursor: default; }
+    .tb-radio-chip-static:hover { border-color: #EDE9DC; }
+    .tb-diff-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .tb-diff-chip {
+      flex: 1 1 0;
+      padding: 9px 10px;
+      border: 1px solid #EDE9DC;
+      border-radius: 10px;
+      background: var(--tb-paper);
+      color: var(--tb-ink-soft);
+      font-family: inherit;
+      font-size: .82rem;
+      font-weight: 550;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color .15s ease-out, background-color .15s ease-out, color .15s ease-out;
+    }
+    .tb-diff-chip:hover { border-color: var(--tb-ink); }
+    .tb-diff-chip:active { transform: scale(.98); }
+    .tb-diff-chip:focus-visible { outline: 2px solid var(--tb-orange); outline-offset: 2px; }
+    .tb-diff-chip-active { border-color: var(--tb-ink); background: var(--tb-ink); color: #fff; }
+    .tb-diff-note { margin-bottom: 12px; font-size: .74rem; line-height: 1.45; color: var(--tb-ink-mute); }
+    .tb-card-opt-note {
+      margin-bottom: 10px;
+      padding: 9px 11px;
+      border: 1px dashed #EDE9DC;
+      border-radius: 10px;
+      background: #FCFAF2;
+      font-size: .76rem;
+      line-height: 1.45;
+      color: var(--tb-ink-mute);
+    }
+    .tb-card-opt-note b { color: var(--tb-ink-soft); font-weight: 600; }
 
     /* ---------- toggles ---------- */
     #atb-page .atb-toggle {
@@ -714,7 +769,7 @@
       gap: 14px;
       margin-bottom: 9px;
       padding: 11px 13px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
       cursor: pointer;
@@ -757,7 +812,7 @@
       display: none;
       margin-top: 13px;
       padding: 13px;
-      border: 1.5px dashed var(--tb-rule-strong);
+      border: 1px dashed #EDE9DC;
       border-radius: 12px;
       background: #FCFAF2;
     }
@@ -788,7 +843,7 @@
       width: 100%;
       height: 46px;
       padding: 0 13px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
       color: var(--tb-ink);
@@ -813,7 +868,7 @@
     #atb-page .atb-marks-grid input[type="number"] {
       width: 100%;
       height: 52px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
       color: var(--tb-ink);
@@ -832,7 +887,7 @@
       justify-content: space-between;
       margin-top: 13px;
       padding: 10px 12px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 10px;
       background: var(--tb-yellow-soft);
       color: var(--tb-ink);
@@ -851,7 +906,7 @@
     #atb-warn {
       margin-top: 12px;
       padding: 10px 13px;
-      border: 1.5px solid #E4B4AE;
+      border: 1px solid #E4B4AE;
       border-radius: 10px;
       background: #FDF4F2;
       color: #B42318;
@@ -861,12 +916,29 @@
     #atb-warn { margin: 0 0 14px; border-color: #E8D9A2; background: #FFFBE6; color: #8A6100; }
 
     /* ---------- build row ---------- */
-    .tb-build-row { display: flex; flex-direction: column; align-items: center; gap: 11px; margin-top: 18px; }
-    .tb-build-row .tb-btn-big { min-width: 220px; }
+    .tb-build-row { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 22px; }
+    #atb-start {
+      align-self: center;
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: 220px;
+      min-height: 40px !important;
+      padding: 0 22px !important;
+      font-size: .85rem !important;
+    }
+    .tb-build-row .tb-btn-big { min-width: 180px; }
+    .tb-build-summary { font-size: .8rem; color: var(--tb-ink-mute); text-align: center; line-height: 1.5; max-width: 560px; }
+    .tb-build-summary b { color: var(--tb-ink-soft); font-weight: 600; }
     .tb-build-row .atb-err { width: 100%; text-align: left; }
 
     /* ---------- build in progress ---------- */
-    #atb-progress { padding: 22px 22px 20px; }
+    #atb-progress { padding: 12px 16px; margin: 12px auto; max-width: 560px; border-top: 2px solid var(--tb-orange); }
+    .tb-confirm { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(7,7,7,.72); align-items: center; justify-content: center; padding: 18px; }
+    .tb-confirm.show { display: flex; }
+    .tb-confirm-card { width: min(440px, 100%); background: var(--tb-paper); border: 1px solid #EDE9DC; border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,.55); padding: 20px 20px 16px; }
+    .tb-confirm-card h3 { margin: 0 0 6px; font-size: 1rem; letter-spacing: -.01em; }
+    .tb-confirm-card p { margin: 0 0 14px; font-size: .85rem; line-height: 1.55; color: var(--tb-ink-soft); }
+    .tb-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
     .tb-build-state-head { display: flex; align-items: center; gap: 14px; }
     .tb-build-spinner {
       position: relative;
@@ -876,7 +948,7 @@
       width: 42px;
       height: 42px;
       flex-shrink: 0;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-yellow);
     }
@@ -884,7 +956,7 @@
       content: '';
       position: absolute;
       inset: -1.5px;
-      border: 1.5px solid var(--tb-orange);
+      border: 1px solid var(--tb-orange);
       border-radius: 12px;
       animation: tb-pulse 1.9s ease-out infinite;
     }
@@ -894,12 +966,12 @@
     .tb-build-stage { margin: 0 0 3px; font-size: .98rem; font-weight: 600; letter-spacing: -.01em; color: var(--tb-ink); }
     .tb-build-eta { margin: 0; font-size: .75rem; color: var(--tb-ink-mute); }
     .tb-build-pct { margin-left: auto; font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; color: var(--tb-ink); font-variant-numeric: tabular-nums; }
-    #atb-progress .atb-bar { height: 10px; margin: 18px 0 0; border: 1.5px solid var(--tb-ink); border-radius: 999px; background: var(--tb-cream); overflow: hidden; }
+    #atb-progress .atb-bar { height: 10px; margin: 18px 0 0; border: 1px solid #EDE9DC; border-radius: 999px; background: var(--tb-cream); overflow: hidden; }
     #atb-progress .atb-bar > i { display: block; height: 100%; width: 0; background: var(--tb-orange); border-radius: 999px; transition: width .5s cubic-bezier(.2, .8, .2, 1); }
     .tb-build-phases { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
     .tb-phase {
       padding: 4px 10px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 999px;
       font-size: .63rem;
       font-weight: 600;
@@ -908,6 +980,7 @@
       color: var(--tb-ink-mute);
     }
     .tb-phase.tb-phase-active { border-color: var(--tb-ink); background: var(--tb-yellow); color: var(--tb-ink); }
+    .tb-phase.tb-phase-done { border-color: var(--tb-ink); background: var(--tb-paper); color: var(--tb-ink); opacity: .85; }
     .tb-build-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
 
     /* ---------- test ready ---------- */
@@ -919,11 +992,11 @@
       width: 52px;
       height: 52px;
       margin: 0 auto 14px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 50%;
       background: var(--tb-yellow);
       color: var(--tb-ink);
-      box-shadow: 3px 3px 0 rgba(21, 21, 21, .18);
+      box-shadow: 0 8px 20px -12px rgba(21,21,21,.16);
     }
     #atb-done h2 { margin: 0 0 5px; font-size: 1.35rem; font-weight: 600; letter-spacing: -.025em; color: var(--tb-ink); }
     #atb-done .tb-done-title { margin: 0 0 5px; font-size: .89rem; color: var(--tb-ink-soft); }
@@ -940,14 +1013,14 @@
       width: min(720px, 100%);
       height: min(600px, calc(100vh - 116px));
       max-height: calc(100vh - 116px);
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 16px;
       background: var(--tb-paper);
-      box-shadow: 6px 6px 0 rgba(21, 21, 21, .22);
+      box-shadow: 0 8px 20px -12px rgba(21,21,21,.16);
       overflow: hidden;
       animation: tb-rise .22s ease-out;
     }
-    .tb-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 17px; border-bottom: 1.5px solid var(--tb-ink); background: linear-gradient(180deg, #FFFDF4, #fff); }
+    .tb-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 17px; border-bottom: 1px solid #EDE9DC; background: linear-gradient(180deg, #FFFDF4, #fff); }
     .tb-modal-head h3 { margin: 0; font-size: .95rem; font-weight: 600; letter-spacing: -.015em; color: var(--tb-ink); }
     .tb-modal-close {
       display: inline-flex;
@@ -955,7 +1028,7 @@
       justify-content: center;
       width: 30px;
       height: 30px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 8px;
       background: #fff;
       color: var(--tb-ink-soft);
@@ -970,7 +1043,7 @@
     .tb-modal-toast {
       margin-bottom: 10px;
       padding: 8px 13px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 9px;
       background: var(--tb-yellow-soft);
       color: var(--tb-ink);
@@ -990,7 +1063,7 @@
       align-items: flex-start;
       margin-bottom: 8px;
       padding: 12px 13px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 12px;
       background: var(--tb-paper);
       transition: border-color .15s ease-out;
@@ -1009,7 +1082,7 @@
       justify-content: center;
       width: 30px;
       height: 30px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 8px;
       background: #fff;
       color: var(--tb-ink-soft);
@@ -1027,10 +1100,10 @@
       display: none;
       min-width: 196px;
       padding: 5px;
-      border: 1.5px solid var(--tb-ink);
+      border: 1px solid #EDE9DC;
       border-radius: 10px;
       background: var(--tb-paper);
-      box-shadow: 4px 4px 0 rgba(21, 21, 21, .16);
+      box-shadow: 0 8px 20px -12px rgba(21,21,21,.16);
     }
     .atb-hist-menu.up { top: auto; bottom: calc(100% + 7px); }
     .atb-hist-menu.open { display: block; }
@@ -1056,7 +1129,7 @@
     .atb-hist-progress { position: relative; display: block; height: 3px; margin-bottom: 13px; border-radius: 2px; background: rgba(21, 21, 21, .10); overflow: hidden; }
     .atb-hist-progress::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; border-radius: 2px; background: var(--tb-orange); animation: atb-indeterminate 1.1s ease-in-out infinite; }
     @keyframes atb-indeterminate { 0% { left: -40%; } 100% { left: 100%; } }
-    .atb-hist-skel { height: 62px; margin-bottom: 8px; padding: 12px 13px; border: 1.5px solid var(--tb-rule); border-radius: 12px; background: #FCFAF2; }
+    .atb-hist-skel { height: 62px; margin-bottom: 8px; padding: 12px 13px; border: 1px solid #EDE9DC; border-radius: 12px; background: #FCFAF2; }
     .atb-hist-skel i { display: block; height: 11px; margin-bottom: 8px; border-radius: 5px; background: linear-gradient(90deg, rgba(21, 21, 21, .05), rgba(21, 21, 21, .12), rgba(21, 21, 21, .05)); background-size: 200% 100%; animation: atb-skelshimmer 1.2s linear infinite; }
     .atb-hist-skel i:last-child { width: 55%; height: 8px; margin-bottom: 0; }
     @keyframes atb-skelshimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -1092,11 +1165,11 @@
       width: 54px;
       height: 54px;
       margin-bottom: 16px;
-      border: 1.5px solid var(--tb-ink, #151515);
+      border: 1px solid #EDE9DC;
       border-radius: 15px;
       background: var(--tb-yellow, #FCE004);
       color: var(--tb-ink, #151515);
-      box-shadow: 3px 3px 0 rgba(21, 21, 21, .18);
+      box-shadow: 0 8px 20px -12px rgba(21,21,21,.16);
     }
     #atb-not-auth > b { font-size: 1.15rem; font-weight: 600; letter-spacing: -.02em; color: var(--tb-ink, #151515); }
     #atb-not-auth p { max-width: 42ch; margin: 8px auto 22px; font-size: .87rem; line-height: 1.6; color: var(--tb-ink-soft, rgba(21, 21, 21, .62)); }
@@ -1104,14 +1177,14 @@
 
     /* ---------- PDF viewer ---------- */
     #pdf-modal { background: rgba(21, 21, 21, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-    .pdf-shell { background: var(--tb-paper); border: 1.5px solid var(--tb-ink); border-radius: 16px; box-shadow: 6px 6px 0 rgba(21, 21, 21, .22); }
-    .pdf-bar { border-bottom: 1.5px solid var(--tb-ink); background: linear-gradient(180deg, #FFFDF4, #fff); }
+    .pdf-shell { background: var(--tb-paper); border: 1px solid #EDE9DC; border-radius: 16px; box-shadow: 0 8px 20px -12px rgba(21,21,21,.16); }
+    .pdf-bar { border-bottom: 1px solid #EDE9DC; background: linear-gradient(180deg, #FFFDF4, #fff); }
     .pdf-bar-title { font-size: .82rem; font-weight: 600; letter-spacing: -.01em; color: var(--tb-ink); }
     .pdf-bar-sub { font-size: .7rem; color: var(--tb-ink-mute); }
     .pdf-icon-btn {
       width: 32px;
       height: 32px;
-      border: 1.5px solid var(--tb-rule);
+      border: 1px solid #EDE9DC;
       border-radius: 9px;
       background: #fff;
       color: var(--tb-ink);
@@ -1121,8 +1194,8 @@
     .pdf-icon-btn:hover { border-color: var(--tb-ink); background: var(--tb-yellow-soft); }
     .pdf-stage { background: var(--tb-cream); }
     .pdf-canvas-wrap { background: var(--tb-cream); }
-    .pdf-pagebar { border-top: 1.5px solid var(--tb-ink); background: #fff; }
-    .pdf-pagebar input { border: 1.5px solid var(--tb-rule); border-radius: 8px; background: #fff; color: var(--tb-ink); font-size: .78rem; }
+    .pdf-pagebar { border-top: 1px solid #EDE9DC; background: #fff; }
+    .pdf-pagebar input { border: 1px solid #EDE9DC; border-radius: 8px; background: #fff; color: var(--tb-ink); font-size: .78rem; }
     .pdf-pagebar input:focus { border-color: var(--tb-ink); outline: none; box-shadow: 0 0 0 3px rgba(254, 97, 0, .16); }
     .pdf-loader { background: rgba(244, 241, 232, .94); color: var(--tb-ink); }
     .pdf-spinner { border: 2px solid rgba(21, 21, 21, .16); border-top-color: var(--tb-orange); }
@@ -1188,14 +1261,14 @@
         <div class="tb-page-header">
           <p class="tb-page-eyebrow" id="tb-eyebrow">Syllabus</p>
           <div class="tb-page-title-row">
-            <h1 class="tb-page-title"><span id="tb-title">Choose your <em>subject &amp; chapters</em></span></h1>
+            <h1 class="tb-page-title"><span id="tb-title">Choose your <em>subject &amp; syllabus</em></span></h1>
           </div>
-          <p class="tb-page-subtitle" id="tb-subtitle">Pick a subject and up to three chapters. Every question is written from those pages only.</p>
+          <p class="tb-page-subtitle" id="tb-subtitle">Pick one subject, then choose the chapter and topics to cover. Every question is written from those pages only.</p>
         </div>
         <div class="tb-top-bar-inline">
-          <span class="tb-pill tb-pill-amber" id="tb-selected-pill">Nothing chosen yet</span>
-          <button type="button" class="tb-btn tb-btn-outline" id="tb-history-btn">History</button>
           <button type="button" class="tb-btn tb-btn-outline" id="tb-back" disabled>Back</button>
+          <button type="button" class="tb-btn tb-btn-outline" id="tb-history-btn">History</button>
+          <button type="button" class="tb-btn tb-btn-primary" id="tb-header-build" style="display:none">Build test</button>
           <button type="button" class="tb-btn tb-btn-primary" id="tb-next">Continue</button>
         </div>
       </div>
@@ -1207,24 +1280,20 @@
           </div>
           <div class="tb-step-connector" id="tb-conn-1"></div>
           <div class="tb-step-item tb-inactive" id="tb-si-2">
-            <button type="button" class="tb-step-item-btn"><span class="tb-step-dot tb-inactive" id="tb-sdot-2">2</span><span class="tb-step-copy" id="tb-scopy-2">Topics</span></button>
-          </div>
-          <div class="tb-step-connector" id="tb-conn-2"></div>
-          <div class="tb-step-item tb-inactive" id="tb-si-3">
-            <button type="button" class="tb-step-item-btn"><span class="tb-step-dot tb-inactive" id="tb-sdot-3">3</span><span class="tb-step-copy" id="tb-scopy-3">Build</span></button>
+            <button type="button" class="tb-step-item-btn"><span class="tb-step-dot tb-inactive" id="tb-sdot-2">2</span><span class="tb-step-copy" id="tb-scopy-2">Paper details</span></button>
           </div>
         </div>
       </div>
 
       <div class="tb-panes" id="tb-panes">
         <section class="tb-pane tb-pane-active" id="pane-step1" data-step="1">
-          <div class="tb-two-col">
-            <div class="tb-card tb-card-chapters">
-              <div class="tb-card-header">
-                <span class="tb-card-header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg></span>
-                <h2 class="tb-card-title">Subject</h2>
-                <span class="tb-card-hint">Class 11</span>
-              </div>
+          <div class="tb-stack">
+          <div class="tb-card tb-card-wide">
+            <div class="tb-card-header">
+              <span class="tb-card-header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg></span>
+              <h2 class="tb-card-title">Subject</h2>
+              <span class="tb-card-hint">Class 11</span>
+            </div>
               <div class="tb-card-body">
                 <select id="atb-subject" style="display:none" aria-hidden="true" tabindex="-1">
                   <option value="">Choose a subject…</option>
@@ -1241,49 +1310,44 @@
                   <button type="button" class="tb-subject-item" data-value="Mathematics"><span class="tb-subject-icon" style=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.4 4.6H6.1l6.1 7.4-6.1 7.4h12.3"/></svg></span><span class="tb-subject-info"><span class="tb-subject-name">Mathematics</span><span class="tb-subject-code">Algebra, trig, calculus</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
                   <button type="button" class="tb-subject-item" data-value="Computer Science"><span class="tb-subject-icon" style=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.6 6.4 3 12l5.6 5.6"/><path d="M15.4 6.4 21 12l-5.6 5.6"/></svg></span><span class="tb-subject-info"><span class="tb-subject-name">Computer Science</span><span class="tb-subject-code">Hardware, software, programming</span></span><span class="tb-subject-check"><i class="tb-subject-check-dot"></i></span></button>
                 </div>
-                <div class="hint" id="tb-subject-hint">One subject per paper.</div>
+                <div class="hint" id="tb-subject-hint">One subject per paper. Choose a second subject to start another test.</div>
               </div>
             </div>
-
-            <div class="tb-card">
-              <div class="tb-card-header">
-                <span class="tb-card-header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5v14"/><path d="M2.6 18.2a1 1 0 0 1-.6-.9V5.4a1 1 0 0 1 1-1h4.1a4 4 0 0 1 4.9 3v14a4 4 0 0 0-4-3.3H2.6z"/><path d="M21.4 18.2a1 1 0 0 0 .6-.9V5.4a1 1 0 0 0-1-1h-4.1a4 4 0 0 0-4.9 3v14a4 4 0 0 1 4-3.3h5.4z"/></svg></span>
-                <h2 class="tb-card-title">Chapters</h2>
-                <span class="tb-card-hint" id="tb-ch-hint">0 of 3</span>
+          <div class="tb-card tb-card-wide">
+            <div class="tb-card-header">
+              <span class="tb-card-header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5v14"/><path d="M2.6 18.2a1 1 0 0 1-.6-.9V5.4a1 1 0 0 1 1-1h4.1a4 4 0 0 1 4.9 3v14a4 4 0 0 0-4-3.3H2.6z"/><path d="M21.4 18.2a1 1 0 0 0 .6-.9V5.4a1 1 0 0 0-1-1h-4.1a4 4 0 0 0-4.9 3v14a4 4 0 0 1 4-3.3h5.4z"/></svg></span>
+              <h2 class="tb-card-title">Chapters</h2>
+              <span class="tb-card-hint" id="tb-ch-hint2">0 selected</span>
+            </div>
+            <div class="tb-card-body">
+              <div class="atb-select-wrap" id="atb-chapter-wrap2">
+                <button type="button" class="atb-select tb-select" id="atb-chapter-btn2" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="atb-chapter-text2" class="atb-select-placeholder">Select chapters…</span>
+                  <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="atb-select-menu atb-select-menu-scroll" id="atb-chapter-menu2" role="listbox" aria-label="Chapters (wide)"></div>
               </div>
-              <div class="tb-card-body">
-                <div class="atb-select-wrap" id="atb-chapter-wrap">
-                  <button type="button" class="atb-select tb-select" id="atb-chapter-btn" aria-haspopup="listbox" aria-expanded="false">
-                    <span id="atb-chapter-text" class="atb-select-placeholder">Select up to 3 chapters…</span>
-                    <svg class="atb-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                  <div class="atb-select-menu atb-select-menu-scroll" id="atb-chapter-menu" role="listbox" aria-multiselectable="true" aria-label="Chapters"></div>
-                </div>
-                <div id="atb-chapter-chips" class="atb-chips"></div>
-                <div class="hint" id="atb-chapter-hint">Pick at least one chapter — questions come only from those pages.</div>
-              </div>
+              <div class="hint" id="atb-chapter-hint2">Pick at least one chapter. Questions come only from those pages.</div>
             </div>
           </div>
-        </section>
-
-        <section class="tb-pane" id="pane-step2" data-step="2">
           <div class="tb-card">
             <div class="tb-card-header">
               <span class="tb-card-header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4.8a2 2 0 0 1 2-2H12a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.2"/></svg></span>
               <h2 class="tb-card-title">Topics</h2>
-              <span class="tb-card-hint" id="tb-topics-hint-count">Optional</span>
+              <span class="tb-card-hint" id="tb-topics-hint-count">Any</span>
             </div>
             <div class="tb-card-body">
               <div class="tb-mode-row" id="tb-mode-row">
-                <span class="tb-radio-chip tb-radio-chip-active" id="tb-mode-chapters">Full chapters</span>
-                <span class="tb-radio-chip" id="tb-mode-topics">Specific topics</span>
+                <span class="tb-radio-chip tb-radio-chip-active tb-radio-chip-static" id="tb-mode-chapters">Full chapter</span>
+                <span class="tb-radio-chip" id="tb-mode-topics" role="button" tabindex="0">Specific topics</span>
               </div>
+              <div class="tb-card-opt-note" id="tb-topics-note">Leave blank to use the full chapter above. Add topics only if you want to narrow the questions.</div>
               <textarea id="atb-topics" style="display:none" aria-hidden="true" tabindex="-1"></textarea>
               <div class="atb-topics-box" id="atb-topics-box">
                 <div id="atb-topics-chips" style="display:contents"></div>
                 <input id="atb-topics-input" class="atb-topics-input" type="text" placeholder="Add a topic, then press comma" autocomplete="off" enterkeyhint="done">
               </div>
-              <div class="hint" id="atb-topics-hint">Separate topics with commas — max 10</div>
+              <div class="hint" id="atb-topics-hint">Separate topics with commas, max 10</div>
               <div class="atb-panel" id="atb-weight-panel">
                 <h3>Topic weightage</h3>
                 <div id="atb-weight-list"></div>
@@ -1291,10 +1355,11 @@
               </div>
             </div>
           </div>
+          </div>
         </section>
 
-        <section class="tb-pane" id="pane-step3" data-step="3">
-          <div class="tb-config-grid">
+        <section class="tb-pane" id="pane-step2" data-step="2">
+          <div class="tb-config-grid tb-config-grid-50">
             <div class="tb-card">
               <div class="tb-card-header">
                 <span class="tb-card-header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.8H6.4a2 2 0 0 0-2 2v14.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V8.4z"/><path d="M14 2.8V8.4h5.6"/><path d="M8.4 13h7.2M8.4 16.6h4.6"/></svg></span>
@@ -1303,20 +1368,22 @@
               </div>
               <div class="tb-card-body tb-card-toggles">
                 <div class="atb-field atb-field-title">
-                  <label>Paper title <span class="atb-tag-label">optional</span></label>
-                  <input type="text" id="atb-test-name" maxlength="120" placeholder="e.g. Force &amp; Motion — Chapter Test" autocomplete="off">
+                  <label>Paper title</label>
+                  <input type="text" id="atb-test-name" maxlength="120" placeholder="e.g. Force and Motion - Chapter Test" autocomplete="off">
                 </div>
                 <div class="atb-toggle" id="atb-pp-label">
                   <div><b>Follow a past paper</b><span>Match the style of recent board papers</span></div>
                   <label class="switch"><input type="checkbox" id="atb-pp"><span class="slider"></span></label>
                 </div>
-                <div class="atb-toggle" id="atb-concept-label">
-                  <div><b>Conceptual mix</b><span>Blend conceptual questions with internet research</span></div>
-                  <label class="switch"><input type="checkbox" id="atb-conceptual" checked><span class="slider"></span></label>
+                <div class="tb-diff-row" id="tb-diff-row" role="radiogroup" aria-label="Difficulty">
+                  <button type="button" class="tb-diff-chip" data-diff="easy" role="radio" aria-checked="false">Easy</button>
+                  <button type="button" class="tb-diff-chip tb-diff-chip-active" data-diff="medium" role="radio" aria-checked="true">Medium</button>
+                  <button type="button" class="tb-diff-chip" data-diff="hard" role="radio" aria-checked="false">Hard</button>
                 </div>
+                <div class="tb-diff-note" id="atb-diff-note">Medium: 75% from the book, 25% conceptual.</div>
                 <div class="atb-toggle" id="atb-answerkey-label">
                   <div><b>Answer key</b><span>Print the marking scheme at the end</span></div>
-                  <label class="switch"><input type="checkbox" id="atb-answerkey" checked><span class="slider"></span></label>
+                  <label class="switch"><input type="checkbox" id="atb-answerkey"><span class="slider"></span></label>
                 </div>
                 <div class="atb-panel" id="atb-pp-panel">
                   <h3>Past paper setup</h3>
@@ -1355,7 +1422,6 @@
             </div>
           </div>
           <div class="tb-build-row">
-            <button class="tb-btn tb-btn-primary tb-btn-big" id="atb-start" type="button">Build test</button>
             <div class="atb-err" id="atb-err"></div>
           </div>
         </section>
@@ -1373,12 +1439,18 @@
         </div>
         <div class="atb-bar"><i id="atb-bar-fill"></i></div>
         <div class="tb-build-phases" aria-hidden="true">
-          <span class="tb-phase tb-phase-active">Reading textbook</span>
-          <span class="tb-phase">Writing questions</span>
-          <span class="tb-phase">Compiling PDF</span>
+          <span class="tb-phase" data-phase="past">Viewing past papers</span>
+          <span class="tb-phase" data-phase="reading">Reading textbook</span>
+          <span class="tb-phase" data-phase="writing">Writing questions</span>
+          <span class="tb-phase" data-phase="compiling">Compiling</span>
         </div>
         <div class="tb-build-actions">
           <button class="tb-btn tb-btn-outline" id="atb-cancel" type="button">Cancel build</button>
+          <span class="tb-build-done-btns" id="atb-banner-done" style="display:none">
+            <button class="tb-btn tb-btn-outline" id="atb-banner-view" type="button">Preview test</button>
+            <a class="tb-btn tb-btn-primary" id="atb-banner-download" href="#">Download test</a>
+            <button class="tb-btn tb-btn-ghost" id="atb-banner-next" type="button">Next test</button>
+          </span>
         </div>
       </div>
 
@@ -1390,14 +1462,23 @@
         <p class="tb-done-title" id="atb-done-title">Your practice test PDF is ready.</p>
         <p class="tb-done-meta" id="atb-done-meta"></p>
         <div class="tb-done-actions">
-          <button class="tb-btn tb-btn-outline" id="atb-view" type="button">Preview</button>
-          <a class="tb-btn tb-btn-primary" id="atb-download" href="#">Download PDF</a>
-          <button class="tb-btn tb-btn-ghost" id="atb-finish" type="button">New test</button>
+          <button class="tb-btn tb-btn-outline" id="atb-view" type="button">Preview test</button>
+          <a class="tb-btn tb-btn-primary" id="atb-download" href="#">Download test</a>
+          <button class="tb-btn tb-btn-ghost" id="atb-finish" type="button">Next test</button>
         </div>
       </div>
-
-    </div>
   </main>
+
+  <div class="tb-confirm" id="atb-confirm">
+    <div class="tb-confirm-card" role="dialog" aria-modal="true" aria-label="Confirm build">
+      <h3>Build this test?</h3>
+      <p id="atb-confirm-copy"></p>
+      <div class="tb-confirm-actions">
+        <button type="button" class="tb-btn tb-btn-outline" id="atb-confirm-no">Not yet</button>
+        <button type="button" class="tb-btn tb-btn-primary" id="atb-confirm-yes">Build test</button>
+      </div>
+    </div>
+  </div>
 
   <div id="atb-history-modal" class="tb-modal" style="display:none" role="dialog" aria-modal="true" aria-label="Build history">
     <div class="tb-modal-scrim" data-history-close></div>
@@ -1415,7 +1496,7 @@
         </div>
         <div id="atb-history-toast" class="tb-modal-toast" aria-live="polite"></div>
         <div id="atb-history-list"></div>
-        <div class="tb-modal-empty" id="atb-history-empty" style="display:none">Nothing here yet — the tests you build will be listed in this panel.</div>
+        <div class="tb-modal-empty" id="atb-history-empty" style="display:none">Nothing here yet. The tests you build will be listed in this panel.</div>
       </div>
     </div>
   </div>
@@ -1725,11 +1806,13 @@
     return m + s + l;
   }
 
+  // Reasonable exam pace: a MCQ ~1 min, a short question (2 marks) ~3 min,
+  // a long question ~5 min per 5 marks, plus ~5 min reading time.
   function suggestedTime() {
     var m = Math.max(0, parseInt($('atb-mcq').value, 10) || 0);
     var sMarks = Math.max(0, parseInt($('atb-short').value, 10) || 0);
     var l = Math.max(0, parseInt($('atb-long').value, 10) || 0);
-    var t = m * 1 + (sMarks / 2) * 3 + l * 2 + 10;
+    var t = m * 1 + (sMarks / 2) * 3 + l * 1 + 5;
     t = Math.max(15, Math.min(180, t));
     return Math.round(t / 5) * 5;
   }
@@ -1740,7 +1823,7 @@
     var topics = parseTopics();
     var marks = totalMarks();
     var pp = $('atb-pp') ? $('atb-pp').checked : false;
-    var conceptual = $('atb-conceptual') ? $('atb-conceptual').checked : true;
+    var conceptual = (DIFFS[difficulty] || DIFFS.medium).concept > 0;
     var ch = selectedChapters.length > 0;
     var s = 30;               // job queue + auth + polling overhead
     if (marks > 0) s += marks * 1.6;         // question generation (MCQ/short/long)
@@ -1762,9 +1845,36 @@
     $('atb-total-marks').textContent = String(totalMarks());
     $('atb-time-allowed').textContent = 'Time allowed: ' + suggestedTime() + ' min';
     var est = formatEstimate(estimateBuildSeconds());
-    var label = est ? ('Expected time: ' + est) : 'Expected time: calculating…';
+    var label = est ? ('Expected build time: ' + est) : 'Expected build time: calculating…';
     $('atb-eta-static').textContent = label;
     $('atb-eta-concept').textContent = label;
+  }
+
+  var DIFFS = {
+    easy:   { book: 0.90, concept: 0.10, note: 'Easy: 90% from the book, 10% conceptual.' },
+    medium: { book: 0.75, concept: 0.25, note: 'Medium: 75% from the book, 25% conceptual.' },
+    hard:   { book: 0.40, concept: 0.60, note: 'Hard: 40% from the book, 60% conceptual. Conceptual questions stay inside this syllabus (same chapters and topics), no random facts.' }
+  };
+  var difficulty = 'medium';
+
+  function wireDifficulty() {
+    var row = $('tb-diff-row');
+    if (!row) return;
+    var chips = row.querySelectorAll('.tb-diff-chip');
+    for (var i = 0; i < chips.length; i++) {
+      (function (chip) {
+        chip.addEventListener('click', function () {
+          difficulty = chip.getAttribute('data-diff') || 'medium';
+          for (var j = 0; j < chips.length; j++) {
+            var on = chips[j] === chip;
+            chips[j].classList.toggle('tb-diff-chip-active', on);
+            chips[j].setAttribute('aria-checked', on ? 'true' : 'false');
+          }
+          var note = $('atb-diff-note');
+          if (note) note.textContent = (DIFFS[difficulty] || DIFFS.medium).note;
+        });
+      })(chips[i]);
+    }
   }
 
   function updatePanels() {
@@ -1818,16 +1928,32 @@
       } catch (_) { boardIds = null; }
     }
     var seen = {};
+    var kept = [];
     for (var i = 0; i < boards.length; i++) {
       var b = boards[i];
-      if (!b || b.region !== 'Punjab') continue;
-      if (b.id === 30 || b.id === 31 || b.id === 32 || b.id === 33 || b.id === 34) continue;
+      if (!b) continue;
+      if (b.region !== 'Punjab') continue;
       if (boardIds && !boardIds[b.id]) continue;
       if (seen[b.id]) continue;
       seen[b.id] = 1;
+      kept.push(b);
+    }
+    // Fallback: never show an empty board list. If the subject has no
+    // published papers (or the paper query missed), show every board
+    // rather than "No boards found".
+    if (!kept.length) {
+      var seenAll = {};
+      for (var j = 0; j < boards.length; j++) {
+        var bb = boards[j];
+        if (!bb || seenAll[bb.id]) continue;
+        seenAll[bb.id] = 1;
+        kept.push(bb);
+      }
+    }
+    for (var v = 0; v < kept.length; v++) {
       var o = document.createElement('option');
-      o.value = String(b.id);
-      o.textContent = b.name;
+      o.value = String(kept[v].id);
+      o.textContent = kept[v].name;
       sel.appendChild(o);
     }
     var stillValid = false;
@@ -1879,7 +2005,7 @@
     if (sel.options.length <= 1) {
       var empty = document.createElement('div');
       empty.className = 'atb-board-empty';
-      empty.textContent = 'No boards found for this subject yet.';
+      empty.textContent = boards.length ? 'Pick a past paper style to load its boards.' : 'Boards are still loading. Try again in a moment.';
       menu.appendChild(empty);
     }
     for (var k = 1; k < sel.options.length; k++) {
@@ -1975,7 +2101,7 @@
   // -- Chapter selector: multi-select, chapters come from the DB per subject --
   var chapterList = [];
   var selectedChapters = [];
-  var MAX_CHAPTERS = 3;
+  var MAX_CHAPTERS = 1;
   var subjectIdCache = {};
 
   function listChapterLabel(c) {
@@ -2000,32 +2126,30 @@
 
   function toggleChapter(id) {
     if (chapterSelected(id)) { removeChapter(id); return; }
-    if (selectedChapters.length >= MAX_CHAPTERS) {
-      showErr('You can select up to ' + MAX_CHAPTERS + ' chapters.');
-      return;
-    }
     var c = null;
     for (var i = 0; i < chapterList.length; i++) {
       if (String(chapterList[i].id) === String(id)) { c = chapterList[i]; break; }
     }
     if (!c) return;
-    selectedChapters.push(c);
+    // Single chapter per test: picking replaces the previous pick.
+    selectedChapters = [c];
     showErr('');
     syncChapterUi();
+    closeChapterMenu();
   }
 
   function syncChapterUi() {
-    var txt = $('atb-chapter-text');
+    var txt = $('atb-chapter-text2');
     if (txt) {
       if (selectedChapters.length === 0) {
-        txt.textContent = 'Select up to ' + MAX_CHAPTERS + ' chapters…';
+        txt.textContent = 'Select a chapter…';
         txt.classList.add('atb-select-placeholder');
       } else {
-        txt.textContent = selectedChapters.length + ' of ' + MAX_CHAPTERS + ' selected';
+        txt.textContent = listChapterLabel(selectedChapters[0]);
         txt.classList.remove('atb-select-placeholder');
       }
     }
-    var menu = $('atb-chapter-menu');
+    var menu = $('atb-chapter-menu2');
     if (menu) {
       var opts = menu.querySelectorAll('.atb-select-opt');
       for (var k = 0; k < opts.length; k++) {
@@ -2040,29 +2164,7 @@
   }
 
   function renderChapterChips() {
-    var host = $('atb-chapter-chips');
-    if (!host) return;
-    host.innerHTML = '';
-    for (var i = 0; i < selectedChapters.length; i++) {
-      (function (c) {
-        var chip = document.createElement('span');
-        chip.className = 'atb-chip';
-        var label = document.createElement('span');
-        label.textContent = listChapterLabel(c);
-        var x = document.createElement('button');
-        x.type = 'button';
-        x.className = 'atb-chip-x';
-        x.setAttribute('aria-label', 'Remove ' + c.name);
-        x.textContent = '\u00d7';
-        x.addEventListener('click', function (e) {
-          e.stopPropagation();
-          removeChapter(c.id);
-        });
-        chip.appendChild(label);
-        chip.appendChild(x);
-        host.appendChild(chip);
-      })(selectedChapters[i]);
-    }
+    // No chip row: the selected chapter is shown in the dropdown trigger itself.
   }
 
   function tickSvg() {
@@ -2083,15 +2185,15 @@
   }
 
   function closeChapterMenu() {
-    var wrap = $('atb-chapter-wrap');
-    var btn = $('atb-chapter-btn');
+    var wrap = $('atb-chapter-wrap2');
+    var btn = $('atb-chapter-btn2');
     if (wrap) wrap.classList.remove('open');
     if (btn) btn.setAttribute('aria-expanded', 'false');
   }
 
   function wireChapterDropdown() {
-    var wrap = $('atb-chapter-wrap');
-    var btn = $('atb-chapter-btn');
+    var wrap = $('atb-chapter-wrap2');
+    var btn = $('atb-chapter-btn2');
     if (!wrap || !btn) return;
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -2111,13 +2213,13 @@
   }
 
   function rebuildChapterMenu() {
-    var menu = $('atb-chapter-menu');
+    var menu = $('atb-chapter-menu2');
     if (!menu) return;
     menu.innerHTML = '';
     if (!chapterList.length) {
       var empty = document.createElement('div');
       empty.className = 'atb-select-empty';
-      empty.textContent = 'Pick a subject to load its chapters.';
+      empty.textContent = 'Pick a subject to load its chapter.';
       menu.appendChild(empty);
       return;
     }
@@ -2197,17 +2299,16 @@
     syncChapterUi();
   }
 
-  // -- Wizard: 3 steps (subject & chapters ? topics ? configure) --
+  // -- Wizard: 3 steps (subject + chapters + topics ? details ? build) --
   var tbStep = 1;
   var TB_STEPS = {
-    1: ['Syllabus', 'Choose your <em>subject &amp; chapters</em>', 'Pick one subject, then mark up to three chapters to keep the AI inside those pages.'],
-    2: ['Topic focus', 'Choose the <em>topics</em>', 'Cover your chapters as-is, or narrow the test to specific topics.'],
-    3: ['Paper details', 'Set the <em>paper details</em>', 'Name it, pick a style, set the marks and time, then generate your test.'],
+    1: ['Syllabus', 'Choose your <em>subject &amp; syllabus</em>', 'Pick one subject, then choose the chapters and topics to cover.'],
+    2: ['Paper details', 'Set the <em>paper details</em>', 'Name your test, pick a style, set the marks and time, then generate your test.'],
   };
 
   function goStep(step) {
-    tbStep = Math.max(1, Math.min(3, step));
-    for (var i = 1; i <= 3; i++) {
+    tbStep = Math.max(1, Math.min(2, step));
+    for (var i = 1; i <= 2; i++) {
       var pane = $('pane-step' + i);
       if (pane) pane.classList.toggle('tb-pane-active', i === tbStep);
       var si = $('tb-si-' + i);
@@ -2239,10 +2340,12 @@
     var back = $('tb-back');
     var next = $('tb-next');
     if (back) back.disabled = tbStep === 1;
-    if (next) next.style.display = tbStep === 3 ? 'none' : '';
+    if (next) next.style.display = tbStep === 2 ? 'none' : '';
+    var hdrBuild = $('tb-header-build');
+    if (hdrBuild) hdrBuild.style.display = tbStep === 2 ? '' : 'none';
     try { scrollToTopish(); } catch (_) {}
   }
-  var SC_LABELS = { 1: 'Syllabus', 2: 'Topics', 3: 'Build' };
+  var SC_LABELS = { 1: 'Syllabus', 2: 'Build' };
 
   function scrollToTopish() {
     var w = document.getElementById('atb-page');
@@ -2261,12 +2364,9 @@
         showWizardHint('');
         restoreChapterHint();
       }
-      if (tbStep === 2) {
-        // Topics or chapters required is checked at build time.
-      }
       goStep(tbStep + 1);
     });
-    for (var i = 1; i <= 3; i++) {
+    for (var i = 1; i <= 2; i++) {
       (function (n) {
         var btn = document.querySelector('#tb-si-' + n + ' .tb-step-item-btn');
         if (btn) btn.addEventListener('click', function () {
@@ -2289,7 +2389,7 @@
   }
 
   function flashChapterHint(msg) {
-    var h = $('atb-chapter-hint');
+    var h = $('atb-chapter-hint2');
     if (h) {
       h.textContent = msg;
       h.classList.add('tb-hint-error');
@@ -2298,9 +2398,9 @@
   }
 
   function restoreChapterHint() {
-    var h = $('atb-chapter-hint');
+    var h = $('atb-chapter-hint2');
     if (h) {
-      h.textContent = 'Pick at least one chapter — questions come only from those pages.';
+      h.textContent = 'Pick at least one chapter. Questions come only from those pages.';
       h.classList.remove('tb-hint-error');
     }
   }
@@ -2308,7 +2408,7 @@
   function showWizardHint(msg) {
     var h = $('tb-subject-hint');
     if (h) {
-      h.textContent = msg || 'One subject per paper.';
+      h.textContent = msg || 'One subject per paper. Choose a second subject to start another test.';
       h.classList.toggle('tb-hint-error', !!msg);
     }
   }
@@ -2344,22 +2444,23 @@
 
   // Selected pill + scope indicators, refreshed on any chapter/topic change.
   function updateScopeUi() {
-    var pill = $('tb-selected-pill');
     var topics = parseTopics();
-    if (pill) {
-      var bits = [];
-      if (selectedChapters.length) bits.push(selectedChapters.length + (selectedChapters.length === 1 ? ' chapter' : ' chapters'));
-      if (topics.length) bits.push(topics.length + (topics.length === 1 ? ' topic' : ' topics'));
-      pill.textContent = bits.length ? bits.join(' · ') : 'Nothing selected';
-    }
-    var chHint = $('tb-ch-hint');
-    if (chHint) chHint.textContent = selectedChapters.length + ' of 3';
+    var chHint = $('tb-ch-hint2');
+    if (chHint) chHint.textContent = selectedChapters.length ? '1 chapter selected' : '0 selected';
     var mc = $('tb-mode-chapters');
     var mt = $('tb-mode-topics');
+    var tbox = $('atb-topics-box');
     if (mc && mt) {
       var custom = topics.length > 0;
-      mc.classList.toggle('tb-radio-chip-active', !custom && selectedChapters.length > 0);
+      mc.classList.toggle('tb-radio-chip-active', !custom);
       mt.classList.toggle('tb-radio-chip-active', custom);
+    }
+    if (tbox) tbox.classList.toggle('tb-topics-filled', topics.length > 0);
+    if (mt && !mt.dataset.wired) {
+      mt.dataset.wired = '1';
+      var focusTopics = function () { var inp = $('atb-topics-input'); if (inp) inp.focus(); };
+      mt.addEventListener('click', focusTopics);
+      mt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusTopics(); } });
     }
   }
 
@@ -2381,13 +2482,49 @@
     } catch (_) {}
   }
 
+  // Auto-name: "<Chapter> TestN" where N = 1 + prior tests for this chapter.
+  // Only used when the user left the name blank.
+  function paperTitle() {
+    var userTyped = ($('atb-test-name') ? $('atb-test-name').value : '').trim();
+    if (userTyped) return userTyped;
+    var ch = selectedChapters.length === 1 ? selectedChapters[0] : null;
+    if (!ch) return 'Test';
+    return ch.name + ' Test' + nextAutoNumber(ch);
+  }
+
+  // Counts prior tests for the same chapter. Populated from history rows
+  // (r.config.chapters / r.chapter_title) once loadHistory runs.
+  var autoNameCounts = {};
+  function nextAutoNumber(ch) {
+    var key = String(ch.id);
+    var n = (autoNameCounts[key] || 0) + 1;
+    autoNameCounts[key] = n;
+    return n;
+  }
+
+  function seedAutoNameCounts(tests) {
+    autoNameCounts = {};
+    (tests || []).forEach(function (r) {
+      var cfg = (r && r.config) || {};
+      var chId = null;
+      var list = Array.isArray(cfg.chapters) ? cfg.chapters : (cfg.chapter ? [cfg.chapter] : null);
+      if (list && list[0] && list[0].id != null) chId = String(list[0].id);
+      else if (r && r.chapter_id != null) chId = String(r.chapter_id);
+      if (chId) autoNameCounts[chId] = (autoNameCounts[chId] || 0) + 1;
+    });
+  }
+
   async function getConfigFromInputs() {
     var subject = $('atb-subject').value;
     var topics = parseTopics();
     pruneImportant(topics);
     var important = importantTopics.slice(0, 3);
     var usePp = $('atb-pp').checked;
-    var conceptual = $('atb-conceptual').checked;
+    var diff = DIFFS[difficulty] || DIFFS.medium;
+    var conceptual = diff.concept > 0;
+    var difficulty_name = difficulty;
+    var book_pct = Math.round(diff.book * 100);
+    var conceptual_pct = 100 - book_pct;
     var shortMarks = Math.max(0, parseInt($('atb-short').value, 10) || 0);
     var boardId = null, boardName = null;
     if (usePp) {
@@ -2398,7 +2535,8 @@
     }
     return {
       subject: subject,
-      paper_title: ($('atb-test-name') ? $('atb-test-name').value : '').trim() || null,
+      paper_title: paperTitle(),
+      paper_title_user: ($('atb-test-name') ? $('atb-test-name').value : '').trim(),
       topics: topics,
       important: important,
       chapters: selectedChapters.map(function (c) {
@@ -2421,6 +2559,10 @@
       weightage: computeWeightage(topics, important),
       use_past_paper: usePp,
       conceptual: conceptual,
+      difficulty: difficulty_name,
+      book_pct: book_pct,
+      conceptual_pct: conceptual_pct,
+      syllabus_only: true,
       answer_key: $('atb-answerkey').checked,
       board_id: boardId,
       board_name: boardName,
@@ -2437,7 +2579,7 @@
   function validate(cfg) {
     if (!cfg.subject) return 'Choose a subject.';
     if (!(cfg.chapters && cfg.chapters.length)) return 'Select at least one chapter.';
-    if (cfg.chapters && cfg.chapters.length > 3) return 'You can select up to 3 chapters.';
+    if (cfg.chapters && cfg.chapters.length > 1) return 'Select only one chapter per test.';
     if (cfg.topics.length > 10) return 'Maximum 10 topics.';
     if (cfg.important && cfg.important.length > 3) return 'You can mark up to 3 important topics.';
     if (cfg.use_past_paper && !cfg.board_id) return 'Choose a board for past paper mode.';
@@ -2478,10 +2620,43 @@
     etaBase = 0;
   }
 
+  function markPhase(job) {
+    var host = document.querySelector('.tb-build-phases');
+    if (!host) return;
+    var text = String((job && (job.stage || job.status)) || '').toLowerCase();
+    var key = 'reading';
+    if (/past|ocr|download/.test(text)) key = 'past';
+    else if (/write|question|generat|research/.test(text)) key = 'writing';
+    else if (/compil|pdf|render|final/.test(text)) key = 'compiling';
+    var ppOn = false;
+    try { ppOn = ($('atb-pp') && $('atb-pp').checked) || (job && job.config && job.config.use_past_paper); } catch (_) {}
+    var phases = host.querySelectorAll('.tb-phase');
+    for (var i = 0; i < phases.length; i++) {
+      var ph = phases[i].getAttribute('data-phase');
+      if (ph === 'past') { phases[i].style.display = ppOn ? '' : 'none'; continue; }
+      var done = false;
+      if (key === 'compiling') done = ph !== 'compiling';
+      else if (key === 'writing') done = (ph === 'reading') || (ph === 'past');
+      else if (key === 'reading') done = (ph === 'past');
+      else if (key === 'past') done = false;
+      phases[i].classList.toggle('tb-phase-active', ph === key);
+      phases[i].classList.toggle('tb-phase-done', !!done);
+    }
+  }
+
   function renderProgress(job) {
     if (!job) return;
     $('atb-stage').textContent = job.stage || job.status || '';
-    var p = Math.max(0, Math.min(100, job.progress || 0));
+    markPhase(job);
+    var p = Math.max(0, Math.min(100, Number(job.progress) || 0));
+    if (p <= 0 && job.stage) {
+      var sLower = String(job.stage).toLowerCase();
+      if (/compil|pdf/.test(sLower)) p = 90;
+      else if (/writ|question|generat/.test(sLower)) p = 65;
+      else if (/read|textbook/.test(sLower)) p = 35;
+      else if (/past|ocr/.test(sLower)) p = 15;
+    }
+    if (job.status === 'completed') p = 100;
     $('atb-bar-fill').style.width = p + '%';
     $('atb-pct').textContent = p + '%';
     var eta = job.eta_seconds;
@@ -2489,7 +2664,22 @@
     etaAt = Date.now();
     tickEta();
     if (job.status === 'completed') {
-      setUiState('done');
+      var doneHost = document.querySelector('.tb-build-phases');
+      if (doneHost) {
+        var dp = doneHost.querySelectorAll('.tb-phase');
+        for (var di = 0; di < dp.length; di++) { dp[di].classList.remove('tb-phase-active'); dp[di].classList.add('tb-phase-done'); }
+      }
+      setUiState('progress');
+      $('atb-bar-fill').style.width = '100%';
+      $('atb-pct').textContent = 'Done';
+      var barWrap = document.querySelector('#atb-progress .atb-bar');
+      if (barWrap) barWrap.style.display = 'none';
+      var pctEl = $('atb-pct');
+      if (pctEl) pctEl.style.display = 'none';
+      var bCancel = $('atb-cancel');
+      if (bCancel) bCancel.style.display = 'none';
+      var bDone = $('atb-banner-done');
+      if (bDone) bDone.style.display = '';
       var res = job.result || {};
       $('atb-done-title').textContent = res.title || 'Your practice test PDF is ready.';
       var metaEl = $('atb-done-meta');
@@ -2507,6 +2697,8 @@
       }
       var url = res.pdf_url || '';
       $('atb-download').href = url || '#';
+      var bDl2 = $('atb-banner-download');
+      if (bDl2) bDl2.href = url || '#';
       currentPdfUrl = url;
       currentPdfTitle = res.title || 'Practice Test';
       activeJobId = job.id;
@@ -2614,7 +2806,7 @@
       try { err.status = r.status; err.detail = detail; } catch (_) {}
       // The free plan allows 1 AI test build a day. The Edge Function spends
       // that allowance before generating anything, so a 429 here is the
-      // server saying "today's build is already spent" — not a failure.
+      // server saying "today's build is already spent" - not a failure.
       if (r.status === 429 && data && data.code === 'FREE_DAILY_LIMIT') {
         err.code = 'FREE_DAILY_LIMIT';
         err.limit = data.limit; err.used = data.used; err.resetsAt = data.resetsAt;
@@ -2624,7 +2816,31 @@
     return data;
   }
 
+  var pendingBuild = false;
+  function confirmAndStart() {
+    var copy = $('atb-confirm-copy');
+    var cfg = null;
+    try { cfg = null; } catch (_) {}
+    if (copy) {
+      var title = paperTitle();
+      var mins = suggestedTime();
+      var marks = totalMarks();
+      var diffName = (difficulty || 'medium');
+      var chapterName = selectedChapters.length && selectedChapters[0].name ? selectedChapters[0].name : 'the chapter you picked';
+      copy.textContent = 'Build "' + title + '" from ' + chapterName + '? ' + marks + ' marks, ' + mins + ' minutes, ' + diffName + ' difficulty.';
+    }
+    var m = $('atb-confirm');
+    if (m) m.classList.add('show');
+  }
+  function closeConfirm() {
+    var m = $('atb-confirm');
+    if (m) m.classList.remove('show');
+  }
+
   async function startBuild() {
+    if (!pendingBuild) { confirmAndStart(); return; }
+    pendingBuild = false;
+    closeConfirm();
     showErr('');
     var cfg = await getConfigFromInputs();
     var v = validate(cfg);
@@ -2637,11 +2853,19 @@
       return;
     }
 
-    var btn = $('atb-start');
+    var btn = $('tb-header-build') || $('atb-start');
     btn.disabled = true;
     btn.textContent = 'Starting...';
     // Show progress + timer instantly so the page never looks stuck
     // while the start request is in flight.
+    var bCancel2 = $('atb-cancel');
+    if (bCancel2) bCancel2.style.display = '';
+    var bDone2 = $('atb-banner-done');
+    if (bDone2) bDone2.style.display = 'none';
+    var barWrap2 = document.querySelector('#atb-progress .atb-bar');
+    if (barWrap2) barWrap2.style.display = '';
+    var pctEl2 = $('atb-pct');
+    if (pctEl2) pctEl2.style.display = '';
     setUiState('progress');
     renderProgress({ stage: 'Starting...', progress: 2, eta_seconds: 240, status: 'queued' });
     try {
@@ -2670,6 +2894,7 @@
       btn.disabled = false;
       btn.textContent = 'Build test';
     }
+    try { btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {}
   }
 
   async function cancelBuild() {
@@ -2729,6 +2954,7 @@
     try {
       var data = await invokeFn({ action: 'list' }, session.access_token);
       var tests = (data && data.tests) || [];
+      seedAutoNameCounts(tests);
       if (empty) empty.style.display = tests.length ? 'none' : 'block';
       showHistoryLoading(false);
       list.innerHTML = tests.map(function (r) {
@@ -2944,9 +3170,8 @@
     $('atb-page').style.display = 'block';
     hideLoading();
     $('atb-pp').addEventListener('change', updatePanels);
-    $('atb-conceptual').addEventListener('change', refreshTotal);
     // whole toggle row is clickable (except when clicking the switch itself)
-    [['atb-pp-label','atb-pp'], ['atb-concept-label','atb-conceptual'], ['atb-answerkey-label','atb-answerkey']].forEach(function(pair){
+    [['atb-pp-label','atb-pp'], ['atb-answerkey-label','atb-answerkey']].forEach(function(pair){
       var row = document.getElementById(pair[0]);
       var input = document.getElementById(pair[1]);
       if (!row || !input) return;
@@ -2964,11 +3189,32 @@
     wireBoardDropdown();
     wireChapterDropdown();
     wireTopicsChips();
+    wireDifficulty();
     wireWizard();
     wireHistoryModal();
     updateScopeUi();
-    $('atb-start').addEventListener('click', startBuild);
+    var startBtn = $('atb-start');
+    if (startBtn) startBtn.addEventListener('click', startBuild);
+    var hdrBuildBtn = $('tb-header-build');
+    if (hdrBuildBtn) hdrBuildBtn.addEventListener('click', startBuild);
     $('atb-cancel').addEventListener('click', cancelBuild);
+    var cYes = $('atb-confirm-yes');
+    if (cYes) cYes.addEventListener('click', function () { pendingBuild = true; startBuild(); });
+    var cNo = $('atb-confirm-no');
+    if (cNo) cNo.addEventListener('click', closeConfirm);
+    var confirmBox = $('atb-confirm');
+    if (confirmBox) confirmBox.addEventListener('click', function (e) { if (e.target === confirmBox) closeConfirm(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeConfirm(); });
+    var bNext = $('atb-banner-next');
+    if (bNext) bNext.addEventListener('click', finishDone);
+    var bView = $('atb-banner-view');
+    if (bView) bView.addEventListener('click', function () { if (currentPdfUrl) openPdf(currentPdfUrl, currentPdfTitle || 'Practice Test'); });
+    var bDl = $('atb-banner-download');
+    if (bDl) bDl.addEventListener('click', function (e) {
+      e.preventDefault();
+      var u = this.getAttribute('href') || '';
+      if (u && u !== '#') downloadPdf(u, currentPdfTitle || 'Practice Test', this);
+    });
     $('atb-finish').addEventListener('click', finishDone);
     $('atb-view').addEventListener('click', function () {
       if (currentPdfUrl) openPdf(currentPdfUrl, currentPdfTitle || 'Practice Test');
@@ -3090,7 +3336,7 @@
     var hint = $('atb-topics-hint');
     if (hint) {
       var n = topicsChips().length;
-      hint.textContent = n ? (n + '/10 topics') : 'Comma-separated — up to 10 topics';
+      hint.textContent = n ? (n + '/10 topics') : 'Comma-separated, up to 10 topics';
     }
     renderWeightage();
     try { updateScopeUi(); } catch (_) {}
