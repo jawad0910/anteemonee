@@ -3119,30 +3119,25 @@
     });
   }
 
+  // Only resume a job that is actively building (queued/running).
+  // A completed job must NOT pop the "Test ready" card back on page load —
+  // the user already saw it after the build finished. Completed tests live
+  // in History, reachable from the header button.
   async function resumeActiveJob() {
     var d = getDb();
     if (!d) return;
     try {
-      var res = await d.from('ai_test_jobs').select('*').in('status', ['queued', 'running', 'completed', 'failed']).order('created_at', { ascending: false }).limit(1);
+      var res = await d.from('ai_test_jobs').select('*').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(1);
       var job = res && res.data && res.data[0];
       if (!job) return;
-      if (job.status === 'queued' || job.status === 'running') {
-        activeJobId = job.id;
-        setUiState('progress');
-        renderProgress(job);
-        startPolling();
-        // kick edge again in case first run died
-        var session = await getSession();
-        if (session) {
-          try { await invokeFn({ action: 'run', job_id: job.id }, session.access_token); } catch (_) {}
-        }
-      } else if (job.status === 'completed' && job.result && job.result.pdf_url) {
-        activeJobId = job.id;
-        setUiState('done');
-        $('atb-done-title').textContent = (job.result && job.result.title) || 'Your practice test PDF is ready.';
-        $('atb-download').href = job.result.pdf_url;
-        currentPdfUrl = job.result.pdf_url;
-        currentPdfTitle = (job.result && job.result.title) || 'Practice Test';
+      activeJobId = job.id;
+      setUiState('progress');
+      renderProgress(job);
+      startPolling();
+      // kick edge again in case first run died
+      var session = await getSession();
+      if (session) {
+        try { await invokeFn({ action: 'run', job_id: job.id }, session.access_token); } catch (_) {}
       }
     } catch (_) {}
   }
