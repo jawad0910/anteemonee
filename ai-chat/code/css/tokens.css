@@ -42,34 +42,34 @@
   --m-sh-3: none;
 }
 
-/* ── Light — flat white, blue only as accent ──────────────────── */
+/* ── Light — flat cream, white composer, no dock strip ─── */
 :root,
 :root[data-theme="light"] {
-  --chat-tint: #000000;              /* user bubbles — monochrome */
-  --chat-tint-hi: #000000;
-  --chat-tint-soft: rgba(0,0,0,0.08);
-  --chat-tint-ring: rgba(0,0,0,0.22);
+  --chat-tint: #FE6100;              /* user bubbles — Anteemonee orange */
+  --chat-tint-hi: #E15100;
+  --chat-tint-soft: rgba(254,97,0,0.08);
+  --chat-tint-ring: rgba(254,97,0,0.22);
   --chat-on-tint: #fff;
 
-  /* Assistant bubble — flat neutral */
-  --chat-bubble: #F2F2F5;
-  --chat-bubble-border: rgba(0,0,0,0.10);
-  --chat-bubble-text: #1A1A1A;
+  /* Assistant bubble — flat white */
+  --chat-bubble: #FFFFFF;
+  --chat-bubble-border: rgba(21,21,21,0.10);
+  --chat-bubble-text: #151515;
 
   /* Blocks inside a reply (code, tables). The reply text itself has no
      panel any more, so these are the only surfaces that need one. */
-  --chat-recessed: #F4F4F6;
-  --chat-recessed-border: rgba(0,0,0,0.075);
+  --chat-recessed: #F4F1E8;
+  --chat-recessed-border: rgba(21,21,21,0.10);
 
   --chat-sidebar: #FFFFFF;
-  --chat-dock: #FFFFFF;
+  --chat-dock: transparent;
   --chat-composer: #FFFFFF;
-  --chat-composer-border: rgba(0,0,0,0.14);
-  --chat-field: #F4F4F6;
-  --chat-text-meta: rgba(0,0,0,0.5);
-  --chat-wallpaper: #FFFFFF;
+  --chat-composer-border: rgba(21,21,21,0.12);
+  --chat-field: #F4F1E8;
+  --chat-text-meta: rgba(21,21,21,0.5);
+  --chat-wallpaper: #F4F1E8;
 
-  --m-focus: 0 0 0 3px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.45);
+  --m-focus: 0 0 0 3px rgba(254,97,0,0.18), 0 0 0 1px rgba(254,97,0,0.55);
 }
 
 /* ── Dark — flat black, monochrome accent ─────────────────────── */
@@ -120,3 +120,6 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Belt-and-braces: the removed selection toolbar must never render. */
+#sel-toolbar, #sel-toolbar.show { display: none !important; }

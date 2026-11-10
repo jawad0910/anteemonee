@@ -11,18 +11,17 @@
    Layer 4 · Composer · iOS Messages input bar
    ========================================================== */
 
-/* ── Dock — frosted strip that fades into the wallpaper ─────────
-   Only for welcome-center mode (centered composer). Normal chat uses
-   the sticky-bottom version from layout.css. */
+/* ── Dock — transparent, blends into the page ──────────────────
+   No white strip, no gradient fade: the composer floats on cream. */
 body.welcome-center .chat-input-area {
-  background: linear-gradient(180deg, transparent, var(--chat-dock) 26%);
-  -webkit-backdrop-filter: var(--m-blur-sm);
-  backdrop-filter: var(--m-blur-sm);
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   border-top: none;
   padding: 4px 18px 12px;
 }
 :root[data-theme="dark"] body.welcome-center .chat-input-area {
-  background: linear-gradient(180deg, transparent, var(--chat-dock) 30%);
+  background: transparent;
 }
 
 /* ── Composer capsule — the primary field ─────────────────────── */
@@ -203,89 +202,113 @@ body.welcome-center .chat-input-area {
   box-shadow: none;
 }
 
-/* ── Slash-command menu + test attachment chip ─────────────────────── */
-.chat-input-area { position: relative; }
+/* ── Slash-command menu — simple, ChatGPT-style ────────────────────
+   Same width as the prompt box (.chat-input-wrapper is min(860px, 100%)),
+   sitting directly on top of it with matching radius and padding. */
+.chat-input-area { position: relative; max-width: 860px; margin: 0 auto; width: 100%; }
 .slash-menu {
   position: absolute;
-  left: 12px;
-  right: 12px;
+  left: 0;
+  right: 0;
   width: auto;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 8px);
   z-index: 250;
-  background: var(--m-bg-elev, var(--surface));
-  border: 1px solid var(--m-border, var(--border));
-  border-radius: 12px;
-  box-shadow: var(--m-shadow-menu, 0 16px 40px -16px rgba(0,0,0,.4));
+  background: var(--chat-composer, #fff);
+  border: 1px solid var(--chat-composer-border, rgba(0,0,0,0.12));
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 2px 6px rgba(0,0,0,0.04),
+    0 12px 32px rgba(0,0,0,0.08);
   overflow: hidden;
-  max-height: min(260px, 40vh);
+  max-height: min(280px, 40vh);
   display: flex;
   flex-direction: column;
+  padding: 8px 8px 8px 14px;
+  animation: slash-in 0.16s cubic-bezier(0.22,1,0.36,1);
 }
-.slash-menu-title {
-  padding: 7px 10px 4px;
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--m-text-muted, var(--text-muted));
-}
-.slash-menu-body {
-  overflow-y: auto;
-  padding: 2px 4px 6px;
-}
-.slash-item, .slash-test-item {
+@keyframes slash-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.slash-menu-search {
   display: flex;
   align-items: center;
   gap: 8px;
+  height: 34px;
+  margin: 0 0 6px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: var(--chat-field, #F4F1E8);
+  border: 1px solid transparent;
+  color: var(--chat-text-meta, rgba(0,0,0,0.55));
+}
+.slash-menu-search:focus-within {
+  background: #fff;
+  border-color: rgba(0,0,0,0.14);
+  box-shadow: 0 0 0 3px rgba(254,97,0,0.12);
+}
+.slash-menu-search-ic { display: inline-flex; flex-shrink: 0; }
+.slash-menu-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--chat-bubble-text, #1a1a1a);
+  font: inherit;
+  font-size: 14px;
+}
+.slash-menu-search-input::placeholder { color: var(--chat-text-meta, rgba(0,0,0,0.45)); }
+.slash-menu-body { overflow-y: auto; padding: 4px 2px; display: flex; flex-direction: column; gap: 2px; }
+.slash-menu-body::-webkit-scrollbar { width: 6px; }
+.slash-menu-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 999px; border: none; }
+.slash-item, .slash-test-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   text-align: left;
-  padding: 6px 8px;
+  padding: 8px 8px;
   border: none;
   background: transparent;
-  color: var(--m-text, var(--text));
+  color: var(--chat-bubble-text, #1a1a1a);
   font: inherit;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
+  transition: background 0.14s ease;
 }
-.slash-item:hover, .slash-test-item:hover { background: var(--m-accent-soft, var(--accent-soft)); }
+.slash-item:hover, .slash-test-item:hover,
+.slash-item.is-active, .slash-test-item.is-active { background: rgba(0,0,0,0.05); }
 .slash-item-ic {
-  width: 26px; height: 26px; border-radius: 8px;
-  background: var(--m-accent-soft, var(--accent-soft));
+  width: 34px; height: 34px; border-radius: 10px;
+  background: rgba(254,97,0,0.08);
+  color: #FE6100;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 13px; flex-shrink: 0;
+  flex-shrink: 0;
 }
-.slash-item b { display: block; font-size: 12.5px; }
-.slash-item small { display: block; font-size: 10.5px; line-height: 1.35; color: var(--m-text-muted, var(--text-muted)); }
-.slash-test-item { gap: 8px; }
-.slash-test-star { color: var(--m-accent, var(--accent)); width: 13px; flex-shrink: 0; font-size: 11px; }
-.slash-test-t { font-weight: 600; font-size: 12px; line-height: 1.3; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.slash-test-sub { font-size: 10.5px; color: var(--m-text-muted, var(--text-muted)); flex-shrink: 0; }
-.slash-loading, .slash-empty {
-  padding: 12px 10px; text-align: center; color: var(--m-text-muted, var(--text-muted));
-  font-size: 11.5px;
+.slash-item b { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; letter-spacing: -0.006em; }
+.slash-item small { display: block; font-size: 12.5px; line-height: 1.4; color: var(--chat-text-meta, rgba(0,0,0,0.55)); margin-top: 1px; }
+.slash-test-star { color: #FE6100; width: 16px; flex-shrink: 0; font-size: 12px; text-align: center; }
+.slash-test-t { font-weight: 550; font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slash-test-sub { font-size: 12px; color: var(--chat-text-meta, rgba(0,0,0,0.55)); flex-shrink: 0; max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slash-empty, .slash-loading {
+  padding: 20px 14px; text-align: center;
+  color: var(--chat-text-meta, rgba(0,0,0,0.55));
+  font-size: 13.5px; line-height: 1.55;
+}
+.slash-loading { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.slash-loading::before {
+  content: ''; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(254,97,0,0.18);
+  border-top-color: #FE6100;
+  animation: m-spin .8s linear infinite; flex-shrink: 0;
 }
 .slash-empty-cta {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--m-accent-soft, var(--accent-soft));
-  color: var(--m-accent, var(--accent));
-  font-size: 11px;
-  font-weight: 650;
-  text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 12px; padding: 8px 16px;
+  border-radius: 999px; background: #FE6100; color: #fff;
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  transition: filter 0.14s ease, transform 0.14s ease;
 }
-.slash-loading::before {
-  content: '';
-  display: inline-block;
-  width: 11px; height: 11px;
-  margin-right: 6px;
-  vertical-align: -2px;
-  border-radius: 50%;
-  border: 2px solid var(--m-accent-soft, var(--accent-soft));
-  border-top-color: var(--m-accent, var(--accent));
-  animation: m-spin .8s linear infinite;
-}
+.slash-empty-cta:hover { filter: brightness(1.06); }
 @keyframes m-spin { to { transform: rotate(360deg); } }
 
 .test-chip {
@@ -480,4 +503,18 @@ body.no-chat-yet .chat-ad { display: none !important; }
 @keyframes yt-skel {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* Reply/Flashcard selection toolbar — REMOVED.
+   The floating Reply/Flashcard buttons were appearing out of nowhere
+   (body-level fixed element, z-index 9999, spawned on every text
+   selection — even with the sidebar closed). Feature disabled;
+   these rules guarantee they never render again. */
+#sel-toolbar,
+#sel-toolbar.show { display: none !important; }
+#reply-chip { display: none !important; }
+
+/* Ads removed — hide any ad DOM element everywhere (in-stream, composer, strip). */
+.chat-ad, .msg-ad, #chat-ad, .chat-ad-banner, [id="container-333c1ec828429a89915481eb727f39dc"] {
+  display: none !important;
 }

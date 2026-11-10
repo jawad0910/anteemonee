@@ -20,8 +20,8 @@
 
   .chat-input-area {
     padding: 4px 10px 10px;
-    background: var(--chat-dock);
-    border-top: 1px solid var(--m-hairline-soft);
+    background: transparent;
+    border-top: none;
   }
   .chat-input-wrapper {
     border-radius: 18px;

@@ -1858,48 +1858,19 @@ Use this context if the student refers to the quiz, an answer, or a question num
   var NATIVE_AD_ID = 'container-333c1ec828429a89915481eb727f39dc';
 
   var STREAM_AD_OPEN = false;
-  function maybeAppendStreamAd(replied, role, opts) {
-    if (role !== 'assistant' || opts.generatedImage) return;
-    try {
-      if (!NATIVE_AD_SRC) return;
-      if (typeof Access !== 'undefined' && Access.state && Access.state.ready && Access.state.paid) return;
-      if (document.body.classList.contains('no-chat-yet')) return;
-      if (STREAM_AD_OPEN) return;
-      STREAM_AD_OPEN = true;
-      // Release before anything can throw: a wedged open-flag must never
-      // starve the following replies.
-      var released = false;
-      function release() {
-        if (released) return;
-        released = true;
-        STREAM_AD_OPEN = false;
-      }
-      setTimeout(release, 2500);
-      var wrap = document.createElement('div');
-      wrap.className = 'msg-ad';
-      var box = document.createElement('div');
-      box.id = NATIVE_AD_ID;
-      wrap.appendChild(box);
-      // Container in the DOM first, then invoke.js — the script looks up the
-      // container by id, so insertion order matters.
-      var body = (replied.querySelector && replied.querySelector('.msg-body')) || document.body;
-      body.appendChild(wrap);
-      var sc = document.createElement('script');
-      sc.async = true;
-      sc.dataset.cfasync = 'false';
-      sc.src = NATIVE_AD_SRC;
-      wrap.appendChild(sc);
-      console.log('[Ad] native ad mounted');
-    } catch (e) {
-      STREAM_AD_OPEN = false;
-      console.warn('[Ad] native mount failed:', e && (e.message || e));
-    }
+  function maybeAppendStreamAd() {
+    // Ads removed — in-stream native ads disabled. No-op.
+    return;
   }
 
   function initChatAd() {
-    // Composer-top strip is retired: ads live in the message stream only
-    // (after the References section of each reply). This hook is kept for
-    // future network slots, but mounts nothing.
+    // Ads removed entirely — strip old ad nodes and mount nothing.
+    try {
+      document.querySelectorAll('#chat-ad, .msg-ad, .chat-ad').forEach(function (n) { n.remove(); });
+      document.querySelectorAll('[id^="container-"]').forEach(function (n) {
+        if (n.id === 'container-333c1ec828429a89915481eb727f39dc' || n.id.indexOf('container-') === 0) n.remove();
+      });
+    } catch (_) {}
     var ad = document.getElementById('chat-ad');
     if (ad) ad.style.display = 'none';
     return;
@@ -2252,10 +2223,16 @@ if (idx >= 0 && idx < PERSONAS.length) {
     chatInput.addEventListener('input', () => {
       autoResize();
       handleSlashTrigger();
-      btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef;
+      if (!slashOpen) btnSend.disabled = !chatInput.value.trim() && pendingImages.length === 0 && !pendingTestRef;
     });
 
     chatInput.addEventListener('keydown', (e) => {
+      if (slashOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape')) {
+        handleSlashKeydown(e);
+        if (e.key === 'Escape') return;
+        e.preventDefault();
+        return;
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (!btnSend.disabled && !isStreaming) handleSend();
@@ -3526,7 +3503,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     conversations.forEach(function(c) { if (!c.shareCode) c.shareCode = makeShareCode(); });
     if (!activeConversationId) {
       activeConversationId = 'conv_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
-      const title = messages[0]?.content?.slice(0, 50) || 'New Chat';
+      const title = localTitleFrom(messages[0]?.content);
       conversations.unshift({ id: activeConversationId, title, titleLocked: false, pinned: false, subject: selectedSubject, messages: [...messages], updatedAt: Date.now() });
       // keep pinned chats: evict oldest unpinned first
       if (conversations.length > 50) {
@@ -3538,7 +3515,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
     } else {
       const conv = conversations.find(c => c.id === activeConversationId);
       if (conv) { conv.messages = [...messages]; conv.updatedAt = Date.now(); conv.subject = conv.subject || selectedSubject; }
-      else conversations.unshift({ id: activeConversationId, title: messages[0]?.content?.slice(0, 50) || 'New Chat', titleLocked: false, pinned: false, subject: selectedSubject, messages: [...messages], updatedAt: Date.now() });
+      else conversations.unshift({ id: activeConversationId, title: localTitleFrom(messages[0]?.content), titleLocked: false, pinned: false, subject: selectedSubject, messages: [...messages], updatedAt: Date.now() });
     }
     try { setMappedConvSubject(activeConversationId, selectedSubject); } catch (_) {}
     if (!(isPremiumTier && currentUserId())) removeExpiredFromMemory();
@@ -3555,6 +3532,21 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
 
   // Ask the AI for a short title after the first exchange of a new chat.
   // Fire-and-forget: never blocks sending, never overwrites a user-edited name.
+  // Uses a deterministic local fallback first so the sidebar never shows a
+  // random-looking slice of the message while the AI title is in flight.
+  function localTitleFrom(text) {
+    const clean = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!clean) return 'New Chat';
+    const low = clean.toLowerCase();
+    // Greetings get a proper topic label instead of echoing "user said hello".
+    if (/^(hi|hello|hey|salam|assalam\w*|good morning|good afternoon|good evening|greetings|how are you|how's it going|how is it going)\b/.test(low)) {
+      return 'greetings';
+    }
+    const words = clean.replace(/[^\p{L}\p{N} ]+/gu, '').split(/\s+/).filter(Boolean);
+    const title = words.slice(0, 5).join(' ');
+    if (title.length < 2) return 'New Chat';
+    return title.length > 42 ? title.slice(0, 42).trim() : title;
+  }
   async function generateChatTitle(convId, firstText) {
     try {
       const clean = String(firstText || '').slice(0, 300).trim();
@@ -3562,7 +3554,7 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
       let title = '';
       const existingTitles = conversations.map(c => c.title).filter(Boolean).join(', ');
       const titleMessages = [
-        { role: 'system', content: `Generate a short, unique chat title (max 4 words) that describes the USER's topic or intent. Rules: plain text only, no quotes, no emoji, no punctuation at end, lowercase. Be specific - not generic words like "greeting" or "chat". If the message is a simple greeting, pick the most relevant topic the user might discuss. Existing titles to avoid duplicating: [${existingTitles}]` },
+        { role: 'system', content: `Generate a short, unique chat title (3 to 6 words) that summarizes the USER's message below. Rules: plain text only, no quotes, no emoji, no punctuation at end, lowercase. Use the user's own vocabulary — mirror their topic words, subject, and intent. Be specific and descriptive. Do NOT narrate the interaction in title form (never "user said hello", "user asked about…", "user wants help"). For greetings, title it simply "greetings". Avoid duplicating these existing titles: [${existingTitles}]` },
         { role: 'user', content: clean },
       ];
       for await (const chunk of api.streamChat(titleMessages, getProviderIndexForText(firstText))) {
@@ -3570,14 +3562,16 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         title += chunk;
         if (title.length > 80) break;
       }
-      title = title.replace(/^["'â€œâ€â€˜â€™\s]+|["'â€œâ€â€˜â€™\s]+$/g, '').replace(/[.!?:;â€¦]+$/g, '').trim();
+      title = title.replace(/^["'“”‘’\s]+|["'“”‘’\s]+$/g, '').replace(/[.!?:;…]+$/g, '').trim();
       title = title.replace(/\{.*$/g, '').trim();
-      title = title.split(/\s+/).filter(Boolean).slice(0, 5).join(' ');
-      if (title.length > 40) title = title.slice(0, 40).trim();
+      title = title.split(/\s+/).filter(Boolean).slice(0, 6).join(' ');
+      if (title.length > 42) title = title.slice(0, 42).trim();
       if (!title) return;
       const conv = conversations.find(c => c.id === convId);
       if (!conv || conv.titleLocked) return;
-      conv.title = title;
+      // Don't clobber the local fallback with something that's *worse*
+      // (empty or unchanged from the raw slice handled by caller).
+      conv.title = title.toLowerCase();
       persistConversation(convId);
       renderHistory();
     } catch (e) {
@@ -4861,12 +4855,13 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
         '<span>Retry</span>' +
         '</button>' +
         '<button class="fb-more-item" role="menuitem" type="button" data-action="summary">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' +
-        '<span>Generate Summary</span>' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+        '<span data-summary-label>Generate Summary</span>' +
         '</button>' +
         '</div>' +
         '</div>';
       body.appendChild(wrap);
+      // Generate Summary sends a short prompt; the AI Response disclosure lives under it.
       var key = ((typeof activeConversationId !== 'undefined' && activeConversationId) ? activeConversationId : 'noconv') + ':' + idx;
       wrap.dataset.voteKey = key;
       attachEngineBadge(body, idx);
@@ -4931,14 +4926,25 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
    */
   function retryMessage(assistantIdx) {
     try {
-      if (assistantIdx <= 0 || !messages[assistantIdx - 1] || messages[assistantIdx - 1].role !== 'user') return;
-      var userMsg = messages[assistantIdx - 1];
-      // Remove the assistant message and everything after it
-      messages.splice(assistantIdx);
-      // Re-render
+      // Find the REAL user prompt this assistant answered. If this assistant
+      // is a summary reply (its user turn is "Generate a summary..."), walk
+      // back past the summary turn to the original question — Retry must
+      // NEVER resend the summary prompt.
+      var userIdx = -1;
+      for (var i = assistantIdx - 1; i >= 0; i--) {
+        if (!messages[i] || messages[i].role !== 'user') continue;
+        var c = messages[i].content || '';
+        if (c.indexOf('Generate a summary of the following response:') === 0) continue;
+        userIdx = i;
+        break;
+      }
+      if (userIdx < 0) return;
+      var userMsg = messages[userIdx];
+      if (!userMsg.content) return;
+      // Remove from the real user turn onward so handleSend re-adds it once.
+      messages.splice(userIdx);
       renderMessagesFrom();
-      // Send the user message again via handleSend (the real send function)
-      if (userMsg.content && typeof handleSend === 'function') {
+      if (typeof handleSend === 'function') {
         chatInput.value = userMsg.content;
         handleSend();
       }
@@ -4946,25 +4952,18 @@ SCOPE: You are a STUDY tutor (FSc academics). You cover every subject the studen
   }
 
   /**
-   * Generate a summary of the AI response and send it as a user message.
-   * The AI will then generate a summary.
+   * Generate a summary of the AI response. Sends the full prompt (grounded)
+   * as a normal user message — no packet, no popup.
    */
   function generateSummary(assistantIdx) {
     try {
       var msg = messages[assistantIdx];
       if (!msg || msg.role !== 'assistant') return;
       var content = stripEmptyReferences(msg.content || '');
-      if (!content) return;
-      // Add a summary request message from user side
-      var summaryPrompt = 'Generate a summary of the following response:\n\n' + content;
-      // Add to messages array as user message
-      messages.push({ role: 'user', content: summaryPrompt });
-      renderMessagesFrom();
-      // Send the summary request via handleSend
-      if (typeof handleSend === 'function') {
-        chatInput.value = summaryPrompt;
-        handleSend();
-      }
+      if (!content || typeof handleSend !== 'function') return;
+      if (isStreaming) return;
+      chatInput.value = 'Generate a summary of the following response:\n\n' + content;
+      handleSend();
     } catch (e) { console.warn('[generateSummary]', e); }
   }
 
@@ -7360,6 +7359,7 @@ function handleFileBlocks(div, text, opts) {
   let selToolbar = null;
 
   function getSelToolbar() {
+    return null; // toolbar feature removed — Reply/Flashcard buttons disabled
     if (selToolbar) return selToolbar;
     selToolbar = document.createElement('div');
     selToolbar.id = 'sel-toolbar';
@@ -7539,6 +7539,10 @@ function handleFileBlocks(div, text, opts) {
   }
 
   function refreshSelToolbar() {
+    // Reply/Flashcard selection toolbar removed — never show Reply/Flashcard buttons.
+    // Buttons were appearing out of nowhere (floating over the collapsed sidebar).
+    hideSelToolbar();
+    return;
     const bar = getSelToolbar();
     const found = currentSelectionInChat();
     if (!found || isStreaming) { hideSelToolbar(); return; }
@@ -7591,31 +7595,105 @@ function handleFileBlocks(div, text, opts) {
 
   // ── Slash commands: type "/" in an empty composer to attach a built test ──
   let slashOpen = false;
+  let slashView = 'commands';
+  let slashActiveIdx = -1;
+  let slashItems = [];
 
   function handleSlashTrigger() {
-    if (chatInput && chatInput.value === '/') openSlashMenu('commands');
-    else closeSlashMenu();
+    if (!chatInput) return;
+    const v = chatInput.value;
+    // Stay open while typing after "/": "/" → "/t" → "/tests" etc.
+    // Close only on space or removing the leading "/".
+    if (v.startsWith('/') && !v.includes(' ')) {
+      if (!slashOpen) openSlashMenu('commands');
+      else if (slashView === 'commands') renderSlashCommands(document.getElementById('slash-menu-body'), v.slice(1));
+      return;
+    }
+    closeSlashMenu();
+  }
+
+  function slashClearActive() {
+    slashActiveIdx = -1;
+    const body = document.getElementById('slash-menu-body');
+    if (body) body.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
+  }
+
+  function slashSetActive(idx) {
+    const body = document.getElementById('slash-menu-body');
+    if (!body || !slashItems.length) return;
+    slashActiveIdx = (idx + slashItems.length) % slashItems.length;
+    body.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
+    const el = slashItems[slashActiveIdx];
+    if (el) { el.classList.add('is-active'); try { el.scrollIntoView({ block: 'nearest' }); } catch (_) {} }
+  }
+
+  function handleSlashKeydown(e) {
+    const body = document.getElementById('slash-menu-body');
+    if (!body) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeSlashMenu(); chatInput && chatInput.focus(); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); slashSetActive(slashActiveIdx < 0 ? 0 : slashActiveIdx + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); slashSetActive(slashActiveIdx < 0 ? slashItems.length - 1 : slashActiveIdx - 1); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const el = slashItems[slashActiveIdx];
+      if (el) el.click();
+    }
+  }
+
+  let slashTestsCache = [];
+
+  function renderSlashTestList(body) {
+    body.innerHTML = '';
+    slashItems = [];
+    if (!slashTestsCache.length) {
+      body.innerHTML =
+        '<div class="slash-empty">No tests here yet.<br>Build one and it will show up here instantly.<br>' +
+        '<a class="slash-empty-cta" href="../ai-test-builder/" target="_blank" rel="noopener">Open the AI Test Builder &rarr;</a></div>';
+      return;
+    }
+    slashTestsCache.forEach(function (t) {
+      const title = (t.config && t.config.paper_title) || t.title || 'Test';
+      const sub = [t.subject, t.board_name].filter(Boolean).join(' \u00b7 ');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slash-test-item';
+      btn.innerHTML =
+        '<span class="slash-item-ic slash-test-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>' +
+        '<span class="slash-test-t">' + escapeHtml(title) + (t.priority ? ' <span class="slash-test-star">★</span>' : '') + '</span>' +
+        '<span class="slash-test-sub">' + escapeHtml(sub) + '</span>';
+      btn.addEventListener('click', function (e) { e.stopPropagation(); selectTestForChat(t); });
+      body.appendChild(btn);
+      slashItems.push(btn);
+    });
+    slashSetActive(0);
   }
 
   function openSlashMenu(view) {
     const m = document.getElementById('slash-menu');
     if (!m) return;
     slashOpen = true;
+    slashView = view || 'commands';
+    slashClearActive();
+    slashItems = [];
     m.style.display = 'flex';
-    const title = document.getElementById('slash-menu-title');
-    if (title) title.textContent = view === 'tests' ? 'Your built tests' : 'Slash commands';
+    const searchWrap = document.getElementById('slash-menu-search-wrap');
+    const search = document.getElementById('slash-menu-search');
+    if (searchWrap) searchWrap.style.display = (view === 'tests' && slashTestsCache.length > 5) ? 'flex' : 'none';
+    if (search && view === 'tests' && slashTestsCache.length > 5) search.value = '';
     const body = document.getElementById('slash-menu-body');
     if (!body) return;
     if (view === 'tests') {
       showSlashLoading('Loading your tests…');
       loadTestsIntoSlash(body);
     } else {
-      renderSlashCommands(body);
+      renderSlashCommands(body, chatInput && chatInput.value.startsWith('/') ? chatInput.value.slice(1) : '');
     }
   }
 
   function closeSlashMenu() {
     slashOpen = false;
+    slashClearActive();
+    slashItems = [];
     const m = document.getElementById('slash-menu');
     if (m) m.style.display = 'none';
   }
@@ -7625,42 +7703,39 @@ function handleFileBlocks(div, text, opts) {
     if (body) body.innerHTML = '<div class="slash-loading">' + escapeHtml(msg || 'Loading…') + '</div>';
   }
 
-  function renderSlashCommands(body) {
+  function renderSlashCommands(body, filter) {
+    if (!body) return;
     body.innerHTML = '';
+    slashItems = [];
+    const q = String(filter || '').trim().toLowerCase();
+    if (q && !'tests'.includes(q)) {
+      body.innerHTML = '<div class="slash-empty">No commands match &ldquo;/' + escapeHtml(q) + '&rdquo;.</div>';
+      return;
+    }
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'slash-item';
-    item.innerHTML = '<span class="slash-item-ic">\u{1F4C4}</span><span><b>Tests</b><small>Attach a test you built in the Test Builder</small></span>';
-    item.addEventListener('click', function () { openSlashMenu('tests'); });
+    item.innerHTML =
+      '<span class="slash-item-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>' +
+      '<span><b>Tests</b><small>Attach a test you built in the Test Builder</small></span>';
+    item.addEventListener('click', function (e) { e.stopPropagation(); openSlashMenu('tests'); });
     body.appendChild(item);
+    slashItems = [item];
+    slashSetActive(0);
   }
 
   async function loadTestsIntoSlash(body) {
+    if (!body || !body.isConnected) return;
     if (!getAccessToken()) {
       body.innerHTML = '<div class="slash-empty">Sign in to load your built tests.</div>';
       return;
     }
     const tests = await fetchMyTests();
-    body.innerHTML = '';
-    if (!tests.length) {
-      body.innerHTML =
-        '<div class="slash-empty">No tests here yet.<br>' +
-        '<a class="slash-empty-cta" href="../ai-test-builder/" target="_blank" rel="noopener">Open the AI Test Builder</a></div>';
-      return;
-    }
-    tests.forEach(function (t) {
-      const title = (t.config && t.config.paper_title) || t.title || 'Test';
-      const sub = [t.subject, t.board_name].filter(Boolean).join(' \u00b7 ');
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'slash-test-item';
-      btn.innerHTML =
-        '<span class="slash-test-star">' + (t.priority ? '\u2605' : '') + '</span>' +
-        '<span class="slash-test-t">' + escapeHtml(title) + '</span>' +
-        '<span class="slash-test-sub">' + escapeHtml(sub) + '</span>';
-      btn.addEventListener('click', function () { selectTestForChat(t); });
-      body.appendChild(btn);
-    });
+    if (!body.isConnected) return;
+    slashTestsCache = tests;
+    const searchWrap = document.getElementById('slash-menu-search-wrap');
+    if (searchWrap) searchWrap.style.display = tests.length > 5 ? 'flex' : 'none';
+    renderSlashTestList(body);
   }
 
   async function fetchMyTests() {
@@ -7830,15 +7905,66 @@ function handleFileBlocks(div, text, opts) {
   function wireSlashMenu() {
     document.addEventListener('click', function (e) {
       if (!slashOpen) return;
-      // Ignore clicks on nodes that were just removed by re-rendering the menu
-      // (e.g. clicking "Tests"), otherwise the popup closes itself instantly.
       if (!e.target || !e.target.isConnected) return;
       if (e.target.closest && e.target.closest('#slash-menu')) return;
       closeSlashMenu();
     });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && slashOpen) closeSlashMenu();
+      if (e.key === 'Escape' && slashOpen) { closeSlashMenu(); chatInput && chatInput.focus(); }
     });
+    chatInput && chatInput.addEventListener('blur', function () {
+      setTimeout(function () {
+        if (slashOpen && document.activeElement !== chatInput && !document.activeElement?.closest('#slash-menu')) closeSlashMenu();
+      }, 120);
+    });
+    const search = document.getElementById('slash-menu-search');
+    if (search && !search.dataset.bound) {
+      search.dataset.bound = '1';
+      let timer = null;
+      search.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          const q = search.value.trim().toLowerCase();
+          const body = document.getElementById('slash-menu-body');
+          if (!body) return;
+          body.innerHTML = '';
+          slashItems = [];
+          const rows = q
+            ? slashTestsCache.filter(t => {
+                const title = ((t.config && t.config.paper_title) || t.title || '').toLowerCase();
+                const sub = ([t.subject, t.board_name].filter(Boolean).join(' ')).toLowerCase();
+                return title.includes(q) || sub.includes(q);
+              })
+            : slashTestsCache;
+          if (!rows.length) {
+            body.innerHTML = '<div class="slash-empty">No tests match &ldquo;' + escapeHtml(q) + '&rdquo;.</div>';
+            return;
+          }
+          rows.forEach(function (t) {
+            const title = (t.config && t.config.paper_title) || t.title || 'Test';
+            const sub = [t.subject, t.board_name].filter(Boolean).join(' \u00b7 ');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'slash-test-item';
+            btn.innerHTML =
+              '<span class="slash-item-ic slash-test-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>' +
+              '<span class="slash-test-t">' + escapeHtml(title) + (t.priority ? ' <span class="slash-test-star">★</span>' : '') + '</span>' +
+              '<span class="slash-test-sub">' + escapeHtml(sub) + '</span>';
+            btn.addEventListener('click', function (e) { e.stopPropagation(); selectTestForChat(t); });
+            body.appendChild(btn);
+            slashItems.push(btn);
+          });
+          slashSetActive(0);
+        }, 120);
+      });
+      search.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape') {
+          e.stopPropagation();
+          if (e.key === 'Enter' && slashItems[slashActiveIdx]) slashItems[slashActiveIdx].click();
+          else handleSlashKeydown(e);
+        }
+      });
+    }
   }
 
   function quoteBlockHtml(quote) {
@@ -7873,11 +7999,10 @@ function handleFileBlocks(div, text, opts) {
     if (ov) ov.classList.remove('show');
   }
 
-  document.addEventListener('mouseup', (e) => {
-    if (e.target && e.target.closest && e.target.closest('#sel-toolbar')) return;
-    setTimeout(refreshSelToolbar, 10);
-  });
-  document.addEventListener('touchend', () => setTimeout(refreshSelToolbar, 350));
+  // Selection toolbar removed — Reply/Flashcard buttons no longer appear.
+  // Listeners kept as no-ops so text selection never floats buttons.
+  document.addEventListener('mouseup', () => {});
+  document.addEventListener('touchend', () => {});
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { hideSelToolbar(); closeQuoteModal(); }
   });

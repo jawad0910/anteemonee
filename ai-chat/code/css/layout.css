@@ -3,7 +3,7 @@
    Layer 2 · App shell · sidebar · topbar · welcome · window
    ========================================================== */
 
-/* ── Full-app wallpaper (macOS Sonoma-style tint wash) ────────── */
+/* ── Full-app wallpaper — flat cream ─────────────────────────── */
 body {
   background: var(--chat-wallpaper);
 }
@@ -11,7 +11,7 @@ body {
 /* ── Window chrome ────────────────────────────────────────────── */
 .chatbot-layout {
   position: fixed;
-  top: var(--site-header-actual-height, 126px);
+  top: var(--site-header-actual-height, 0px);
   left: 0;
   right: 0;
   bottom: 0;
@@ -19,13 +19,13 @@ body {
   z-index: 100;
 }
 
-/* ── Sidebar — frosted glass panel with hairline edge ─────────── */
+/* ── Sidebar — white with hairline, no thick border ─────────── */
 .sidebar {
   background: var(--chat-sidebar);
   -webkit-backdrop-filter: var(--m-blur);
   backdrop-filter: var(--m-blur);
-  border-right: 1px solid var(--m-hairline);
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+  border-right: 1px solid #EDE9DC;
+  box-shadow: none;
   width: 288px;
   min-width: 288px;
   padding: 12px 10px 12px;
@@ -383,22 +383,22 @@ body.guest .history-section .sidebar-label { display: none; }
   overflow-x: hidden;
 }
 
-/* Ensure the chat input area stays at bottom */
+/* Ensure the chat input area stays at bottom — transparent, no white strip */
 .chat-input-area {
   flex-shrink: 0;
   position: sticky;
   bottom: 0;
   z-index: 2000;
-  background: var(--chat-composer);
-  padding: 12px 14px;
-  border-top: 1px solid var(--chat-composer-border);
+  background: transparent;
+  padding: 6px 14px 10px;
+  border-top: none;
 }
 
 /* Normal (non-welcome) chat input area - sticky at bottom */
 body:not(.welcome-center) .chat-input-area {
-  background: var(--chat-composer);
-  padding: 12px 14px;
-  border-top: 1px solid var(--chat-composer-border);
+  background: transparent;
+  padding: 6px 14px 10px;
+  border-top: none;
 }
 
 /* ── Topbar (mobile) — frosted strip ──────────────────────────── */

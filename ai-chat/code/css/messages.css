@@ -8,9 +8,9 @@
   position: sticky;
   bottom: 0;
   z-index: 2000;
-  background: var(--chat-composer);
-  padding: 12px 14px;
-  border-top: 1px solid var(--chat-composer-border);
+  background: transparent;
+  padding: 6px 14px 10px;
+  border-top: none;
 }
 .chat-container {
   display: flex;
@@ -303,21 +303,24 @@
   50% { opacity: 0.6; }
 }
 
-/* ── Feedback + actions under a bubble — macOS context tint ───── */
+/* ── Feedback + actions under a bubble — small & professional ── */
 .msg-feedback,
 .msg-user-actions {
-  gap: 2px;
+  gap: 4px;
   opacity: 0;
+  margin-top: 4px;
 }
 .message:hover .msg-feedback,
 .message:hover .msg-user-actions,
 .message:focus-within .msg-user-actions { opacity: 1; }
 .fb-btn, .msg-user-actions .fb-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   color: var(--chat-text-meta);
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
 }
+.fb-btn svg { width: 13px; height: 13px; }
 .fb-btn:hover { background: var(--chat-tint-soft); color: var(--chat-tint); }
 .fb-btn.fb-like.active { color: var(--chat-tint); }
 .fb-btn.fb-like.active svg { fill: var(--chat-tint-soft); }
@@ -330,9 +333,9 @@
   align-items: center;
 }
 .fb-btn.fb-more {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   color: var(--chat-text-meta);
   display: flex;
   align-items: center;
@@ -346,12 +349,12 @@
   position: absolute;
   right: 0;
   bottom: calc(100% + 6px);
-  min-width: 180px;
-  padding: 6px;
-  border-radius: 12px;
-  background: var(--chat-composer);
-  border: 1px solid var(--chat-composer-border);
-  box-shadow: var(--m-sh-2);
+  min-width: 168px;
+  padding: 5px;
+  border-radius: 11px;
+  background: #FFFFFF;
+  border: 1px solid #EDE9DC;
+  box-shadow: 0 12px 32px -12px rgba(21,21,21,.22), 0 2px 8px rgba(21,21,21,.05);
   z-index: 100;
   animation: moreMenuIn var(--m-base) var(--m-ease-out);
 }
@@ -362,30 +365,31 @@
 .fb-more-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 13.5px;
+  color: #151515;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: background 0.12s var(--m-ease-out), color 0.12s var(--m-ease-out);
 }
 .fb-more-item:hover {
-  background: var(--chat-tint-soft);
-  color: var(--chat-tint);
+  background: #FEF9C8;
+  color: #E15100;
 }
 .fb-more-item svg {
   flex-shrink: 0;
-  color: var(--chat-text-meta);
+  color: rgba(21,21,21,.45);
+  width: 13px; height: 13px;
 }
 .fb-more-item:hover svg {
-  color: var(--chat-tint);
+  color: #FE6100;
 }
 
 /* ── Autolinked bare URLs: favicon chip, theme-aware ─────────────── */

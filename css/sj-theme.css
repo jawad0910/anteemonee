@@ -576,18 +576,72 @@ footer a, .site-footer a, .footer a { color: var(--sj-ink) !important; }
    - .tv-simple paragraphs become SJ eyebrow labels.
    ============================================================ */
 [data-theme] .rstep {
-  background: #fff !important;
-  border: 1.5px solid var(--sj-ink) !important;
-  border-radius: 14px !important;
-  box-shadow: 3px 3px 0 var(--sj-ink) !important;
+  background: #FFFFFF !important;
+  border: 1px solid #EDE9DC !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px -16px rgba(21,21,21,.18) !important;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
 }
 [data-theme] .rstep:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 var(--sj-ink) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -18px rgba(21,21,21,.22) !important;
 }
 [data-theme] .rstep.trophy {
-  background: #fff !important;
-  border-color: var(--sj-ink) !important;
+  background: #FEF9C8 !important;
+  border: 1px solid #FCE004 !important;
+}
+[data-theme] .rstep-num {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: rgba(21,21,21,.45) !important;
+}
+[data-theme] .rstep-ic {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  background: #F4F1E8 !important;
+  color: #FE6100 !important;
+  border: 1px solid #EDE9DC !important;
+  box-shadow: none !important;
+}
+[data-theme] .rstep-tx { font-family: 'Poppins', system-ui, sans-serif !important; color: #151515 !important; }
+[data-theme] .rstep-tx b { color: #151515 !important; font-weight: 700 !important; }
+[data-theme] .rstep-tx small { color: rgba(21,21,21,.62) !important; }
+[data-theme] .rstep-go { color: rgba(21,21,21,.35) !important; font-weight: 600 !important; }
+[data-theme] a.rstep:hover .rstep-go { color: #FE6100 !important; }
+[data-theme] .roadmap { gap: 10px !important; position: relative !important; }
+[data-theme] .roadmap::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 19px !important;
+  top: 12px !important;
+  bottom: 12px !important;
+  width: 2px !important;
+  background: #EDE9DC !important;
+  border-radius: 2px !important;
+}
+[data-theme] .roadmap .rstep { position: relative !important; }
+[data-theme] .roadmap .rstep::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 15px !important;
+  top: 50% !important;
+  transform: translate(-50%,-50%) !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  border: 2px solid #EDE9DC !important;
+}
+[data-theme] .roadmap .rstep.trophy::before {
+  background: #FCE004 !important;
+  border-color: #FE6100 !important;
+}
+[data-theme] .roadmap .rstep.trophy .rstep-ic {
+  background: #FCE004 !important;
+  color: #151515 !important;
+  border-color: #EDE9DC !important;
 }
 
 /* the loose little labels above the TV + roadmap */
@@ -610,3 +664,104 @@ footer a, .site-footer a, .footer a { color: var(--sj-ink) !important; }
   background: var(--sj-ink);
   flex: none;
 }
+
+/* ============================================================
+   v6 — hero practice card: thin, soft, no thick borders
+   ============================================================ */
+[data-theme] .bri-card {
+  background: #FFFFFF !important;
+  border: 0 !important;
+  box-shadow: 0 16px 40px -18px rgba(21,21,21,.18), 0 2px 8px rgba(21,21,21,.05) !important;
+  border-radius: 20px !important;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
+}
+[data-theme] .bri-subjs button {
+  background: #F4F1E8 !important;
+  border: 1px solid #EDE9DC !important;
+  color: rgba(21,21,21,.6) !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+[data-theme] .bri-subjs button.on {
+  background: #FE6100 !important;
+  color: #FFFFFF !important;
+  border-color: transparent !important;
+}
+[data-theme] .bri-viz {
+  background: #F4F1E8 !important;
+  border: 1px solid #EDE9DC !important;
+  border-radius: 14px !important;
+}
+[data-theme] .bri-q,
+[data-theme] .bri-status,
+[data-theme] .bri-val,
+[data-theme] .bri-mol,
+[data-theme] .bri-phy-numbers,
+[data-theme] .bri-punnett,
+[data-theme] .bri-bit,
+[data-theme] .bri-foot {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+}
+[data-theme] .bri-q { color: #151515 !important; font-weight: 600 !important; }
+[data-theme] .bri-slider-row input[type="range"] { background: #EDE9DC !important; }
+[data-theme] .bri-slider-row input[type="range"]::-webkit-slider-thumb {
+  background: #FE6100 !important;
+  border: 3px solid #fff !important;
+  box-shadow: 0 2px 8px rgba(254,97,0,.35) !important;
+}
+[data-theme] .bri-slider-row input[type="range"]::-moz-range-thumb {
+  background: #FE6100 !important;
+  border: 3px solid #fff !important;
+}
+[data-theme] .bri-val {
+  background: #F4F1E8 !important;
+  border: 1px solid #EDE9DC !important;
+  color: #151515 !important;
+  font-weight: 700 !important;
+}
+[data-theme] .bri-status.good {
+  color: #E15100 !important;
+  background: #FEF9C8 !important;
+  border-color: #FCE004 !important;
+}
+[data-theme] .bri-status.miss {
+  color: #151515 !important;
+  background: #F4F1E8 !important;
+  border-color: #EDE9DC !important;
+}
+[data-theme] .bri-mol {
+  background: #FFFFFF !important;
+  border: 1px solid #EDE9DC !important;
+  color: #151515 !important;
+  font-weight: 700 !important;
+}
+[data-theme] .bri-atom.h { background: #FE6100 !important; color: #fff !important; }
+[data-theme] .bri-atom.o { background: #151515 !important; color: #FCE004 !important; }
+[data-theme] .bri-punnett span { background: #FFFFFF !important; border: 1px solid #EDE9DC !important; color: #151515 !important; }
+[data-theme] .bri-punnett .tall { background: #FEF9C8 !important; border-color: #FCE004 !important; }
+[data-theme] .bri-bit {
+  background: #FFFFFF !important;
+  border: 1px solid #EDE9DC !important;
+  color: rgba(21,21,21,.55) !important;
+  font-weight: 700 !important;
+}
+[data-theme] .bri-bit.on { border-color: #FE6100 !important; color: #151515 !important; background: #FEF9C8 !important; }
+[data-theme] .bri-foot {
+  background: #FE6100 !important;
+  border: 1px solid #FE6100 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 8px 20px rgba(254,97,0,.28) !important;
+}
+[data-theme] .bri-foot:hover { background: #E15100 !important; border-color: #E15100 !important; }
+[data-theme] .bri-poly { fill: #FFFFFF !important; stroke: #151515 !important; }
+[data-theme] .bri-ext { stroke: #151515 !important; }
+[data-theme] .bri-svgt { fill: #151515 !important; font-family: 'Poppins', system-ui, sans-serif !important; }
+[data-theme] .bri-svgbox { fill: #FFFFFF !important; stroke: #EDE9DC !important; }
+[data-theme] .bri-force-arrow { background: #FE6100 !important; }
+[data-theme] .bri-force-arrow::after { border-left-color: #FE6100 !important; }
+[data-theme] .bri-track { background: repeating-linear-gradient(90deg, #EDE9DC 0 12px, transparent 12px 22px) !important; background-position: 0 42px !important; background-size: 100% 3px !important; background-repeat: no-repeat !important; }
+[data-theme] .bri-phy-numbers { color: rgba(21,21,21,.62) !important; }
+[data-theme] .bri-phy-numbers b { color: #151515 !important; }
+[data-theme] .bri-cart { color: #151515 !important; }
