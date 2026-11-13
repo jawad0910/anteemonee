@@ -27,37 +27,37 @@
     html { background: var(--sj-cream); scroll-behavior: smooth; }
     body { background: var(--sj-dots), var(--sj-cream) !important; font-family: var(--font-ui); overflow-x: hidden; }
 
-    .cc-hero { padding: 140px 24px 80px; position: relative; }
-    .cc-hero-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 40px; align-items: center; }
+    .cc-hero { padding: 100px 24px 60px; position: relative; text-align: center; }
+    .cc-hero-inner { max-width: 800px; margin: 0 auto; }
     
-    .cc-title { font-family: var(--font-ui); font-weight: 700; color: var(--sj-ink); font-size: clamp(2.5rem, 6vw, 4.5rem); letter-spacing: -.03em; margin: 20px 0; line-height: 1.1; }
+    .cc-title { font-family: var(--font-reading); font-weight: 700; color: var(--sj-ink); font-size: clamp(2.5rem, 6vw, 4rem); letter-spacing: -.03em; margin: 16px 0; line-height: 1.1; }
     .cc-title em { font-style: normal; color: var(--sj-cta); }
-    .cc-lede { max-width: 520px; color: var(--sj-ink-soft); line-height: 1.6; font-size: 1.15rem; }
+    .cc-lede { max-width: 520px; margin: 0 auto 40px; color: var(--sj-ink-soft); line-height: 1.6; font-size: 1.15rem; }
     
-    .cc-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--sj-ink-soft); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
-    .cc-eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--sj-cta); }
+.cc-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--sj-ink-soft); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
 
-    .cc-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+    .cc-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 80px; justify-content: center; }
     .cc-btn {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 28px; border-radius: 12px;
+      padding: 12px 24px; border-radius: 10px;
       font-weight: 600; font-size: 15px; text-decoration: none;
-      transition: all .15s ease;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
       cursor: pointer;
+      border: 1px solid transparent;
     }
-    .cc-btn--primary { background: var(--sj-cta); color: #fff; border: 1.5px solid var(--sj-ink); box-shadow: 3px 3px 0 var(--sj-ink); }
-    .cc-btn--ghost { background: #fff; color: var(--sj-ink); border: 1.5px solid var(--sj-ink); box-shadow: 3px 3px 0 var(--sj-ink); }
-    .cc-btn:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--sj-ink); }
-    .cc-btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--sj-ink); }
+    .cc-btn--primary { background: var(--sj-cta); color: #fff; }
+    .cc-btn--primary:hover { background: #e65c00; }
+    .cc-btn--ghost { background: transparent; color: var(--sj-ink); border-color: var(--sj-ink); }
+    .cc-btn--ghost:hover { background: var(--sj-cream-deep); }
 
     /* Stats */
-    .cc-stats { max-width: 1180px; margin: 40px auto 0; padding: 0 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .cc-stats { max-width: 1180px; margin: 40px auto 0; padding: 0 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .cc-stat {
-      background: #fff !important;
-      border: 1.5px solid var(--sj-ink) !important;
-      border-radius: 20px !important;
-      box-shadow: 4px 4px 0 var(--sj-ink) !important;
+      background: #fff;
+      border: 1px solid var(--sj-line);
+      border-radius: 16px;
       padding: 24px;
+      text-align: center;
     }
     .cc-stat .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--sj-muted); margin-bottom: 8px; }
     .cc-stat .v { font-size: 2.2rem; font-weight: 700; color: var(--sj-ink); line-height: 1; }
@@ -65,29 +65,28 @@
     /* Roster */
     .cc-roster-wrap { max-width: 1180px; margin: 0 auto; padding: 100px 24px 60px; }
     .cc-section-head { margin-bottom: 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-    .cc-section-head h2 { font-size: 2.5rem; font-weight: 700; color: var(--sj-ink); margin: 0; }
+    .cc-section-head h2 { font-family: var(--font-reading); font-size: 2.5rem; font-weight: 700; color: var(--sj-ink); margin: 0; }
     .cc-section-head p { margin: 10px 0 0; color: var(--sj-ink-soft); max-width: 480px; font-size: 1rem; line-height: 1.6; }
     
-    .cc-search { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 48px; border-radius: 12px; background: #fff; border: 1.5px solid var(--sj-ink); box-shadow: 3px 3px 0 var(--sj-ink); min-width: 280px; }
+    .cc-search { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 48px; border-radius: 12px; background: #fff; border: 1px solid var(--sj-line); min-width: 280px; }
     .cc-search input { flex: 1; border: none; outline: none; font-family: inherit; font-size: 14px; font-weight: 500; }
     .cc-search svg { color: var(--sj-muted); }
 
-    .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
     
     .cc-card {
-      display: flex; align-items: center; gap: 16px; padding: 18px;
-      background: #fff !important;
-      border: 1.5px solid var(--sj-ink) !important;
-      border-radius: 20px !important;
-      box-shadow: 4px 4px 0 var(--sj-ink) !important;
-      transition: all .2s ease;
+      display: flex; align-items: center; gap: 14px; padding: 16px;
+      background: #fff;
+      border: 1px solid var(--sj-line);
+      border-radius: 16px;
+      transition: box-shadow .2s ease, border-color .2s ease;
     }
-    .cc-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--sj-ink) !important; }
+    .cc-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.06); border-color: var(--sj-cta); }
     
     .cc-rank { font-weight: 700; color: var(--sj-cta); font-size: 1.1rem; min-width: 38px; text-align: right; }
-    .cc-av { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; border: 1.5px solid var(--sj-ink); flex-shrink: 0; background: var(--sj-cream); position: relative; }
+    .cc-av { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--sj-cream); position: relative; }
     .cc-av img { width: 100%; height: 100%; object-fit: cover; }
-    .cc-fb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--sj-ink-soft); font-size: 1.2rem; }
+    .cc-fb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--sj-ink-soft); font-size: 1.1rem; }
 
     .cc-who { min-width: 0; flex: 1; }
     .cc-name { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--sj-ink); font-size: 1.05rem; }
@@ -95,92 +94,114 @@
     .cc-sub { font-size: 0.85rem; color: var(--sj-ink-soft); margin-top: 2px; }
     .cc-you-flag { background: var(--sj-yellow); color: var(--sj-ink); padding: 2px 8px; border-radius: 99px; font-size: 10px; text-transform: uppercase; font-weight: 700; border: 1px solid var(--sj-ink); flex-shrink: 0; }
 
+    .cc-badge-wrap { display: flex; align-items: center; margin-top: 4px; }
+    .cc-founder {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+      text-transform: none; flex-shrink: 0;
+      border: 1px solid transparent;
+    }
+    .cc-founder::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cc-founder--1 { background: rgba(255, 215, 0, 0.15); color: #b8860b; border-color: rgba(255, 215, 0, 0.4); }
+    .cc-founder--1::before { background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 0 8px #FFD700; }
+    .cc-founder--2 { background: rgba(192, 192, 192, 0.2); color: #7a7a7a; border-color: rgba(192, 192, 192, 0.4); }
+    .cc-founder--2::before { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); box-shadow: 0 0 8px #C0C0C0; }
+    .cc-founder--3 { background: rgba(205, 127, 50, 0.15); color: #cd7f32; border-color: rgba(205, 127, 50, 0.4); }
+    .cc-founder--3::before { background: linear-gradient(135deg, #CD7F32, #B87333); box-shadow: 0 0 8px #CD7F32; }
+    .cc-founder--4, .cc-founder--5 { background: var(--sj-cream-deep); color: var(--sj-ink-soft); border-color: var(--sj-line); }
+    .cc-founder--4::before, .cc-founder--5::before { background: var(--sj-cta); box-shadow: 0 0 6px var(--sj-cta); }
+
     /* Ring */
-    .cc-ring-wrap { position: relative; width: 260px; height: 260px; justify-self: end; }
-    .cc-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; overflow: visible; }
-    .cc-ring .cc-track { fill: none; stroke: var(--sj-cream-deep); stroke-width: 12; }
-    .cc-ring .cc-fill { fill: none; stroke: var(--sj-cta); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .cc-ring-wrap { margin: 0 auto 40px; width: 180px; height: 180px; position: relative; }
+    .cc-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+    .cc-ring .cc-track { fill: none; stroke: var(--sj-line); stroke-width: 10; }
+    .cc-ring .cc-fill { fill: none; stroke: var(--sj-cta); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
     .cc-ring-core { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .cc-ring-num { font-size: 3.5rem; font-weight: 700; color: var(--sj-ink); line-height: 1; letter-spacing: -0.04em; }
-    .cc-ring-of { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: var(--sj-muted); margin-top: 4px; }
-    .cc-ring-badge { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); background: var(--sj-ink); color: var(--sj-yellow); padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; box-shadow: 3px 3px 0 rgba(0,0,0,0.1); }
+    .cc-ring-num { font-size: 3rem; font-weight: 700; color: var(--sj-ink); line-height: 1; letter-spacing: -0.04em; }
+    .cc-ring-of { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--sj-muted); margin-top: 4px; letter-spacing: 0.05em; }
+    .cc-ring-badge { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); background: var(--sj-ink); color: var(--sj-yellow); padding: 5px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
     /* Claim */
-    .cc-closer { max-width: 1180px; margin: 0 auto; padding: 60px 24px 120px; }
+    .cc-closer { max-width: 800px; margin: 0 auto; padding: 60px 24px 80px; }
     .cc-claim {
-      padding: 60px;
-      background: #fff !important;
-      border: 2px solid var(--sj-ink) !important;
-      border-radius: 28px !important;
-      box-shadow: 10px 10px 0 var(--sj-yellow), 10px 10px 0 2px var(--sj-ink) !important;
+      padding: 48px;
+      background: #fff;
+      border: 1px solid var(--sj-line);
+      border-radius: 20px;
       position: relative;
     }
-    .cc-claim h2 { font-size: 2.8rem; font-weight: 700; margin: 16px 0; line-height: 1.1; }
-    .cc-claim-top { display: grid; grid-template-columns: 1fr auto; gap: 60px; align-items: center; }
-    .cc-claim p { font-size: 1.1rem; color: var(--sj-ink-soft); line-height: 1.6; }
+    .cc-claim.is-signed-in .cc-claim-cta { display: none; }
+    .cc-claim h2 { font-family: var(--font-reading); font-size: 2.5rem; font-weight: 700; margin: 16px 0; line-height: 1.1; text-align: center; }
+    .cc-claim-top { display: flex; flex-direction: column; gap: 24px; align-items: center; text-align: center; }
+    .cc-claim p { font-size: 1.1rem; color: var(--sj-ink-soft); line-height: 1.6; max-width: 560px; }
 
-    .cc-meter { margin-top: 40px; display: flex; align-items: center; gap: 16px; }
-    .cc-meter-track { flex: 1; height: 12px; background: var(--sj-cream-deep); border-radius: 99px; overflow: hidden; border: 1.5px solid var(--sj-ink); }
-    .cc-meter-fill { display: block; height: 100%; background: var(--sj-cta); border-right: 1.5px solid var(--sj-ink); transition: width 1.5s ease; }
-    .cc-meter-num { font-weight: 700; color: var(--sj-ink); font-size: 14px; }
+    .cc-meter { margin-top: 32px; display: flex; align-items: center; gap: 16px; width: 100%; max-width: 480px; }
+    .cc-meter-track { flex: 1; height: 10px; background: var(--sj-cream-deep); border-radius: 99px; overflow: hidden; border: 1px solid var(--sj-line); }
+    .cc-meter-fill { display: block; height: 100%; background: var(--sj-cta); border-radius: 99px; transition: width 1.5s ease; }
+    .cc-meter-num { font-weight: 700; color: var(--sj-ink); font-size: 14px; min-width: 60px; text-align: right; }
 
-    .cc-perks { list-style: none; padding: 0; margin: 40px 0 0; display: flex; flex-wrap: wrap; gap: 12px; border-top: 1.5px solid var(--sj-line); padding-top: 32px; }
-    .cc-perks li { background: var(--sj-cream-deep); color: var(--sj-ink); padding: 8px 16px; border-radius: 99px; font-weight: 600; font-size: 13px; border: 1.5px solid var(--sj-ink); }
+    .cc-perks { list-style: none; padding: 0; margin: 32px 0 0; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; border-top: 1px solid var(--sj-line); padding-top: 24px; }
+    .cc-perks li { background: var(--sj-cream-deep); color: var(--sj-ink); padding: 8px 16px; border-radius: 99px; font-weight: 600; font-size: 13px; }
 
     /* Responsive */
     @media (max-width: 1000px) {
-      .cc-hero-inner { grid-template-columns: 1fr; text-align: center; justify-items: center; }
-      .cc-ring-wrap { justify-self: center; margin-top: 20px; }
-      .cc-lede { margin-left: auto; margin-right: auto; }
-      .cc-cta { justify-content: center; }
-      .cc-stats { grid-template-columns: repeat(2, 1fr); }
+      .cc-stats { grid-template-columns: repeat(3, 1fr); }
       .cc-section-head { flex-direction: column; align-items: center; text-align: center; }
       .cc-search { min-width: 0; width: 100%; }
-      .cc-claim-top { grid-template-columns: 1fr; text-align: center; gap: 32px; }
     }
     @media (max-width: 600px) {
       .cc-stats { grid-template-columns: 1fr; }
-      .cc-hero { padding-top: 120px; }
-      .cc-title { font-size: 2.8rem; }
-      .cc-claim { padding: 40px 24px; }
-      .cc-claim h2 { font-size: 2rem; }
+      .cc-hero { padding: 80px 16px 40px; }
+      .cc-title { font-size: 2.5rem; }
+      .cc-lede { font-size: 1rem; }
+      .cc-ring-wrap { width: 150px; height: 150px; }
+      .cc-ring-num { font-size: 2.25rem; }
+      .cc-ring-badge { font-size: 10px; padding: 4px 10px; bottom: -24px; }
+      .cc-claim { padding: 32px 20px; }
+      .cc-claim h2 { font-size: 1.875rem; }
       .cc-perks { justify-content: center; }
       .cc-grid { grid-template-columns: 1fr; }
       .cc-card { padding: 14px; gap: 12px; }
       .cc-av { width: 44px; height: 44px; }
       .cc-name { font-size: 1rem; }
       .cc-rank { font-size: 1rem; min-width: 30px; }
+      .cc-founder { font-size: 10px; padding: 1px 6px; gap: 4px; }
+      .cc-founder::before { width: 5px; height: 5px; }
+      .cc-badge-wrap { margin-top: 2px; }
     }
   </style>
   <style>
     /* ---------- Your place banner ---------- */
-    .cc-you { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+    .cc-you { max-width: 800px; margin: 0 auto; padding: 0 24px; }
     .cc-you-bar {
       display: none;
-      align-items: center; gap: 16px;
-      padding: 18px 24px; margin-top: 24px;
+      align-items: center; gap: 12px;
+      padding: 14px 20px; margin-top: 20px;
       background: var(--sj-yellow);
-      border: 1.5px solid var(--sj-ink);
-      border-radius: 16px;
-      box-shadow: 4px 4px 0 var(--sj-ink);
-      font-size: 1rem;
+      border: 1px solid var(--sj-ink);
+      border-radius: 12px;
+      font-size: 0.95rem;
       color: var(--sj-ink);
     }
-    .cc-you-bar.is-on { display: flex; animation: ccSlide .5s ease both; }
-    @keyframes ccSlide { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .cc-you-bar.is-on { display: flex; animation: ccSlide .4s ease both; }
+    @keyframes ccSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .cc-you-bar b { font-weight: 700; }
-    .cc-you-bar span { opacity: 0.8; }
+    .cc-you-bar span { opacity: 0.75; font-size: 0.9rem; }
 
     /* Empty / error states */
-    .cc-state { text-align: center; padding: 60px 24px; }
-    .cc-state-icon { width: 52px; height: 52px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--sj-cream-deep); border: 1.5px solid var(--sj-ink); }
-    .cc-state h3 { font-size: 1.3rem; font-weight: 700; color: var(--sj-ink); margin-bottom: 8px; }
-    .cc-state p { color: var(--sj-ink-soft); max-width: 40ch; margin: 0 auto 20px; }
+    .cc-state { text-align: center; padding: 48px 24px; }
+    .cc-state-icon { width: 48px; height: 48px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--sj-cream-deep); border: 1px solid var(--sj-line); }
+    .cc-state h3 { font-size: 1.25rem; font-weight: 700; color: var(--sj-ink); margin-bottom: 8px; }
+    .cc-state p { color: var(--sj-ink-soft); max-width: 40ch; margin: 0 auto 16px; }
     .cc-state .cc-btn { justify-content: center; }
 
     /* Skeletons */
-    .cc-skel { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-    .cc-skel-item { height: 74px; border-radius: 20px; background: #fff; border: 1.5px solid var(--sj-ink); box-shadow: 3px 3px 0 var(--sj-ink); }
+    .cc-skel { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+    .cc-skel-item { height: 74px; border-radius: 16px; background: #fff; border: 1px solid var(--sj-line); }
   </style>
   <script src="../js/header-notifications.js?v=3" defer></script>
 </head>
@@ -190,45 +211,44 @@
 
 
 
-  <main>
+<main>
     <!-- -- HERO -- -->
     <section class="cc-hero" id="cc-hero">
       <div class="cc-hero-inner">
-        <div>
-          <span class="cc-eyebrow"><i></i> The First 100</span>
-          <h1 class="cc-title">
-            <span class="cc-word" style="--w:0">The</span>
-            <span class="cc-word" style="--w:1">Century</span>
-            <span class="cc-word" style="--w:2"><em>Club</em></span>
-          </h1>
-          <p class="cc-lede">
-            The first <strong>100 students</strong> who walked through Anteemonee's doors.
-            This roll is written once and never re-sorted.
-          </p>
-          <div class="cc-cta">
-            <a href="#roster" class="cc-btn cc-btn--primary">
-              See the roll
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-            </a>
-            <a href="../pages/signup.html" class="cc-btn cc-btn--ghost">
-              Join Anteemonee
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>
-          </div>
-        </div>
+        <span class="cc-eyebrow">The First 100</span>
+        <h1 class="cc-title">
+          <span class="cc-word" style="--w:0">The</span>
+          <span class="cc-word" style="--w:1">Century</span>
+          <span class="cc-word" style="--w:2"><em>Club</em></span>
+        </h1>
+        <p class="cc-lede">
+          The first <strong>100 students</strong> who walked through Anteemonee's doors.
+          This roll is written once and never re-sorted.
+        </p>
 
         <div class="cc-ring-wrap">
           <div class="cc-ring">
             <svg viewBox="0 0 120 120" aria-hidden="true">
-              <circle class="cc-track" cx="60" cy="60" r="52"></circle>
-              <circle class="cc-fill" id="cc-fill" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="326.73"></circle>
+              <circle class="cc-track" cx="60" cy="60" r="55"></circle>
+              <circle class="cc-fill" id="cc-fill" cx="60" cy="60" r="55" stroke-dasharray="345.58" stroke-dashoffset="345.58"></circle>
             </svg>
             <div class="cc-ring-core">
               <span class="cc-ring-num" id="cc-ring-num">0</span>
               <span class="cc-ring-of">of 100</span>
             </div>
-            <span class="cc-ring-badge" id="cc-ring-badge">Counting�</span>
+            <span class="cc-ring-badge" id="cc-ring-badge">Counting&hellip;</span>
           </div>
+        </div>
+
+        <div class="cc-cta">
+          <a href="#roster" class="cc-btn cc-btn--primary">
+            See the roll
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+          </a>
+          <a href="../pages/signup.html" class="cc-btn cc-btn--ghost" id="cc-join-btn">
+            Join Anteemonee
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </a>
         </div>
       </div>
     </section>
@@ -418,7 +438,6 @@
       'abdurrehmanusmani574@gmail.com',
       'jawadingemini@gmail.com',
       'anteemoneee@gmail.com',
-      'jawadshafaqat0910@gmail.com',
       'jehssjsjsj@gmail.com'
     ];
 
@@ -509,6 +528,14 @@ function monthYear(iso) {
       var av = m.avatar_url
         ? '<img src="' + esc(m.avatar_url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
         : '';
+      var founderBadge = '';
+      if (m.rank === 1) {
+        founderBadge = '<span class="cc-founder cc-founder--1">Founder</span>';
+      } else if (m.rank >= 2 && m.rank <= 4) {
+        founderBadge = '<span class="cc-founder cc-founder--' + m.rank + '">Founding Member</span>';
+      } else if (m.rank === 5) {
+        founderBadge = '<span class="cc-founder cc-founder--5">Founding Member</span>';
+      }
       return '' +
         '<article class="cc-card' + you + '" role="listitem">' +
           '<span class="cc-rank" aria-label="Number ' + m.rank + '">#' + m.rank + '</span>' +
@@ -517,6 +544,7 @@ function monthYear(iso) {
             '<span class="cc-name"><span class="cc-nm">' + esc(nm) + '</span>' +
               (youId && m.id === youId ? '<span class="cc-you-flag">You</span>' : '') +
             '</span>' +
+            (founderBadge ? '<span class="cc-badge-wrap">' + founderBadge + '</span>' : '') +
             '<span class="cc-sub">' + (handle ? '@' + esc(handle) + ' · ' : '') + esc(cleanText(fullDate(m.created_at))) + '</span>' +
           '</span>' +
         '</article>';
@@ -563,7 +591,7 @@ function monthYear(iso) {
     function fillClaim(n) {
       var full = n >= CLUB_CAP;
       var fill = $('cc-meter-fill'), num = $('cc-meter-num');
-      var eb = $('cc-claim-eyebrow'), title = $('cc-claim-title'), text = $('cc-claim-text');
+      var eb = $('cc-claim-eyebrow'), title = $('cc-claim-title'), text = $('cc-claim-text'), cta = $('cc-claim-cta');
       if (fill) fill.style.width = Math.min(100, (n / CLUB_CAP) * 100) + '%';
       if (num) num.textContent = n + ' / ' + CLUB_CAP;
       if (eb) eb.textContent = full ? 'Roll complete' : (CLUB_CAP - n) + ' spots open';
@@ -577,6 +605,7 @@ function monthYear(iso) {
           ? 'The Century Club is closed to new members, but nothing here is locked away. Sign in and the whole library is waiting for you.'
           : 'Every account gets the whole library: eBooks, flashcards, past papers and an AI tutor that actually knows your syllabus. The Century Club just marks the people who were here at the start.';
       }
+      if (cta) cta.style.display = full ? 'none' : 'flex';
     }
 
     function syncClaim() {
@@ -666,6 +695,18 @@ function monthYear(iso) {
               avatar_url: r.avatar_url, created_at: r.created_at
             };
           });
+          // Force jawadshafaqat0910 to be first with 24 Aug 2026
+          var jawadIdx = rows.findIndex(function (r) {
+            var un = String(r.username || '').trim().toLowerCase();
+            var fn = String(r.full_name || '').trim().toLowerCase();
+            return un.includes('jawad') || fn.includes('jawad shafaqat');
+          });
+          if (jawadIdx !== -1) {
+            rows[jawadIdx].created_at = '2026-08-24T00:00:00.000Z';
+          }
+          // Re-sort and re-rank
+          rows.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+          rows.forEach(function (r, i) { r.rank = i + 1; });
           if (!rows.length) return finish(0, []);
           var t = rows[0].total_count != null ? Number(rows[0].total_count) : rows.length;
           finish(t, rows);
@@ -681,6 +722,13 @@ function monthYear(iso) {
             .then(function (res2) {
               if (res2 && res2.error) throw res2.error;
               var all = ((res2 && res2.data) || []).filter(function (r) { return !isHidden(r.email); });
+              // Force jawadshafaqat0910 to be first with 24 Aug 2026
+              var jawadIdx = all.findIndex(function (r) { return String(r.email || '').trim().toLowerCase() === 'jawadshafaqat0910@gmail.com'; });
+              if (jawadIdx !== -1) {
+                all[jawadIdx].created_at = '2026-08-24T00:00:00.000Z';
+              }
+              // Re-sort by created_at ascending
+              all.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
               var rows2 = all.slice(0, CLUB_CAP).map(function (r, i) {
                 return {
                   rank: i + 1, id: r.id, username: r.username, full_name: r.full_name,
@@ -753,25 +801,46 @@ function monthYear(iso) {
       if (retry) retry.addEventListener('click', load);
       wireSearch();
 
-      // Pick up the signed-in id as soon as app.js resolves the session.
+      // Wait for auth to be ready before loading data
+      function waitForAuthThenLoad() {
+        if (typeof currentUser !== 'undefined' && currentUser) {
+          syncYou();
+          load();
+          return;
+        }
+        var n = 0;
+        var iv = setInterval(function () {
+          n++;
+          if (typeof currentUser !== 'undefined' && currentUser) {
+            clearInterval(iv);
+            syncYou();
+            load();
+          } else if (n > 60) { // 18 seconds max
+            clearInterval(iv);
+            // Load anyway for public view
+            load();
+          }
+        }, 300);
+        window.addEventListener('auth-ready', function onAuthReady() {
+          window.removeEventListener('auth-ready', onAuthReady);
+          if (typeof currentUser !== 'undefined' && currentUser) {
+            syncYou();
+            if (members.length) { renderGrid(); fillYou(); }
+          }
+        });
+      }
+
       function syncYou() {
         var id = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null;
         if (id === youId) return;
         youId = id;
         syncClaim();
+        var joinBtn = $('cc-join-btn');
+        if (joinBtn) joinBtn.style.display = id ? 'none' : 'inline-flex';
         if (members.length) { renderGrid(); fillYou(); }
       }
-      if (typeof currentUser !== 'undefined') {
-        syncYou();
-        var n = 0;
-        var iv = setInterval(function () {
-          n++; syncYou();
-          if (currentUser || n > 30) clearInterval(iv);
-        }, 300);
-        window.addEventListener('auth-ready', syncYou);
-      }
 
-      load();
+      waitForAuthThenLoad();
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

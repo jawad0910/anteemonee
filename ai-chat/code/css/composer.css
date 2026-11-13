@@ -136,6 +136,88 @@ body.welcome-center .chat-input-area {
   color: var(--chat-on-tint);
   box-shadow: 0 4px 14px var(--chat-tint-ring);
 }
+.btn-voice.recording {
+  background: var(--error);
+  color: var(--chat-on-tint);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+/* Inline voice recording: covers the whole prompt box */
+.chat-input-wrapper.voice-recording-active > :not(.voice-rec-wrap) {
+  visibility: hidden;
+  pointer-events: none;
+}
+.chat-input-wrapper.voice-recording-active {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.voice-rec-wrap {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: 80%;
+  height: 36px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 999px;
+  background: var(--card-bg, var(--liquid-bg));
+  border: 1px solid var(--liquid-border);
+  box-sizing: border-box;
+}
+.voice-rec-wrap.show { display: flex; }
+.voice-rec-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.voice-freq {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  width: 120px;
+  min-width: 0;
+  height: 20px;
+}
+.voice-freq-bar {
+  flex: 0 0 3px;
+  width: 3px;
+  min-width: 3px;
+  max-width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent, #6366f1);
+  opacity: 0.4;
+  transition: height 50ms linear, opacity 50ms linear;
+}
+.voice-stop-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: #ef4444 !important;
+  color: #fff !important;
+  border-color: #ef4444 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.voice-stop-btn:hover { filter: brightness(1.05); transform: none; }
+.voice-stop-btn svg { width: 14px; height: 14px; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.7); }
+}
 .btn-stop {
   color: var(--error);
 }
