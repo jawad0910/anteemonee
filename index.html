@@ -126,12 +126,274 @@
     .hero-actions .btn-secondary:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
     .section { padding: 70px 24px; }
     .section-inner { max-width: 1280px; margin: 0 auto; }
+    /* ── Watch-how-it-works TV: white projector skin, soft, Poppins ── */
+    .tv { background: #FFFFFF !important; border: 0 !important; box-shadow: 0 20px 60px -24px rgba(21,21,21,.28), 0 2px 8px rgba(21,21,21,.06) !important; }
+    .tv-topbar { font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-brand { color: rgba(21,21,21,.55) !important; }
+    .tv-channel { color: #151515 !important; background: #FCE004 !important; border: 1px solid #EDE9DC !important; }
+    .tv-led { background: #FE6100 !important; box-shadow: 0 0 8px rgba(254,97,0,.55) !important; }
+    .tv-screen { background: #F4F1E8 !important; border: 1px solid #EDE9DC !important; }
+    .tv-scan { background: repeating-linear-gradient(0deg, rgba(21,21,21,.045) 0 1px, transparent 1px 3px) !important; }
+    .tv-static { background: repeating-linear-gradient(0deg, rgba(21,21,21,.16) 0 2px, rgba(21,21,21,.05) 2px 4px) !important; }
+    .tv-scene { color: #151515 !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-bubble { font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-bubble.user { background: #FCE004 !important; border: 1px solid #EDE9DC !important; color: #151515 !important; }
+    .tv-bubble.ai { background: #FFFFFF !important; border: 1px solid #EDE9DC !important; color: #151515 !important; }
+    .tv-caret { background: #FE6100 !important; }
+    .tv-ref { color: #151515 !important; background: #FFFFFF !important; border: 1px solid #EDE9DC !important; }
+    .tv-step { color: #151515 !important; background: #FFFFFF !important; border: 1px solid #EDE9DC !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-step.done { border-color: #FCE004 !important; background: #FEF9C8 !important; }
+    .tv-progress { background: #EDE9DC !important; }
+    .tv-progress i { background: linear-gradient(90deg, #FE6100, #FCE004) !important; }
+    .tv-paper { background: #FFFFFF !important; color: #151515 !important; border: 1px solid #EDE9DC !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-paper em { color: #E15100 !important; }
+    .tv-dl { background: #FE6100 !important; color: #FFFFFF !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-grade { background: #FEF9C8 !important; border: 1px solid #FCE004 !important; }
+    .tv-grade b { color: #E15100 !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-grade span { color: rgba(21,21,21,.75) !important; }
+    .tv-check { color: rgba(21,21,21,.55) !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-spin { border-color: #EDE9DC !important; border-top-color: #FE6100 !important; }
+    .tv-overall { color: rgba(21,21,21,.75) !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-overall b { color: #151515 !important; }
+    .tv-btn { color: #151515 !important; background: #FFFFFF !important; border: 1px solid #EDE9DC !important; font-family: 'Poppins', system-ui, sans-serif; }
+    .tv-btn:hover { background: #FEF9C8 !important; border-color: #FCE004 !important; }
+    .tv-dot { background: #EDE9DC !important; }
+    .tv-dot.on { background: #FE6100 !important; box-shadow: 0 0 8px rgba(254,97,0,.45) !important; }
+    .tv-stand { background: #EDE9DC !important; }
+    .tv-cta-row .plan-btn { font-family: 'Poppins', system-ui, sans-serif; }
+    /* ── Recorded-demo cursor + typed bubbles ── */
+    .tv-cursor {
+      position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; z-index: 9;
+      pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+      transition: left .85s cubic-bezier(.4,.0,.2,1), top .85s cubic-bezier(.4,.0,.2,1), opacity .3s ease, transform .15s ease;
+      opacity: 0;
+    }
+    .tv-cursor.on { opacity: 1; }
+    .tv-cursor.press { transform: scale(.85); }
+    .tv-cursor svg { width: 22px; height: 22px; display: block; }
+    .tv-type-caret {
+      display: inline-block; width: 2px; height: 18px; margin-left: 2px; vertical-align: -3px;
+      background: #FE6100; animation: tvblink 1s steps(1) infinite;
+    }
+    .tv-typed-user { white-space: nowrap; }
+    .tv-typing-dots { display: inline-flex; gap: 4px; align-items: center; min-height: 14px; }
+    .tv-typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: #FE6100; animation: tbdot 1.1s ease-in-out infinite; }
+    .tv-typing-dots i:nth-child(2) { animation-delay: .18s; } .tv-typing-dots i:nth-child(3) { animation-delay: .36s; }
+    @keyframes tbdot { 0%,60%,100% { transform: translateY(0); opacity:.45; } 30% { transform: translateY(-4px); opacity:1; } }
+    .tv-reveal { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
+    .tv-reveal.show { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .tv-caret, .tv-spin, .tv-type-caret { animation: none; }
+      .tv-typing-dots i { animation: none; }
+    }
+    /* ── Hero practice card (bri-card) — thin, soft, Poppins ── */
+    .bri-card {
+      position: relative;
+      background: #FFFFFF;
+      color: #151515;
+      border-radius: 20px;
+      padding: 16px 16px 12px;
+      max-width: 380px;
+      margin-left: auto;
+      border: 0;
+      box-shadow: 0 16px 40px -18px rgba(21,21,21,.18), 0 2px 8px rgba(21,21,21,.05);
+      font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    }
+    .bri-subjs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .bri-subjs button {
+      flex: 1; min-width: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 12px; font-weight: 600;
+      padding: 7px 2px; border-radius: 10px; background: #F4F1E8; border: 1px solid #EDE9DC; color: rgba(21,21,21,.6);
+      cursor: pointer; white-space: nowrap; box-shadow: none;
+    }
+    .bri-subjs button.on { background: #FE6100; color: #FFFFFF; border-color: transparent; }
+    .bri-q {
+      font-family: 'Poppins', system-ui, sans-serif; font-size: 13.5px; font-weight: 600; line-height: 1.5;
+      letter-spacing: -0.006em; color: #151515; margin: 0 2px 10px; text-wrap: pretty;
+    }
+    .bri-viz {
+      background: #F4F1E8; border: 1px solid #EDE9DC; border-radius: 14px; padding: 12px;
+      position: relative;
+    }
+    .bri-geo { padding: 2px 2px 0; }
+    .bri-geo svg { display: block; }
+    .bri-poly { fill: #FFFFFF; stroke: #151515; }
+    .bri-ext { stroke: #151515; }
+    .bri-svgt { fill: #151515; font-family: 'Poppins', system-ui, sans-serif; }
+    .bri-svgbox { fill: #FFFFFF; stroke: #EDE9DC; }
+    .bri-slider-row input[type="range"] {
+      flex: 1; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 999px;
+      background: #EDE9DC; outline: none; cursor: ew-resize;
+    }
+    .bri-slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: #FE6100; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(254,97,0,.35); cursor: grab;
+    }
+    .bri-slider-row input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%; background: #FE6100; border: 3px solid #fff; cursor: grab;
+    }
+    .bri-val {
+      font-family: 'Poppins', system-ui, sans-serif; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+      color: #151515; background: #F4F1E8; border: 1px solid #EDE9DC; padding: 5px 10px; border-radius: 9px;
+      min-width: 58px; text-align: center;
+    }
+    .bri-status {
+      font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.006em;
+      font-variant-numeric: tabular-nums; text-align: center; margin: 0 2px; padding: 11px 12px;
+      border-radius: 12px; border: 1px solid transparent;
+    }
+    .bri-status.good { color: #E15100; background: #FEF9C8; border-color: #FCE004; }
+    .bri-status.miss { color: #151515; background: #F4F1E8; border-color: #EDE9DC; }
+    .bri-mol {
+      display: inline-flex; align-items: center; gap: 3px; background: #FFFFFF; border: 1px solid #EDE9DC;
+      border-radius: 999px; padding: 5px 10px; font-size: 13px; font-weight: 700; color: #151515;
+      font-family: 'Poppins', system-ui, sans-serif;
+    }
+    .bri-atom { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+    .bri-atom.h { background: #FE6100; color: #fff; } .bri-atom.o { background: #151515; color: #FCE004; }
+    .bri-punnett span { padding: 8px 0; border-radius: 9px; background: #FFFFFF; border: 1px solid #EDE9DC; }
+    .bri-punnett span:first-child { background: transparent; border: none; }
+    .bri-punnett .tall { background: #FEF9C8; border-color: #FCE004; }
+    .bri-bit {
+      width: 52px; height: 54px; border-radius: 13px; background: #FFFFFF; border: 1px solid #EDE9DC;
+      color: rgba(21,21,21,.55); font-size: 20px; font-weight: 700; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: 'Poppins', system-ui, sans-serif;
+    }
+    .bri-bit.on { border-color: #FE6100; color: #151515; background: #FEF9C8; }
+    .bri-foot {
+      display: flex; align-items: center; justify-content: center; font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 13.5px; font-weight: 700; letter-spacing: .002em; color: #FFFFFF;
+      background: #FE6100; border: 1px solid #FE6100; border-radius: 999px; padding: 11px 14px; margin-top: 10px;
+      text-decoration: none; box-shadow: 0 8px 20px rgba(254,97,0,.28);
+    }
+    .bri-foot:hover { background: #E15100; border-color: #E15100; }
+    .bri-force-arrow { background: #FE6100; }
+    .bri-force-arrow::after { border-left-color: #FE6100; }
+    .bri-phy-numbers { font-family: 'Poppins', system-ui, sans-serif; }
+    .bri-track { background: repeating-linear-gradient(90deg, #EDE9DC 0 12px, transparent 12px 22px); background-position: 0 42px; background-size: 100% 3px; background-repeat: no-repeat; }
+    .bri-atom.h { font-family: 'Poppins', system-ui, sans-serif; }
+    /* Roadmap to 90+ — slim timeline, white cards, Poppins */
+    /* thin center rail, small dot per step, no thick 1.5px borders */
+    .roadmap { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; position: relative; }
+    .roadmap::before { content: ''; position: absolute; left: 19px; top: 12px; bottom: 12px; width: 2px; background: #EDE9DC; border-radius: 2px; }
+    .roadmap .rstep { padding: 14px 16px; border-radius: 16px; position: relative; }
+    .roadmap .rstep::before { content: ''; position: absolute; left: 15px; top: 50%; transform: translate(-50%,-50%); width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF; border: 2px solid #EDE9DC; }
+    .roadmap .rstep-num { font-family: 'Poppins', system-ui, sans-serif; font-size: 11px; font-weight: 700; color: rgba(21,21,21,.45); min-width: 28px; }
+    .roadmap .rstep-ic { width: 38px; height: 38px; border-radius: 12px; background: #F4F1E8; color: #FE6100; border: 1px solid #EDE9DC; box-shadow: none; }
+    .roadmap .rstep-tx { font-family: 'Poppins', system-ui, sans-serif; }
+    .roadmap .rstep-go { color: rgba(21,21,21,.35); font-weight: 600; transition: color .18s ease, transform .18s ease; }
+    .roadmap a.rstep:hover .rstep-go { color: #FE6100; transform: translateX(2px); }
+    .roadmap .rstep.trophy { background: #FEF9C8; border-color: #FCE004; }
+    .roadmap .rstep.trophy::before { background: #FCE004; border-color: #FE6100; }
+    .roadmap .rstep.trophy .rstep-ic { background: #FCE004; color: #151515; border-color: #EDE9DC; }
+    .rstep.trophy .rstep-tx b { font-size: 17px; }
+    @media (min-width: 700px) {
+      .roadmap .rstep:nth-child(2) { margin-left: 5%; }
+      .roadmap .rstep:nth-child(3) { margin-left: 10%; }
+      .roadmap .rstep:nth-child(4) { margin-left: 15%; }
+      .roadmap .rstep:nth-child(5) { margin-left: 20%; }
+      .roadmap .rstep:nth-child(6) { margin-left: 25%; }
+      .roadmap .rstep.trophy { margin-left: 12%; margin-right: 12%; }
+    }
+    @media (max-width: 699px) {
+      .roadmap .rstep:nth-child(2) { margin-left: 3%; }
+      .roadmap .rstep:nth-child(3) { margin-left: 6%; }
+      .roadmap .rstep:nth-child(4) { margin-left: 9%; }
+      .roadmap .rstep:nth-child(5) { margin-left: 12%; }
+      .roadmap .rstep:nth-child(6) { margin-left: 15%; }
+    }
+
+    /* Android App Coming Soon Announcement */
+    .app-banner {
+      position: relative;
+      background: linear-gradient(135deg, #FE6100 0%, #E15100 100%);
+      color: #fff;
+      padding: 16px 24px;
+      margin: 0 24px 24px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(254, 97, 0, 0.3);
+    }
+    .app-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .app-banner-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .app-banner-text {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .app-banner-text strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .app-banner-close {
+      background: none;
+      border: none;
+      color: #fff;
+      opacity: 0.7;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      transition: opacity 0.2s, background 0.2s;
+      margin-left: 8px;
+    }
+    .app-banner-close:hover {
+      opacity: 1;
+      background: rgba(255,255,255,0.15);
+    }
+    .app-banner-close:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    /* Simplify buttons */
+    .plan-btn { border: none !important; box-shadow: none !important; transition: background-color 0.15s ease, color 0.15s ease !important; }
+    .plan-btn:hover { transform: none !important; box-shadow: none !important; }
+    .plan-btn:active { transform: scale(0.98) !important; }
+    .plan-btn-primary { box-shadow: none !important; }
+    .plan-btn-primary:hover { box-shadow: none !important; }
+    .plan-btn::after, .plan-btn::before { display: none; }
+
+    #hero-primary-cta { border: none !important; box-shadow: none !important; transition: background-color 0.15s ease, filter 0.15s ease !important; }
+    #hero-primary-cta:hover { transform: none !important; box-shadow: none !important; }
+    #hero-primary-cta:active { transform: scale(0.97) !important; }
+
+    .hero-actions .btn-secondary { border: 1px solid var(--accent) !important; box-shadow: none !important; transition: background-color 0.15s ease, color 0.15s ease !important; }
+    .hero-actions .btn-secondary:hover { transform: none !important; box-shadow: none !important; background: var(--accent-soft); }
+    .hero-actions .btn-secondary:active { transform: scale(0.97) !important; }
+
+    .tv-btn { border: 1px solid rgba(255,255,255,0.14) !important; box-shadow: none !important; }
+    .tv-btn:hover { border-color: var(--accent) !important; box-shadow: none !important; }
+
+    .bri-foot { border: none !important; box-shadow: 0 4px 16px rgba(254,97,0,0.25) !important; }
+    .bri-foot:hover { box-shadow: 0 6px 20px rgba(254,97,0,0.3) !important; }
   </style>
   <link rel="stylesheet" href="css/header.css?v=12">
   <script src="js/header-notifications.js?v=3" defer></script>
-  <link rel="stylesheet" href="css/home.css?v=5">
+  <link rel="stylesheet" href="css/home.css?v=8">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/sj-theme.css?v=7">
+  <link rel="stylesheet" href="css/sj-theme.css?v=10">
 </head>
 <body data-header-gap="-28">
   <div data-site-header></div>
@@ -139,6 +401,25 @@
 
 
   <main>
+    <!-- Android App Coming Soon Banner -->
+    <div class="app-banner" id="app-banner" role="status" aria-live="polite">
+      <div class="app-banner-content">
+        <div class="app-banner-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a8 8 0 0 1 8 8v8a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2H6v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V12a8 8 0 0 1 16 0v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V10"/>
+            <path d="M8 14h8M12 10v4"/>
+          </svg>
+        </div>
+        <div class="app-banner-text">
+          <strong>Android App Coming Soon</strong>
+          Get notified when it launches on the Play Store
+        </div>
+      </div>
+      <button class="app-banner-close" id="app-banner-close" aria-label="Dismiss announcement">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
     <!-- HERO -->
     <section class="hero">
       <div class="hero-inner">
@@ -456,8 +737,8 @@
             <div class="tv-screen">
               <div class="tv-scene" data-scene="0">
                 <div class="tv-chat">
-                  <div class="tv-bubble user"><span>YOU</span><p>Explain Newton&apos;s second law, Physics Ch 3</p></div>
-                  <div class="tv-bubble ai"><span>AI TUTOR</span><p><span class="tv-type" data-text="Force equals mass times acceleration: F = ma. Your book introduces it in Chapter 3, page 48 — the net force on a body equals its mass times acceleration. Worked example: a 2 kg cart pushed with a 10 N force accelerates at 5 m/s². Common mistake: mixing mass (kg) with weight (N). Key idea: bigger force or smaller mass means bigger acceleration."></span><span class="tv-caret"></span></p></div>
+                  <div class="tv-bubble user" data-user-q hidden><span>YOU</span><p><span class="tv-typed-user" data-typed-user></span><span class="tv-type-caret" data-typed-caret></span></p></div>
+                  <div class="tv-bubble ai" data-ai-a hidden><span>AI TUTOR</span><p><span class="tv-type" data-text="Force equals mass times acceleration: F = ma. Your book introduces it in Chapter 3, page 48 — the net force on a body equals its mass times acceleration. Worked example: a 2 kg cart pushed with a 10 N force accelerates at 5 m/s². Common mistake: mixing mass (kg) with weight (N). Key idea: bigger force or smaller mass means bigger acceleration."></span><span class="tv-caret"></span></p></div>
                   <div class="tv-ref" data-ref>Physics Class 11 · Chapter 3 · p. 48</div>
                   <div class="tv-bubble user tv-reveal" data-follow-q hidden><span>YOU</span><p>Give one exam tip for this</p></div>
                   <div class="tv-bubble ai tv-reveal" data-follow-a hidden><span>AI TUTOR</span><p>Always write the formula first, then substitute values with units — the formula alone earns a mark.</p></div>
@@ -491,6 +772,7 @@
               </div>
               <div class="tv-scan"></div>
               <div class="tv-static" id="tv-static"></div>
+              <div class="tv-cursor" id="tv-cursor" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M5 3l14 7-6.5 1.5L9 18z" fill="#fff" stroke="#151515" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
             </div>
             <div class="tv-controls">
               <button class="tv-btn" id="tv-prev" aria-label="Previous channel">CH-</button>
@@ -514,9 +796,12 @@
       var label = document.getElementById('tv-channel');
       var staticEl = document.getElementById('tv-static');
       var dotsWrap = document.getElementById('tv-dots');
+      var cursor = document.getElementById('tv-cursor');
       var names = ['AI TUTOR', 'TEST BUILDER', 'AI EXAMINER'];
       var cur = 0, gen = 0, timers = [];
       var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var USER_Q = 'Explain Newton\'s second law, Physics Ch 3';
+      var screenEl = tv.querySelector('.tv-screen');
       function later(fn, ms) {
         var g = gen;
         var id = setTimeout(function () { if (g === gen) fn(); }, ms);
@@ -534,36 +819,100 @@
         var dots = dotsWrap.children;
         for (var k = 0; k < dots.length; k++) dots[k].classList.toggle('on', k === cur);
       }
-      function typeInto(el, full, ref) {
+      function moveCursor(el, dx, dy) {
+        if (!cursor || !el || reduceMotion) return;
+        var sr = screenEl.getBoundingClientRect();
+        var r = el.getBoundingClientRect();
+        var x = r.left - sr.left + r.width / 2 + (dx || 0);
+        var y = r.top - sr.top + r.height / 2 + (dy || -6);
+        cursor.classList.add('on');
+        cursor.style.left = Math.max(4, Math.min(sr.width - 28, x)) + 'px';
+        cursor.style.top = Math.max(4, Math.min(sr.height - 28, y)) + 'px';
+      }
+      function pressCursor(fn, hold) {
+        if (!cursor || reduceMotion) { if (fn) fn(); return; }
+        cursor.classList.add('press');
+        later(function () { cursor.classList.remove('press'); if (fn) fn(); }, hold || 180);
+      }
+      function userTypeInto(el, caret, done) {
+        if (reduceMotion) { el.textContent = USER_Q; if (caret) caret.style.display = ''; if (done) done(); return; }
+        el.textContent = '';
+        var bubble = el.closest('.tv-bubble') || el;
+        var n = 0;
+        moveCursor(bubble, 0, -10);
+        (function tick() {
+          n += 1;
+          el.textContent = USER_Q.slice(0, n);
+          if (n < USER_Q.length) later(tick, 55);
+          else later(function () {
+            pressCursor(function () {
+              if (caret) caret.style.display = '';
+              if (done) done();
+            }, 220);
+          }, 300);
+        })();
+      }
+      function typeInto(el, full, cb) {
+        if (reduceMotion) { el.textContent = full; if (cb) cb(); return; }
+        var bubble = el.closest('.tv-bubble') || el;
+        moveCursor(bubble, -40, -8);
         el.textContent = '';
         var n = 0;
         (function tick() {
-          n += 4;
+          var step = (Math.random() > .85) ? 1 : 2;
+          n += step;
           el.textContent = full.slice(0, n);
-          if (n < full.length) later(tick, 16);
-          else if (ref) ref.classList.add('show');
+          if (n < full.length) later(tick, 22 + Math.random() * 14);
+          else if (cb) cb();
         })();
+      }
+      function typingDotsInto(el, done) {
+        if (reduceMotion) { if (done) done(); return; }
+        el.innerHTML = '<span class="tv-typing-dots"><i></i><i></i><i></i></span>';
+        later(function () { el.innerHTML = ''; if (done) done(); }, 800);
       }
       function animateScene(i) {
         if (i === 0) {
+          var userBubble = scenes[0].querySelector('[data-user-q]');
+          var userText = scenes[0].querySelector('[data-typed-user]');
+          var userCaret = scenes[0].querySelector('[data-typed-caret]');
+          var aiBubble = scenes[0].querySelector('[data-ai-a]');
           var typeEl = scenes[0].querySelector('.tv-type');
           var ref = scenes[0].querySelector('[data-ref]');
           var fQ = scenes[0].querySelector('[data-follow-q]');
           var fA = scenes[0].querySelector('[data-follow-a]');
           var full = typeEl.getAttribute('data-text');
+          if (userBubble) userBubble.hidden = false;
+          userText.textContent = '';
+          if (userCaret) userCaret.style.display = '';
+          if (aiBubble) aiBubble.hidden = true;
           ref.classList.remove('show');
           if (fQ) { fQ.hidden = true; fQ.classList.remove('show'); }
           if (fA) { fA.hidden = true; fA.classList.remove('show'); }
+          typeEl.textContent = '';
           if (reduceMotion) {
+            userText.textContent = USER_Q;
+            if (aiBubble) aiBubble.hidden = false;
             typeEl.textContent = full; ref.classList.add('show');
             if (fQ) { fQ.hidden = false; fQ.classList.add('show'); }
             if (fA) { fA.hidden = false; fA.classList.add('show'); }
+            if (cursor) cursor.classList.remove('on');
             return;
           }
-          typeInto(typeEl, full, ref);
-          var typeMs = Math.ceil(full.length / 4) * 16 + 900;
-          later(function () { if (fQ) { fQ.hidden = false; void fQ.offsetWidth; fQ.classList.add('show'); } }, typeMs);
-          later(function () { if (fA) { fA.hidden = false; void fA.offsetWidth; fA.classList.add('show'); } }, typeMs + 1400);
+          userTypeInto(userText, userCaret, function () {
+            if (aiBubble) aiBubble.hidden = false;
+            moveCursor(aiBubble, -60, -10);
+            var tmp = typeEl.cloneNode(false);
+            tmp.className = 'tv-type-dots-slot';
+            tmp.style.display = 'none';
+            typeEl.parentNode.appendChild(tmp);
+            tmp.style.display = '';
+            typingDotsInto(tmp, function () { typeInto(typeEl, full, function () { ref.classList.add('show'); }); });
+            var typeMs = 900 + Math.ceil(full.length / 2) * 22 + 900;
+            later(function () { if (fQ) { fQ.hidden = false; void fQ.offsetWidth; fQ.classList.add('show'); } }, typeMs);
+            later(function () { if (fA) { fA.hidden = false; void fA.offsetWidth; fA.classList.add('show'); } }, typeMs + 1400);
+            later(function () { if (cursor) cursor.classList.remove('on'); }, typeMs + 2000);
+          });
         } else if (i === 1) {
           var steps = scenes[1].querySelectorAll('[data-step]');
           var bar = scenes[1].querySelector('[data-progress]');
@@ -576,19 +925,24 @@
             for (var b = 0; b < steps.length; b++) steps[b].classList.add('show', 'done');
             bar.classList.add('show'); fill.style.width = '100%';
             paper.hidden = false; paper.classList.add('show');
+            if (cursor) cursor.classList.remove('on');
             return;
           }
           steps.forEach(function (st, k) {
-            later(function () { st.classList.add('show'); }, 350 * (k + 1));
-            later(function () { st.classList.add('done'); }, 350 * (k + 1) + 260);
+            later(function () { moveCursor(st, -40, 0); }, 450 * k + 450);
+            later(function () { pressCursor(function () { st.classList.add('show'); }, 140); }, 450 * k + 850);
+            later(function () { st.classList.add('done'); }, 450 * k + 1100);
           });
-          later(function () { bar.classList.add('show'); fill.style.width = '100%'; }, 350 * (steps.length + 1));
-          later(function () { paper.hidden = false; void paper.offsetWidth; paper.classList.add('show'); }, 350 * (steps.length + 1) + 1300);
+          later(function () { bar.classList.add('show'); fill.style.width = '100%'; }, 450 * (steps.length + 1));
+          later(function () { moveCursor(paper, -60, 0); }, 450 * (steps.length + 1) + 1200);
+          later(function () { pressCursor(function () { paper.hidden = false; void paper.offsetWidth; paper.classList.add('show'); }, 160); }, 450 * (steps.length + 1) + 1400);
+          later(function () { if (cursor) cursor.classList.remove('on'); }, 450 * (steps.length + 1) + 1800);
         } else {
           var check = scenes[2].querySelector('[data-check]');
           var grade = scenes[2].querySelector('[data-grade]');
           var grade2 = scenes[2].querySelector('[data-grade2]');
           var overall = scenes[2].querySelector('[data-overall]');
+          var user2 = scenes[2].querySelector('.tv-bubble.user');
           grade.hidden = true; grade.classList.remove('show');
           if (grade2) { grade2.hidden = true; grade2.classList.remove('show'); }
           overall.hidden = true; overall.classList.remove('show');
@@ -598,16 +952,20 @@
             grade.hidden = false; overall.hidden = false;
             grade.classList.add('show'); overall.classList.add('show');
             if (grade2) { grade2.hidden = false; grade2.classList.add('show'); }
+            if (cursor) cursor.classList.remove('on');
             return;
           }
-          later(function () {
+          later(function () { moveCursor(user2, -30, 0); }, 600);
+          later(function () { pressCursor(function () {
             check.hidden = true;
             grade.hidden = false; void grade.offsetWidth; grade.classList.add('show');
-          }, 1100);
+          }, 160); }, 1100);
+          later(function () { moveCursor(grade, -40, 0); }, 1500);
           later(function () {
             if (grade2) { grade2.hidden = false; void grade2.offsetWidth; grade2.classList.add('show'); }
           }, 1950);
           later(function () { overall.hidden = false; void overall.offsetWidth; overall.classList.add('show'); }, 2800);
+          later(function () { if (cursor) cursor.classList.remove('on'); }, 3200);
         }
       }
       function show(i, instant) {
@@ -615,6 +973,7 @@
         clearTimers();
         label.textContent = 'CH 0' + (cur + 1) + ' · ' + names[cur];
         setDots();
+        if (cursor) cursor.classList.remove('on');
         var run = function () {
           scenes.forEach(function (s, k) { s.hidden = (k !== cur); });
           animateScene(cur);
@@ -907,6 +1266,21 @@
         // Stop polling once auth check is complete (app.js sets window.__authReady = true)
         if (window.__authReady === true) clearInterval(timer);
       }, 300);
+      // App banner close handler
+      var appBanner = document.getElementById('app-banner');
+      var appClose = document.getElementById('app-banner-close');
+      if (appBanner && appClose) {
+        appClose.addEventListener('click', function () {
+          appBanner.style.display = 'none';
+          try { localStorage.setItem('app_banner_dismissed', '1'); } catch (_) {}
+        });
+        try {
+          if (localStorage.getItem('app_banner_dismissed') === '1') {
+            appBanner.style.display = 'none';
+          }
+        } catch (_) {}
+      }
+
       // FAQ
       document.querySelectorAll('.faq-item').forEach(function (it) {
         it.querySelector('.faq-q').addEventListener('click', function () {
