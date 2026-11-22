@@ -8,137 +8,188 @@
       try {
         var m = null;
         try { m = localStorage.getItem('Anteemonee_theme_mode') || localStorage.getItem('Anteemonee_theme'); } catch (_) {}
-        var t = 'light'; /* Light mode only for now — dark is disabled sitewide. */
+        var t = 'light';
         document.documentElement.setAttribute('data-theme', t);
       } catch (_) {}
     })();
   </script>
   <title>Past Papers - Anteemonee</title>
   <meta name="theme-color" content="#000000">
-  <link rel="icon" href="../assets/anteemonee.png">
+  <link rel="icon" href="/assets/anteemonee.png">
   <link rel="preconnect" href="https://zkuytvjeqkpexcbyoyhz.supabase.co">
-  <link rel="stylesheet" href="../css/style.css?v=42">
-  <link rel="stylesheet" href="../css/xai.css?v=5">
-  <link rel="preload" href="/assets/js/vendor/supabase.min.js" as="script">
+  <link rel="stylesheet" href="/css/style.css?v=42">
+  <link rel="stylesheet" href="/css/xai.css?v=5">
+  <link rel="stylesheet" href="/css/header.css?v=12">
+  <link rel="stylesheet" href="/css/sj-theme.css?v=7">
+  <script src="/assets/js/vendor/supabase.min.js"></script>
+  <script>
+    var SUPA_URL = 'https://zkuytvjeqkpexcbyoyhz.supabase.co';
+    var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprdXl0dmplcWtwZXhjYnlveWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjUwNDAsImV4cCI6MjEwMzAwMTA0MH0.8tMbR057BmGaO0_T4nMOVLt1AAmWsPKBEopoSYYis44';
+    var db = null;
+    try { db = supabase.createClient(SUPA_URL, SUPA_ANON); } catch (_) {}
+
+    function withTimeout(promise, ms, label) {
+      var timer = null;
+      var timeout = new Promise(function (_, reject) {
+        timer = setTimeout(function () { reject(new Error((label || 'request') + ' timed out')); }, ms);
+      });
+      var clear = function () { if (timer) clearTimeout(timer); };
+      return Promise.race([promise, timeout]).then(
+        function (v) { clear(); return v; },
+        function (e) { clear(); throw e; }
+      );
+    }
+  </script>
   <style>
-    :root{
-      --fc-font: var(--font-ui);
-      --fc-ease:cubic-bezier(.32,.72,0,1);
-      --fc-tint:var(--accent-soft);
-    }
-    html{scroll-behavior:smooth;background:var(--bg)}
-    body{overflow-x:hidden;overflow-y:auto;background:var(--bg)!important}
-    [data-theme="dark"]{--bg:#000;--bg-elevated:#000;--elevated:#000;--bg-card:#0A0A0A;--bg-card-hover:#161616;--surface:#101010;--surface-recessed:#000;--footer-bg:#000}
+    :root {
+      --pp-bg: var(--sj-cream);
+      --pp-surface: #ffffff;
+      --pp-border: var(--sj-line);
+      --pp-ink: var(--sj-ink);
+      --pp-ink-soft: var(--sj-ink-soft);
+      --pp-muted: var(--sj-muted);
+      --pp-accent: var(--sj-cta);
+      --pp-accent-soft: rgba(254, 97, 0, 0.1);
+      --pp-yellow: var(--sj-yellow);
+      --pp-radius: 16px;
+      --pp-radius-lg: 24px;
+      --pp-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+      --pp-shadow-lg: 0 10px 40px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+      --pp-shadow-xl: 0 20px 60px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.05);
 
-    .fc-page{max-width:860px;margin:0 auto;padding:112px 24px 90px;min-height:100vh}
-
-    .fc-loading{display:flex;flex-direction:column;gap:12px}
-    .fc-skeleton{height:120px;border-radius:var(--radius-lg);background:linear-gradient(90deg,var(--surface) 25%,var(--bg-card) 50%,var(--surface) 75%);background-size:200% 100%;animation:fcShimmer 1.2s infinite}
-    @keyframes fcShimmer{to{background-position:-200% 0}}
-
-    .fc-empty{text-align:center;padding:60px 20px;color:var(--text-secondary)}
-    .fc-empty h3{font-size:17px;color:var(--text);margin-bottom:8px}
-
-    .fc-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--liquid-bg-strong);-webkit-backdrop-filter:var(--liquid-blur);backdrop-filter:var(--liquid-blur);border:1px solid var(--liquid-border);color:var(--text);padding:13px 22px;border-radius:999px;font-size:14px;font-weight:600;z-index:3000;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;box-shadow:var(--liquid-inset),var(--liquid-shadow);max-width:calc(100vw - 32px);text-align:center}
-    .fc-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-    .sub-header{display:flex;align-items:center;gap:13px;margin-bottom:20px}
-    .sub-header .study-back{
-      width:38px;height:38px;border-radius:50%;padding:0;font-size:16px;
-      display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
-      background:var(--liquid-bg-soft);border:1px solid var(--liquid-border-soft);
-      color:var(--text-secondary);cursor:pointer;
-      transition:transform .25s var(--fc-ease),background-color .25s,color .25s,border-color .25s;
-    }
-    .sub-header .study-back:hover{background:var(--liquid-bg);color:var(--text);transform:translateX(-2px);border-color:var(--liquid-border)}
-    .sub-header .study-back:active{transform:translateX(-2px) scale(.94)}
-    .sub-icon{
-      width:46px;height:46px;border-radius:14px;flex-shrink:0;
-      display:flex;align-items:center;justify-content:center;
-      font-family:var(--fc-font);font-weight:700;font-size:17px;letter-spacing:-.02em;
-      background:var(--accent-soft);
-    }
-    .sub-info{flex:1;min-width:0}
-    .sub-info h2{
-      font-family:var(--fc-font);font-size:1.4rem;font-weight:700;letter-spacing:-.022em;
-      margin:0 0 3px;color:var(--text);
-    }
-    .sub-info .sub-code{
-      font-family:var(--fc-font);font-size:12.5px;font-weight:600;letter-spacing:-.01em;
-      color:var(--text-muted);opacity:1;
+      /* PDF Preview variables (match ebooks page) */
+      --bg: var(--pp-bg);
+      --bg-elevated: var(--pp-surface);
+      --bg-card: var(--pp-surface);
+      --text: var(--pp-ink);
+      --text-secondary: var(--pp-ink-soft);
+      --border: var(--pp-border);
+      --accent: var(--pp-accent);
+      --on-accent: #fff;
     }
 
-    /* ========== BOARD LIST ========== */
-    .list-header{font-family:var(--fc-font);font-size:1.05rem;font-weight:650;letter-spacing:-.015em;margin:0 0 14px;color:var(--text-secondary)}
-    .board-list{display:flex;flex-direction:column;gap:12px}
+    html { background: var(--pp-bg); scroll-behavior: smooth; }
+    body { background: transparent !important; font-family: var(--font-ui); font-weight: 500; overflow-x: hidden; color: var(--pp-ink); }
 
-    .board-row{
-      background:var(--liquid-bg-soft);border:1px solid var(--liquid-border-soft);
-      border-radius:18px;overflow:hidden;
-      transition:transform .3s var(--fc-ease),border-color .3s var(--fc-ease),box-shadow .3s var(--fc-ease),background-color .3s var(--fc-ease);
-      will-change:transform;
-    }
-    .board-row:hover{transform:translateY(-2px);border-color:var(--liquid-border);box-shadow:0 10px 34px rgba(0,0,0,.24)}
+    .pp-container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
 
-    .board-header{
-      display:flex;align-items:center;gap:13px;width:100%;
-      padding:15px 16px;margin:0;border:none;background:none;color:inherit;
-      font-family:var(--fc-font);text-align:left;cursor:pointer;
-      transition:background-color .25s var(--fc-ease);
+    /* Auth Gate */
+    .pp-gate {
+      max-width: 480px; margin: 140px auto 80px; padding: 56px 32px; text-align: center;
+      background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius-lg);
+      box-shadow: var(--pp-shadow-lg);
     }
-    .board-header:hover{background:var(--liquid-bg-soft)}
-    .board-header:active{background:var(--liquid-bg)}
-    .board-header:focus-visible{outline:2px solid var(--text);outline-offset:-3px}
+    .pp-gate-icon { width: 64px; height: 64px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: var(--pp-accent-soft); color: var(--pp-accent); }
+    .pp-gate h2 { font-family: var(--font-ui); font-size: 1.5rem; font-weight: 700; color: var(--pp-ink); margin: 0 0 10px; }
+    .pp-gate p { color: var(--pp-ink-soft); max-width: 360px; margin: 0 auto 28px; line-height: 1.6; font-size: 1rem; font-weight: 500; }
+    .pp-gate-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .pp-gate .pp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; border: none; cursor: pointer; font-family: inherit; }
+    .pp-gate .pp-btn--primary { background: var(--pp-accent); color: #fff; box-shadow: 0 4px 20px rgba(254, 97, 0, 0.3); }
+    .pp-gate .pp-btn--primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(254, 97, 0, 0.4); }
+    .pp-gate .pp-btn--ghost { background: var(--pp-surface); color: var(--pp-ink); border: 1px solid var(--pp-border); }
+    .pp-gate .pp-btn--ghost:hover { background: var(--pp-bg); border-color: var(--pp-ink); transform: translateY(-2px); box-shadow: var(--pp-shadow-lg); }
 
-    .board-num{
-      width:38px;height:38px;border-radius:12px;flex-shrink:0;
-      display:flex;align-items:center;justify-content:center;
-      font-size:12px;font-weight:700;letter-spacing:.02em;
-      background:var(--accent-soft);color:var(--text);
-    }
-    .board-title{
-      flex:1;min-width:0;font-size:15.5px;font-weight:650;letter-spacing:-.018em;color:var(--text);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-    .board-badge{
-      display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
-      padding:4px 10px;border-radius:999px;
-      background:var(--accent-soft);border:none;color:var(--text-secondary);
-      font-size:11.5px;font-weight:650;letter-spacing:-.005em;
-      font-variant-numeric:tabular-nums;white-space:nowrap;
-    }
-    .board-open{
-      display:inline-flex;align-items:center;gap:7px;flex-shrink:0;
-      padding:8px 15px;border-radius:999px;border:none;
-      background:var(--accent);color:var(--on-accent);
-      font-family:var(--fc-font);font-size:13px;font-weight:650;letter-spacing:-.01em;white-space:nowrap;
-      box-shadow:0 1px 2px rgba(0,0,0,.28);
-      transition:transform .22s var(--fc-ease),box-shadow .22s var(--fc-ease),background-color .22s var(--fc-ease),opacity .22s;
-    }
-    .board-open svg{width:11px;height:11px;fill:currentColor}
-    .board-header:hover .board-open{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.3)}
-    .board-header:active .board-open{transform:translateY(0) scale(.97);box-shadow:0 1px 2px rgba(0,0,0,.28)}
-    .board-header:focus-visible .board-open{outline:2px solid var(--text);outline-offset:2px}
+    /* Page */
+    .pp-page { min-height: 100vh; padding: 80px 0 100px; }
+
+    /* Subject Header */
+    .pp-subject-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; padding: 20px; background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius); }
+    .pp-back-btn { width: 44px; height: 44px; border-radius: 999px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--pp-bg); border: 1px solid var(--pp-border); color: var(--pp-ink-soft); cursor: pointer; transition: all 0.2s ease; }
+    .pp-back-btn:hover { background: var(--pp-accent); border-color: var(--pp-accent); color: #fff; transform: translateX(-2px); }
+    .pp-back-btn:active { transform: translateX(-2px) scale(0.95); }
+    .pp-subject-icon { width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--pp-accent); }
+    .pp-subject-info { flex: 1; min-width: 0; }
+    .pp-subject-info h1 { font-family: var(--font-ui); font-size: 1.5rem; font-weight: 700; letter-spacing: -.022em; margin: 0 0 4px; color: var(--pp-ink); }
+    .pp-subject-info .pp-subject-code { font-family: var(--font-ui); font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--pp-muted); }
+
+    /* Board List */
+    .pp-board-list { display: flex; flex-direction: column; gap: 12px; }
+    .pp-board-row { background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius); overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    .pp-board-row:hover { transform: translateY(-2px); box-shadow: var(--pp-shadow-lg); border-color: rgba(254, 97, 0, 0.2); }
+    .pp-board-btn { display: flex; align-items: center; gap: 16px; width: 100%; padding: 18px 20px; margin: 0; border: none; background: none; color: inherit; font-family: var(--font-ui); font-weight: 600; text-align: left; cursor: pointer; transition: background-color 0.2s ease; }
+    .pp-board-btn:hover { background: var(--pp-bg); }
+    .pp-board-btn:active { background: var(--sj-cream-deep); }
+    .pp-board-btn:focus-visible { outline: 2px solid var(--pp-accent); outline-offset: -3px; }
+
+    .pp-board-count { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 4px 12px; border-radius: 999px; background: var(--pp-accent-soft); border: none; color: var(--pp-accent); font-size: 12.5px; font-weight: 600; letter-spacing: -.005em; font-variant-numeric: tabular-nums; white-space: nowrap; margin-right: auto; }
+    .pp-board-chevron { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; color: var(--pp-ink-soft); transition: transform 0.2s ease; }
+    .pp-board-btn[aria-expanded="true"] .pp-board-chevron { transform: rotate(180deg); }
 
     /* Board preview chips under a row */
-    .board-years{display:flex;gap:6px;flex-wrap:wrap;padding:2px 16px 14px}
-    .board-year-chip{
-      padding:4px 10px;border-radius:999px;
-      background:var(--liquid-bg-soft);border:1px solid var(--liquid-border-soft);
-      font-family:var(--fc-font);font-size:11.5px;font-weight:650;color:var(--text-secondary);
-      font-variant-numeric:tabular-nums;
+    .pp-board-years { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 20px 16px; border-top: 1px solid var(--pp-border); }
+    .pp-board-year-chip { padding: 5px 12px; border-radius: 999px; background: var(--pp-bg); border: 1px solid var(--pp-border); font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--pp-ink-soft); font-variant-numeric: tabular-nums; transition: all 0.2s ease; cursor: default; }
+    .pp-board-year-chip:hover { background: var(--pp-accent-soft); border-color: var(--pp-accent); color: var(--pp-accent); }
+
+    /* Expandable papers */
+    .pp-board-papers { display: flex; flex-direction: column; gap: 12px !important; padding: 12px 20px 16px; border-top: 1px solid var(--pp-border); margin-top: -2px; animation: pp-expand .2s ease; }
+    @keyframes pp-expand { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    /* PDF Preview Modal */
+    .pdf-shell { animation: pdf-fade-in .2s ease; }
+    @keyframes pdf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .pdf-page { position: relative; background: #fff; border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.45); overflow: hidden; max-width: 100%; flex-shrink: 0; }
+    .pdf-page canvas { display: block; width: 100%; height: 100%; }
+    .pdf-page-num { position: absolute; right: 8px; bottom: 6px; font-size: 11px; font-weight: 700; color: rgba(0,0,0,.5); background: rgba(255,255,255,.8); border-radius: 6px; padding: 1px 7px; pointer-events: none; }
+    .pdf-loader { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: var(--bg); color: var(--text); z-index: 2; }
+    .pdf-loader.show { display: flex; }
+    .pdf-spinner { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+    .pdf-spread { display: flex; gap: 12px; width: 100%; justify-content: center; align-items: flex-start; }
+    .pdf-spread .pdf-page { flex: 1 1 0; min-width: 0; }
+    #pdf-pages { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; padding: 4px 0 10px; }
+    #pdf-pages.pdf-two { align-items: flex-start; }
+
+    .pp-paper-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: 12px; transition: all 0.2s ease; margin-bottom: 12px; }
+    .pp-paper-item:hover { background: var(--sj-cream-deep); border-color: var(--pp-accent); }
+    .pp-paper-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .pp-paper-title { font-family: var(--font-ui); font-size: 14px; font-weight: 600; color: var(--pp-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pp-paper-year { font-family: var(--font-ui); font-size: 12px; font-weight: 500; color: var(--pp-muted); }
+    .pp-paper-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; background: var(--pp-accent); color: #fff; font-family: var(--font-ui); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(254,97,0,.2); }
+    .pp-paper-link:hover { background: var(--sj-cta-deep); transform: translateX(2px); box-shadow: 0 4px 12px rgba(254,97,0,.3); }
+    .pp-paper-link:active { transform: scale(0.98); }
+
+    /* Loading */
+    .pp-loading { display: none; flex-direction: column; gap: 12px; }
+    .pp-loading.visible { display: flex; }
+    .pp-skeleton { height: 120px; border-radius: var(--pp-radius); background: linear-gradient(90deg, var(--pp-border) 25%, var(--pp-bg) 50%, var(--pp-border) 75%); background-size: 200% 100%; animation: pp-shimmer 1.2s infinite; }
+    @keyframes pp-shimmer { to { background-position: -200% 0; } }
+
+    /* Empty State */
+    .pp-empty { display: none; text-align: center; padding: 80px 24px; }
+    .pp-empty.visible { display: block; }
+    .pp-empty-icon { width: 64px; height: 64px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: var(--pp-bg); border: 1px solid var(--pp-border); color: var(--pp-muted); }
+    .pp-empty h3 { font-family: var(--font-ui); font-size: 1.5rem; font-weight: 700; color: var(--pp-ink); margin-bottom: 10px; }
+    .pp-empty p { color: var(--pp-ink-soft); max-width: 40ch; margin: 0 auto; line-height: 1.6; font-weight: 500; }
+
+    /* Toast */
+    .pp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--pp-ink); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--pp-border); color: #fff; padding: 14px 24px; border-radius: 100px; font-size: 14px; font-weight: 600; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; box-shadow: var(--pp-shadow-xl); max-width: calc(100vw - 32px); text-align: center; }
+    .pp-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .pp-page { padding: 60px 0 80px; }
+      .pp-subject-header { padding: 16px; }
+      .pp-subject-icon { width: 48px; height: 48px; font-size: 1.25rem; }
+      .pp-subject-info h1 { font-size: 1.25rem; }
+      .pp-board-btn { padding: 16px; gap: 12px; }
+      .pp-board-num { width: 38px; height: 38px; font-size: 12px; }
+      .pp-board-title { font-size: 15px; }
+      .pp-board-arrow { padding: 8px 14px; font-size: 13px; }
+      .pp-gate { margin: 100px 16px 40px; padding: 40px 24px; }
     }
-    @media(max-width:560px){
-      .board-title{font-size:14.5px}
-      .board-open{padding:7px 12px;font-size:12.5px}
+    @media (max-width: 480px) {
+      .pp-subject-header { flex-wrap: wrap; }
+      .pp-back-btn { order: 3; margin-left: auto; margin-top: -48px; }
+      .pp-subject-icon { order: 1; }
+      .pp-subject-info { order: 2; flex: 1; min-width: calc(100% - 60px); }
     }
 
-    @media(max-width:640px){
-      .fc-page{padding:100px 16px 70px}
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .pp-board-row, .pp-board-chevron, .pp-board-year-chip, .pp-paper-item, .pp-paper-link, .pp-gate .pp-btn, .pp-skeleton, .pp-back-btn { transition: none !important; animation: none !important; }
     }
   </style>
-  <link rel="stylesheet" href="../css/header.css?v=12">
-  <script src="../js/header-notifications.js?v=3" defer></script>
+  <script src="/js/header-notifications.js?v=3" defer></script>
 </head>
 <body>
 
@@ -146,327 +197,606 @@
   <div data-site-header></div>
   <script src="../js/site-chrome.js?v=9"></script>
 
-  <!-- NOT AUTH -->
-  <div id="pp-not-auth" style="display:none;max-width:560px;margin:0 auto;padding:160px 24px 80px;text-align:center">
-    <h2 style="margin-bottom:12px">Sign in required</h2>
-    <p style="color:var(--text-secondary);margin-bottom:24px">Please sign in to view past papers.</p>
-    <a href="../pages/login.html" class="btn-primary" style="text-decoration:none">Sign In</a>
+  <!-- NOT AUTH GATE -->
+  <div id="pp-gate" class="pp-gate" style="display:none" role="dialog" aria-labelledby="gate-title" aria-modal="true">
+    <div class="pp-gate-icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2 id="gate-title">Sign in to view Past Papers</h2>
+    <p>Past papers live behind a free Anteemonee account. Log in or sign up to solve papers from your board.</p>
+    <div class="pp-gate-actions">
+      <a href="/pages/login.html" class="pp-btn pp-btn--primary">Log in</a>
+      <a href="/pages/signup.html" class="pp-btn pp-btn--ghost">Sign Up</a>
+    </div>
   </div>
 
-  <!-- PAGE -->
-  <main class="fc-page" id="pp-page" style="display:none">
+  <!-- MAIN PAGE -->
+  <main class="pp-page pp-container" id="pp-page" style="display:none">
 
-    <!-- Subject header -->
-    <div class="sub-header" id="sub-header" style="display:none">
-      <button class="study-back" id="back-btn" style="width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border-radius:12px" aria-label="Back to subjects">←</button>
-      <div class="sub-icon" id="sub-icon"></div>
-      <div class="sub-info">
-        <h2 id="sub-title">Subject</h2>
-        <span class="sub-code" id="sub-code"></span>
+    <!-- Subject Header -->
+    <header class="pp-subject-header" id="pp-subject-header" style="display:none">
+      <button class="pp-back-btn" id="back-btn" aria-label="Back to subjects">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M10 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="pp-subject-icon" id="pp-subject-icon"></div>
+      <div class="pp-subject-info">
+        <h1 id="pp-subject-name">Subject</h1>
+        <span class="pp-subject-code" id="pp-subject-code"></span>
       </div>
-    </div>
+    </header>
 
     <!-- Loading -->
-    <div class="fc-loading" id="pp-loading">
-      <div class="fc-skeleton"></div>
-      <div class="fc-skeleton"></div>
-      <div class="fc-skeleton"></div>
+    <div class="pp-loading" id="pp-loading" aria-label="Loading boards" role="status">
+      <div class="pp-skeleton"></div>
+      <div class="pp-skeleton"></div>
+      <div class="pp-skeleton"></div>
     </div>
 
-    <!-- ===== BOARD LIST ===== -->
-    <div id="board-list-view" style="display:none">
-      <div class="list-header" id="list-header">Choose a board</div>
-      <div class="board-list" id="board-list"></div>
-    </div>
+    <!-- Board List -->
+    <section id="board-list-view" style="display:none">
+      <div class="pp-board-list" id="board-list" role="list"></div>
+    </section>
 
     <!-- Empty -->
-    <div class="fc-empty" id="pp-empty" style="display:none">
+    <div class="pp-empty" id="pp-empty" role="status">
+      <div class="pp-empty-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+      </div>
       <h3>No past papers available</h3>
       <p id="pp-empty-text">There are no past papers for this subject yet.</p>
     </div>
   </main>
 
-  <div class="fc-toast" id="pp-toast" role="status"></div>
+  <!-- PDF Preview Modal -->
+  <div id="pdf-modal" style="display:none" role="dialog" aria-modal="true" aria-label="PDF Preview">
+    <div class="pdf-shell" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;display:flex;flex-direction:column;background:var(--bg-elevated);border:1px solid var(--border);border-radius:22px;box-shadow:0 24px 80px rgba(0,0,0,.55);width:min(1100px,95vw);height:min(88vh,900px);max-width:1100px;max-height:900px;overflow:hidden;">
+      <div class="pdf-bar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg-card);border-radius:22px 22px 0 0;">
+        <div class="pdf-bar-left" style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <button type="button" class="pdf-icon-btn" onclick="closePdfPreview()" aria-label="Close" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div id="pdf-preview-title" class="pdf-bar-title" style="font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;color:var(--text);"></div>
+        </div>
+      </div>
+      <div class="pdf-stage" style="flex:1;display:flex;flex-direction:column;min-height:0;background:var(--bg-elevated);overflow:hidden;">
+        <div class="pdf-canvas-wrap" id="pdf-scroll" style="flex:1;position:relative;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;padding:18px;background:var(--bg);overscroll-behavior:contain;min-height:0;">
+          <div id="pdf-loader" class="pdf-loader" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--bg);color:var(--text);z-index:2;">
+            <div class="pdf-spinner" style="width:40px;height:40px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .9s linear infinite"></div>
+            <div style="font-size:14px;color:var(--text-secondary);font-weight:500">Loading pages...</div>
+          </div>
+          <div id="pdf-pages"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pp-toast" id="pp-toast" role="status" aria-live="polite"></div>
+
+  <script src="/js/site-chrome.js?v=9"></script>
+  <script src="/js/account-manager.js?v=11"></script>
+  <script src="/js/app.js?v=38"></script>
+  <script src="/js/login-modal.js?v=6"></script>
+  <script src="/js/forgot-modal.js?v=2"></script>
+  <script src="/js/signup-modal.js?v=4"></script>
+  
+  <!-- PDF.js for preview -->
+  <script src="/assets/js/vendor/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/js/vendor/pdf.worker.min.js';
+    }
+  </script>
 
   <script>
-    (function () {
-      'use strict';
+    // PDF Preview functionality (simplified from ebooks page - single page, light/dark mode)
+    var pdfDoc = null;
+    var pdfUrl = '';
+    var pdfTitle = '';
+    var pdfPages = [];
+    var pdfScale = 1.0;
+    var pdfScrollEl = null;
+    var pdfPagesEl = null;
+    var loader = null;
+    var pdfObs = null;
 
-      var SUBJECTS={
-        'Physics':{code:'9702',letter:'P'},
-        'Chemistry':{code:'9701',letter:'C'},
-        'Biology':{code:'9700',letter:'B'},
-        'Mathematics':{code:'9709',letter:'M'},
-        'English':{code:'9093',letter:'E'},
-        'Computer Science':{code:'9618',letter:'CS'}
-      };
+    function isMobile() {
+      return window.innerWidth < 768;
+    }
 
-      var subjectName='';
-      var boards={};
+    function pdfColW() {
+      return Math.max(280, (pdfScrollEl ? pdfScrollEl.clientWidth : 800) - 36);
+    }
 
-      function $(id){return document.getElementById(id)}
-      function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-      function uid(){try{if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id)return currentUser.id}catch(_){}return null}
-      function toast(msg){var el=$('pp-toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show')},2600)}
+    function openPdfPreview(url, title) {
+      pdfUrl = url;
+      pdfTitle = title;
+      var modal = document.getElementById('pdf-modal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
 
-      function usable(p){
-        var u=String(p.file_path||p.source_url||'').trim();
-        if(!u) return false;
-        if(!/^https?:\/\//i.test(u)) return /past-papers-pdf/i.test(u);
-        return u.indexOf('past-papers-pdf')!==-1||u.indexOf('res.cloudinary.com')!==-1||u.indexOf('/raw/upload/')!==-1;
+      var titleEl = document.getElementById('pdf-preview-title');
+      if (titleEl) titleEl.textContent = title;
+
+      // Initialize DOM elements
+      pdfScrollEl = document.getElementById('pdf-scroll');
+      pdfPagesEl = document.getElementById('pdf-pages');
+      loader = document.getElementById('pdf-loader');
+
+      // Reset state
+      pdfDoc = null;
+      pdfPages = [];
+      pdfScale = 1.0;
+      pdfPagesEl.innerHTML = '';
+      if (loader) loader.classList.add('show');
+
+      // Load PDF
+      loadPdf(url);
+    }
+
+    function closePdfPreview() {
+      var modal = document.getElementById('pdf-modal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      if (loader) loader.classList.remove('show');
+      pdfPagesEl.innerHTML = '';
+      pdfDoc = null;
+      pdfPages = [];
+      if (pdfObs) pdfObs.disconnect();
+      pdfObs = null;
+    }
+
+    function loadPdf(url) {
+      if (!window.pdfjsLib) {
+        console.error('pdf.js not loaded');
+        if (loader) loader.classList.remove('show');
+        return;
       }
-      function isPunjab(region){
-        return String(region||'').toLowerCase().indexOf('punjab')!==-1;
+      var loadingTask = pdfjsLib.getDocument(url);
+      loadingTask.promise.then(function(pdf) {
+        pdfDoc = pdf;
+        renderPdfPages();
+      }).catch(function(err) {
+        console.error('PDF load failed:', err);
+        if (loader) loader.classList.remove('show');
+      });
+    }
+
+    function renderPdfPages() {
+      if (!pdfDoc || !pdfPagesEl) return;
+      var numPages = pdfDoc.numPages;
+      pdfPagesEl.innerHTML = '';
+      pdfPages = [];
+
+      // Create page elements
+      for (var i = 1; i <= numPages; i++) {
+        var pageEl = document.createElement('div');
+        pageEl.className = 'pdf-page';
+        pageEl.dataset.pageNumber = i;
+        var canvas = document.createElement('canvas');
+        pageEl.appendChild(canvas);
+        var num = document.createElement('div');
+        num.className = 'pdf-page-num';
+        num.textContent = i;
+        pageEl.appendChild(num);
+        pdfPages.push({ pageNum: i, el: pageEl, canvas: canvas, rendered: false, w: 0, h: 0 });
       }
-      function boardInitials(name){
-        // "BISE Lahore" → "LA" · "FBISE — Federal Board" → "FE"
-        var m=String(name||'').match(/BISE\s+([A-Za-z]+)/i);
-        var word=m?m[1]:String(name||'').replace(/FBISE|BIEK/gi,function(w){return w+' '}).split(' ')[0];
-        word=String(word||'').replace(/[^A-Za-z]/g,'');
-        if(!word) return '';
-        return word.slice(0,2).toUpperCase();
-      }
 
-      /* ========== LOAD ========== */
+      // Render visible pages
+      renderVisiblePages();
 
-      async function loadBoards(){
-        var info=SUBJECTS[subjectName];
-        // 1) subject ids that carry this name
-        var sRes=await withTimeout(db.from('subjects').select('id,name'),15000,'load subjects');
-        var subjectIds=(sRes.data||[]).filter(function(s){return s.name===subjectName}).map(function(s){return s.id});
-        if(!sRes.error&&!subjectIds.length){showEmpty();return}
-        var paperQuery=db.from('past_papers')
-          .select('board_id,file_path,source_url,subject_id,year')
-          .eq('status','published');
-        if(subjectIds.length) paperQuery=paperQuery.in('subject_id',subjectIds);
-        else paperQuery=paperQuery.limit(0);
-        var res=await withTimeout(paperQuery,15000,'load papers');
-        if(res.error) throw res.error;
-        var papers=(res.data||[]).filter(usable);
-
-        // 2) boards (to keep Punjab only)
-        var bRes=await withTimeout(db.from('boards').select('id,name,region').order('name'),10000,'load boards');
-        var boardRows=(bRes.data||[]).filter(function(b){return isPunjab(b.region)});
-
-        boards={};
-        papers.forEach(function(p){
-          var key=String(p.board_id);
-          if(!boards[key]) boards[key]={id:p.board_id,name:'',count:0,years:{}};
-          boards[key].count++;
-          if(p.year) boards[key].years[String(p.year)]=true;
+      // IntersectionObserver for lazy rendering
+      if (pdfObs) pdfObs.disconnect();
+      pdfObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            var pageNum = parseInt(entry.target.dataset.pageNumber, 10);
+            renderPage(pageNum);
+            pdfObs.unobserve(entry.target);
+          }
         });
-        boardRows.forEach(function(b){
-          var key=String(b.id);
-          if(boards[key]) boards[key].name=b.name;
-        });
-        Object.keys(boards).forEach(function(k){ if(!boards[k].name) delete boards[k]; });
+      }, { root: pdfScrollEl, rootMargin: '200px', threshold: 0.01 });
 
-        $('pp-loading').style.display='none';
-        var list=Object.values(boards);
-        if(!list.length){showEmpty();return}
-
-        renderSubjectHeader(list);
-        list.sort(function(a,b){return b.count-a.count});
-        renderBoards(list,info);
-      }
-
-      function showEmpty(){
-        $('pp-loading').style.display='none';
-        $('sub-header').style.display='none';
-        $('board-list-view').style.display='none';
-        $('pp-empty').style.display='block';
-      }
-
-      /* ========== HEADER ========== */
-
-      function renderSubjectHeader(list){
-        var info=SUBJECTS[subjectName]||{letter:subjectName.charAt(0)};
-        var total=0; list.forEach(function(b){total+=b.count});
-        $('sub-header').style.display='flex';
-        $('sub-icon').textContent=info.letter;
-        $('sub-title').textContent=subjectName;
-        $('sub-code').textContent=list.length+' board'+(list.length===1?'':'s')+' · '+total+' paper'+(total===1?'':'s');
-      }
-
-      /* ========== BOARD LIST ========== */
-
-      var ARROW='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:11px;height:11px;fill:currentColor"><path d="M5 3.5v17l14-8.5z"/></svg>';
-
-      function renderBoards(list,info){
-        var wrap=$('board-list');
-        $('board-list-view').style.display='block';
-        $('list-header').textContent='Choose a board to open its '+esc(subjectName)+' papers.';
-        var html=list.map(function(b){
-          var years=Object.keys(b.years).sort(function(a,b){return b-a}).slice(0,4);
-          var yearChips='';
-          if(years.length) yearChips='<div class="board-years">'+years.map(function(y){return '<span class="board-year-chip">'+esc(y)+'</span>'}).join('')+'</div>';
-          return '<article class="board-row">'
-            +'<button type="button" class="board-header" data-board="'+esc(b.id)+'" data-name="'+esc(b.name)+'">'
-            +'<span class="board-num">'+esc(boardInitials(b.name)||'BI')+'</span>'
-            +'<span class="board-title">'+esc(b.name)+'</span>'
-            +'<span class="board-badge">'+b.count+' paper'+(b.count===1?'':'s')+'</span>'
-            +'<span class="board-open">'+ARROW+'Browse</span>'
-            +'</button>'
-            +yearChips
-            +'</article>';
-        }).join('');
-        wrap.innerHTML=html;
-      }
-
-      /* Row click → papers page */
-      document.addEventListener('click',function(e){
-        var head=e.target&&e.target.closest?e.target.closest('.board-header'):null;
-        if(!head) return;
-        var id=head.getAttribute('data-board');
-        var name=head.getAttribute('data-name');
-        if(!id) return;
-        if(window.top!==window.self){ try{ window.top.location.href='../past-papers-board/?subject='+encodeURIComponent(subjectName)+'&board='+encodeURIComponent(id); return; }catch(_){} }
-        window.location.href='../past-papers-board/?subject='+encodeURIComponent(subjectName)+'&board='+encodeURIComponent(id)+'&boardname='+encodeURIComponent(name||'');
+      pdfPages.forEach(function(p) {
+        pdfObs.observe(p.el);
       });
 
-      $('back-btn').addEventListener('click',function(){ window.location.href='../past-papers/'; });
+      if (loader) loader.classList.remove('show');
+    }
 
-      /* ========== INIT ========== */
+    function renderPage(pageNum) {
+      if (!pdfDoc) return;
+      var pageData = pdfPages.find(function(p) { return p.pageNum === pageNum; });
+      if (!pageData || pageData.rendered) return;
+      pageData.rendered = true;
 
-      async function init(){
-        subjectName=new URLSearchParams(window.location.search).get('subject')||'';
-        if(!subjectName){window.location.href='../past-papers/';return}
+      pdfDoc.getPage(pageNum).then(function(page) {
+        var viewport = page.getViewport({ scale: pdfScale });
+        var cw = pdfColW();
+        var scale = Math.min(cw / viewport.width, 2.5);
+        var finalViewport = page.getViewport({ scale: scale });
+        pageData.w = finalViewport.width;
+        pageData.h = finalViewport.height;
 
-        try{await checkAuth()}catch(_){}
-        if(!uid()){$('pp-not-auth').style.display='block';return}
-        try{if(typeof Access!=='undefined')await Access.init()}catch(_){}
-        $('pp-page').style.display='block';
-        document.title=subjectName+' Past Papers — Anteemonee';
+        var context = pageData.canvas.getContext('2d');
+        pageData.canvas.width = finalViewport.width;
+        pageData.canvas.height = finalViewport.height;
+        pageData.el.style.width = finalViewport.width + 'px';
+        pageData.el.style.height = finalViewport.height + 'px';
 
-        window.addEventListener('scroll',function(){
-          var h=$('header');if(h) h.classList.toggle('scrolled',window.scrollY>20);
-        },{passive:true});
-
-        loadBoards().catch(function(err){
-          console.warn('[PastPapers] load failed:',err);
-          showEmpty();
-          $('pp-empty-text').textContent='Could not load papers. Please refresh the page.';
-          toast('Could not load papers');
+        page.render({ canvasContext: context, viewport: finalViewport }).promise.then(function() {
+          // Page rendered
         });
-      }
+      });
+    }
 
-      if(document.readyState==='loading'){
-        document.addEventListener('DOMContentLoaded',function(){init()});
-      }else{init()}
-    })();
+    function renderVisiblePages() {
+      if (!pdfPagesEl || !pdfPages.length) return;
+      pdfPagesEl.innerHTML = '';
+      pdfPages.forEach(function(p) {
+        pdfPagesEl.appendChild(p.el);
+      });
+
+      // Adjust canvas sizes
+      var cw = pdfColW();
+      pdfPages.forEach(function(p) {
+        if (!p.w) return;
+        var dw = Math.min(p.w * pdfScale, cw);
+        var dh = (p.h / p.w) * dw;
+        p.el.style.width = dw + 'px';
+        p.el.style.height = dh + 'px';
+      });
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var modal = document.getElementById('pdf-modal');
+        if (modal && modal.style.display === 'flex') {
+          closePdfPreview();
+        }
+      }
+    });
   </script>
-  <script src="/assets/js/vendor/supabase.min.js"></script>
-  <script src="../js/account-manager.js?v=11"></script>
-  <script src="../js/app.js?v=38"></script>
-  <script src="../js/login-modal.js?v=6"></script>
-  <script src="../js/forgot-modal.js?v=2"></script>
-  <script src="../js/signup-modal.js?v=4"></script>
+
   <script>
-    (function () {
-      function renderLandingAuth() {
-        try {
-          var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
-          var loggedOut = document.getElementById('landing-auth');
-          var loggedIn = document.getElementById('landing-auth-in');
-          if (!loggedOut || !loggedIn) return;
-          if (user) {
-            loggedOut.style.display = 'none';
-            var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
-            var username = fullName ? fullName.trim().split(/\s+/)[0] : (user.email || 'User').split('@')[0];
-            var initial = (fullName || username || 'U').charAt(0).toUpperCase();
-            var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (user.user_metadata && (user.user_metadata.avatar_url ?? user.user_metadata.picture)) ?? (user.user_metadata && user.user_metadata.profile_image_url) ?? '';
-            var dropdownHtml =
-              '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
-                '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
-                  '<div class="avatar-wrapper">' +
-                    (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
-                  '</div>' +
-                '</button>' +
-                '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
-                  '<div class="dropdown-header">' +
-                    '<div class="dropdown-avatar">' +
-                      (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
-                    '</div>' +
-                    '<div class="dropdown-info">' +
-                      '<span class="dropdown-name">' + (fullName || username) + '</span>' +
-                      '<span class="dropdown-email">' + (user.email || '') + '</span>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div class="dropdown-divider"></div>' +
-                  '<a href="../account/" class="dropdown-item">' +
-                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
-                    'Account' +
-                  '</a>' +
-                  '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
-                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
-                    'Settings' +
-                  '</a>' +
-                  '<div class="dropdown-divider"></div>' +
-                  '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
-                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
-                    'Logout' +
-                  '</button>' +
-                '</div>' +
-              '</div>';
-            loggedIn.innerHTML = dropdownHtml;
-            loggedIn.style.display = 'flex';
-            setupLandingProfileDropdown();
-          } else {
-            loggedIn.style.display = 'none';
-            loggedOut.style.display = 'flex';
-          }
-        } catch (_) {}
-      }
-      function setupLandingProfileDropdown() {
-        var dropdown = document.getElementById('landing-profile-dropdown-menu');
-        var container = document.getElementById('landing-profile-dropdown');
-        if (!dropdown || !container) return;
-        var hideTimer = null;
-        function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
-        function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
-        container.addEventListener('mouseenter', cancelHide);
-        container.addEventListener('mouseleave', scheduleHide);
-        dropdown.addEventListener('mouseenter', cancelHide);
-        dropdown.addEventListener('mouseleave', scheduleHide);
-      }
-      if (!window._landingDropdownClickHandler) {
-        document.addEventListener('click', function(e) {
-          var container = document.getElementById('landing-profile-dropdown');
-          var dropdown = document.getElementById('landing-profile-dropdown-menu');
-          if (container && dropdown && !container.contains(e.target)) dropdown.classList.remove('open');
-        });
-        window._landingDropdownClickHandler = true;
-      }
-      function toggleLandingProfileDropdown() {
-        var dropdown = document.getElementById('landing-profile-dropdown-menu');
-        if (dropdown) dropdown.classList.toggle('open');
-      }
-      function closeLandingProfileDropdown() {
-        var dropdown = document.getElementById('landing-profile-dropdown-menu');
-        if (dropdown) dropdown.classList.remove('open');
-      }
-      function handleLandingLogout() {
-        try {
-          if (typeof handleLogout === 'function') handleLogout();
-          else window.location.href = '../index.html';
-        } catch (_) { window.location.href = '../index.html'; }
-      }
-      window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
-      window.closeLandingProfileDropdown = closeLandingProfileDropdown;
-      window.handleLandingLogout = handleLandingLogout;
-      renderLandingAuth();
-      var tries = 0;
-      var timer = setInterval(function () {
-        tries++;
-        renderLandingAuth();
-        if (tries > 40) clearInterval(timer);
-        if (window.__authReady === true) clearInterval(timer);
-      }, 300);
-      var hdr = document.getElementById('site-header');
-      window.addEventListener('scroll', function () { if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
-    })();
-  </script>
-  <script src="../js/site-chrome.js?v=9"></script>
+  (function () {
+    'use strict';
 
+    var SUBJECTS={
+      'Physics':{code:'9702',letter:'P',color:'#3b82f6'},
+      'Chemistry':{code:'9701',letter:'C',color:'#ef4444'},
+      'Biology':{code:'9700',letter:'B',color:'#22c55e'},
+      'Mathematics':{code:'9709',letter:'M',color:'#f59e0b'},
+      'English':{code:'9093',letter:'E',color:'#8b5cf6'},
+      'Computer Science':{code:'9618',letter:'CS',color:'#ec4899'}
+    };
+
+    var SUBJECT_ICONS = {
+      'Physics': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      'Chemistry': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>',
+      'Biology': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>',
+      'Mathematics': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+      'English': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+      'Computer Science': '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>'
+    };
+
+    var subjectName='';
+    var boards={};
+
+    function $(id){return document.getElementById(id)}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"')}
+    function uid(){try{if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id)return currentUser.id}catch(_){}return null}
+    function toast(msg){var el=$('pp-toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show')},2600)}
+
+    function usable(p){
+      var u=String(p.file_path||p.source_url||'').trim();
+      if(!u) return false;
+      if(!/^https?:\/\//i.test(u)) return /past-papers-pdf/i.test(u);
+      return u.indexOf('past-papers-pdf')!==-1||u.indexOf('res.cloudinary.com')!==-1||u.indexOf('/raw/upload/')!==-1;
+    }
+    function isPunjab(region){
+      return String(region||'').toLowerCase().indexOf('punjab')!==-1;
+    }
+    function boardInitials(name){
+      var m=String(name||'').match(/BISE\s+([A-Za-z]+)/i);
+      var word=m?m[1]:String(name||'').replace(/FBISE|BIEK/gi,function(w){return w+' '}).split(' ')[0];
+      word=String(word||'').replace(/[^A-Za-z]/g,'');
+      if(!word) return '';
+      return word.slice(0,2).toUpperCase();
+    }
+
+    async function checkAuthSubject(){
+      try{
+        if(typeof db!=='undefined'&&db){
+          var res=await db.auth.getSession();
+          var session=res&&res.data?res.data.session:null;
+          if(session?.user){
+            window.currentUser=session.user;
+            try{localStorage.setItem('Anteemonee_signed_in','1')}catch(_){}
+          }else{
+            window.currentUser=null;
+            try{localStorage.removeItem('Anteemonee_signed_in')}catch(_){}
+          }
+        }
+      }catch(e){
+        console.warn('[PastPapersSubject] auth check failed:',e);
+        window.currentUser=null;
+      }
+    }
+
+    /* ========== LOAD ========== */
+
+    async function loadBoards(){
+      var info=SUBJECTS[subjectName];
+      var sRes=await withTimeout(db.from('subjects').select('id,name'),15000,'load subjects');
+      var subjectIds=(sRes.data||[]).filter(function(s){return s.name===subjectName}).map(function(s){return s.id});
+      if(!sRes.error&&!subjectIds.length){showEmpty();return}
+      var paperQuery=db.from('past_papers')
+        .select('board_id,file_path,source_url,subject_id,year,title,paper_type')
+        .eq('status','published');
+      if(subjectIds.length) paperQuery=paperQuery.in('subject_id',subjectIds);
+      else paperQuery=paperQuery.limit(0);
+      var res=await withTimeout(paperQuery,15000,'load papers');
+      if(res.error) throw res.error;
+      var papers=(res.data||[]).filter(usable);
+
+      var bRes=await withTimeout(db.from('boards').select('id,name,region').order('name'),10000,'load boards');
+      var boardRows=(bRes.data||[]).filter(function(b){return isPunjab(b.region)});
+
+      boards={};
+      papers.forEach(function(p){
+        var key=String(p.board_id);
+        if(!boards[key]) boards[key]={id:p.board_id,name:'',papers:[],years:{}};
+        boards[key].papers.push(p);
+        if(p.year) boards[key].years[String(p.year)]=true;
+      });
+      boardRows.forEach(function(b){
+        var key=String(b.id);
+        if(boards[key]) boards[key].name=b.name;
+      });
+      Object.keys(boards).forEach(function(k){ if(!boards[k].name) delete boards[k]; });
+
+      $('pp-loading').classList.remove('visible');
+      var list=Object.values(boards);
+      if(!list.length){showEmpty();return}
+
+      renderSubjectHeader(list);
+      list.sort(function(a,b){return b.papers.length-a.papers.length});
+      renderBoards(list,info);
+    }
+
+    function showEmpty(){
+      $('pp-loading').classList.remove('visible');
+      $('pp-subject-header').style.display='none';
+      $('board-list-view').style.display='none';
+      $('pp-empty').classList.add('visible');
+    }
+
+    /* ========== HEADER ========== */
+
+    function renderSubjectHeader(list){
+      var info=SUBJECTS[subjectName]||{letter:subjectName.charAt(0),color:'#FE6100'};
+      var total=0; var allYears={};
+      list.forEach(function(b){
+        total+=b.papers.length;
+        Object.keys(b.years).forEach(function(y){allYears[y]=true});
+      });
+      $('pp-subject-header').style.display='flex';
+      $('pp-subject-icon').innerHTML=SUBJECT_ICONS[subjectName] || '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>';
+      var iconSvg=$('pp-subject-icon').querySelector('svg');
+      if(iconSvg) iconSvg.style.color='#fff';
+      $('pp-subject-icon').style.background=info.color;
+      $('pp-subject-name').textContent=subjectName;
+      $('pp-subject-code').textContent=list.length+' board'+(list.length===1?'':'s')+' · '+total+' paper'+(total===1?'':'s');
+    }
+
+    /* ========== BOARD LIST ========== */
+
+    var CHEVRON='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;fill:currentColor;transition:transform .2s ease"><path d="M6 9l6 6 6-6"/></svg>';
+
+    function formatPaperTitle(p){
+      var title = p.title || 'Past Paper';
+      var year = p.year ? String(p.year) : '';
+      if (year && new RegExp(year + '\\s*$').test(title.trim())) return title;
+      return year ? title + ' ' + year : title;
+    }
+
+    function paperLinkHtml(p){
+      var url=p.file_path||p.source_url||'';
+      if(!url) return '';
+      if(!/^https?:\/\//i.test(url)) url='/past-papers-pdf/'+url;
+      return '<button type="button" class="pp-paper-link" onclick="openPdfPreview(\''+esc(url)+'\',\''+esc(formatPaperTitle(p))+'\')">Open</button>';
+    }
+
+    function renderBoards(list,info){
+      var wrap=$('board-list');
+      $('board-list-view').style.display='block';
+      var html=list.map(function(b){
+        var years=Object.keys(b.years).sort(function(a,b){return b-a});
+        var yearChips='';
+        if(years.length) yearChips='<div class="pp-board-years">'+years.map(function(y){return '<span class="pp-board-year-chip">'+esc(y)+'</span>'}).join('')+'</div>';
+        
+        var papersHtml=b.papers.map(function(p){
+          return '<article class="pp-paper-item">'
+            +'<div class="pp-paper-meta">'
+            +'<span class="pp-paper-title">'+esc(formatPaperTitle(p))+'</span>'
+            +'<span class="pp-paper-year">'+esc(p.year||'')+'</span>'
+            +'</div>'
+            +'<div class="pp-paper-actions">'
+            +paperLinkHtml(p)
+            +'</div>'
+            +'</article>';
+        }).join('');
+        
+        return '<article class="pp-board-row" data-board-id="'+esc(b.id)+'">'
+          +'<button type="button" class="pp-board-btn" aria-expanded="false" aria-controls="papers-'+esc(b.id)+'">'
+          +'<span class="pp-board-num"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>'
+          +'<span class="pp-board-title">'+esc(b.name)+'</span>'
+          +'<span class="pp-board-count">'+b.papers.length+' paper'+(b.papers.length===1?'':'s')+'</span>'
+          +'<span class="pp-board-chevron">'+CHEVRON+'</span>'
+          +'</button>'
+          +'<div class="pp-board-papers" id="papers-'+esc(b.id)+'" style="display:none">'
+          +papersHtml
+          +'</div>'
+          +yearChips
+          +'</article>';
+      }).join('');
+      wrap.innerHTML=html;
+      
+      // Toggle papers on board click
+      wrap.querySelectorAll('.pp-board-btn').forEach(function(btn){
+        btn.addEventListener('click',function(){
+          var row=btn.closest('.pp-board-row');
+          var papers=row.querySelector('.pp-board-papers');
+          var chevron=btn.querySelector('.pp-board-chevron');
+          var expanded=btn.getAttribute('aria-expanded')==='true';
+          btn.setAttribute('aria-expanded',!expanded);
+          papers.style.display=expanded?'none':'block';
+          chevron.style.transform=expanded?'rotate(0deg)':'rotate(180deg)';
+        });
+      });
+    }
+
+    $('back-btn').addEventListener('click',function(){ window.location.href='/past-papers/'; });
+
+    /* ========== INIT ========== */
+
+    var SUBJECT_LOOKUP = {
+      'physics': 'Physics',
+      'chemistry': 'Chemistry',
+      'biology': 'Biology',
+      'mathematics': 'Mathematics',
+      'english': 'English',
+      'computer-science': 'Computer Science',
+      'computer science': 'Computer Science'
+    };
+
+    async function init(){
+      // Extract subject from URL path: /past-papers/chemistry/
+      var pathParts = window.location.pathname.split('/').filter(function(p){return p});
+      var rawSubject = decodeURIComponent(pathParts[pathParts.length - 1]) || '';
+      // Map lowercase URL to proper case
+      subjectName = SUBJECT_LOOKUP[rawSubject.toLowerCase()] || rawSubject;
+      // Fallback to query param for backward compatibility
+      if (!subjectName) subjectName = new URLSearchParams(window.location.search).get('subject') || '';
+      if(!subjectName){window.location.href='/past-papers/';return}
+
+      try{await checkAuthSubject()}catch(e){console.warn('Auth check failed:',e)}
+      
+      // Small delay to let Supabase session resolve
+      await new Promise(function(r){setTimeout(r,100)});
+      
+      if(!uid()){
+        $('pp-gate').style.display='block';
+        $('pp-loading').classList.remove('visible');
+        return;
+      }
+      try{if(typeof Access!=='undefined')await Access.init()}catch(_){}
+      $('pp-page').style.display='block';
+      document.title=subjectName+' Past Papers — Anteemonee';
+
+      window.addEventListener('scroll',function(){
+        var h=$('header');if(h) h.classList.toggle('scrolled',window.scrollY>20);
+      },{passive:true});
+
+      $('pp-loading').classList.add('visible');
+      loadBoards().catch(function(err){
+        console.warn('[PastPapersSubject] load failed:',err);
+        showEmpty();
+        $('pp-empty-text').textContent='Could not load papers. Please refresh the page.';
+        toast('Could not load papers');
+      });
+    }
+
+    if(document.readyState==='loading'){
+      document.addEventListener('DOMContentLoaded',function(){init()});
+    }else{init()}
+  })();
+  </script>
+
+  <script>
+  (function () {
+    // Render landing auth dropdown for inner pages (app.js only does this on index.html)
+    function renderInnerAuthDropdown() {
+      var loggedIn = document.getElementById('landing-auth-in');
+      var loggedOut = document.getElementById('landing-auth');
+      if (!loggedIn || !loggedOut) return;
+      if (typeof currentUser === 'undefined' || !currentUser) return;
+      if (loggedIn.innerHTML.trim()) return; // Already rendered
+
+      var fullName = (currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name)) || '';
+      var username = fullName ? fullName.trim().split(/\s+/)[0] : (currentUser.email || 'User').split('@')[0];
+      var initial = (fullName || username || 'U').charAt(0).toUpperCase();
+      var imgUrl = (typeof currentProfile !== 'undefined' && currentProfile ? currentProfile.profile_image_url : undefined) ?? (currentUser.user_metadata && (currentUser.user_metadata.avatar_url ?? currentUser.user_metadata.picture)) ?? (currentUser.user_metadata && currentUser.user_metadata.profile_image_url) ?? '';
+
+      var dropdownHtml =
+        '<div class="landing-profile-dropdown" id="landing-profile-dropdown">' +
+          '<button class="avatar-btn" onclick="toggleLandingProfileDropdown()" aria-label="Profile menu">' +
+            '<div class="avatar-wrapper">' +
+              (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback">' + initial + '</div>') +
+            '</div>' +
+          '</button>' +
+          '<div class="profile-dropdown" id="landing-profile-dropdown-menu">' +
+            '<div class="dropdown-header">' +
+              '<div class="dropdown-avatar">' +
+                (imgUrl ? '<img src="' + imgUrl + '" alt="' + username + '" class="dropdown-avatar-img" referrerpolicy="no-referrer" style="filter:none;-webkit-filter:none;mix-blend-mode:normal;opacity:1" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="avatar-fallback dropdown-avatar-fallback" style="display:none">' + initial + '</div>' : '<div class="avatar-fallback dropdown-avatar-fallback">' + initial + '</div>') +
+              '</div>' +
+              '<div class="dropdown-info">' +
+                '<span class="dropdown-name">' + (fullName || username) + '</span>' +
+                '<span class="dropdown-email">' + (currentUser.email || '') + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="dropdown-divider"></div>' +
+            '<a href="../account/" class="dropdown-item">' +
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+              'Account' +
+            '</a>' +
+            '<a href="../settings/" class="dropdown-item" onclick="closeLandingProfileDropdown()">' +
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+              'Settings' +
+            '</a>' +
+            '<div class="dropdown-divider"></div>' +
+            '<button class="dropdown-item dropdown-logout" onclick="handleLandingLogout()">' +
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+              'Logout' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+      loggedIn.innerHTML = dropdownHtml;
+      loggedIn.style.display = 'flex';
+      loggedOut.style.display = 'none';
+      setupLandingProfileDropdown();
+    }
+
+    function handleLandingLogout() { try { if (typeof handleLogout === 'function') { handleLogout(); return; } } catch (_) {} window.location.href = '../index.html'; }
+    function toggleLandingProfileDropdown() { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.toggle('open'); }
+    function closeLandingProfileDropdown() { var m = document.getElementById('landing-profile-dropdown-menu'); if (m) m.classList.remove('open'); }
+    function setupLandingProfileDropdown() {
+      var dropdown = document.getElementById('landing-profile-dropdown-menu');
+      var container = document.getElementById('landing-profile-dropdown');
+      if (!dropdown || !container) return;
+      var hideTimer = null;
+      function scheduleHide() { hideTimer = setTimeout(function() { dropdown.classList.remove('open'); }, 150); }
+      function cancelHide() { if (hideTimer) clearTimeout(hideTimer); }
+      container.addEventListener('mouseenter', cancelHide);
+      container.addEvent('mouseleave', scheduleHide);
+      dropdown.addEventListener('mouseenter', cancelHide);
+      dropdown.addEventListener('mouseleave', scheduleHide);
+    }
+    window.handleLandingLogout = handleLandingLogout;
+    window.toggleLandingProfileDropdown = toggleLandingProfileDropdown;
+    window.closeLandingProfileDropdown = closeLandingProfileDropdown;
+
+    // Run after app.js auth is ready
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      renderInnerAuthDropdown();
+      if (tries > 40 || window.__authReady === true) clearInterval(timer);
+    }, 300);
+  })();
+  </script>
 </body>
 </html>
