@@ -1,0 +1,8 @@
+[model]
+provider = "openai_compatible"
+model = "local-model"
+base_url = "http://127.0.0.1:3001/v1"
+api_key = "dummy-key"
+
+[agent]
+default_model = "local-model"

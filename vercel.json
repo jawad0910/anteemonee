@@ -1,0 +1,31 @@
+{
+  "rewrites": [
+    {
+      "source": "/past-papers/:subject/",
+      "destination": "/past-papers-subject/index.html"
+    },
+    {
+      "source": "/past-papers/:subject",
+      "destination": "/past-papers-subject/index.html"
+    },
+    {
+      "source": "/ai-examiner/:subject/:code/",
+      "destination": "/ai-examiner/index.html"
+    },
+    {
+      "source": "/payment/:code/",
+      "destination": "/payment/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
