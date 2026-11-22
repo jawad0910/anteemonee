@@ -1,56 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
   <url>
-    <loc>https://anteemonee.com/</loc>
-    <lastmod>2026-09-10</lastmod>
+    <loc>https://anteemonee.vercel.app/</loc>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- Main Feature Pages -->
   <url>
-    <loc>https://anteemonee.com/flashcards/</loc>
-    <lastmod>2026-09-10</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://anteemonee.vercel.app/ai-chat/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/ebooks/</loc>
-    <lastmod>2026-09-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://anteemonee.com/century-club/</loc>
-    <lastmod>2026-10-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://anteemonee.com/premium/</loc>
-    <lastmod>2026-10-16</lastmod>
+    <loc>https://anteemonee.vercel.app/ai-test-builder/</loc>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/pages/download.html</loc>
-    <lastmod>2026-09-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://anteemonee.vercel.app/past-papers/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/slame/</loc>
-    <lastmod>2026-10-17</lastmod>
+    <loc>https://anteemonee.vercel.app/ebooks/</loc>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/terms/</loc>
-    <lastmod>2026-09-10</lastmod>
+    <loc>https://anteemonee.vercel.app/ai-examiner/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/flashcards/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/syllabus/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/century-club/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Subject-specific past papers (static URLs) -->
+  <url>
+    <loc>https://anteemonee.vercel.app/past-papers/physics/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/past-papers/chemistry/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/past-papers/biology/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/past-papers/mathematics/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/past-papers/english/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/past-papers/computer-science/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Flashcards subject pages -->
+  <url>
+    <loc>https://anteemonee.vercel.app/flashcards-subject/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Premium -->
+  <url>
+    <loc>https://anteemonee.vercel.app/premium/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://anteemonee.vercel.app/terms/</loc>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://anteemonee.com/privacy/</loc>
-    <lastmod>2026-09-10</lastmod>
+    <loc>https://anteemonee.vercel.app/privacy/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://anteemonee.vercel.app/refunds/</loc>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
